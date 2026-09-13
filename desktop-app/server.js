@@ -21,7 +21,13 @@ const GENERATOR_DIR = fs.existsSync(path.join(__dirname, '..', 'demo-generator.j
   ? path.join(__dirname, '..')
   : path.join(process.resourcesPath || __dirname, 'generator');
 
-function createApp() {
+// Options are for BrightSite Studio V2 (../desktop-app-v2), which runs this
+// same server with its own page on top: `publicDir` is served before this
+// app's public/ (so its index.html wins, everything else falls through to
+// ours) and `appVersion` is what /api/app-info reports. Without options
+// this app behaves exactly as it always has.
+function createApp(options = {}) {
+  const appVersion = options.appVersion || APP_VERSION;
   const app = express();
   app.use(express.json({ limit: '2mb' }));
   // Scripts on a copied website sometimes load files by root path
@@ -36,6 +42,7 @@ function createApp() {
     if (!file.startsWith(siteDir + path.sep)) return next();
     fs.stat(file, (err, stat) => (err || !stat.isFile() ? next() : res.sendFile(file)));
   });
+  if (options.publicDir) app.use(express.static(options.publicDir));
   app.use(express.static(path.join(__dirname, 'public')));
   app.use('/generator', express.static(GENERATOR_DIR));
   app.use('/projects', express.static(storage.ROOT));
@@ -66,7 +73,7 @@ function createApp() {
   app.get('/api/sync-status', (req, res) => res.json(sync.getStatus()));
   app.get('/api/demo-views', async (req, res) => res.json(await sync.pullDemoViews()));
   app.get('/api/can-deploy', async (req, res) => res.json({ canDeploy: await canDeploy() }));
-  app.get('/api/app-info', (req, res) => res.json({ version: APP_VERSION }));
+  app.get('/api/app-info', (req, res) => res.json({ version: appVersion }));
 
   app.post('/api/projects', (req, res) => {
     const project = storage.createProject(req.body?.name || '', { pipelineStage: req.body?.pipelineStage });
@@ -458,7 +465,7 @@ function createApp() {
   // normally would.
   app.post('/api/open-external', (req, res) => {
     const url = String(req.body?.url || '');
-    if (!/^(https:\/\/|mailto:|sms:)/.test(url)) return res.status(400).json({ error: 'Only https://, mailto: or sms: links can be opened' });
+    if (!/^(https:\/\/|mailto:|sms:|tel:)/.test(url)) return res.status(400).json({ error: 'Only https://, mailto:, sms: or tel: links can be opened' });
     if (browserFetch.isElectronMain()) require('electron').shell.openExternal(url);
     res.json({ ok: true });
   });

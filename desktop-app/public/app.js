@@ -480,6 +480,8 @@
       el.projectList.appendChild(box);
       body.scrollTop = scrolls[section.id] || 0;
     });
+    // Studio V2 (../desktop-app-v2) redraws its pipeline on this.
+    document.dispatchEvent(new CustomEvent('studio:projects'));
   }
   el.projectList.addEventListener('click', e => {
     const head = e.target.closest('.side-section-head');
@@ -562,6 +564,7 @@
     renderPreview({ seedDeployed: true });
     renderLiveActions();
     checkLive();
+    document.dispatchEvent(new CustomEvent('studio:current'));
   }
 
   function closeCurrentProject() {
@@ -576,6 +579,7 @@
     el.preview.srcdoc = '';
     delete el.preview.dataset.lastHtml;
     renderLiveActions();
+    document.dispatchEvent(new CustomEvent('studio:current'));
   }
 
   // Shows a "copy site URL" button and switches the deploy button's label/
@@ -3243,6 +3247,20 @@ document.addEventListener('focusout',e=>{
     const btn = e.target.closest('.tab-switch button[data-tab]');
     if (btn) switchTab(btn.dataset.tab);
   });
+
+  // Studio V2 (../desktop-app-v2) loads this same file for the builder,
+  // preview, settings, sync and billing, and drives it through these. This
+  // page never reads them.
+  window.StudioCore = {
+    state, api, notify, showConfirm, openExternal, ownerUrl, friendlyError,
+    loadProjects, selectProject, closeCurrentProject, deleteProject,
+    saveProjectFields, setRaw, scheduleSave, flushSave, persist,
+    renderEditor, renderPreview, fitPreviewFrame, renderLiveActions, setViewport, setTextEditing,
+    wireBuildBar, openPlanDialog, openPayDialog, openDomainDialog, markPaid, goLiveFromList,
+    refreshBilling, recheckLiveSites, openWhatsApp, openEmail, toWhatsAppNumber,
+    businessName, phoneOf, websiteOf, timeAgo, escapeHtml, escapeAttr,
+    billingNote, planSummary, planCharges, isDeployPending, isOfflinePending, siteState, viewsText
+  };
 
   loadProjects().then(() => { renderEditor(); renderLiveActions(); });
 })();
