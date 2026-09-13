@@ -11,6 +11,7 @@
     "server": "node server.js",
     "build": "electron-builder --mac",
     "build:win": "electron-builder --win",
+    "release": "electron-builder --mac --win -p always",
     "test": "node --test tests/*.test.js"
   },
   "dependencies": {
@@ -68,8 +69,20 @@
     ],
     "mac": {
       "target": [
-        "dmg",
-        "zip"
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
       ],
       "category": "public.app-category.productivity",
       "icon": "../desktop-app/public/icon.png",

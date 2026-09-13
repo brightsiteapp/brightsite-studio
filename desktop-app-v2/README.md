@@ -101,6 +101,20 @@ whole window:
 - **Desktop view**: the preview on top, every builder control underneath.
 - **Mobile view**: the controls on the left, the phone full height on the right.
 
+## Releasing
+
+Bump `version` in `package.json`, then:
+
+```bash
+GH_TOKEN=$(gh auth token) npm run release
+```
+
+This builds the Mac app for both Intel and Apple Silicon (DMG + zip, one
+`latest-mac.yml` listing both) and the Windows installer, and publishes them
+as a release on `wellnesswebsolutions/brightsite-studio-v2`. Installed copies
+pick it up by themselves. Download page for the newest version:
+https://github.com/wellnesswebsolutions/brightsite-studio-v2/releases/latest
+
 ## Things that are separate from V1
 
 - **Google/Facebook sign-in**: the sign-in browser lives in each app's own
