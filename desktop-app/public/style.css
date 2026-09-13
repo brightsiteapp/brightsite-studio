@@ -1286,6 +1286,7 @@ dialog .dns-table button { margin: 0; padding: 4px 10px; font-size: 12px; }
 .live-dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: #c9c6bd; }
 .live-dot.is-up { background: #1f9d55; box-shadow: 0 0 0 3px #e6f6ec; }
 .live-dot.is-down { background: #e0453f; box-shadow: 0 0 0 3px #fbeceb; }
+.live-dot.is-unpublished { background: #fff; box-shadow: inset 0 0 0 2px #c9c6bd; }
 .live-row.is-offline, .live-row.is-offline:hover { border-color: #f3c9c7; background: #fffafa; }
 /* Narrower windows: buttons drop to a second line, still in the same
    fixed slots so they stay lined up. */

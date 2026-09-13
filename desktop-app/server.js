@@ -374,6 +374,23 @@ function createApp(options = {}) {
     }
   });
 
+  // Near-instant billing: Studio isn't on the internet, so it can't receive
+  // Stripe's webhooks. Instead the app asks every 30 seconds whether any
+  // payment, cancellation or failure happened since it last looked (one
+  // small request), and runs the full refresh only when one has.
+  let lastBillingEventCheck = Math.floor(Date.now() / 1000) - 60;
+  app.get('/api/billing/events', async (req, res) => {
+    if (!stripe.getKey()) return res.json({ changed: false });
+    const since = lastBillingEventCheck;
+    try {
+      const count = await stripe.billingEventsSince(since - 5); // a little overlap for clock drift
+      lastBillingEventCheck = Math.floor(Date.now() / 1000);
+      res.json({ changed: count > 0 });
+    } catch (err) {
+      res.status(502).json({ error: err.message });
+    }
+  });
+
   app.post('/api/billing/refresh', async (req, res) => {
     if (!stripe.getKey()) return res.json({ skipped: true, changed: [] });
     try {
@@ -771,7 +788,7 @@ function createApp(options = {}) {
     try {
       const check = await fetch(project.liveUrl, { method: 'HEAD', redirect: 'follow', signal: AbortSignal.timeout(8000) });
       if (check.status === 404) {
-        const saved = storage.saveProject(req.params.slug, { liveUrl: '' });
+        const saved = storage.saveProject(req.params.slug, { liveUrl: '', everLive: true });
         sync.pushOne(saved);
         return res.json(saved);
       }
@@ -782,7 +799,7 @@ function createApp(options = {}) {
   app.post('/api/projects/:slug/offline', async (req, res) => {
     try {
       await takeOffline(req.params.slug);
-      const saved = storage.saveProject(req.params.slug, { liveUrl: '', deployRequestedAt: '', offlineRequestedAt: '', deployError: '' });
+      const saved = storage.saveProject(req.params.slug, { liveUrl: '', everLive: true, deployRequestedAt: '', offlineRequestedAt: '', deployError: '' });
       sync.pushOne(saved);
       res.json(saved);
     } catch (err) {
@@ -794,7 +811,9 @@ function createApp(options = {}) {
     try {
       const outDir = exportFor(req.params.slug, req.body?.html);
       const url = await deployToVercel(outDir, req.params.slug);
-      const saved = storage.saveProject(req.params.slug, { liveUrl: url, deployRequestedAt: '', offlineRequestedAt: '', deployError: '' });
+      // everLive: it has been published, so if it's ever down again that's
+      // worth a warning — a site never published yet isn't "offline".
+      const saved = storage.saveProject(req.params.slug, { liveUrl: url, everLive: true, deployRequestedAt: '', offlineRequestedAt: '', deployError: '' });
       sync.pushOne(saved);
       res.json({ url });
     } catch (err) {

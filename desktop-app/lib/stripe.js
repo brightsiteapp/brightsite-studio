@@ -126,4 +126,17 @@ async function billingForEmail(email) {
   return found;
 }
 
-module.exports = { getKey, setKey, status, testKey, createPaymentLink, billingBySlug, billingForEmail, billingOf, better };
+// How many payment, cancellation or failure events Stripe has recorded
+// since `since` (unix seconds) — the cheap "anything new?" check that
+// decides whether the full billing refresh needs to run.
+const BILLING_EVENTS = [
+  'checkout.session.completed', 'customer.subscription.created', 'customer.subscription.updated',
+  'customer.subscription.deleted', 'invoice.paid', 'invoice.payment_failed', 'charge.succeeded', 'charge.refunded'
+];
+async function billingEventsSince(since) {
+  if (!getKey()) return 0;
+  const types = BILLING_EVENTS.map(t => `types[]=${t}`).join('&');
+  return (await call(`events?limit=1&created[gt]=${since}&${types}`)).data.length;
+}
+
+module.exports = { getKey, setKey, status, testKey, createPaymentLink, billingBySlug, billingForEmail, billingEventsSince, billingOf, better };

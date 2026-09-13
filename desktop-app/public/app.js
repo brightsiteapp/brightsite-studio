@@ -2717,9 +2717,12 @@ document.addEventListener('focusout',e=>{
   // from Studio, so it gets no Make live / Take offline.
   const isLinkedSite = p => p.importedSite?.mode === 'link';
   const siteBuiltHere = p => Boolean(p.raw?.name) && !isLinkedSite(p);
-  // Green = live, red = a site built here that isn't up, grey = no site
-  // of ours (e.g. a customer added with their own existing website).
-  const siteState = p => p.liveUrl || isLinkedSite(p) ? 'up' : siteBuiltHere(p) ? 'down' : 'none';
+  // Green = live, red = a site that was live and has gone down, hollow = a
+  // site built here that hasn't been published yet, grey = no site of ours
+  // (e.g. a customer added with their own existing website). Only red
+  // counts towards the "sites are offline" warning.
+  const siteState = p => p.liveUrl || isLinkedSite(p) ? 'up'
+    : !siteBuiltHere(p) ? 'none' : p.everLive ? 'down' : 'unpublished';
 
   function billingNote(p) {
     const b = p.billing;
@@ -2748,7 +2751,8 @@ document.addEventListener('focusout',e=>{
         ? '<span class="crm-stage stage-paid" title="Marked paid by hand — not through Stripe">Paying · not Stripe</span>'
         : '<span class="crm-stage stage-paid">Paying</span>')
       : '<span class="crm-stage stage-pending">Pending</span>';
-    const dotTitle = dot === 'up' ? 'Site is live' : dot === 'down' ? 'Site is offline' : 'No site built in Studio';
+    const dotTitle = dot === 'up' ? 'Site is live' : dot === 'down' ? 'Site is offline'
+      : dot === 'unpublished' ? 'Not published yet' : 'No site built in Studio';
     return `
       <div class="crm-row live-row ${section === 'live' && dot === 'down' ? 'is-offline' : ''}" ${p.notes ? `title="${escapeAttr(p.notes.trim())}"` : ''}>
         <span class="live-dot is-${dot}" title="${dotTitle}"></span>
@@ -2979,7 +2983,7 @@ document.addEventListener('focusout',e=>{
         <h3>Domain — ${escapeHtml(businessName(p))}</h3>
         <p class="dim">Use a domain the customer owns (GoDaddy, 123-reg, IONOS, Namecheap…). Studio adds it to their site, then you add the DNS records below wherever the domain was bought.</p>
         ${state.canDeploy ? '' : '<p class="pay-status">Sign in to Vercel in Settings (⚙) on this computer to connect domains.</p>'}
-        ${p.liveUrl ? '' : '<p class="dim">This site isn’t live yet — click “Make live” on it too, so there’s something to show at the domain.</p>'}
+        ${p.liveUrl ? '' : '<p class="dim">This site isn’t live yet — it goes live by itself once they’re paying and the domain points here (or click “Make live”).</p>'}
         <div class="pay-link">
           <input type="text" id="domainInput" placeholder="theirbusiness.co.uk" value="${escapeAttr(domain)}" ${state.canDeploy ? '' : 'disabled'}>
           <button type="button" class="primary" data-connect ${state.canDeploy ? '' : 'disabled'}>${domain ? 'Change' : 'Connect'}</button>
@@ -3106,10 +3110,58 @@ document.addEventListener('focusout',e=>{
   async function refreshBilling() {
     try {
       const r = await api('/api/billing/refresh', { method: 'POST' });
-      if (!r.changed?.length) return;
-      await loadProjects();
-      if (state.tab === 'live') renderLive();
+      if (r.changed?.length) {
+        await loadProjects();
+        if (state.tab === 'live') renderLive();
+      }
     } catch { /* Stripe unreachable or no permission — try again later */ }
+    autoGoLive();
+  }
+
+  // Near-instant Stripe updates: every 30 seconds the server asks Stripe
+  // whether anything billing-related happened since it last looked (one
+  // small request); the full refresh only runs when something did.
+  async function checkBillingEvents() {
+    try {
+      if ((await api('/api/billing/events')).changed) await refreshBilling();
+    } catch { /* offline or no Stripe — the 5-minute refresh still runs */ }
+  }
+  setInterval(checkBillingEvents, 30 * 1000);
+
+  // A paying customer whose domain now points at their site goes live by
+  // itself, from the computer that can publish. Each business is tried
+  // once per session, so a publish that fails can't repeat every check.
+  const autoLiveTried = new Set();
+  let autoLiveRunning = false;
+  async function autoGoLive() {
+    if (!state.canDeploy || autoLiveRunning) return;
+    const ready = state.projects.filter(p => liveSection(p) === 'live' && p.customDomain && !p.liveUrl
+      && siteBuiltHere(p) && !isDeployPending(p) && !autoLiveTried.has(p.slug));
+    if (!ready.length) return;
+    autoLiveRunning = true;
+    try {
+      for (const p of ready) {
+        const dns = await api(`/api/projects/${p.slug}/domain-check`).catch(() => null);
+        if (!dns?.ok) continue; // not pointing here yet — checked again next time
+        autoLiveTried.add(p.slug);
+        try {
+          const html = p.importedSite ? importedMarker(p) : await buildSiteHtml(p);
+          await api(`/api/projects/${p.slug}/deploy`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ html })
+          });
+          rememberProject(await api(`/api/projects/${p.slug}`));
+          if (state.current?.slug === p.slug) state.current.deployedHtml = html;
+          notify(`“${businessName(p)}” is paying and ${p.customDomain} is connected — it’s live now.`, { sticky: true });
+        } catch (err) {
+          await saveProjectFields(p.slug, { deployError: friendlyError(err.message) }).catch(() => {});
+          notify(`Couldn’t put “${businessName(p)}” live automatically: ${friendlyError(err.message)}`, { sticky: false });
+        }
+      }
+    } finally {
+      autoLiveRunning = false;
+      if (state.tab === 'live') renderLive();
+      renderLiveActions();
+    }
   }
   async function recheckLiveSites() {
     const sites = state.projects.filter(p => (isPaid(p) || isPending(p)) && p.liveUrl);
