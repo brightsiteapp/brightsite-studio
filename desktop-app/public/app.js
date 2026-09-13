@@ -666,6 +666,39 @@
     ).join('');
   }
 
+  // Simple tick-boxes + up/down arrows for which home page sections show
+  // and in what order — mirrors fresh-templates.js's hiddenSections/
+  // sectionOrder fields. "Your work/services" is the main content block
+  // and always stays on; lume/studio have their own fixed narrative so
+  // the list is replaced with a note instead.
+  const HOME_SECTIONS = [
+    { id: 'reviews', label: 'Reviews' },
+    { id: 'gallery', label: 'Gallery' },
+    { id: 'booking', label: 'Call to action' }
+  ];
+  function homeSectionOrder(raw) {
+    const order = (raw.sectionOrder || []).filter(id => HOME_SECTIONS.some(s => s.id === id));
+    return [...order, ...HOME_SECTIONS.map(s => s.id).filter(id => !order.includes(id))];
+  }
+  function sectionsListHtml(raw) {
+    const layout = effectiveLayout(raw);
+    if (layout === 'lume' || layout === 'studio') {
+      return `<p class="sections-note">This template has its own fixed page layout, so sections can’t be turned off or reordered.</p>`;
+    }
+    const hidden = new Set(raw.hiddenSections || []);
+    const ids = homeSectionOrder(raw);
+    return `<div class="sections-list">${ids.map((id, i) => {
+      const meta = HOME_SECTIONS.find(s => s.id === id);
+      return `<div class="section-row">
+        <label><input type="checkbox" data-section-toggle="${id}" ${hidden.has(id) ? '' : 'checked'}> ${meta.label}</label>
+        <div class="section-row-actions">
+          <button type="button" data-section-up="${id}" title="Move up" ${i === 0 ? 'disabled' : ''}>↑</button>
+          <button type="button" data-section-down="${id}" title="Move down" ${i === ids.length - 1 ? 'disabled' : ''}>↓</button>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+
   // Which template the preview is actually rendering right now — mirrors
   // fresh-templates.js's own fallback exactly (an explicit choice if it's
   // still a valid id, otherwise the category default), so the picker
@@ -1092,6 +1125,9 @@
       <div class="field"><label>Template</label>
         <div class="template-grid-6" id="templateGrid">${templateOptions(effectiveLayout(raw))}</div></div>
 
+      <div class="field"><label>Home page sections</label>
+        <div id="sectionsField">${sectionsListHtml(raw)}</div></div>
+
       <div class="field"><label>Colour <span class="colour-current" id="colourCurrent">${colourCurrentHtml(raw.tones?.base)}</span></label>
         <div class="colour-picker" id="colourPicker">${colourPickerHtml(raw.tones?.base, null)}</div></div>
 
@@ -1151,6 +1187,30 @@
       if (!tile) return;
       setRaw({ layout: tile.dataset.layout });
       document.querySelectorAll('.template-tile').forEach(t => t.classList.toggle('selected', t === tile));
+      document.getElementById('sectionsField').innerHTML = sectionsListHtml(state.current.raw);
+      persist();
+      schedulePreview();
+    });
+    document.getElementById('sectionsField').addEventListener('change', e => {
+      const cb = e.target.closest('[data-section-toggle]');
+      if (!cb) return;
+      const hidden = new Set(state.current.raw.hiddenSections || []);
+      if (cb.checked) hidden.delete(cb.dataset.sectionToggle); else hidden.add(cb.dataset.sectionToggle);
+      setRaw({ hiddenSections: [...hidden] });
+      persist();
+      schedulePreview();
+    });
+    document.getElementById('sectionsField').addEventListener('click', e => {
+      const btn = e.target.closest('[data-section-up],[data-section-down]');
+      if (!btn) return;
+      const id = btn.dataset.sectionUp || btn.dataset.sectionDown;
+      const ids = homeSectionOrder(state.current.raw);
+      const from = ids.indexOf(id);
+      const to = btn.dataset.sectionUp ? from - 1 : from + 1;
+      if (to < 0 || to >= ids.length) return;
+      [ids[from], ids[to]] = [ids[to], ids[from]];
+      setRaw({ sectionOrder: ids });
+      document.getElementById('sectionsField').innerHTML = sectionsListHtml(state.current.raw);
       persist();
       schedulePreview();
     });

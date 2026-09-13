@@ -237,6 +237,8 @@ function studioLayoutCSS() {
   ${lumeLayoutCSS()}
   ${indexLayoutCSS()}
   ${studioProLayoutCSS()}
+  ${fluxLayoutCSS()}
+  ${bloomLayoutCSS()}
   @media(max-width:760px){.layout-lume .button,.layout-index .button{font-size:15px}.layout-lume .header-action,.layout-index .header-action{font-size:14px}.layout-studio .studio-hero{padding:16px}.layout-studio .studio-marquee{position:static;order:3;font-size:100px}}
   /* Minimal — a quiet information column beside an image-led portfolio. */
   .layout-minimal .container{width:min(1440px,100% - 48px)}
@@ -341,10 +343,13 @@ function sereneLayoutCSS() {
   .layout-serene .hero{border-radius:0 0 50% 50% / 0 0 65px 65px;overflow:hidden}
   .layout-serene .hero-copy{padding:30px 48px 70px}
   .layout-serene .hero-title{font-size:clamp(48px,5.3vw,76px);font-weight:400;line-height:.97;max-width:22ch}
-  .layout-serene .button{border-radius:999px;padding:16px 27px;box-shadow:none}
-  .layout-serene .site-header{background:color-mix(in srgb,var(--header) 88%,transparent)}
-  .layout-serene .brand{font-family:var(--heading);font-size:32px;font-weight:500}
+  .layout-serene .button{border-radius:999px;padding:16px 27px;box-shadow:none;transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s}
+  .layout-serene .button:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 14px 30px color-mix(in srgb,var(--accent) 30%,transparent)}
+  .layout-serene .site-header{background:color-mix(in srgb,var(--header) 88%,transparent);transition:box-shadow .35s ease,top .35s ease}
+  .layout-serene .site-header.is-scrolled{box-shadow:0 18px 40px color-mix(in srgb,var(--ink) 12%,transparent)}
+  .layout-serene .brand{font-family:var(--heading);font-size:32px;font-weight:500;font-style:italic}
   .layout-serene .section{padding:115px 0}
+  .layout-serene .hero-title em,.layout-serene .hero-title i{font-style:italic;font-weight:400}
   .layout-serene .signature .intro-pair{align-items:center;flex-direction:column;text-align:center;margin-bottom:60px}
   .layout-serene .signature .section-heading{margin-left:auto;margin-right:auto;text-align:center}
   .layout-serene .section-heading h2{font-size:clamp(50px,5.5vw,82px);font-weight:400;letter-spacing:-.035em}
@@ -369,7 +374,14 @@ function sereneLayoutCSS() {
   .layout-serene .page-intro .section-heading{margin:auto}
   .layout-serene .directory-card,.layout-serene .contact-card{border:0;border-radius:22px;background:var(--surface);padding:34px}
   .layout-serene .directory-card h3{font-size:32px}.layout-serene .contact-card h2{font-size:56px}
-  .layout-serene .map{border-radius:24px}.layout-serene .reveal{transition-duration:1s}
+  .layout-serene .map{border-radius:24px}.layout-serene .reveal{transition-duration:1s;transform:translateY(30px) scale(.98)}
+  .layout-serene .reveal.in{transform:none}
+  .layout-serene .brand-scene{will-change:transform;transform-origin:center 40%}
+  @media(min-width:901px){
+    .layout-serene .site-header{top:18px;left:50%;transform:translateX(-50%);width:calc(100% - 48px);max-width:1180px;border-radius:999px;border-bottom:0;box-shadow:0 10px 30px color-mix(in srgb,var(--ink) 8%,transparent)}
+    .layout-serene .site-header .header-inner{width:100%;max-width:none;padding:0 14px 0 30px}
+    .layout-serene .page{padding-top:calc(var(--header-height) + 30px)}
+  }
   @media(max-width:900px){
     .layout-serene .hero{border-radius:0 0 50% 50% / 0 0 35px 35px}
     .layout-serene .hero-copy{position:static!important;padding:30px 24px 52px;text-align:center;background:var(--header)}
@@ -705,6 +717,104 @@ function perspectiveLayoutCSS() {
   `;
 }
 
+// Flux: a dark, kinetic layout — parallax hero image, a scrolling marquee
+// eyebrow and cards that tilt toward the pointer. Content and structure are
+// unchanged from the standard layout; only presentation and motion differ.
+function fluxLayoutCSS() {
+  return `
+  .layout-flux .container{width:min(1320px,100% - 64px)}
+  .layout-flux .site-header{background:color-mix(in srgb,var(--header) 80%,transparent);border-bottom:1px solid var(--line)}
+  .layout-flux .hero{overflow:clip}
+  .layout-flux .brand-scene{will-change:transform;transform:scale(1.08)}
+  .layout-flux .hero-title{font-size:clamp(40px,6vw,88px);letter-spacing:-.05em;font-weight:600}
+  .layout-flux .button{border-radius:999px;box-shadow:none}
+  .layout-flux .marquee-strip{overflow:hidden;white-space:nowrap;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--surface)}
+  .layout-flux .marquee-track{display:inline-flex;gap:48px;will-change:transform;font-family:var(--heading);font-size:22px;letter-spacing:-.02em;color:var(--accent)}
+  .layout-flux .marquee-track span{display:inline-flex;align-items:center;gap:48px}
+  .layout-flux .signature .section-heading h2{font-size:clamp(46px,6.5vw,92px);letter-spacing:-.06em;line-height:.98}
+  .layout-flux .service-grid,.layout-flux .membership-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;perspective:1200px}
+  .layout-flux .service-card{border-radius:18px;border:1px solid var(--line);background:var(--card);transform:perspective(900px) rotateX(0) rotateY(0);transition:transform .25s ease,box-shadow .25s ease}
+  .layout-flux .service-card:hover{box-shadow:0 24px 50px color-mix(in srgb,var(--accent) 18%,transparent)}
+  .layout-flux .card-picture{aspect-ratio:5/4}
+  .layout-flux .card-content h3{font-size:30px;letter-spacing:-.03em}
+  .layout-flux .story{background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .layout-flux .story-photo{border-radius:18px}
+  .layout-flux .gallery{grid-template-columns:repeat(4,1fr);gap:14px}
+  .layout-flux .gallery-demo:nth-child(n){grid-column:auto;aspect-ratio:3/4;border-radius:14px}
+  .layout-flux .gallery-demo:first-child,.layout-flux .gallery-demo:nth-child(6){grid-column:span 1;aspect-ratio:3/4}
+  .layout-flux .review-card:nth-child(n){border-radius:16px}
+  .layout-flux .closing{background:var(--accent);border-radius:32px;width:calc(100% - 48px);margin:24px auto}
+  .layout-flux .closing h2{font-size:clamp(46px,7vw,96px);letter-spacing:-.04em}
+  .layout-flux .reveal{transform:translateY(28px) scale(.985);transition:opacity .6s ease,transform .7s cubic-bezier(.16,1,.3,1)}
+  @media(max-width:1100px){.layout-flux .service-grid,.layout-flux .membership-grid{grid-template-columns:1fr}.layout-flux .gallery{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:760px){.layout-flux .container{width:calc(100% - 36px)}.layout-flux .closing{width:calc(100% - 24px);border-radius:22px}.layout-flux .marquee-track{font-size:16px;gap:28px}.layout-flux .marquee-track span{gap:28px}}
+  @media(prefers-reduced-motion:reduce){.layout-flux .brand-scene{transform:none}.layout-flux .marquee-track{animation:none!important}}
+  `;
+}
+
+// Bloom: full-bleed parallax hero, big centred serif headings and alternating
+// pastel colour-block sections with pill CTAs. Content and structure are
+// unchanged from the standard layout; only presentation and motion differ.
+function bloomLayoutCSS() {
+  return `
+  .layout-bloom .site-header{background:color-mix(in srgb,var(--header) 70%,transparent);backdrop-filter:blur(14px);border-bottom:0}
+  .layout-bloom .hero{overflow:clip}
+  .layout-bloom .brand-scene{will-change:transform}
+  .layout-bloom .hero-copy{text-align:center}
+  .layout-bloom .hero-copy .inner{max-width:900px;margin:auto}
+  .layout-bloom .hero-copy .eyebrow{margin:0 auto 14px}
+  .layout-bloom .hero-title{font-size:clamp(44px,6.5vw,88px);font-weight:400;line-height:1.03;max-width:16ch;margin:0 auto 26px}
+  .layout-bloom .hero-actions{justify-content:center}
+  .layout-bloom .button{border-radius:999px;padding:16px 30px;box-shadow:none;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+  .layout-bloom .button:hover{transform:translateY(-3px)}
+  .layout-bloom .hero-actions .secondary{background:var(--bg);color:var(--ink);border-color:transparent}
+  .layout-bloom .section{padding:120px 0}
+  .layout-bloom .section-heading{max-width:720px;margin:0 auto 20px;text-align:center}
+  .layout-bloom .section-heading h2{font-size:clamp(38px,5vw,64px);font-weight:400;letter-spacing:-.02em}
+  .layout-bloom .section-heading p{margin:20px auto 0}
+  .layout-bloom .signature .intro-pair{flex-direction:column;align-items:center;text-align:center;margin-bottom:56px}
+  .layout-bloom .signature .intro-pair>.text-link{margin-top:22px}
+  .layout-bloom .service-grid,.layout-bloom .expertise-cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+  .layout-bloom .service-card{border:0;border-radius:var(--radius);background:var(--card);box-shadow:none}
+  .layout-bloom .card-picture{aspect-ratio:4/5}
+  .layout-bloom .card-content{text-align:center;padding:26px 20px}
+  .layout-bloom .card-content h3{font-size:26px;font-weight:400}
+  .layout-bloom .card-foot{justify-content:center;border-top:0;flex-direction:column;gap:8px}
+  .layout-bloom .story{background:color-mix(in srgb,var(--accent) 16%,var(--bg));border-radius:var(--radius);margin:0 24px;width:calc(100% - 48px)}
+  .layout-bloom .story-photo{border-radius:calc(var(--radius) - 8px)}
+  .layout-bloom .story h2{font-size:clamp(36px,4.5vw,56px);font-weight:400}
+  .layout-bloom .steps p{border-color:color-mix(in srgb,var(--ink) 12%,transparent)}
+  .layout-bloom .review-section{background:color-mix(in srgb,var(--accent) 10%,var(--bg))}
+  .layout-bloom .reviews{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .layout-bloom .review-card:nth-child(n){border:0;background:var(--bg);border-radius:var(--radius);padding:34px}
+  .layout-bloom .review-card blockquote{font-size:26px;font-weight:400}
+  .layout-bloom .review-stamp{border-color:var(--accent);background:var(--card)}
+  .layout-bloom .gallery{grid-template-columns:repeat(3,1fr);gap:18px}
+  .layout-bloom .gallery-demo:nth-child(n){grid-column:auto;aspect-ratio:4/5;border-radius:var(--radius);transform:none}
+  .layout-bloom .closing{background:color-mix(in srgb,var(--accent) 22%,var(--bg));color:var(--ink);border-radius:var(--radius);margin:0 24px 24px;width:calc(100% - 48px);text-align:center}
+  .layout-bloom .closing-grid{flex-direction:column;align-items:center;display:flex;gap:22px}
+  .layout-bloom .closing .eyebrow{color:var(--accent)}
+  .layout-bloom .closing h2{font-size:clamp(44px,6vw,80px);font-weight:400}
+  .layout-bloom .closing .button{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+  .layout-bloom .page-intro{text-align:center;background:color-mix(in srgb,var(--accent) 10%,var(--bg))}
+  .layout-bloom .page-intro .section-heading{margin:auto}
+  .layout-bloom .directory-card,.layout-bloom .contact-card{border:0;border-radius:var(--radius);background:var(--card)}
+  .layout-bloom .map{border-radius:var(--radius)}
+  .layout-bloom .reveal{transform:translateY(26px);transition:opacity .8s ease,transform .9s cubic-bezier(.16,1,.3,1)}
+  @media(max-width:1100px){.layout-bloom .service-grid,.layout-bloom .expertise-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:900px){
+    .layout-bloom .hero-copy{position:static!important;background:linear-gradient(0deg,var(--header),color-mix(in srgb,var(--header) 60%,transparent))}
+    .layout-bloom .section{padding:72px 0}
+    .layout-bloom .story,.layout-bloom .closing{margin:0 14px;width:calc(100% - 28px)}
+  }
+  @media(max-width:600px){
+    .layout-bloom .service-grid,.layout-bloom .expertise-cards,.layout-bloom .reviews,.layout-bloom .directory-grid{grid-template-columns:1fr}
+    .layout-bloom .gallery{grid-template-columns:1fr 1fr;gap:12px}
+  }
+  @media(prefers-reduced-motion:reduce){.layout-bloom .brand-scene{transform:none!important}}
+  `;
+}
+
 function templateDesignMotion(layout) {
   // Returned as a self-contained script in the exported/shared website.
   return `
@@ -744,6 +854,16 @@ function templateDesignMotion(layout) {
     });
   }
   if(visualStyle==='organic'){const gallery=document.querySelector('.gallery');gallery.tabIndex=0;gallery.setAttribute('role','region');gallery.setAttribute('aria-label','Photo gallery — scroll to explore')}
+  if(visualStyle==='serene'){
+    const header=document.querySelector('.site-header');
+    let frame=0;const paintHeader=()=>{frame=0;header.classList.toggle('is-scrolled',scrollY>10)};
+    addEventListener('scroll',()=>{if(!frame)frame=requestAnimationFrame(paintHeader)},{passive:true});paintHeader();
+    const hero=document.querySelector('.hero'),scene=hero?.querySelector('.brand-scene');
+    if(hero&&scene&&!motionPreference.matches){
+      let frame2=0;const move=()=>{frame2=0;const progress=Math.min(1,Math.max(0,scrollY/Math.max(1,hero.offsetHeight)));scene.style.transform='scale('+(1+progress*.08)+') translateY('+(progress*24)+'px)'};
+      addEventListener('scroll',()=>{if(!frame2)frame2=requestAnimationFrame(move)},{passive:true});move();
+    }
+  }
   if(visualStyle==='kinetic'){
     const rail=document.querySelector('.signature .service-grid,.signature .membership-grid,.signature .project-grid,.signature .expertise-cards');
     if(rail){
@@ -760,5 +880,34 @@ function templateDesignMotion(layout) {
     }
   }
   if(['bold','kinetic'].includes(visualStyle)&&!motionPreference.matches){const progress=document.createElement('div');progress.className='scroll-progress';progress.setAttribute('aria-hidden','true');document.body.append(progress);let frame=0;const update=()=>{frame=0;const distance=document.documentElement.scrollHeight-innerHeight;progress.style.transform='scaleX('+(distance>0?Math.min(1,Math.max(0,scrollY/distance)):0)+')'};window.addEventListener('scroll',()=>{if(!frame)frame=requestAnimationFrame(update)},{passive:true});update()}
+  if(visualStyle==='bloom'){
+    const hero=document.querySelector('.hero'),scene=hero?.querySelector('.brand-scene');
+    if(hero&&scene&&!motionPreference.matches){
+      let frame=0;const move=()=>{frame=0;const progress=Math.min(1,Math.max(0,scrollY/Math.max(1,hero.offsetHeight)));scene.style.transform='scale(1.06) translateY('+(progress*40)+'px)'};
+      addEventListener('scroll',()=>{if(!frame)frame=requestAnimationFrame(move)},{passive:true});move();
+    }
+  }
+  if(visualStyle==='flux'){
+    const hero=document.querySelector('.hero'),scene=hero?.querySelector('.brand-scene');
+    if(hero&&scene&&!motionPreference.matches){
+      let frame=0;const move=()=>{frame=0;const progress=Math.min(1,Math.max(0,scrollY/Math.max(1,hero.offsetHeight)));scene.style.transform='scale(1.08) translateY('+(progress*30)+'px)'};
+      addEventListener('scroll',()=>{if(!frame)frame=requestAnimationFrame(move)},{passive:true});move();
+    }
+    const label=document.querySelector('.site-header .brand small')?.textContent||document.title;
+    const strip=document.createElement('div');strip.className='marquee-strip';
+    const track=document.createElement('div');track.className='marquee-track';
+    const item=Array.from({length:8},()=>'<span>'+label+'</span>').join('');
+    track.innerHTML=item;strip.append(track);hero?.after(strip);
+    if(!motionPreference.matches){
+      let x=0,frame2=0;const drift=()=>{frame2=0;x-=.4;if(-x>track.scrollWidth/2)x=0;track.style.transform='translate3d('+x+'px,0,0)';frame2=requestAnimationFrame(drift)};
+      drift();
+    }
+    if(!motionPreference.matches&&matchMedia('(pointer:fine)').matches){
+      document.querySelectorAll('.service-card').forEach(card=>{
+        card.addEventListener('pointermove',event=>{const rect=card.getBoundingClientRect();const px=(event.clientX-rect.left)/rect.width-.5,py=(event.clientY-rect.top)/rect.height-.5;card.style.transform='perspective(900px) rotateX('+(-py*6)+'deg) rotateY('+(px*8)+'deg)'});
+        card.addEventListener('pointerleave',()=>{card.style.transform=''});
+      });
+    }
+  }
   `;
 }
