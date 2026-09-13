@@ -15,7 +15,11 @@
     {id:'studio',name:'Studio',detail:'Bold portfolio marquee & case-study chapters',font:'Bebas Neue',round:'0px',tier:'Pro'},
     {id:'flux',name:'Flux',detail:'Parallax hero, kinetic type & magnetic cards',font:'Sora',round:'6px',tier:'Pro'},
     {id:'bloom',name:'Bloom',detail:'Full-bleed parallax hero & pastel colour blocks',font:'Fraunces',round:'28px',tier:'Pro'},
-    {id:'torque',name:'Torque',detail:'Industrial dark hero, angled tags & bold type',font:'Bebas Neue',round:'2px',tier:'Pro'}
+    {id:'torque',name:'Torque',detail:'Industrial dark hero, angled tags & bold type',font:'Bebas Neue',round:'2px',tier:'Pro'},
+    {id:'minimal',name:'Minimal',detail:'Quiet information column beside a portfolio',font:'Manrope',round:'12px',tier:'Pro'},
+    {id:'luxe',name:'Luxe',detail:'Sculpted images & floating panels',font:'Cormorant Garamond',round:'28px',tier:'Pro'},
+    {id:'soft',name:'Soft',detail:'Rounded capsule cards on a gentle palette',font:'Quicksand',round:'24px',tier:'Pro'},
+    {id:'organic',name:'Organic',detail:'Warm blocks & a scrolling photo strip',font:'DM Serif Display',round:'12px',tier:'Pro'}
   ];
   const DEMO_FONTS = [
     {id:'classic',name:'Classic',family:'Cormorant Garamond'},
@@ -25,8 +29,9 @@
     {id:'strong',name:'Strong',family:'Bebas Neue'},
     {id:'clean',name:'Clean',family:'Montserrat'}
   ];
+  // Every category gets its own distinct template — no two share a look.
   function demoLayoutForCategory(cat) {
-    return ({hairbeauty:'serene',aesthetics:'serene',health:'serene',trades:'index',homegarden:'kinetic',fooddrink:'bold',fitness:'studio',creative:'studio',professional:'editorial',automotive:'bold',pets:'serene'})[cat] || 'editorial';
+    return ({hairbeauty:'luxe',aesthetics:'bloom',health:'serene',trades:'torque',homegarden:'kinetic',fooddrink:'soft',fitness:'studio',creative:'flux',professional:'editorial',automotive:'bold',pets:'organic'})[cat] || 'minimal';
   }
   // Business content is selected only from the user's industry, never from
   // their visual template. Keep this mapping independent of recommendations.
