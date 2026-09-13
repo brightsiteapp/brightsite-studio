@@ -50,8 +50,8 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "wellnesswebsolutions",
-        "repo": "wellness-web",
+        "owner": "brightsiteapp",
+        "repo": "brightsite-studio",
         "releaseType": "release"
       }
     ],

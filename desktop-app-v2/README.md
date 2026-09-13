@@ -142,15 +142,15 @@ GH_TOKEN=$(gh auth token) npm run release
 
 This builds the Mac app for both Intel and Apple Silicon (DMG + zip, one
 `latest-mac.yml` listing both) and the Windows installer, and publishes them
-as a release on `wellnesswebsolutions/brightsite-studio-v2`. Installed copies
+as a release on `brightsiteapp/brightsite-studio-v2`. Installed copies
 pick it up by themselves. Download page for the newest version:
-https://github.com/wellnesswebsolutions/brightsite-studio-v2/releases/latest
+https://github.com/brightsiteapp/brightsite-studio-v2/releases/latest
 
 ## Things that are separate from V1
 
 - **Google/Facebook sign-in**: the sign-in browser lives in each app's own
   data folder, so sign in once in V2's Settings.
-- **Updates**: V2 checks GitHub releases on `wellnesswebsolutions/brightsite-studio-v2`
+- **Updates**: V2 checks GitHub releases on `brightsiteapp/brightsite-studio-v2`
   (`package.json` → `build.publish`). It doesn't use V1's repo: V1 updates from the
   latest release there, and a V2 release in that repo would be offered to every
   V1 install. Until that repo has a release, V2 simply reports "up to date".

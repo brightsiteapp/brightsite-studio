@@ -1077,7 +1077,7 @@ Font: ${design.font}
 Colour palette: ${design.palette}`;
       const status = document.getElementById('handoffStatus');
       status.textContent = 'Opening your email app…';
-      window.location.href = `mailto:wellnesswebsolutions@gmail.com?subject=${encodeURIComponent(`Website preview - ${businessName || 'New enquiry'}`)}&body=${encodeURIComponent(message)}`;
+      window.location.href = `mailto:brightsiteapp@gmail.com?subject=${encodeURIComponent(`Website preview - ${businessName || 'New enquiry'}`)}&body=${encodeURIComponent(message)}`;
       postLeadWithMedia({
         Business: businessName, Industry: bizTagline.value || 'Not provided',
         Location: bizLocation.value.trim() || 'Not provided', Template: design.template,

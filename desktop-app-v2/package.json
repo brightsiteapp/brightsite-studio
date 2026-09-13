@@ -62,7 +62,7 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "wellnesswebsolutions",
+        "owner": "brightsiteapp",
         "repo": "brightsite-studio-v2",
         "releaseType": "release"
       }

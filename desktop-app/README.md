@@ -110,7 +110,7 @@ without editing that file.
 ## Publishing app updates
 
 Installed copies check GitHub Releases on
-[`wellnesswebsolutions/wellness-web`](https://github.com/wellnesswebsolutions/wellness-web/releases)
+[`brightsiteapp/brightsite-studio`](https://github.com/brightsiteapp/brightsite-studio/releases)
 a few seconds after launch (and every few hours), download any newer
 version quietly in the background, then show a small **New version ready ·
 Restart to update** notice in the top bar. Nothing installs until someone

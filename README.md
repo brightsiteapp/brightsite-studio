@@ -1,8 +1,8 @@
-# wellness-web
+# brightsite-studio
 
 Aesthetic Intelligence — brand websites that fill your diary
 
-Live: https://wellnessweb.vercel.app
+Live: https://brightsite.app
 
 Static site — plain HTML/CSS, no build step.
 
@@ -46,7 +46,7 @@ matches are cached for 29 days.
 ## Deploying
 
 Pushes to `main` auto-deploy to Vercel:
-https://wellnessweb.vercel.app
+https://brightsite.app
 
 Manual deploy: `vercel deploy --prod --yes`
 

@@ -1,4 +1,4 @@
-// Cloudflare Worker that emails wellnesswebsolutions@gmail.com whenever a
+// Cloudflare Worker that emails brightsiteapp@gmail.com whenever a
 // lead is captured on the site. Handles two shapes of request:
 //  - application/json: a quick text-only lead ping (business_name, details)
 //  - multipart/form-data: the full WhatsApp handoff — business details plus
@@ -47,7 +47,7 @@ async function handleJsonLead(body, env, cors) {
     },
     body: JSON.stringify({
       from: 'BrightSite Leads <leads@brightsite.app>',
-      to: ['wellnesswebsolutions@gmail.com'],
+      to: ['brightsiteapp@gmail.com'],
       subject: `New lead: ${business_name}`,
       text: details || '(no further details)',
     }),
@@ -88,7 +88,7 @@ async function handleFormLead(form, env, cors) {
     },
     body: JSON.stringify({
       from: 'BrightSite Leads <leads@brightsite.app>',
-      to: ['wellnesswebsolutions@gmail.com'],
+      to: ['brightsiteapp@gmail.com'],
       subject: `New BrightSite customer handoff — ${business}`,
       text: lines.join('\n') || '(no further details)',
       attachments,
