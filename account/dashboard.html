@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>My Website — BrightSite</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../favicon.png" type="image/png">
+<meta name="theme-color" content="#F7F2EC">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body{padding:0 0 60px}
+  .dash-top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 24px;border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0;z-index:10}
+  .dash-top .brand-mini{display:flex;align-items:center;gap:10px;text-decoration:none}
+  .dash-top .brand-mini img{height:28px;width:auto}
+  .dash-top-right{display:flex;align-items:center;gap:14px}
+  .dash-top-right span{font-size:13px;color:var(--muted)}
+  .dash-logout{background:none;border:1px solid var(--line);border-radius:999px;padding:8px 16px;font:inherit;font-size:12.5px;font-weight:600;color:var(--ink);cursor:pointer}
+  .dash-logout:hover{border-color:var(--muted)}
+  .dash-wrap{max-width:720px;margin:0 auto;padding:32px 20px 0}
+  .dash-wrap h1{font-family:var(--display);font-size:clamp(22px,3vw,28px);font-weight:600;margin-bottom:6px}
+  .dash-wrap>p.sub{color:var(--muted);font-size:14px;margin-bottom:26px}
+  .dash-section{padding:clamp(20px,4vw,28px);border:1px solid var(--line);border-radius:18px;background:var(--card);box-shadow:0 10px 26px rgba(23,32,31,.04);margin-bottom:20px}
+  .dash-section h2{font-family:var(--display);font-size:17px;font-weight:700;margin-bottom:4px}
+  .dash-section p.hint{color:var(--muted);font-size:13px;margin-bottom:16px;line-height:1.5}
+  .dash-field{margin-bottom:12px}
+  .dash-field label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:6px}
+  .dash-field input,.dash-field textarea{width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font:inherit;font-size:14.5px;outline:none;transition:border-color .18s ease}
+  .dash-field input{min-height:46px}
+  .dash-field textarea{min-height:70px;resize:vertical}
+  .dash-field input:focus,.dash-field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+  .dash-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:540px){.dash-grid2{grid-template-columns:1fr}}
+
+  .svc-row{display:grid;grid-template-columns:1fr 110px auto;gap:8px;margin-bottom:8px;align-items:center}
+  @media(max-width:540px){.svc-row{grid-template-columns:1fr 90px auto}}
+  .svc-row input{min-height:42px;padding:0 12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px}
+  .svc-remove{background:none;border:0;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;width:32px;height:32px;border-radius:8px}
+  .svc-remove:hover{background:#f3efe8;color:#b23b2c}
+  .dash-add{margin-top:4px;background:none;border:1px dashed var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:13px;font-weight:600;color:var(--accent);cursor:pointer}
+  .dash-add:hover{border-color:var(--accent);background:rgba(59,130,246,.06)}
+
+  .media-row{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+  .media-thumb{width:64px;height:64px;border-radius:12px;border:1px solid var(--line);object-fit:cover;background:#f3efe8;flex:none}
+  .media-thumb.empty{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:10px;text-align:center}
+  .media-btn{border:1px solid var(--line);border-radius:999px;padding:8px 16px;font:inherit;font-size:12.5px;font-weight:600;background:#fff;cursor:pointer}
+  .media-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px;margin-bottom:12px}
+  .gallery-item{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+  .gallery-item img{width:100%;height:100%;object-fit:cover;display:block}
+  .gallery-item button{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:12px;line-height:1;cursor:pointer}
+  .gallery-counter{font-size:12.5px;color:var(--muted);margin-bottom:10px}
+  .gallery-counter.full{color:#b23b2c;font-weight:600}
+
+  .dash-save-bar{position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--line);padding:14px 20px;display:flex;align-items:center;gap:14px;justify-content:flex-end;max-width:720px;margin:0 auto}
+  .dash-save{min-height:46px;padding:0 26px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:inherit;font-size:13.5px;font-weight:700;letter-spacing:.03em;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease}
+  .dash-save:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(59,130,246,.28)}
+  .dash-save:disabled{opacity:.65;cursor:wait;transform:none;box-shadow:none}
+  .dash-save-status{font-size:13px;color:var(--muted)}
+  .dash-save-status.ok{color:var(--accent);font-weight:600}
+  .dash-save-status.err{color:#b23b2c}
+
+  #setupPanel{max-width:480px;margin:60px auto;padding:clamp(22px,4vw,32px);border:1px solid var(--line);border-radius:20px;background:var(--card);box-shadow:0 12px 30px rgba(23,32,31,.05)}
+  #setupPanel h1{font-family:var(--display);font-size:22px;font-weight:600;margin-bottom:6px}
+  #setupPanel p.sub{color:var(--muted);font-size:14px;margin-bottom:18px;line-height:1.5}
+  #setupBtn{width:100%;min-height:48px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;margin-top:10px}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<div class="dash-top">
+  <a href="/" class="brand-mini"><img src="../img/brightsite-logo.png" alt="BrightSite"></a>
+  <div class="dash-top-right">
+    <span id="dashEmail"></span>
+    <button class="dash-logout" id="logoutBtn" type="button">Log out</button>
+  </div>
+</div>
+
+<!-- Shown when the logged-in user has no business row yet -->
+<div id="setupPanel" hidden>
+  <h1>Set up your website</h1>
+  <p class="sub">Choose the web address (slug) BrightSite uses for your site, and your business name. You can add services, prices, contact info and photos after this.</p>
+  <div class="dash-field">
+    <label for="setupSlug">Web address</label>
+    <input type="text" id="setupSlug" placeholder="e.g. willow-beauty-studio" autocomplete="off">
+  </div>
+  <div class="dash-field">
+    <label for="setupName">Business name</label>
+    <input type="text" id="setupName" placeholder="e.g. Willow Beauty Studio" autocomplete="organization">
+  </div>
+  <button id="setupBtn" type="button">Create my website</button>
+  <div class="acct-status" id="setupStatus" style="min-height:20px;margin-top:10px;font-size:13px;color:var(--muted)"></div>
+</div>
+
+<div id="dashWrap" class="dash-wrap" hidden>
+  <h1>My Website</h1>
+  <p class="sub">Update what's shown on your live site. Changes save straight to BrightSite — no need to contact us for everyday edits.</p>
+
+  <div class="dash-section">
+    <h2>Business info</h2>
+    <p class="hint">Your name and contact details, shown on your website.</p>
+    <div class="dash-field"><label for="fName">Business name</label><input type="text" id="fName"></div>
+    <div class="dash-grid2">
+      <div class="dash-field"><label for="fPhone">Phone</label><input type="text" id="fPhone" placeholder="e.g. 020 7946 0958"></div>
+      <div class="dash-field"><label for="fEmail2">Email</label><input type="email" id="fEmail2" placeholder="you@example.com"></div>
+    </div>
+    <div class="dash-field"><label for="fAddress">Address</label><input type="text" id="fAddress" placeholder="e.g. 12 High Street, London"></div>
+    <div class="dash-field"><label for="fHours">Opening hours</label><textarea id="fHours" placeholder="e.g. Mon-Fri 9am-6pm, Sat 10am-4pm"></textarea></div>
+  </div>
+
+  <div class="dash-section">
+    <h2>Services &amp; prices</h2>
+    <p class="hint">Listed on your site in this order. Leave price blank if it varies.</p>
+    <div id="svcList"></div>
+    <button type="button" class="dash-add" id="svcAdd">+ Add a service</button>
+  </div>
+
+  <div class="dash-section">
+    <h2>Logo &amp; hero image</h2>
+    <p class="hint">Logo appears in your header; the hero image is the large photo at the top of your site.</p>
+    <div class="media-row">
+      <img id="logoThumb" class="media-thumb empty" alt="">
+      <div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:6px">Logo</div>
+        <label class="media-btn">Choose file<input type="file" accept="image/*" id="logoInput" hidden></label>
+      </div>
+    </div>
+    <div class="media-row">
+      <img id="heroThumb" class="media-thumb empty" alt="">
+      <div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:6px">Hero image</div>
+        <label class="media-btn">Choose file<input type="file" accept="image/*" id="heroInput" hidden></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-section">
+    <h2>Gallery</h2>
+    <p class="hint">Photo gallery shown on your site. Maximum 20 images.</p>
+    <div class="gallery-counter" id="galleryCounter">0 / 20 photos</div>
+    <div class="gallery-grid" id="galleryGrid"></div>
+    <label class="media-btn" id="galleryAddWrap">Add photos<input type="file" accept="image/*" id="galleryInput" hidden multiple></label>
+  </div>
+</div>
+
+<div class="dash-save-bar" id="saveBar" hidden>
+  <span class="dash-save-status" id="saveStatus"></span>
+  <button class="dash-save" id="saveBtn" type="button">Save changes</button>
+</div>
+
+<script>
+(function(){
+  var SUPABASE_URL = 'https://estqrftkrpqlrxnsltgw.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_MfwWqSIcsfVE6d5Q7jIxJA_V3Pyf2oP';
+  var GALLERY_MAX = 20;
+
+  var session = null;
+  try { session = JSON.parse(localStorage.getItem('bs_session') || 'null'); } catch (e) {}
+  if (!session || !session.access_token) {
+    location.href = 'login.html' + location.search;
+    return;
+  }
+
+  var params = new URLSearchParams(location.search);
+
+  function authHeaders(extra) {
+    return Object.assign({
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: 'Bearer ' + session.access_token
+    }, extra || {});
+  }
+
+  document.getElementById('dashEmail').textContent = session.email || '';
+  document.getElementById('logoutBtn').addEventListener('click', function () {
+    localStorage.removeItem('bs_session');
+    location.href = 'login.html';
+  });
+
+  // ---------------- state ----------------
+  var business = null;   // full row from `businesses` (data column parsed)
+  var slug = null;
+  var services = [];     // [{name, price}]
+  var media = { logoImage: null, heroImage: null, gallery: [] }; // relPaths already on the row
+  var pendingUploads = { logo: null, hero: null, gallery: [] };  // {file} staged, not yet saved
+  var galleryRemoved = [];
+
+  function setupPanel() { return document.getElementById('setupPanel'); }
+  function dashWrap() { return document.getElementById('dashWrap'); }
+  function saveBar() { return document.getElementById('saveBar'); }
+
+  // ---------------- load existing business row ----------------
+  function loadBusiness() {
+    var url = SUPABASE_URL + '/rest/v1/businesses?select=*&user_id=eq.' + encodeURIComponent(session.user_id);
+    return fetch(url, { headers: authHeaders() })
+      .then(function (res) { return res.json(); })
+      .then(function (rows) {
+        if (rows && rows.length) {
+          business = rows[0];
+          slug = business.id;
+          renderDashboard();
+        } else {
+          showSetup();
+        }
+      })
+      .catch(function () { showSetup(); });
+  }
+
+  function showSetup() {
+    setupPanel().hidden = false;
+    dashWrap().hidden = true;
+    saveBar().hidden = true;
+    var pendingName = localStorage.getItem('bs_pending_business_name') || '';
+    var pendingSlug = params.get('slug') || localStorage.getItem('bs_pending_slug') || '';
+    document.getElementById('setupName').value = pendingName;
+    document.getElementById('setupSlug').value = pendingSlug;
+  }
+
+  function slugify(s) {
+    return (s || '').toLowerCase().trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60);
+  }
+
+  document.getElementById('setupBtn').addEventListener('click', function () {
+    var name = document.getElementById('setupName').value.trim();
+    var chosenSlug = slugify(document.getElementById('setupSlug').value || name);
+    var statusEl = document.getElementById('setupStatus');
+    if (!name || !chosenSlug) {
+      statusEl.textContent = 'Enter a business name and web address.';
+      statusEl.style.color = '#b23b2c';
+      return;
+    }
+    statusEl.textContent = 'Creating…';
+    statusEl.style.color = '';
+    var record = {
+      slug: chosenSlug,
+      name: name,
+      raw: { name: name, services: [], gallery: [] },
+      updatedAt: new Date().toISOString()
+    };
+    fetch(SUPABASE_URL + '/rest/v1/businesses', {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation,resolution=merge-duplicates' }),
+      body: JSON.stringify({
+        id: chosenSlug,
+        name: name,
+        user_id: session.user_id,
+        data: record,
+        updated_at: record.updatedAt
+      })
+    })
+      .then(function (res) {
+        if (!res.ok) return res.json().then(function (d) { throw new Error(d.message || d.msg || ('Failed (' + res.status + ')')); });
+        return res.json();
+      })
+      .then(function (rows) {
+        localStorage.removeItem('bs_pending_business_name');
+        localStorage.removeItem('bs_pending_slug');
+        business = Array.isArray(rows) ? rows[0] : rows;
+        slug = chosenSlug;
+        renderDashboard();
+      })
+      .catch(function (err) {
+        statusEl.textContent = /duplicate|already exists|23505/i.test(err.message)
+          ? 'That web address is already taken — choose another.'
+          : (err.message || 'Something went wrong.');
+        statusEl.style.color = '#b23b2c';
+      });
+  });
+
+  // ---------------- render dashboard from business row ----------------
+  function renderDashboard() {
+    setupPanel().hidden = true;
+    dashWrap().hidden = false;
+    saveBar().hidden = false;
+
+    var data = business.data || {};
+    var raw = data.raw || {};
+    services = Array.isArray(raw.services) ? raw.services.slice() : [];
+    media.logoImage = raw.logoImage || null;
+    media.heroImage = raw.heroImage || null;
+    media.gallery = Array.isArray(raw.gallery) ? raw.gallery.slice() : [];
+
+    document.getElementById('fName').value = raw.name || business.name || '';
+    document.getElementById('fPhone').value = raw.phone || '';
+    document.getElementById('fEmail2').value = raw.email || '';
+    document.getElementById('fAddress').value = raw.address || '';
+    document.getElementById('fHours').value = raw.hours || '';
+
+    renderServices();
+    renderMediaThumbs();
+    renderGallery();
+  }
+
+  // ---------------- services ----------------
+  function renderServices() {
+    var list = document.getElementById('svcList');
+    list.innerHTML = '';
+    services.forEach(function (svc, i) {
+      var row = document.createElement('div');
+      row.className = 'svc-row';
+      row.innerHTML =
+        '<input type="text" placeholder="Service name" data-i="' + i + '" data-f="name" value="' + escapeAttr(svc.name || '') + '">' +
+        '<input type="text" placeholder="Price" data-i="' + i + '" data-f="price" value="' + escapeAttr(svc.price || '') + '">' +
+        '<button type="button" class="svc-remove" data-i="' + i + '" aria-label="Remove">&times;</button>';
+      list.appendChild(row);
+    });
+    list.querySelectorAll('input').forEach(function (input) {
+      input.addEventListener('input', function () {
+        var i = +input.dataset.i, f = input.dataset.f;
+        services[i][f] = input.value;
+      });
+    });
+    list.querySelectorAll('.svc-remove').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        services.splice(+btn.dataset.i, 1);
+        renderServices();
+      });
+    });
+  }
+
+  document.getElementById('svcAdd').addEventListener('click', function () {
+    services.push({ name: '', price: '' });
+    renderServices();
+  });
+
+  function escapeAttr(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  }
+
+  // ---------------- media (logo / hero) ----------------
+  function renderMediaThumbs() {
+    var logoThumb = document.getElementById('logoThumb');
+    var heroThumb = document.getElementById('heroThumb');
+    setThumb(logoThumb, pendingUploads.logo ? URL.createObjectURL(pendingUploads.logo) : mediaUrl(media.logoImage));
+    setThumb(heroThumb, pendingUploads.hero ? URL.createObjectURL(pendingUploads.hero) : mediaUrl(media.heroImage));
+  }
+
+  function setThumb(el, url) {
+    if (url) { el.src = url; el.classList.remove('empty'); el.alt = ''; }
+    else { el.removeAttribute('src'); el.classList.add('empty'); el.textContent = 'No image'; el.alt = 'No image'; }
+  }
+
+  function mediaUrl(relPath) {
+    if (!relPath || !slug) return null;
+    return SUPABASE_URL + '/storage/v1/object/public/business-media/' + slug + '/' + relPath;
+  }
+
+  document.getElementById('logoInput').addEventListener('change', function (e) {
+    if (e.target.files[0]) { pendingUploads.logo = e.target.files[0]; renderMediaThumbs(); }
+  });
+  document.getElementById('heroInput').addEventListener('change', function (e) {
+    if (e.target.files[0]) { pendingUploads.hero = e.target.files[0]; renderMediaThumbs(); }
+  });
+
+  // ---------------- gallery ----------------
+  function galleryCount() {
+    return media.gallery.length + pendingUploads.gallery.length;
+  }
+
+  function renderGallery() {
+    var grid = document.getElementById('galleryGrid');
+    grid.innerHTML = '';
+    media.gallery.forEach(function (relPath, i) {
+      var item = document.createElement('div');
+      item.className = 'gallery-item';
+      item.innerHTML = '<img src="' + mediaUrl(relPath) + '" alt=""><button type="button" data-kind="existing" data-i="' + i + '" aria-label="Remove">&times;</button>';
+      grid.appendChild(item);
+    });
+    pendingUploads.gallery.forEach(function (file, i) {
+      var item = document.createElement('div');
+      item.className = 'gallery-item';
+      var img = document.createElement('img');
+      img.src = URL.createObjectURL(file);
+      var btn = document.createElement('button');
+      btn.type = 'button'; btn.dataset.kind = 'pending'; btn.dataset.i = i;
+      btn.setAttribute('aria-label', 'Remove');
+      btn.innerHTML = '&times;';
+      item.appendChild(img); item.appendChild(btn);
+      grid.appendChild(item);
+    });
+    grid.querySelectorAll('button').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var i = +btn.dataset.i;
+        if (btn.dataset.kind === 'existing') {
+          galleryRemoved.push(media.gallery[i]);
+          media.gallery.splice(i, 1);
+        } else {
+          pendingUploads.gallery.splice(i, 1);
+        }
+        renderGallery();
+      });
+    });
+    var counter = document.getElementById('galleryCounter');
+    var count = galleryCount();
+    counter.textContent = count + ' / ' + GALLERY_MAX + ' photos';
+    counter.className = 'gallery-counter' + (count >= GALLERY_MAX ? ' full' : '');
+    document.getElementById('galleryAddWrap').style.display = count >= GALLERY_MAX ? 'none' : '';
+  }
+
+  document.getElementById('galleryInput').addEventListener('change', function (e) {
+    var files = Array.from(e.target.files || []);
+    var room = GALLERY_MAX - galleryCount();
+    if (room <= 0) { files = []; }
+    else if (files.length > room) { files = files.slice(0, room); }
+    pendingUploads.gallery = pendingUploads.gallery.concat(files);
+    e.target.value = '';
+    renderGallery();
+  });
+
+  // ---------------- save ----------------
+  function extFor(file) {
+    var m = /\.(\w+)$/.exec(file.name || '');
+    return m ? '.' + m[1].toLowerCase() : '.jpg';
+  }
+
+  function uploadFile(relPath, file) {
+    return fetch(SUPABASE_URL + '/storage/v1/object/business-media/' + slug + '/' + relPath, {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': file.type || 'application/octet-stream', 'x-upsert': 'true' }),
+      body: file
+    }).then(function (res) {
+      if (!res.ok && res.status !== 409) throw new Error('Image upload failed (' + res.status + ')');
+    });
+  }
+
+  function deleteFile(relPath) {
+    return fetch(SUPABASE_URL + '/storage/v1/object/business-media/' + slug + '/' + relPath, {
+      method: 'DELETE',
+      headers: authHeaders()
+    }).catch(function () {});
+  }
+
+  document.getElementById('saveBtn').addEventListener('click', function () {
+    var btn = this;
+    var statusEl = document.getElementById('saveStatus');
+    btn.disabled = true;
+    statusEl.textContent = 'Saving…';
+    statusEl.className = 'dash-save-status';
+
+    var uploads = [];
+    if (pendingUploads.logo) {
+      var logoPath = 'img/logo' + extFor(pendingUploads.logo);
+      uploads.push(uploadFile(logoPath, pendingUploads.logo).then(function () { media.logoImage = logoPath; }));
+    }
+    if (pendingUploads.hero) {
+      var heroPath = 'img/hero' + extFor(pendingUploads.hero);
+      uploads.push(uploadFile(heroPath, pendingUploads.hero).then(function () { media.heroImage = heroPath; }));
+    }
+    pendingUploads.gallery.forEach(function (file) {
+      var relPath = 'img/gallery/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + extFor(file);
+      uploads.push(uploadFile(relPath, file).then(function () { media.gallery.push(relPath); }));
+    });
+    galleryRemoved.forEach(function (relPath) { uploads.push(deleteFile(relPath)); });
+
+    Promise.all(uploads)
+      .then(function () {
+        var raw = Object.assign({}, (business.data && business.data.raw) || {}, {
+          name: document.getElementById('fName').value.trim(),
+          phone: document.getElementById('fPhone').value.trim(),
+          email: document.getElementById('fEmail2').value.trim(),
+          address: document.getElementById('fAddress').value.trim(),
+          hours: document.getElementById('fHours').value.trim(),
+          services: services.filter(function (s) { return s.name && s.name.trim(); }),
+          logoImage: media.logoImage,
+          heroImage: media.heroImage,
+          gallery: media.gallery
+        });
+        var record = {
+          slug: slug,
+          name: raw.name,
+          raw: raw,
+          updatedAt: new Date().toISOString()
+        };
+        return fetch(SUPABASE_URL + '/rest/v1/businesses', {
+          method: 'POST',
+          headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation,resolution=merge-duplicates' }),
+          body: JSON.stringify({
+            id: slug,
+            name: raw.name,
+            user_id: session.user_id,
+            data: record,
+            updated_at: record.updatedAt
+          })
+        }).then(function (res) {
+          if (!res.ok) return res.json().then(function (d) { throw new Error(d.message || d.msg || ('Save failed (' + res.status + ')')); });
+          return res.json();
+        }).then(function (rows) {
+          business = Array.isArray(rows) ? rows[0] : rows;
+        });
+      })
+      .then(function () {
+        pendingUploads = { logo: null, hero: null, gallery: [] };
+        galleryRemoved = [];
+        renderMediaThumbs();
+        renderGallery();
+        statusEl.textContent = 'Saved';
+        statusEl.className = 'dash-save-status ok';
+        btn.disabled = false;
+      })
+      .catch(function (err) {
+        statusEl.textContent = err.message || 'Something went wrong — please try again.';
+        statusEl.className = 'dash-save-status err';
+        btn.disabled = false;
+      });
+  });
+
+  loadBusiness();
+})();
+</script>
+</body>
+</html>

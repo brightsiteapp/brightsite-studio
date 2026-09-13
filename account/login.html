@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>My Account — BrightSite</title>
+<meta name="description" content="Log in to manage your BrightSite website — services, prices, contact info and photos.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../favicon.png" type="image/png">
+<meta name="theme-color" content="#F7F2EC">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .acct-wrap{width:100%;max-width:420px}
+  .acct-brand{display:flex;justify-content:center;margin-bottom:26px}
+  .acct-brand img{height:40px;width:auto}
+  .acct-card{padding:clamp(22px,4vw,32px);border:1px solid var(--line);border-radius:20px;background:var(--card);box-shadow:0 12px 30px rgba(23,32,31,.05)}
+  .acct-card h1{font-family:var(--display);font-size:clamp(21px,3vw,26px);font-weight:600;line-height:1.15;margin-bottom:6px}
+  .acct-card>p.sub{color:var(--muted);font-size:14px;line-height:1.55;margin-bottom:20px}
+  .acct-field{margin-bottom:12px}
+  .acct-field label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:6px;letter-spacing:.02em}
+  .acct-field input{width:100%;min-height:48px;padding:0 14px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font:inherit;font-size:15px;outline:none;transition:border-color .18s ease,box-shadow .18s ease}
+  .acct-field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+  .acct-slug-field{display:none}
+  .acct-slug-field.show{display:block}
+  .acct-submit{width:100%;margin-top:14px;min-height:48px;padding:0 21px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:inherit;font-size:13px;font-weight:700;letter-spacing:.04em;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease}
+  .acct-submit:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(59,130,246,.28)}
+  .acct-submit:disabled{opacity:.7;cursor:wait;transform:none;box-shadow:none}
+  .acct-status{min-height:20px;margin-top:12px;font-size:13px;color:var(--muted);line-height:1.5}
+  .acct-status.ok{color:var(--accent);font-weight:600}
+  .acct-status.err{color:#b23b2c}
+  .acct-toggle{margin-top:18px;text-align:center;font-size:13.5px;color:var(--muted)}
+  .acct-toggle button{background:none;border:0;color:var(--accent);font:inherit;font-weight:700;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:2px}
+  .acct-back{display:block;text-align:center;margin-top:16px;font-size:13px;color:var(--muted);text-decoration:none}
+  .acct-back:hover{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="acct-wrap">
+  <div class="acct-brand"><a href="/"><img src="../img/brightsite-logo.png" alt="BrightSite"></a></div>
+  <div class="acct-card">
+    <h1 id="acctTitle">Log in</h1>
+    <p class="sub" id="acctSub">Manage your website's services, prices, contact info and photos.</p>
+
+    <form id="acctForm" novalidate>
+      <div class="acct-field acct-slug-field" id="slugField">
+        <label for="fBusiness">Business name</label>
+        <input type="text" id="fBusiness" autocomplete="organization" placeholder="e.g. Willow Beauty Studio">
+      </div>
+      <div class="acct-field">
+        <label for="fEmail">Email</label>
+        <input type="email" id="fEmail" required autocomplete="email" placeholder="you@example.com">
+      </div>
+      <div class="acct-field">
+        <label for="fPassword">Password</label>
+        <input type="password" id="fPassword" required autocomplete="current-password" placeholder="••••••••" minlength="6">
+      </div>
+      <button type="submit" class="acct-submit" id="acctSubmit">Log in</button>
+      <div class="acct-status" id="acctStatus"></div>
+    </form>
+
+    <div class="acct-toggle">
+      <span id="toggleText">Don't have an account?</span>
+      <button type="button" id="toggleBtn">Sign up</button>
+    </div>
+  </div>
+  <a href="/" class="acct-back">&larr; Back to BrightSite</a>
+</div>
+
+<script>
+(function(){
+  var SUPABASE_URL = 'https://estqrftkrpqlrxnsltgw.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_MfwWqSIcsfVE6d5Q7jIxJA_V3Pyf2oP';
+
+  var params = new URLSearchParams(location.search);
+  var slugParam = params.get('slug') || '';
+  var isSignup = params.get('signup') === '1';
+
+  var form = document.getElementById('acctForm');
+  var title = document.getElementById('acctTitle');
+  var sub = document.getElementById('acctSub');
+  var submitBtn = document.getElementById('acctSubmit');
+  var statusEl = document.getElementById('acctStatus');
+  var toggleBtn = document.getElementById('toggleBtn');
+  var toggleText = document.getElementById('toggleText');
+  var slugField = document.getElementById('slugField');
+  var businessInput = document.getElementById('fBusiness');
+  var emailInput = document.getElementById('fEmail');
+  var passwordInput = document.getElementById('fPassword');
+
+  // If already logged in, go straight to the dashboard.
+  try {
+    var existing = JSON.parse(localStorage.getItem('bs_session') || 'null');
+    if (existing && existing.access_token) {
+      location.href = 'dashboard.html' + (slugParam ? ('?slug=' + encodeURIComponent(slugParam)) : '');
+      return;
+    }
+  } catch (e) {}
+
+  function setMode(signup) {
+    isSignup = signup;
+    if (isSignup) {
+      title.textContent = 'Create your account';
+      sub.textContent = 'Set up a login so you can manage your own website — services, prices, contact info and photos.';
+      submitBtn.textContent = 'Sign up';
+      toggleText.textContent = 'Already have an account?';
+      toggleBtn.textContent = 'Log in';
+      slugField.classList.add('show');
+      passwordInput.autocomplete = 'new-password';
+    } else {
+      title.textContent = 'Log in';
+      sub.textContent = "Manage your website's services, prices, contact info and photos.";
+      submitBtn.textContent = 'Log in';
+      toggleText.textContent = "Don't have an account?";
+      toggleBtn.textContent = 'Sign up';
+      slugField.classList.remove('show');
+      passwordInput.autocomplete = 'current-password';
+    }
+    statusEl.textContent = '';
+    statusEl.className = 'acct-status';
+  }
+
+  toggleBtn.addEventListener('click', function () { setMode(!isSignup); });
+
+  if (slugParam) businessInput.value = '';
+  setMode(isSignup);
+
+  function showStatus(msg, kind) {
+    statusEl.textContent = msg;
+    statusEl.className = 'acct-status' + (kind ? ' ' + kind : '');
+  }
+
+  function friendlyError(data, res) {
+    var msg = (data && (data.error_description || data.msg || data.message)) || ('Something went wrong (' + res.status + ')');
+    if (/already registered|already exists/i.test(msg)) return 'An account with that email already exists — try logging in instead.';
+    if (/invalid login credentials/i.test(msg)) return 'Incorrect email or password.';
+    if (/password should be/i.test(msg)) return msg;
+    return msg;
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var email = emailInput.value.trim();
+    var password = passwordInput.value;
+    if (!email || !password) { showStatus('Enter your email and password.', 'err'); return; }
+
+    submitBtn.disabled = true;
+    showStatus(isSignup ? 'Creating your account…' : 'Logging in…');
+
+    var endpoint = isSignup
+      ? SUPABASE_URL + '/auth/v1/signup'
+      : SUPABASE_URL + '/auth/v1/token?grant_type=password';
+
+    fetch(endpoint, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: password })
+    })
+      .then(function (res) {
+        return res.json().then(function (data) { return { res: res, data: data }; });
+      })
+      .then(function (r) {
+        var res = r.res, data = r.data;
+        if (!res.ok) {
+          showStatus(friendlyError(data, res), 'err');
+          submitBtn.disabled = false;
+          return;
+        }
+        if (isSignup && !data.access_token) {
+          // Email confirmation is turned on in the Supabase project —
+          // no session yet, tell the user to check their inbox.
+          showStatus('Account created! Check your email to confirm it, then log in.', 'ok');
+          submitBtn.disabled = false;
+          setMode(false);
+          return;
+        }
+        var session = {
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+          user_id: (data.user && data.user.id) || null,
+          email: (data.user && data.user.email) || email
+        };
+        localStorage.setItem('bs_session', JSON.stringify(session));
+        if (isSignup && businessInput.value.trim()) {
+          localStorage.setItem('bs_pending_business_name', businessInput.value.trim());
+        }
+        if (slugParam) localStorage.setItem('bs_pending_slug', slugParam);
+        showStatus('Success — redirecting…', 'ok');
+        location.href = 'dashboard.html' + (slugParam ? ('?slug=' + encodeURIComponent(slugParam)) : '');
+      })
+      .catch(function (err) {
+        showStatus('Network error — please try again.', 'err');
+        submitBtn.disabled = false;
+      });
+  });
+})();
+</script>
+</body>
+</html>
