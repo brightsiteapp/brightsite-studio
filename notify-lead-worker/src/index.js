@@ -59,7 +59,7 @@ async function handleJsonLead(body, env, cors) {
 
 const TEXT_FIELDS = [
   'Business', 'Customer', 'Customer email', 'Industry', 'Location',
-  'Template', 'Font', 'Colour scheme',
+  'Template', 'Font', 'Colour scheme', 'Interested in',
   'Current website', 'Social media', 'Media notes',
 ];
 

@@ -1409,6 +1409,9 @@ Colour palette: ${design.palette}`;
       const businessType = bizTagline.value;
       const location_ = bizLocation.value.trim();
       const design = selectedDesignSummary();
+      const wantsBooking = document.getElementById('bizWantsBooking')?.checked;
+      const wantsEcommerce = document.getElementById('bizWantsEcommerce')?.checked;
+      const extras = [wantsBooking && 'Booking form', wantsEcommerce && 'Online store (e-commerce)'].filter(Boolean);
 
       const message = `Hi, I'd like you to finish my website.
 
@@ -1417,7 +1420,8 @@ Industry: ${businessType}
 Location: ${location_}
 Template: ${design.template}
 Font: ${design.font}
-Colour palette: ${design.palette}`;
+Colour palette: ${design.palette}${extras.length ? `
+Also interested in: ${extras.join(', ')}` : ''}`;
 
       const status = document.getElementById('handoffStatus');
       status.textContent = 'Opening WhatsApp…';
@@ -1436,6 +1440,7 @@ Colour palette: ${design.palette}`;
         Template: design.template,
         Font: design.font,
         'Colour scheme': design.palette,
+        ...(extras.length ? { 'Interested in': extras.join(', ') } : {}),
       }, [{ name: 'Site preview', file: previewFile }]).then(sent => {
         status.textContent = sent
           ? 'Your details were accepted for email delivery. Press Send inside WhatsApp to message Tom.'

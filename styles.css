@@ -1460,6 +1460,11 @@ html,body{max-width:100%}
 #handoffStatus:empty{display:none}
 .account-cta{display:block;margin:0 auto 10px;max-width:780px;text-align:center;font-size:13px;font-weight:600;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
 .account-cta:hover{color:var(--ink)}
+.builder-extras{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 14px;margin:0 auto 10px;max-width:780px;pointer-events:auto}
+.builder-extras-label{font-size:12px;font-weight:600;color:#5a6b85}
+.builder-extras-check{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#26344c;cursor:pointer}
+.builder-extras-check input{width:15px;height:15px;accent-color:var(--accent);cursor:pointer}
+@media(max-width:700px){.builder-extras{gap:6px 10px}.builder-extras-label{width:100%;text-align:center}}
 @media(max-width:700px){
 .home-price-grid{grid-template-columns:1fr}
 .mobile-demo-cta{display:none}
