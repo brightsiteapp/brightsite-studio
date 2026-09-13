@@ -134,7 +134,7 @@
     if(!name||!business||!email){status.className='contact-form-status err';status.textContent='Please complete all three fields.';return;}
     var button=form.querySelector('button');button.disabled=true;button.textContent='Sending…';status.className='contact-form-status';status.textContent='';
     try{
-      var response=await fetch('https://wellnessweb-notify-lead.notify-lead-worker.workers.dev/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({business_name:business,details:'Contact request\\nName: '+name+'\\nEmail: '+email})});
+      var response=await fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({business_name:business,details:'Contact request\\nName: '+name+'\\nEmail: '+email})});
       if(!response.ok)throw new Error('Request failed');
       form.reset();status.className='contact-form-status ok';status.textContent='Thanks — Tom will be in touch shortly.';
     }catch(error){status.className='contact-form-status err';status.textContent='Something went wrong. Please use WhatsApp or email below.';}

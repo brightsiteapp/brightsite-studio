@@ -1324,17 +1324,17 @@ Colour palette: ${design.palette}`;
   });
 
   async function postLead(business_name, details) {
-    const databaseRequest = fetch('https://klreehoegatehoubhhog.supabase.co/rest/v1/wellnessweb_leads', {
+    const databaseRequest = fetch('https://estqrftkrpqlrxnsltgw.supabase.co/rest/v1/leads', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': 'sb_publishable_oexuN3loIJTtwF93K_i2iA_OzJSAcHD',
-        'Authorization': 'Bearer sb_publishable_oexuN3loIJTtwF93K_i2iA_OzJSAcHD',
+        'apikey': 'sb_publishable_MfwWqSIcsfVE6d5Q7jIxJA_V3Pyf2oP',
+        'Authorization': 'Bearer sb_publishable_MfwWqSIcsfVE6d5Q7jIxJA_V3Pyf2oP',
         'Prefer': 'return=minimal'
       },
       body: JSON.stringify({ business_name, details, created_at: new Date().toISOString() })
     });
-    const emailRequest = fetch('https://wellnessweb-notify-lead.notify-lead-worker.workers.dev/', {
+    const emailRequest = fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ business_name, details }),
@@ -1364,12 +1364,12 @@ Colour palette: ${design.palette}`;
   // "activate this form" confirmation per recipient and still couldn't
   // carry the business details or preview, so it's no longer used.
   async function postLeadWithMedia(fields, files) {
-    const databaseRequest = fetch('https://klreehoegatehoubhhog.supabase.co/rest/v1/wellnessweb_leads', {
+    const databaseRequest = fetch('https://estqrftkrpqlrxnsltgw.supabase.co/rest/v1/leads', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': 'sb_publishable_oexuN3loIJTtwF93K_i2iA_OzJSAcHD',
-        'Authorization': 'Bearer sb_publishable_oexuN3loIJTtwF93K_i2iA_OzJSAcHD',
+        'apikey': 'sb_publishable_MfwWqSIcsfVE6d5Q7jIxJA_V3Pyf2oP',
+        'Authorization': 'Bearer sb_publishable_MfwWqSIcsfVE6d5Q7jIxJA_V3Pyf2oP',
         'Prefer': 'return=minimal'
       },
       body: JSON.stringify({ business_name: fields.Business, details: JSON.stringify(fields), created_at: new Date().toISOString() })
@@ -1378,7 +1378,7 @@ Colour palette: ${design.palette}`;
     const formData = new FormData();
     Object.entries(fields).forEach(([key, value]) => formData.append(key, value));
     files.forEach(({ name, file }) => { if (file) formData.append(name, file, file.name); });
-    const emailRequest = fetch('https://wellnessweb-notify-lead.notify-lead-worker.workers.dev/', {
+    const emailRequest = fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/', {
       method: 'POST',
       body: formData,
       keepalive: true

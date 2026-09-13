@@ -52,7 +52,7 @@ async function revealBuilder(page) {
     await route.fulfill({path:join(root,asset)});
   });
   await page.route('**/rest/v1/**', route => route.fulfill({status:201,body:''}));
-  await page.route('**/wellnessweb-notify-lead.**', route => route.fulfill({status:200,body:'{}'}));
+  await page.route('**/brightsite-notify-lead.**', route => route.fulfill({status:200,body:'{}'}));
   await page.goto(baseUrl, { waitUntil: 'load' });
   await page.evaluate(() => {
     document.getElementById('bizName').value = 'Hull Hair';
