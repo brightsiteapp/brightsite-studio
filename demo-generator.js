@@ -14,7 +14,8 @@
     {id:'index',name:'Index',detail:'Ultra-minimal directory & typographic grid',font:'Manrope',round:'0px',tier:'Pro'},
     {id:'studio',name:'Studio',detail:'Bold portfolio marquee & case-study chapters',font:'Bebas Neue',round:'0px',tier:'Pro'},
     {id:'flux',name:'Flux',detail:'Parallax hero, kinetic type & magnetic cards',font:'Sora',round:'6px',tier:'Pro'},
-    {id:'bloom',name:'Bloom',detail:'Full-bleed parallax hero & pastel colour blocks',font:'Fraunces',round:'28px',tier:'Pro'}
+    {id:'bloom',name:'Bloom',detail:'Full-bleed parallax hero & pastel colour blocks',font:'Fraunces',round:'28px',tier:'Pro'},
+    {id:'torque',name:'Torque',detail:'Industrial dark hero, angled tags & bold type',font:'Bebas Neue',round:'2px',tier:'Pro'}
   ];
   const DEMO_FONTS = [
     {id:'classic',name:'Classic',family:'Cormorant Garamond'},

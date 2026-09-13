@@ -239,6 +239,7 @@ function studioLayoutCSS() {
   ${studioProLayoutCSS()}
   ${fluxLayoutCSS()}
   ${bloomLayoutCSS()}
+  ${torqueLayoutCSS()}
   @media(max-width:760px){.layout-lume .button,.layout-index .button{font-size:15px}.layout-lume .header-action,.layout-index .header-action{font-size:14px}.layout-studio .studio-hero{padding:16px}.layout-studio .studio-marquee{position:static;order:3;font-size:100px}}
   /* Minimal — a quiet information column beside an image-led portfolio. */
   .layout-minimal .container{width:min(1440px,100% - 48px)}
@@ -812,6 +813,48 @@ function bloomLayoutCSS() {
     .layout-bloom .gallery{grid-template-columns:1fr 1fr;gap:12px}
   }
   @media(prefers-reduced-motion:reduce){.layout-bloom .brand-scene{transform:none!important}}
+  `;
+}
+
+// Torque: an industrial, high-contrast layout for trades and automotive —
+// a darkened hero photo, an angled accent tag, condensed uppercase display
+// type and a bold "call now" CTA. Content and structure are unchanged from
+// the standard layout; only presentation and motion differ.
+function torqueLayoutCSS() {
+  return `
+  .layout-torque .container{width:min(1320px,100% - 64px)}
+  .layout-torque .site-header{background:color-mix(in srgb,var(--header) 92%,transparent);border-bottom:3px solid var(--accent)}
+  .layout-torque .brand{text-transform:uppercase;letter-spacing:-.01em}
+  .layout-torque .hero{position:relative}
+  .layout-torque .hero::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(0,0,0,.7));z-index:1;pointer-events:none}
+  .layout-torque .hero-copy{position:relative;z-index:2}
+  .layout-torque .hero-copy .eyebrow{display:inline-block;background:var(--accent);color:var(--on-accent);padding:8px 16px;transform:skewX(-10deg);font-weight:800}
+  .layout-torque .hero-copy .eyebrow>*{display:inline-block;transform:skewX(10deg)}
+  .layout-torque .hero-title{font-family:var(--heading);text-transform:uppercase;font-size:clamp(46px,7vw,104px);line-height:.92;letter-spacing:0}
+  .layout-torque .button{border-radius:2px;text-transform:uppercase;letter-spacing:.03em;font-weight:800;box-shadow:none}
+  .layout-torque .hero-actions .button:not(.secondary){background:var(--accent);border-color:var(--accent)}
+  .layout-torque .section-heading h2{font-family:var(--heading);text-transform:uppercase;font-size:clamp(44px,7vw,90px);letter-spacing:0;line-height:.95}
+  .layout-torque .signature .section-heading{max-width:1000px}
+  .layout-torque .service-grid,.layout-torque .membership-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:3px}
+  .layout-torque .service-card{border-radius:0;border:0;background:var(--surface);border-left:4px solid var(--accent)}
+  .layout-torque .card-picture{aspect-ratio:16/9;filter:saturate(.9) contrast(1.05)}
+  .layout-torque .card-content h3{font-family:var(--heading);text-transform:uppercase;font-size:32px;letter-spacing:0}
+  .layout-torque .card-foot{color:var(--accent);font-weight:800}
+  .layout-torque .story{border-top:3px solid var(--accent)}
+  .layout-torque .story h2{font-family:var(--heading);text-transform:uppercase}
+  .layout-torque .story-photo{border-radius:0}
+  .layout-torque .coverage-card,.layout-torque .vehicle-card{border-radius:0;border-left:4px solid var(--accent)}
+  .layout-torque .trust-badges span,.layout-torque .vehicle-list span{border-radius:0;border-color:var(--accent);color:var(--accent);font-weight:700;text-transform:uppercase}
+  .layout-torque .gallery{grid-template-columns:repeat(4,1fr);gap:3px}
+  .layout-torque .gallery-demo:nth-child(n){grid-column:auto;aspect-ratio:1;border-radius:0;transform:none}
+  .layout-torque .review-card:nth-child(n){border-radius:0;border:0;border-top:4px solid var(--accent)}
+  .layout-torque .closing{background:var(--accent);border-radius:0}
+  .layout-torque .closing h2{font-family:var(--heading);text-transform:uppercase;font-size:clamp(60px,10vw,150px);line-height:.85}
+  .layout-torque .closing .button{border-radius:2px}
+  .layout-torque .directory-card{border-radius:0;border-left:4px solid var(--accent)}
+  .layout-torque .contact-card{border-radius:0}
+  .layout-torque .reveal{transform:translateY(20px);transition:opacity .4s ease,transform .5s cubic-bezier(.2,.9,.3,1)}
+  @media(max-width:900px){.layout-torque .service-grid,.layout-torque .membership-grid{grid-template-columns:1fr}.layout-torque .gallery{grid-template-columns:repeat(2,1fr)}}
   `;
 }
 

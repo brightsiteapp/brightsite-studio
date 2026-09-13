@@ -17,11 +17,11 @@ function buildFreshDemoHTML(raw) {
     automotive:{font:'Montserrat',label:'Services',cta:'Book your vehicle in',short:'Book now',title:'Ready for the road ahead.',intro:'Your next mile starts here.',gallery:'Behind the workshop doors',kicker:'Keep moving',round:'10px'}
   };
   const c = settings[contentType];
-  const design = {minimal:{font:'Manrope',round:'12px'},editorial:{font:'Fraunces',round:'0px'},bold:{font:'Bebas Neue',round:'0px'},luxe:{font:'Cormorant Garamond',round:'28px'},kinetic:{font:'Sora',round:'20px'},flux:{font:'Sora',round:'6px'},bloom:{font:'Fraunces',round:'28px'}}[layout] || DEMO_LAYOUTS.find(item => item.id === layout);
+  const design = {minimal:{font:'Manrope',round:'12px'},editorial:{font:'Fraunces',round:'0px'},bold:{font:'Bebas Neue',round:'0px'},luxe:{font:'Cormorant Garamond',round:'28px'},kinetic:{font:'Sora',round:'20px'},flux:{font:'Sora',round:'6px'},bloom:{font:'Fraunces',round:'28px'},torque:{font:'Bebas Neue',round:'2px'}}[layout] || DEMO_LAYOUTS.find(item => item.id === layout);
   const font = DEMO_FONTS.find(item => item.id === d.font)?.family || DEMO_LAYOUTS.find(item => item.id === layout)?.font || design.font;
   const t = d.tones || tonesFromHex(info.theme || '#667a74');
   const [h,s] = hexToHsl(t.base);
-  const dark = t.mode ? t.mode === 'dark' : (layout === 'bold' || layout === 'flux');
+  const dark = t.mode ? t.mode === 'dark' : (layout === 'bold' || layout === 'flux' || layout === 'torque');
   const tone = (lightness,saturation=Math.min(s,36)) => hslToHex(h,saturation,lightness);
   const palette = {bg:tone(dark ? 9 : 97),surface:tone(dark ? 15 : 92),card:tone(dark ? 19 : 99),ink:tone(dark ? 96 : 12),muted:tone(dark ? 75 : 35),accent:tone(dark ? 73 : 32,Math.max(25,Math.min(s,65))),onAccent:tone(dark ? 9 : 99),header:tone(dark ? 12 : 88),line:tone(dark ? 29 : 79)};
   const hero = d.heroImage || profile?.heroPhoto?.url || `https://brightsite.app/img/hero/${info.photo || 'creative-hero.jpg'}`;

@@ -11,8 +11,8 @@ for(const file of ['template-designs.js','fresh-templates.js','demo-generator.js
 }
 const layouts=vm.runInContext('DEMO_LAYOUTS',context);
 const categories=vm.runInContext('BUSINESS_TYPES',context);
-assert.equal(layouts.length,8);
-assert.equal(new Set(layouts.map(item=>item.name)).size,8);
+assert.equal(layouts.length,9);
+assert.equal(new Set(layouts.map(item=>item.name)).size,9);
 assert.equal(layouts.some(item=>item.id==='lume'||item.name==='Legacy'),false);
 const picture='<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900"><rect width="1600" height="900" fill="#b7a799"/></svg>';
 const hero='data:image/svg+xml;base64,'+Buffer.from(picture).toString('base64');
