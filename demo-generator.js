@@ -6,20 +6,23 @@
   // total), matching a real treatment-menu/price-list page. `services`/
   // `prices` (used for hidden auto-fill + homepage teaser tiles) are
   // derived from the groups by flattenGroups() below.
+  // Each name says what kind of business the layout is built for (matching
+  // the category labels in hero-brand-compositor.js's CATEGORY_ALIASES),
+  // not an abstract style name — "Torque" told nobody it was for trades.
   const DEMO_LAYOUTS = [
-    {id:'editorial',name:'Editorial',detail:'Magazine grids & oversized type',tier:'Essential'},
-    {id:'bold',name:'Noir',detail:'Immersive image panels & refined contrast',font:'Cormorant Garamond',tier:'Essential'},
-    {id:'kinetic',name:'Perspective',detail:'Sculpted split hero & scrolling showcases',font:'Lora',tier:'Essential'},
-    {id:'serene',name:'Serene',detail:'Full-screen cinematic hero & flowing sections',font:'Cormorant Garamond',round:'18px',tier:'Essential'},
-    {id:'index',name:'Index',detail:'Ultra-minimal directory & typographic grid',font:'Manrope',round:'0px',tier:'Pro'},
-    {id:'studio',name:'Studio',detail:'Bold portfolio marquee & case-study chapters',font:'Bebas Neue',round:'0px',tier:'Pro'},
-    {id:'flux',name:'Flux',detail:'Parallax hero, kinetic type & magnetic cards',font:'Sora',round:'6px',tier:'Pro'},
-    {id:'bloom',name:'Bloom',detail:'Full-bleed parallax hero & pastel colour blocks',font:'Fraunces',round:'28px',tier:'Pro'},
-    {id:'torque',name:'Torque',detail:'Industrial dark hero, angled tags & bold type',font:'Bebas Neue',round:'2px',tier:'Pro'},
-    {id:'minimal',name:'Minimal',detail:'Quiet information column beside a portfolio',font:'Manrope',round:'12px',tier:'Pro'},
-    {id:'luxe',name:'Luxe',detail:'Sculpted images & floating panels',font:'Cormorant Garamond',round:'28px',tier:'Pro'},
-    {id:'soft',name:'Soft',detail:'Rounded capsule cards on a gentle palette',font:'Quicksand',round:'24px',tier:'Pro'},
-    {id:'organic',name:'Organic',detail:'Warm blocks & a scrolling photo strip',font:'DM Serif Display',round:'12px',tier:'Pro'}
+    {id:'editorial',name:'Professional Services',detail:'Magazine grids & oversized type',tier:'Essential'},
+    {id:'bold',name:'Automotive',detail:'Immersive image panels & refined contrast',font:'Cormorant Garamond',tier:'Essential'},
+    {id:'kinetic',name:'Home & Garden',detail:'Sculpted split hero & scrolling showcases',font:'Lora',tier:'Essential'},
+    {id:'serene',name:'Health & Wellness',detail:'Full-screen cinematic hero & flowing sections',font:'Cormorant Garamond',round:'18px',tier:'Essential'},
+    {id:'index',name:'Directory & Listings',detail:'Ultra-minimal directory & typographic grid',font:'Manrope',round:'0px',tier:'Pro'},
+    {id:'studio',name:'Fitness',detail:'Bold portfolio marquee & case-study chapters',font:'Bebas Neue',round:'0px',tier:'Pro'},
+    {id:'flux',name:'Creative',detail:'Parallax hero, kinetic type & magnetic cards',font:'Sora',round:'6px',tier:'Pro'},
+    {id:'bloom',name:'Aesthetics & Skin',detail:'Full-bleed parallax hero & pastel colour blocks',font:'Fraunces',round:'28px',tier:'Pro'},
+    {id:'torque',name:'Trades & Construction',detail:'Industrial dark hero, angled tags & bold type',font:'Bebas Neue',round:'2px',tier:'Pro'},
+    {id:'minimal',name:'General Business',detail:'Quiet information column beside a portfolio',font:'Manrope',round:'12px',tier:'Pro'},
+    {id:'luxe',name:'Hair & Beauty',detail:'Sculpted images & floating panels',font:'Cormorant Garamond',round:'28px',tier:'Pro'},
+    {id:'soft',name:'Food & Drink',detail:'Rounded capsule cards on a gentle palette',font:'Quicksand',round:'24px',tier:'Pro'},
+    {id:'organic',name:'Pet Care',detail:'Warm blocks & a scrolling photo strip',font:'DM Serif Display',round:'12px',tier:'Pro'}
   ];
   const DEMO_FONTS = [
     {id:'classic',name:'Classic',family:'Cormorant Garamond'},

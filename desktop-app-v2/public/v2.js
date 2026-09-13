@@ -24,7 +24,7 @@
   const project = slug => core.state.projects.find(p => p.slug === slug) || null;
   const current = () => core.state.current;
   const JSON_HEADERS = { 'Content-Type': 'application/json' };
-  const v2 = { view: 'pipeline', slug: null, query: '', archivedOpen: false, editing: false, localTasks: [], doneOpen: false, detailsFor: null, bannerFor: null };
+  const v2 = { view: 'pipeline', slug: null, query: '', archivedOpen: false, editing: false, localTasks: [], doneOpen: false, detailsFor: null, bannerFor: null, leadCategory: '' };
 
   // ---------------- V1, mounted into V2 ----------------
   async function mountV1() {
@@ -330,6 +330,10 @@
       ${e.cta ? `<button type="button" class="v2-empty-cta" data-empty-act="${e.cta[0]}">${esc(e.cta[1])} ›</button>` : ''}</div>`;
   }
 
+  // Categories come from raw.tagline ("hair", "laser & skin · Hull", …) —
+  // only the part before "·" groups businesses across locations.
+  const categoryOf = p => (p.raw?.tagline || '').split('·')[0].trim();
+
   function cardHtml(p, now) {
     const c = P.card(p, now);
     const views = core.state.views?.[p.slug];
@@ -361,13 +365,14 @@
     const board = $('#v2Board');
     const scrolls = Object.fromEntries($$('.v2-list', board).map(l => [l.dataset.list, l.scrollTop]));
     const list = (key, items) => (items.length ? items.map(p => cardHtml(p, now)).join('') : emptyHtml(key));
-    const col = (id, count, body) => `
+    const col = (id, count, body, extraHead = '') => `
       <section class="v2-col col-${id}">
         <header class="v2-col-head">
           <span class="v2-col-icon">${BOARD_ICONS[id]}</span><span class="v2-col-title">${COLUMNS[id].title}</span><b>${count}</b>
           <button type="button" class="v2-col-more" data-col-more="${id}" aria-label="${COLUMNS[id].title} options">${BOARD_ICONS.hdots}</button>
         </header>
         <p class="v2-col-sub">${COLUMNS[id].sub}</p>
+        ${extraHead}
         <div class="v2-col-body">${body}</div>
       </section>`;
     const whole = (key, items) => `<div class="v2-list" data-list="${key}" data-drop="${key}">${list(key, items)}</div>`;
@@ -376,8 +381,19 @@
         <div class="v2-half-head">${icon}<span>${title}</span><b>${items.length}</b></div>
         <div class="v2-list" data-list="${key}">${list(key, items)}</div>
       </div>`;
+
+    const leadCategories = [...new Set(cols.lead.map(categoryOf).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    if (v2.leadCategory && !leadCategories.includes(v2.leadCategory)) v2.leadCategory = '';
+    const leadItems = v2.leadCategory ? cols.lead.filter(p => categoryOf(p) === v2.leadCategory) : cols.lead;
+    const leadCategoryPicker = leadCategories.length
+      ? `<select class="v2-lead-cat" data-lead-cat aria-label="Filter leads by category">
+          <option value="">All categories</option>
+          ${leadCategories.map(c => `<option value="${esc(c)}"${c === v2.leadCategory ? ' selected' : ''}>${esc(c)}</option>`).join('')}
+        </select>`
+      : '';
+
     board.innerHTML =
-      col('lead', cols.lead.length, whole('lead', cols.lead))
+      col('lead', leadItems.length, whole('lead', leadItems), leadCategoryPicker)
       + col('ready', cols.ready.length, whole('ready', cols.ready))
       + col('follow', cols.followup.length,
         half('followup', 'followup', 'Needs follow-up', '<i class="v2-half-dot"></i>', cols.followup)
@@ -406,6 +422,10 @@
   }
 
   const board = $('#v2Board');
+  board.addEventListener('change', e => {
+    const catSel = e.target.closest('[data-lead-cat]');
+    if (catSel) { v2.leadCategory = catSel.value; renderBoard(); }
+  });
   board.addEventListener('click', e => {
     const more = e.target.closest('[data-card-more]');
     if (more) {
