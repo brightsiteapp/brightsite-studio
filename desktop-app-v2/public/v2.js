@@ -837,6 +837,154 @@
   siteMenu.addEventListener('click', e => { if (e.target.closest('button')) closeMenu(); });
   document.body.append(siteMenu);
 
+  // ---- the compact editor ----
+  // V1 redraws its whole editor (#editor innerHTML) after every import,
+  // upload, AI edit and undo. Each time, the fresh markup is rearranged
+  // here: the same V1 elements (same ids, same handlers) moved into a
+  // two-column grid, and the big Logo / Hero / Gallery boxes folded into a
+  // tray behind three small thumbnail cards. Nothing is re-implemented,
+  // so every V1 control keeps working exactly as before.
+  const editorEl = $('#editor');
+  const mediaUrl = path => `/projects/${current().slug}/${path}`;
+  const sectionLabel = text => Object.assign(document.createElement('div'), { className: 'v2-ed-label', textContent: text });
+
+  function compactEditor() {
+    const p = current();
+    if (!p || !$('#f_name', editorEl) || $('.v2-ed-grid', editorEl)) return;
+    const fieldOf = id => $(`#${id}`, editorEl)?.closest('.field');
+
+    const source = $('.link-bar.compact', editorEl) || $('.imported-site', editorEl);
+    source?.before(sectionLabel('Source'));
+    if ($('#importBtn')) $('#f_link').placeholder = 'Facebook or Google Maps link…';
+
+    // Two fields per row; WhatsApp / Email sit inside their own fields.
+    const phone = fieldOf('f_phone');
+    const email = fieldOf('f_email');
+    phone.classList.add('v2-has-btn');
+    email.classList.add('v2-has-btn');
+    phone.append($('#whatsappBtn', editorEl));
+    email.append($('#emailBtn', editorEl));
+    $('#f_contactName', editorEl).placeholder = '';
+    const nameRow = $('.form-grid.name-row', editorEl);
+    const grid = document.createElement('div');
+    grid.className = 'v2-ed-grid';
+    grid.append(fieldOf('f_name'), fieldOf('f_category'), fieldOf('f_contactName'), fieldOf('f_location'), phone, email);
+    nameRow.replaceWith(sectionLabel('Business'), grid);
+    $('.phone-row', editorEl).remove();
+
+    const row = $('.media-row-3', editorEl);
+    if (row) {
+      const cards = document.createElement('div');
+      cards.className = 'v2-media-cards';
+      cards.innerHTML = mediaCardsHtml(p);
+      row.before(sectionLabel('Media'), cards);
+      cards.after(row);
+      row.classList.add('v2-media-tray');
+      cards.onclick = e => {
+        const card = e.target.closest('[data-media]');
+        if (card) setMediaOpen(v2.mediaOpen === card.dataset.media ? null : card.dataset.media);
+      };
+      if (v2.mediaFor !== p.slug) { v2.mediaFor = p.slug; v2.mediaOpen = null; }
+      setMediaOpen(v2.mediaOpen);
+    }
+
+    // Edit with AI: one line, growing only when there's more to say.
+    const ai = $('#aiInstruction', editorEl);
+    if (ai) {
+      ai.rows = 1;
+      ai.placeholder = 'e.g. Make the about section warmer…';
+    }
+  }
+
+  function mediaCardsHtml(p) {
+    const raw = p.raw || {};
+    const found = core.state.found || {};
+    const suggestion = $('#placementSuggestion', editorEl);
+    const card = (slot, label, inner, badge) => `
+      <button type="button" class="v2-media-card${inner ? ' has-media' : ''} is-${slot}" data-media="${slot}" aria-expanded="false" title="${inner ? `${label} — change or remove` : `Add a ${label.toLowerCase()}`}">
+        ${inner || `<span class="v2-media-empty">+ ${label}</span>`}
+        ${inner ? `<span class="v2-media-name">${label}</span>` : ''}
+        ${badge ? `<i class="v2-media-badge" title="${esc(badge)}">${esc(badge)}</i>` : ''}
+      </button>`;
+    const img = path => `<img src="${esc(mediaUrl(path))}" alt="" loading="lazy">`;
+    const gallery = raw.gallery || [];
+    const collage = gallery.length
+      ? `<span class="v2-collage n-${Math.min(gallery.length, 3)}">${gallery.slice(0, 3).map(img).join('')}</span>`
+      : '';
+    return card('logo', 'Logo', raw.logoImage ? img(raw.logoImage) : '', !raw.logoImage && found.logo ? 'Found' : '')
+      + card('hero', 'Hero', raw.heroImage ? img(raw.heroImage) : '', suggestion ? 'Suggestion' : !raw.heroImage && found.hero ? 'Found' : '')
+      + card('gallery', gallery.length > 3 ? `Gallery · ${gallery.length}` : 'Gallery', collage, '');
+  }
+
+  function setMediaOpen(slot) {
+    v2.mediaOpen = slot;
+    const row = $('.v2-media-tray', editorEl);
+    if (!row) return;
+    if (slot) row.dataset.open = slot;
+    else delete row.dataset.open;
+    $$('.v2-media-card', editorEl).forEach(c => {
+      const on = c.dataset.media === slot;
+      c.classList.toggle('is-open', on);
+      c.setAttribute('aria-expanded', String(on));
+    });
+  }
+
+  new MutationObserver(compactEditor).observe(editorEl, { childList: true });
+
+  // ---- editor width: drag the divider, or collapse it away ----
+  const EDITOR_MIN = 340;
+  const EDITOR_MAX = 640;
+  const layoutEl = $('.layout', site);
+  const divider = document.createElement('div');
+  divider.className = 'v2-ed-divider';
+  divider.setAttribute('role', 'separator');
+  divider.setAttribute('aria-orientation', 'vertical');
+  divider.setAttribute('aria-label', 'Resize the editor');
+  divider.tabIndex = 0;
+  divider.innerHTML = '<button type="button" class="v2-ed-collapse" title="Hide the editor" aria-label="Hide the editor"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>';
+  layoutEl.append(divider);
+  const readWidth = () => {
+    try { return Number(localStorage.getItem('v2EditorWidth')) || 392; } catch { return 392; }
+  };
+  const clampWidth = w => Math.round(Math.max(EDITOR_MIN, Math.min(EDITOR_MAX, layoutEl.clientWidth * 0.6 || EDITOR_MAX, w)));
+  function setEditorWidth(w, remember) {
+    v2.editorWidth = clampWidth(w);
+    site.style.setProperty('--v2-ed-w', `${v2.editorWidth}px`);
+    if (remember) try { localStorage.setItem('v2EditorWidth', String(v2.editorWidth)); } catch { /* per-computer nicety */ }
+  }
+  function setCollapsed(on) {
+    v2.editorCollapsed = on;
+    site.classList.toggle('ed-collapsed', on);
+    const btn = $('.v2-ed-collapse', divider);
+    btn.title = on ? 'Show the editor' : 'Hide the editor';
+    btn.setAttribute('aria-label', btn.title);
+  }
+  site.style.setProperty('--v2-ed-w', `${readWidth()}px`);
+  $('.v2-ed-collapse', divider).onclick = () => setCollapsed(!v2.editorCollapsed);
+  divider.addEventListener('pointerdown', e => {
+    if (e.button !== 0 || v2.editorCollapsed || e.target.closest('.v2-ed-collapse')) return;
+    e.preventDefault();
+    divider.setPointerCapture(e.pointerId);
+    site.classList.add('is-resizing');
+    const left = layoutEl.getBoundingClientRect().left;
+    const move = ev => setEditorWidth(ev.clientX - left, false);
+    const up = () => {
+      divider.removeEventListener('pointermove', move);
+      site.classList.remove('is-resizing');
+      setEditorWidth(v2.editorWidth || readWidth(), true);
+    };
+    divider.addEventListener('pointermove', move);
+    divider.addEventListener('pointerup', up, { once: true });
+    divider.addEventListener('pointercancel', up, { once: true });
+  });
+  divider.addEventListener('keydown', e => {
+    if (e.target !== divider || v2.editorCollapsed) return;
+    const step = e.key === 'ArrowLeft' ? -16 : e.key === 'ArrowRight' ? 16 : 0;
+    if (!step) return;
+    e.preventDefault();
+    setEditorWidth((v2.editorWidth || $('#editor').offsetWidth) + step, true);
+  });
+
   function setEditing(on) {
     if (v2.editing === on) return;
     v2.editing = on;
@@ -844,7 +992,9 @@
     site.classList.toggle('is-editing', on);
     document.body.classList.toggle('v2-is-editing', on);
     if (on) {
+      setCollapsed(false);
       core.renderEditor();
+      compactEditor();
     } else {
       if (core.state.editingText) $('#editTextBtn').click();
       if (core.state.appFullscreen) $('#fullscreenBtn').click();

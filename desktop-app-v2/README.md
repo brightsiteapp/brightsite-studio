@@ -96,8 +96,17 @@ record and shows in the profile) or not (stored on this computer in
 The profile shows the preview large, with only the most useful actions: device
 toggle, full screen, **Edit website**, Make live, and a ⋯ menu (copy link,
 export, domain, take offline). **Edit website** opens V1's full builder in the
-whole window: every builder control on the left, the preview (desktop or
-mobile) on the right.
+whole window: a compact editor (about 390px) on the left, the preview
+(desktop or mobile) using the rest.
+
+The compact editor is V1's own editor, rearranged by `compactEditor()` in
+`public/v2.js` every time V1 redraws it: the same fields (same ids and
+handlers) in a two-column grid, and Logo / Hero / Gallery as three small
+thumbnail cards. Clicking a card opens V1's own media controls for it
+underneath (upload, replace, remove, use found, place logo on photo, the
+logo suggestion, gallery add/remove). Drag the divider to resize the editor
+(remembered on this computer, arrow keys work too); its small ‹ button hides
+the editor so the site gets the whole window.
 
 **Settings** is a page in the sidebar. It's V1's own settings panel, shown in
 the window instead of as a pop-up.
