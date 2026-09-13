@@ -624,6 +624,8 @@
       ${field('address', 'Address', profile.address || raw.location || '')}
       <label class="v2-field"><span>Category</span><select data-f="category">${categoryOptions}</select></label>`);
 
+    setSection('#v2dPrices', pricePreviewHtml(p));
+
     const site = P.siteUrl(p);
     const website = site || p.importedSite?.url || p.contact?.existingWebsite || '';
     setSection('#v2dLinks', `
@@ -790,6 +792,7 @@
       case 'mark-paid': await core.markPaid(p.slug, btn); return render();
       case 'whatsapp': case 'email': case 'call': return reachOut(btn.dataset.act, p);
       case 'copy': return copyText(P.contactCard(p), 'Contact details copied.');
+      case 'prices': return openPriceList();
       case 'edit': return setEditing(true);
       case 'edit-done': return setEditing(false);
       case 'site-more': return openPersistentMenu(siteMenu, btn);
@@ -871,6 +874,13 @@
     grid.append(fieldOf('f_name'), fieldOf('f_category'), fieldOf('f_contactName'), fieldOf('f_location'), phone, email);
     nameRow.replaceWith(sectionLabel('Business'), grid);
     $('.phone-row', editorEl).remove();
+    const count = PL.counts(p.priceList).services;
+    const prices = document.createElement('button');
+    prices.type = 'button';
+    prices.className = 'v2-ed-prices';
+    prices.dataset.act = 'prices';
+    prices.innerHTML = `<span>Prices &amp; services</span><b>${count ? esc(PL.summary(p.priceList)) : 'Add prices'}</b><i aria-hidden="true">›</i>`;
+    grid.after(prices);
 
     const row = $('.media-row-3', editorEl);
     if (row) {
@@ -1019,8 +1029,325 @@
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     if (menuEl) { closeMenu(); return; }
+    if (pl.open) { e.stopPropagation(); closePriceList(); return; }
     if (v2.editing && !core.state.appFullscreen && !document.querySelector('dialog[open]') && !$('#notifPanel:not([hidden])')) setEditing(false);
   }, true);
+
+  // ---------------- price list ----------------
+  // Sections of services (service, price, time) stored on the business
+  // record as `priceList`, so it syncs with the record like tasks. Opened
+  // from the profile's Prices panel or the editor's Prices button. Text
+  // pasted from anywhere fills it in without AI (public/price-list.js); a
+  // photo of their prices is read by Claude Code (lib/price-photo.js).
+  // Every change saves by itself.
+  const PL = window.PriceList;
+  const pl = { open: false, slug: null, list: null, timer: null, undo: null, dragFrom: null };
+  const plModal = document.createElement('div');
+  plModal.className = 'v2-modal';
+  plModal.hidden = true;
+  document.body.append(plModal);
+
+  function pricePreviewHtml(p) {
+    const list = PL.clean(p.priceList);
+    const c = PL.counts(list);
+    if (!c.services) {
+      return `<h2>Prices</h2><p class="v2-pl-empty">Add their services and prices — paste them from anywhere, type them, or read them from a photo.</p>
+        <button type="button" class="v2-btn v2-pl-open" data-act="prices">Add prices</button>`;
+    }
+    const rows = list.sections.flatMap(s => [s.title ? { head: s.title } : null, ...s.items.map(it => ({ it }))]).filter(Boolean).slice(0, 7);
+    return `<h2>Prices <b class="v2-count">${c.services}</b><button type="button" class="v2-link v2-h2-act" data-act="prices">Edit</button></h2>
+      <div class="v2-pl-mini">${rows.map(r => (r.head ? `<div class="v2-pl-mini-head">${esc(r.head)}</div>`
+        : `<div class="v2-pl-mini-row"><span>${esc(r.it.service)}</span><b>${esc(r.it.price)}</b>${r.it.time ? `<i>${esc(r.it.time)}</i>` : ''}</div>`)).join('')}</div>
+      <button type="button" class="v2-link v2-pl-more" data-act="prices">${esc(PL.summary(list))} · Open price list ›</button>`;
+  }
+
+  function openPriceList() {
+    const p = current();
+    if (!p) return;
+    closeMenu();
+    Object.assign(pl, { open: true, slug: p.slug, list: PL.clean(p.priceList), undo: null });
+    if (!pl.list.sections.length) pl.list.sections.push({ title: '', items: [{ service: '', price: '', time: '' }] });
+    plModal.hidden = false;
+    renderPriceModal();
+    setPriceStatus('');
+    requestAnimationFrame(() => $('.v2-pl-body input', plModal)?.focus());
+  }
+
+  async function closePriceList() {
+    if (!pl.open) return;
+    await flushPriceSave();
+    pl.open = false;
+    plModal.hidden = true;
+    render();
+  }
+
+  const blankRow = () => ({ service: '', price: '', time: '' });
+  function renderPriceModal() {
+    const p = project(pl.slug) || current();
+    const btn = (act, label, title, cls = '') => `<button type="button" class="v2-pl-icon ${cls}" data-pl="${act}" title="${title}" aria-label="${title}">${label}</button>`;
+    const scrollTop = $('.v2-pl-body', plModal)?.scrollTop || 0;
+    plModal.innerHTML = `
+      <div class="v2-modal-card" role="dialog" aria-modal="true" aria-label="Prices and services">
+        <header class="v2-pl-top">
+          <div class="v2-pl-title"><h2>Prices &amp; services</h2><p>${esc(nameOf(p) || '')} · <span id="v2PlSaved">Saves automatically</span></p></div>
+          <div class="v2-pl-tools">
+            <button type="button" class="v2-btn" data-pl="paste">Paste a list</button>
+            <button type="button" class="v2-btn" data-pl="photo">Read a photo</button>
+            <button type="button" class="v2-btn primary" data-pl="close">Done</button>
+          </div>
+          <input type="file" accept="image/*" id="v2PlPhoto" hidden>
+        </header>
+        <div class="v2-pl-paste" id="v2PlPaste" hidden>
+          <textarea id="v2PlPasteText" placeholder="Paste their prices here — from a website, Facebook, a PDF or a spreadsheet. Headings become sections; prices and times are picked out by themselves." spellcheck="false"></textarea>
+          <div class="v2-pl-paste-foot"><span id="v2PlPastePreview">Nothing pasted yet.</span>
+            <button type="button" class="v2-btn ghost" data-pl="paste-cancel">Cancel</button>
+            <button type="button" class="v2-btn" data-pl="paste-replace" disabled>Replace list</button>
+            <button type="button" class="v2-btn primary" data-pl="paste-add" disabled>Add to list</button></div>
+        </div>
+        <div class="v2-pl-status" id="v2PlStatus" hidden></div>
+        <div class="v2-pl-body">
+          <div class="v2-pl-cols"><span></span><span>Service</span><span>Price</span><span>Time</span><span></span></div>
+          ${pl.list.sections.map((s, si) => `
+          <section class="v2-pl-sec" data-s="${si}">
+            <div class="v2-pl-sec-head">
+              <span class="v2-pl-grip" title="Drag to move this section" aria-hidden="true">⋮⋮</span>
+              <input data-k="title" value="${esc(s.title)}" placeholder="Section title — e.g. Hair, Nails, Menu" aria-label="Section title">
+              ${btn('sec-up', '↑', 'Move section up', si === 0 ? 'is-off' : '')}${btn('sec-down', '↓', 'Move section down', si === pl.list.sections.length - 1 ? 'is-off' : '')}${btn('sec-del', '✕', 'Delete section', 'is-del')}
+            </div>
+            ${s.items.map((it, ri) => `
+            <div class="v2-pl-row" data-r="${ri}">
+              <span class="v2-pl-num">${ri + 1}</span>
+              <input data-k="service" value="${esc(it.service)}" placeholder="Service" aria-label="Service">
+              <input data-k="price" value="${esc(it.price)}" placeholder="£" aria-label="Price">
+              <input data-k="time" value="${esc(it.time)}" placeholder="e.g. 30 mins" aria-label="Time">
+              <span class="v2-pl-row-btns">${btn('row-up', '↑', 'Move up', ri === 0 ? 'is-off' : '')}${btn('row-down', '↓', 'Move down', ri === s.items.length - 1 ? 'is-off' : '')}${btn('row-del', '✕', 'Delete', 'is-del')}</span>
+            </div>`).join('')}
+            <button type="button" class="v2-link v2-pl-add-row" data-pl="add-row">+ Add service</button>
+          </section>`).join('')}
+          <button type="button" class="v2-btn v2-pl-add-sec" data-pl="add-sec">+ Add section</button>
+          <p class="v2-pl-tip">Tip: paste several lines into any box and they’re sorted into services, prices and times for you.</p>
+        </div>
+      </div>`;
+    $('.v2-pl-body', plModal).scrollTop = scrollTop;
+  }
+
+  function setPriceStatus(html, undoable = false) {
+    const box = $('#v2PlStatus', plModal);
+    if (!box) return;
+    box.hidden = !html;
+    box.innerHTML = html + (undoable && pl.undo ? ' <button type="button" class="v2-link" data-pl="undo">Undo</button>' : '');
+  }
+
+  // Saves a moment after typing stops; moves, deletes and bulk changes save at once.
+  function schedulePriceSave(delay = 700) {
+    clearTimeout(pl.timer);
+    const saved = $('#v2PlSaved', plModal);
+    if (saved) saved.textContent = 'Saving…';
+    pl.timer = setTimeout(flushPriceSave, delay);
+  }
+  async function flushPriceSave() {
+    if (!pl.timer) return;
+    clearTimeout(pl.timer);
+    pl.timer = null;
+    try {
+      await save(pl.slug, { priceList: PL.clean(pl.list) });
+      const saved = $('#v2PlSaved', plModal);
+      if (saved) saved.textContent = 'Saved';
+    } catch (err) {
+      const saved = $('#v2PlSaved', plModal);
+      if (saved) saved.textContent = 'Not saved — will retry';
+      core.notify(core.friendlyError(err.message), { sticky: false });
+      schedulePriceSave(4000);
+    }
+  }
+
+  // A bulk change (paste, photo, replace) keeps the list before it for Undo.
+  function bulkChange(list, message) {
+    pl.undo = PL.clean(pl.list);
+    pl.list = list;
+    if (!pl.list.sections.length) pl.list.sections.push({ title: '', items: [blankRow()] });
+    renderPriceModal();
+    schedulePriceSave(0);
+    setPriceStatus(message, true);
+  }
+  const withoutBlank = list => ({ sections: PL.clean(list).sections });
+  const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+
+  function pastePreview() {
+    const parsed = PL.parse($('#v2PlPasteText', plModal).value);
+    const c = PL.counts(parsed);
+    $('#v2PlPastePreview', plModal).textContent = c.services
+      ? `Found ${plural(c.services, 'service')}${c.sections > 1 || parsed.sections[0]?.title ? ` in ${plural(c.sections, 'section')}` : ''}${parsed.sections.some(s => s.items.some(i => !i.price)) ? ' — some without a price' : ''}.`
+      : 'Nothing found yet — each service on its own line works best.';
+    $$('[data-pl="paste-add"], [data-pl="paste-replace"]', plModal).forEach(b => { b.disabled = !c.services; });
+    return parsed;
+  }
+
+  async function readPricePhoto(file) {
+    if (!file) return;
+    const slug = pl.slug;
+    setPriceStatus('<span class="status-spinner"></span> Reading the photo with AI — this can take up to a minute…');
+    $$('[data-pl="photo"]', plModal).forEach(b => { b.disabled = true; });
+    try {
+      const res = await fetch(`/api/v2/projects/${encodeURIComponent(slug)}/price-photo`, { method: 'POST', headers: { 'Content-Type': file.type || 'image/jpeg' }, body: file });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Couldn’t read the photo (${res.status}).`);
+      if (!pl.open || pl.slug !== slug) return;
+      const got = PL.counts(data.priceList).services;
+      const existing = withoutBlank(pl.list);
+      bulkChange(existing.sections.length ? { sections: [...existing.sections, ...data.priceList.sections] } : data.priceList,
+        `Added ${plural(got, 'service')} from the photo and saved — check them over.`);
+    } catch (err) {
+      if (pl.open) setPriceStatus(esc(err.message));
+    } finally {
+      $$('[data-pl="photo"]', plModal).forEach(b => { b.disabled = false; });
+    }
+  }
+
+  plModal.addEventListener('click', e => {
+    if (e.target === plModal) return closePriceList();
+    const b = e.target.closest('[data-pl]');
+    if (!b || b.disabled || b.classList.contains('is-off')) return;
+    const sec = b.closest('[data-s]');
+    const si = sec ? Number(sec.dataset.s) : -1;
+    const ri = b.closest('[data-r]') ? Number(b.closest('[data-r]').dataset.r) : -1;
+    const secs = pl.list.sections;
+    const swap = (arr, a, c) => { [arr[a], arr[c]] = [arr[c], arr[a]]; };
+    const structural = () => { renderPriceModal(); schedulePriceSave(150); };
+    switch (b.dataset.pl) {
+      case 'close': return closePriceList();
+      case 'paste': {
+        const box = $('#v2PlPaste', plModal);
+        box.hidden = !box.hidden;
+        if (!box.hidden) $('#v2PlPasteText', plModal).focus();
+        return;
+      }
+      case 'paste-cancel': $('#v2PlPaste', plModal).hidden = true; return;
+      case 'paste-add': case 'paste-replace': {
+        const parsed = pastePreview();
+        const n = PL.counts(parsed).services;
+        const existing = withoutBlank(pl.list);
+        const replace = b.dataset.pl === 'paste-replace';
+        bulkChange(replace ? parsed : { sections: [...existing.sections, ...parsed.sections] }, `${replace ? 'Replaced the list with' : 'Added'} ${plural(n, 'service')} from your paste.`);
+        return;
+      }
+      case 'photo': return $('#v2PlPhoto', plModal).click();
+      case 'undo':
+        if (pl.undo) { const back = pl.undo; pl.undo = null; pl.list = back.sections.length ? back : { sections: [{ title: '', items: [blankRow()] }] }; renderPriceModal(); schedulePriceSave(0); setPriceStatus('Undone.'); }
+        return;
+      case 'add-sec':
+        secs.push({ title: '', items: [blankRow()] });
+        renderPriceModal();
+        $$('.v2-pl-sec', plModal).pop()?.querySelector('input')?.focus();
+        return schedulePriceSave(150);
+      case 'add-row': {
+        secs[si].items.push(blankRow());
+        renderPriceModal();
+        const rows = $$(`.v2-pl-sec[data-s="${si}"] .v2-pl-row`, plModal);
+        rows[rows.length - 1]?.querySelector('input')?.focus();
+        return schedulePriceSave(150);
+      }
+      case 'sec-up': swap(secs, si, si - 1); return structural();
+      case 'sec-down': swap(secs, si, si + 1); return structural();
+      case 'sec-del': {
+        const s = secs[si];
+        const filled = s.items.filter(i => i.service || i.price).length;
+        if (filled && !confirm(`Delete “${s.title || 'this section'}” and its ${plural(filled, 'service')}?`)) return;
+        secs.splice(si, 1);
+        if (!secs.length) secs.push({ title: '', items: [blankRow()] });
+        return structural();
+      }
+      case 'row-up': swap(secs[si].items, ri, ri - 1); return structural();
+      case 'row-down': swap(secs[si].items, ri, ri + 1); return structural();
+      case 'row-del':
+        secs[si].items.splice(ri, 1);
+        if (!secs[si].items.length) secs[si].items.push(blankRow());
+        return structural();
+    }
+  });
+
+  plModal.addEventListener('input', e => {
+    if (e.target.id === 'v2PlPasteText') return pastePreview();
+    const k = e.target.dataset.k;
+    const sec = e.target.closest('[data-s]');
+    if (!k || !sec) return;
+    const s = pl.list.sections[Number(sec.dataset.s)];
+    if (k === 'title') s.title = e.target.value;
+    else s.items[Number(e.target.closest('[data-r]').dataset.r)][k] = e.target.value;
+    schedulePriceSave();
+  });
+  plModal.addEventListener('change', e => { if (e.target.id === 'v2PlPhoto') { readPricePhoto(e.target.files[0]); e.target.value = ''; } });
+
+  // Smart paste: several lines pasted into any box are sorted into
+  // services (and sections, if it has headings) right where they land.
+  plModal.addEventListener('paste', e => {
+    const input = e.target.closest('.v2-pl-body input');
+    const text = e.clipboardData?.getData('text/plain') || '';
+    if (!input || !/[\n\t]/.test(text.trim())) return;
+    const parsed = PL.parse(text);
+    const n = PL.counts(parsed).services;
+    if (!n) return;
+    e.preventDefault();
+    const si = Number(input.closest('[data-s]').dataset.s);
+    const ri = input.closest('[data-r]') ? Number(input.closest('[data-r]').dataset.r) : -1;
+    // An exact copy (blank rows kept), so the row indexes still line up.
+    const secs = JSON.parse(JSON.stringify(pl.list.sections));
+    const target = secs[si];
+    const isBlank = it => !it.service && !it.price && !it.time;
+    const blankAt = ri >= 0 && isBlank(target.items[ri]);
+    const targetEmpty = !target.title && target.items.every(isBlank);
+    const [first, ...others] = parsed.sections;
+    if (!first.title || targetEmpty) {
+      // Untitled lines join this section after the row pasted into (a
+      // titled first block names an empty section).
+      if (first.title && !target.title) target.title = first.title;
+      target.items.splice(ri >= 0 ? ri + 1 : target.items.length, 0, ...first.items);
+      secs.splice(secs.indexOf(target) + 1, 0, ...others);
+    } else {
+      secs.splice(secs.indexOf(target) + 1, 0, ...parsed.sections);
+    }
+    // A blank row the paste landed in is replaced rather than left behind.
+    if (blankAt) target.items.splice(ri, 1);
+    if (!target.title && !target.items.length) secs.splice(secs.indexOf(target), 1);
+    bulkChange({ sections: secs }, `Filled in ${plural(n, 'service')} from your paste.`);
+  });
+
+  // Drag a section by its ⋮⋮ grip to reorder.
+  plModal.addEventListener('mousedown', e => {
+    const grip = e.target.closest('.v2-pl-grip');
+    if (grip) grip.closest('.v2-pl-sec').draggable = true;
+  });
+  plModal.addEventListener('dragstart', e => {
+    const sec = e.target.closest?.('.v2-pl-sec');
+    if (!sec) return;
+    pl.dragFrom = Number(sec.dataset.s);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(pl.dragFrom));
+    requestAnimationFrame(() => sec.classList.add('is-dragging'));
+  });
+  plModal.addEventListener('dragover', e => {
+    const sec = pl.dragFrom !== null && e.target.closest('.v2-pl-sec');
+    if (!sec) return;
+    e.preventDefault();
+    const after = e.clientY > sec.getBoundingClientRect().top + sec.offsetHeight / 2;
+    $$('.v2-pl-sec', plModal).forEach(n => n.classList.remove('drop-before', 'drop-after'));
+    sec.classList.add(after ? 'drop-after' : 'drop-before');
+  });
+  plModal.addEventListener('drop', e => {
+    const sec = pl.dragFrom !== null && e.target.closest('.v2-pl-sec');
+    if (!sec) return;
+    e.preventDefault();
+    const to = Number(sec.dataset.s) + (sec.classList.contains('drop-after') ? 1 : 0);
+    const [moved] = pl.list.sections.splice(pl.dragFrom, 1);
+    pl.list.sections.splice(to > pl.dragFrom ? to - 1 : to, 0, moved);
+    pl.dragFrom = null;
+    renderPriceModal();
+    schedulePriceSave(150);
+  });
+  plModal.addEventListener('dragend', () => {
+    pl.dragFrom = null;
+    $$('.v2-pl-sec', plModal).forEach(n => { n.draggable = false; n.classList.remove('is-dragging', 'drop-before', 'drop-after'); });
+  });
 
   // ---------------- tasks ----------------
   // Linked tasks live on their business's record (so they sync with it);

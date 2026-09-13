@@ -1,7 +1,7 @@
 {
   "name": "brightsite-studio-v2",
   "productName": "BrightSite Studio V2",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "private": true,
   "description": "BrightSite Studio V2 — the same Studio, with a simple pipeline, tasks and business profiles",
   "main": "main.js",

@@ -108,6 +108,27 @@ logo suggestion, gallery add/remove). Drag the divider to resize the editor
 (remembered on this computer, arrow keys work too); its small ‹ button hides
 the editor so the site gets the whole window.
 
+## Prices & services
+
+Each business has a price list: sections (e.g. Hair, Nails) of services,
+each with a price and a time. It's stored on the business record as
+`priceList` (`{ sections: [{ title, items: [{ service, price, time }] }] }`),
+so it syncs like tasks, with no database change. The profile's **Prices**
+panel shows the start of it; **Edit** there, or **Prices & services** in the
+editor, opens the full table: add sections and services, move them with the
+arrows (or drag a section by its ⋮⋮ grip), and every change saves by itself.
+
+- **Paste a list** (or paste several lines into any box): text from a
+  website, Facebook, a PDF or a spreadsheet is sorted into sections,
+  services, prices and times without AI (`public/price-list.js`, tested in
+  `tests/price-list.test.js`). Bulk changes can be undone.
+- **Read a photo**: a photo of their price board or menu is read by the
+  local Claude Code CLI, like V1's AI edits (`lib/price-photo.js`), added to
+  the list and saved. The photo is kept in the business's folder.
+
+The list isn't on the generated website yet; that needs a change to the
+shared generator (V1 uses it too).
+
 **Settings** is a page in the sidebar. It's V1's own settings panel, shown in
 the window instead of as a pop-up.
 

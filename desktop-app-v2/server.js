@@ -17,7 +17,9 @@ if (!process.env.PORT) process.env.PORT = '4174';
 
 const { createApp, PORT } = require(path.join(V1_DIR, 'server'));
 const storage = require(path.join(V1_DIR, 'lib', 'site-storage'));
+const { spawnEnv } = require(path.join(V1_DIR, 'lib', 'shell-path'));
 const tasks = require('./lib/tasks');
+const pricePhoto = require('./lib/price-photo');
 const { version } = require('./package.json');
 
 function createV2App() {
@@ -31,6 +33,24 @@ function createV2App() {
       res.json(tasks.write(storage.ROOT, req.body));
     } catch (err) {
       res.status(400).json({ error: err.message });
+    }
+  });
+  // A photo of a price list → sections for the business's price list (see
+  // lib/price-photo.js). The photo is kept in the business's folder; the
+  // list comes back to the page, which saves it on the record.
+  app.post('/api/v2/projects/:slug/price-photo', express.raw({ type: 'image/*', limit: '15mb' }), async (req, res) => {
+    const { slug } = req.params;
+    if (!/^[\w-]+$/.test(slug) || !storage.readProject(slug)) return res.status(404).json({ error: 'That business wasn’t found.' });
+    let file;
+    try {
+      file = pricePhoto.savePhoto(storage.projectDir(slug), req.body, req.get('content-type'));
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
+    try {
+      res.json({ photo: file, priceList: await pricePhoto.readPhoto(storage.projectDir(slug), file, { spawnEnv }) });
+    } catch (err) {
+      res.status(502).json({ error: err.message, photo: file });
     }
   });
   return app;

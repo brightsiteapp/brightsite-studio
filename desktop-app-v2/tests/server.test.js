@@ -33,6 +33,21 @@ test('V2 serves its own page, and V1’s scripts and page underneath', async () 
   assert.deepStrictEqual(await (await fetch(`${v2.url}/api/app-info`)).json(), { version: require('../package.json').version });
 });
 
+test('price photo: unknown businesses and non-images are turned away before any AI runs', async () => {
+  const storage = require(path.join(V1_DIR, 'lib', 'site-storage'));
+  const { slug } = storage.createProject('Photo Test');
+  const post = (slug, type, body) => fetch(`${v2.url}/api/v2/projects/${slug}/price-photo`, { method: 'POST', headers: { 'Content-Type': type }, body });
+  assert.strictEqual((await post('no-such-business', 'image/png', 'x')).status, 404);
+  assert.strictEqual((await post('..%2Fetc', 'image/png', 'x')).status, 404);
+  const notImage = await post('photo-test', 'image/svg+xml', '<svg/>');
+  assert.strictEqual(notImage.status, 400);
+  assert.match((await notImage.json()).error, /photo/);
+  const { parseReply } = require('../lib/price-photo');
+  assert.deepStrictEqual(parseReply('Here you go: {"sections":[{"title":"Hair","items":[{"service":"Cut","price":"£20","time":""}]}]}'),
+    { sections: [{ title: 'Hair', items: [{ service: 'Cut', price: '£20', time: '' }] }] });
+  assert.throws(() => parseReply('{"sections":[]}'), /Couldn’t find any prices/);
+});
+
 test('V1 on its own is unchanged', async () => {
   const page = await (await fetch(`${v1.url}/`)).text();
   assert.match(page, /<script src="app\.js"><\/script>/);
