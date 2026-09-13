@@ -87,36 +87,13 @@ async function runHomepageFlow(label, contextOptions, mobile) {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.goto(baseUrl, { waitUntil: 'load' });
 
-  await page.locator('#cx').scrollIntoViewIfNeeded();
-  const firstCarouselIndex = await page.locator('#cx').getAttribute('data-active');
-  await page.waitForTimeout(1950);
-  const nextCarouselIndex = await page.locator('#cx').getAttribute('data-active');
-  assert.notEqual(nextCarouselIndex, firstCarouselIndex, `${label}: carousel should advance every 1.8s`);
-
-  const activeCardMotion = await page.locator('.cx-item[data-pos="0"] .cx-float').evaluate((element) => (
-    getComputedStyle(element).animationName
-  ));
-  assert.equal(activeCardMotion, 'cx-centre-drift', `${label}: centre card should keep drifting`);
-
-  const dotColoursMatch = await page.locator('.cx-item[data-pos="0"]').evaluate((item) => {
-    const dot = item.querySelector('.cx-dot');
-    const itemColour = getComputedStyle(item).getPropertyValue('--cx-hero-colour').trim();
-    const probe = document.createElement('span');
-    probe.style.color = itemColour;
-    document.body.appendChild(probe);
-    const expected = getComputedStyle(probe).color;
-    probe.remove();
-    return getComputedStyle(dot).backgroundColor === expected;
-  });
-  assert.equal(dotColoursMatch, true, `${label}: active dot should match the site's hero colour`);
-
   if (mobile) {
-    await page.locator('#cx').evaluate((element) => element.scrollIntoView({ block: 'center' }));
+    await page.locator('.hero-conv').evaluate((element) => element.scrollIntoView({ block: 'start' }));
     await page.waitForTimeout(100);
-    const carouselBox = await page.locator('#cx').boundingBox();
+    const heroBox = await page.locator('.hero-conv').boundingBox();
     const viewport = page.viewportSize();
     const beforeSwipe = await page.evaluate(() => window.scrollY);
-    const startY = Math.min(viewport.height - 70, carouselBox.y + carouselBox.height * 0.72);
+    const startY = Math.min(viewport.height - 70, heroBox.y + heroBox.height * 0.72);
     await swipeUp(page, {
       x: Math.round(viewport.width / 2),
       startY: Math.round(startY),
@@ -125,7 +102,7 @@ async function runHomepageFlow(label, contextOptions, mobile) {
     const afterSwipe = await page.evaluate(() => window.scrollY);
     assert.ok(
       afterSwipe > beforeSwipe + 40,
-      `${label}: a real finger swipe over the carousel should scroll (${beforeSwipe} -> ${afterSwipe})`
+      `${label}: a real finger swipe over the hero should scroll (${beforeSwipe} -> ${afterSwipe})`
     );
   } else {
     await page.evaluate(() => window.scrollTo(0, 700));
@@ -159,47 +136,61 @@ async function runHomepageFlow(label, contextOptions, mobile) {
 
   await activate(page.locator('#qaLocationNext'));
   await page.locator('#builderOverlay:not([hidden])').waitFor({ timeout: 10000 });
-  await page.getByText('A quick demo — your final website can be anything you imagine').waitFor();
-  assert.equal(await page.locator('.builder-style').count(), 4, `${label}: builder should offer four genuinely different styles`);
-  for (const style of ['bold', 'studio']) {
-    await activate(page.locator(`.builder-style[data-style="${style}"]`));
-    await page.waitForFunction((expected) => document.querySelector('#previewFrame').contentDocument?.body.classList.contains(`site-style-${expected}`), style);
-  }
+  await page.locator('#previewFrame').waitFor();
+  await page.waitForFunction(() => document.querySelector('#previewFrame').contentDocument?.body);
+
   const foodDemo = await page.evaluate(() => buildDemoHTML({
-    name: 'The Sample Kitchen', tagline: 'Food & Drink', location: 'Beverley', services: [], prices: [], goal: 'Book now', stylePreset: 'modern'
+    name: 'The Sample Kitchen', tagline: 'Food & Drink', location: 'Beverley', services: [], prices: [], goal: 'Book now'
   }));
   assert.match(foodDemo, />Menu</, `${label}: food sites should use Menu navigation`);
   assert.match(foodDemo, /Reserve a table/, `${label}: food sites should use a relevant reservation CTA`);
   await page.waitForFunction(() => document.querySelector('#previewFrame').contentDocument?.querySelectorAll('.gallery-demo img').length === 6);
   const galleryNotice = await page.locator('#previewFrame').evaluate((frame) => (
-    frame.contentDocument.body.textContent.includes('all six will be replaced with your own photographs before launch')
+    frame.contentDocument.body.textContent.includes('Demo photography, ready for your own')
   ));
   assert.equal(galleryNotice, true, `${label}: demo gallery should explain that customer photographs replace it`);
 
   const rootLocked = await page.evaluate(() => document.documentElement.classList.contains('builder-scroll-lock'));
   assert.equal(rootLocked, !mobile, `${label}: scroll lock should be desktop-only`);
 
-  const signPalette = page.locator('#builderSignPalette');
-  const signAuto = page.locator('[data-sign-colour=""]');
-  const blueSign = page.locator('[data-sign-colour="#2563eb"]');
-  assert.equal(await signPalette.isVisible(), true, `${label}: sign colour palette should be visible`);
-  assert.equal(await signAuto.getAttribute('aria-pressed'), 'true', `${label}: sign colour should start in auto mode`);
-  const previewBeforeColour = await page.locator('#previewFrame').getAttribute('srcdoc');
-  await activate(page.locator('#builderSignPalette summary'));
-  await activate(blueSign);
+  assert.equal(await page.locator('.glass-circle[data-tool]').count(), 4, `${label}: builder should offer four style tools (send, colour, font, layout)`);
+
+  await activate(page.locator('[data-tool="layout"]'));
+  await page.locator('.builder-choice-list [data-layout]').first().waitFor();
+  assert.ok(await page.locator('.builder-choice-list [data-layout]').count() > 5, `${label}: layout picker should offer several templates`);
+  const previewBeforeLayout = await page.locator('#previewFrame').getAttribute('srcdoc');
+  await activate(page.locator('[data-layout="torque"]'));
   await page.waitForFunction((before) => (
     document.querySelector('#previewFrame').getAttribute('srcdoc') !== before
+  ), previewBeforeLayout);
+  await activate(page.locator('[data-tool="layout"]'));
+  assert.equal(await page.locator('[data-layout="torque"]').getAttribute('aria-pressed'), 'true', `${label}: choosing a layout should mark it selected`);
+  await activate(page.locator('[data-tool="layout"]'));
+
+  await activate(page.locator('[data-tool="colour"]'));
+  const heroPaletteChoice = page.locator('[data-hero-palette="true"]');
+  const rosePalette = page.locator('[data-colour="#b77988"]');
+  assert.equal(await heroPaletteChoice.getAttribute('aria-pressed'), 'true', `${label}: colour should start matched to the hero photo`);
+  const accentOf = () => page.evaluate(() => (
+    getComputedStyle(document.querySelector('#previewFrame').contentDocument.documentElement).getPropertyValue('--accent').trim()
+  ));
+  const previewBeforeColour = await accentOf();
+  await activate(rosePalette);
+  await page.waitForFunction((before) => (
+    getComputedStyle(document.querySelector('#previewFrame').contentDocument.documentElement).getPropertyValue('--accent').trim() !== before
   ), previewBeforeColour);
-  assert.equal(await signAuto.getAttribute('aria-pressed'), 'false', `${label}: choosing a colour should leave auto mode`);
-  await activate(page.locator('#builderSignPalette summary'));
-  await activate(signAuto);
-  await page.waitForFunction(() => document.querySelector('[data-sign-colour=""]').getAttribute('aria-pressed') === 'true');
+  await activate(page.locator('[data-tool="colour"]'));
+  assert.equal(await heroPaletteChoice.getAttribute('aria-pressed'), 'false', `${label}: choosing a colour should leave the hero-matched default`);
+  await activate(heroPaletteChoice);
+  await activate(page.locator('[data-tool="colour"]'));
+  assert.equal(await heroPaletteChoice.getAttribute('aria-pressed'), 'true', `${label}: reselecting the hero palette should mark it active again`);
+  await activate(page.locator('[data-tool="colour"]'));
 
   if (mobile) {
     const previewFrame = page.locator('#previewFrame');
     const frameBox = await previewFrame.boundingBox();
     const beforePreviewSwipe = await previewFrame.evaluate((frame) => frame.contentWindow.scrollY);
-    const startY = Math.min(frameBox.y + frameBox.height - 90, page.viewportSize().height - 150);
+    const startY = frameBox.y + frameBox.height * 0.55;
     await swipeUp(page, {
       x: Math.round(frameBox.x + frameBox.width / 2),
       startY: Math.round(startY),
@@ -211,11 +202,6 @@ async function runHomepageFlow(label, contextOptions, mobile) {
       `${label}: a real finger swipe should scroll the generated preview (${beforePreviewSwipe} -> ${afterPreviewSwipe})`
     );
   }
-
-  const builderInput = page.locator('#builderInput');
-  await activate(builderInput);
-  await builderInput.pressSequentially('Lucan Tester', { delay: 20 });
-  assert.equal(await builderInput.inputValue(), 'Lucan Tester', `${label}: builder input should accept typing`);
 
   assert.deepEqual(errors, [], `${label}: page should not throw runtime errors`);
   await context.close();
