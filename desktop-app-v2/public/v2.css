@@ -45,7 +45,7 @@ body.v2 {
 }
 .v2-brand { padding: 0 12px 26px; }
 .v2-brand img { display: block; height: 22px; width: auto; }
-.v2-brand span { display: block; margin-top: 4px; font-size: 14px; color: #344054; }
+.v2-brand span { display: block; margin-top: 4px; font-size: 14px; color: var(--accent); font-weight: 600; }
 .v2-nav {
   position: relative; display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 12px;
   border: 0; border-radius: 12px; background: transparent; color: #344054;
