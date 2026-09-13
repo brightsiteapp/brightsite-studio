@@ -44,7 +44,8 @@
     $('#v2Strips').append(take('#setupStrip'));
     document.body.append(take('#noticeStrip'));
     $('#v2Site').append(take('#builderView'));
-    ['#settingsDialog', '#planDialog', '#payDialog', '#domainDialog', '#confirmDialog'].forEach(sel => document.body.append(take(sel)));
+    $('#v2SettingsMount').append(take('#settingsDialog'));
+    ['#planDialog', '#payDialog', '#domainDialog', '#confirmDialog'].forEach(sel => document.body.append(take(sel)));
     await loadScript('/follow-ups.js');
     await loadScript('/app.js');
   }
@@ -86,9 +87,11 @@
     if (view !== 'profile' && v2.editing) setEditing(false);
     closeMenu();
     v2.view = view;
+    if (view !== 'settings') closeSettings();
     if (slug) v2.slug = slug;
     $('#v2PipelineView').hidden = view !== 'pipeline';
     $('#v2TasksView').hidden = view !== 'tasks';
+    $('#v2SettingsView').hidden = view !== 'settings';
     $('#v2ProfileView').hidden = view !== 'profile';
     $$('.v2-nav[data-view]').forEach(b => b.classList.toggle('is-active', b.dataset.view === (view === 'profile' ? 'pipeline' : view)));
     if (view === 'profile') {
@@ -242,21 +245,38 @@
     tBadge.textContent = dueTasks > 9 ? '9+' : String(dueTasks);
   }
 
+  const navigate = view => (v2.view === 'profile' ? leaveProfile(view) : showView(view));
+  // Settings goes through V1's own gear button, so V1 refreshes every
+  // account and service status exactly as it does when its pop-up opens.
   $$('.v2-nav[data-view]').forEach(btn => {
-    btn.onclick = () => (v2.view === 'profile' ? leaveProfile(btn.dataset.view) : showView(btn.dataset.view));
+    btn.onclick = () => (btn.dataset.view === 'settings' ? $('#gearBtn').click() : navigate(btn.dataset.view));
   });
-  $('#v2SettingsBtn').onclick = () => $('#gearBtn').click();
 
-  // Shared sync status as a small dot under the bell (V1's full status
-  // stays in Settings).
+  // V1's settings panel as a page instead of a pop-up: V1 "opening" it
+  // (its gear button, the setup strip's "Finish setup") shows the Settings
+  // view, and leaving the view closes it the way V1's Done button would,
+  // which also stops V1's sign-in polling.
+  const settingsPanel = $('#settingsDialog');
+  settingsPanel.showModal = () => {
+    settingsPanel.setAttribute('open', '');
+    if (v2.view !== 'settings') navigate('settings');
+  };
+  function closeSettings() {
+    if (settingsPanel.open) settingsPanel.close();
+  }
+  settingsPanel.addEventListener('close', () => { if (v2.view === 'settings') showView('pipeline'); });
+
+  // Shared sync status under the bell (V1's full status stays in Settings).
   const SYNC_TITLES = { synced: 'Synced', syncing: 'Syncing…', offline: 'Offline — changes will sync later' };
+  const SYNC_SHORT = { synced: 'Synced', syncing: 'Syncing…', offline: 'Offline' };
   async function refreshSyncDot() {
     try {
       const s = await core.api('/api/sync-status');
-      const dot = $('#v2Sync');
-      dot.hidden = s.state === 'disabled';
-      dot.className = `v2-sync is-${s.state}`;
-      dot.title = SYNC_TITLES[s.state] || s.state;
+      const label = $('#v2SyncLabel');
+      label.hidden = s.state === 'disabled';
+      label.title = SYNC_TITLES[s.state] || s.state;
+      $('#v2Sync').className = `v2-sync is-${s.state}`;
+      $('#v2SyncText').textContent = SYNC_SHORT[s.state] || s.state;
     } catch { /* best-effort */ }
   }
   refreshSyncDot();
@@ -274,73 +294,133 @@
   // ---------------- pipeline board ----------------
   core.wireBuildBar($('#v2AddInput'), $('#v2AddBtn'), $('#v2AddStatus'));
   $('#v2Search').oninput = e => { v2.query = e.target.value; renderBoard(); };
-  $('#v2ArchivedBtn').onclick = () => { v2.archivedOpen = !v2.archivedOpen; renderBoard(); };
-
-  const EMPTY = {
-    lead: 'No new leads — add one above.',
-    ready: 'Nothing waiting to be sent.',
-    followup: 'Nobody to chase right now.',
-    waiting: 'No one waiting on a reply.',
-    active: 'No paying clients yet.',
-    issue: 'No payment problems.'
+  const svg = (body, fill = false) => `<svg viewBox="0 0 24 24" ${fill ? 'fill="currentColor"' : 'fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"'}>${body}</svg>`;
+  const BOARD_ICONS = {
+    lead: svg('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.2 14.8c1.9.7 3 2.4 3.4 5.2"/>'),
+    ready: svg('<rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8.5 21h7M12 17v4"/>'),
+    follow: svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/>'),
+    clients: svg('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5 1.6 0 3 .4 4.1 1.2"/><path d="M15.5 17.5l2 2 4-4.5"/>'),
+    chat: svg('<path d="M20 15a2 2 0 0 1-2 2H8l-4 3.5V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/>'),
+    card: svg('<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4"/>'),
+    bolt: svg('<path d="M13.5 2L4 13.5h6.5L9.5 22 20 10h-6.5z"/>', true),
+    send: svg('<path d="M21.5 2.5L10.5 13.5M21.5 2.5l-7 19-4-8-8-4z"/>'),
+    dots: svg('<circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/>', true),
+    hdots: svg('<circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/>', true)
   };
+  const COLUMNS = {
+    lead: { title: 'Leads', sub: 'New businesses ready to build' },
+    ready: { title: 'Website ready', sub: 'Built and ready to send' },
+    follow: { title: 'Follow up', sub: 'Keep the conversation going' },
+    clients: { title: 'Clients', sub: 'Paying clients and live sites' }
+  };
+  const EMPTY = {
+    lead: { icon: 'lead', title: 'No new leads', text: 'Add one with the bar above — a link, a name, or an AI search.', cta: ['add', 'Add a lead'] },
+    ready: { icon: 'ready', title: 'Nothing ready yet', text: 'Sites you’ve finished building will appear here.', cta: ['build', 'Build a website'] },
+    followup: { icon: 'follow', title: 'No follow-ups right now', text: 'Leads that need a nudge will appear here.' },
+    waiting: { text: 'No one waiting on a reply.' },
+    active: { text: 'No paying clients yet.' },
+    issue: { icon: 'card', title: 'All good!', text: 'No payment problems.', quiet: true }
+  };
+  function emptyHtml(key) {
+    const e = EMPTY[key];
+    if (!e.icon) return `<p class="v2-empty">${esc(e.text)}</p>`;
+    const icon = `<span class="v2-empty-icon">${BOARD_ICONS[e.icon]}</span>`;
+    if (e.quiet) return `<div class="v2-empty-state is-quiet"><p>${esc(e.text)}</p>${icon}<b>${esc(e.title)}</b></div>`;
+    return `<div class="v2-empty-state">${icon}<b>${esc(e.title)}</b><p>${esc(e.text)}</p>
+      ${e.cta ? `<button type="button" class="v2-empty-cta" data-empty-act="${e.cta[0]}">${esc(e.cta[1])} ›</button>` : ''}</div>`;
+  }
 
   function cardHtml(p, now) {
     const c = P.card(p, now);
     const views = core.state.views?.[p.slug];
     const opened = views && ['ready', 'waiting', 'followup'].includes(c.stage) ? `<span class="v2-card-meta">Opened the demo ${views.count}×</span>` : '';
+    const task = c.stage === 'lead' || c.stage === 'ready'
+      ? `<span class="v2-pill">${BOARD_ICONS[c.stage === 'lead' ? 'bolt' : 'send']}${esc(c.task)}</span>`
+      : c.stage === 'waiting'
+        ? `<span class="v2-card-task is-quiet">${BOARD_ICONS.chat}${esc(c.task)}</span>`
+        : `<span class="v2-card-task"><i></i>${esc(c.task)}</span>`;
     return `<div class="v2-card tone-${c.tone}" tabindex="0" draggable="true" data-slug="${esc(p.slug)}" data-stage="${c.stage}">
-      <div class="v2-card-top"><span class="v2-card-name">${esc(nameOf(p))}</span>${c.flag ? `<span class="v2-flag">${esc(c.flag)}</span>` : ''}</div>
+      <div class="v2-card-top"><span class="v2-card-name">${esc(nameOf(p))}</span>${c.flag ? `<span class="v2-flag">${esc(c.flag)}</span>` : ''}
+        <button type="button" class="v2-card-more" data-card-more title="Move or delete" aria-label="Move or delete">${BOARD_ICONS.dots}</button></div>
       ${c.sub ? `<div class="v2-card-sub">${esc(c.sub)}</div>` : ''}
-      <div class="v2-card-task"><i></i>${esc(c.task)}</div>${opened}
+      ${task}${opened}
     </div>`;
   }
-  const list = (items, empty, now) => items.length ? items.map(p => cardHtml(p, now)).join('') : `<p class="v2-empty">${esc(empty)}</p>`;
 
   function renderBoard() {
     const now = Date.now();
     const cols = P.board(core.state.projects, now, v2.query);
     const all = v2.query ? P.board(core.state.projects, now) : cols;
+    v2.archivedCount = all.archived.length;
     $('#v2Summary').textContent = core.state.projectsLoaded ? P.summary(all) : 'Loading…';
-    const archivedBtn = $('#v2ArchivedBtn');
-    archivedBtn.hidden = !all.archived.length;
-    archivedBtn.textContent = `${v2.archivedOpen ? 'Hide' : 'Not interested'} · ${all.archived.length}`;
     const archived = $('#v2Archived');
     archived.hidden = !v2.archivedOpen || !cols.archived.length;
-    archived.innerHTML = cols.archived.map(p => `<button type="button" class="v2-archived-chip" data-slug="${esc(p.slug)}">${esc(nameOf(p))}</button>`).join('');
+    archived.innerHTML = cols.archived.length ? '<span class="v2-archived-label">Not interested</span>'
+      + cols.archived.map(p => `<button type="button" class="v2-archived-chip" data-slug="${esc(p.slug)}">${esc(nameOf(p))}</button>`).join('') : '';
 
     const board = $('#v2Board');
     const scrolls = Object.fromEntries($$('.v2-list', board).map(l => [l.dataset.list, l.scrollTop]));
-    const col = (id, title, body, count) => `
+    const list = (key, items) => (items.length ? items.map(p => cardHtml(p, now)).join('') : emptyHtml(key));
+    const col = (id, count, body) => `
       <section class="v2-col col-${id}">
-        <header class="v2-col-head"><span class="v2-dot"></span>${title}<b>${count}</b></header>
+        <header class="v2-col-head">
+          <span class="v2-col-icon">${BOARD_ICONS[id]}</span><span class="v2-col-title">${COLUMNS[id].title}</span><b>${count}</b>
+          <button type="button" class="v2-col-more" data-col-more="${id}" aria-label="${COLUMNS[id].title} options">${BOARD_ICONS.hdots}</button>
+        </header>
+        <p class="v2-col-sub">${COLUMNS[id].sub}</p>
         <div class="v2-col-body">${body}</div>
       </section>`;
-    const whole = (key, items, drop) => `<div class="v2-list" data-list="${key}" data-drop="${drop}">${list(items, EMPTY[key], now)}</div>`;
-    const half = (key, title, items, drop) => `
-      <div class="v2-half" data-drop="${drop}">
-        <div class="v2-half-head">${title}<b>${items.length}</b></div>
-        <div class="v2-list" data-list="${key}">${list(items, EMPTY[key], now)}</div>
+    const whole = (key, items) => `<div class="v2-list" data-list="${key}" data-drop="${key}">${list(key, items)}</div>`;
+    const half = (key, drop, title, icon, items) => `
+      <div class="v2-half half-${key}" data-drop="${drop}">
+        <div class="v2-half-head">${icon}<span>${title}</span><b>${items.length}</b></div>
+        <div class="v2-list" data-list="${key}">${list(key, items)}</div>
       </div>`;
     board.innerHTML =
-      col('lead', 'Lead', whole('lead', cols.lead, 'lead'), cols.lead.length)
-      + col('ready', 'Website ready', whole('ready', cols.ready, 'ready'), cols.ready.length)
-      + col('follow', 'Follow up',
-        half('followup', 'Needs follow-up', cols.followup, 'followup') + half('waiting', 'Waiting for reply', cols.waiting, 'waiting'),
-        cols.followup.length)
-      + col('clients', 'Clients',
-        half('active', 'Active paying', cols.active, 'client') + half('issue', 'Payment issue / cancelled', cols.issue, 'client'),
-        cols.active.length + cols.issue.length);
+      col('lead', cols.lead.length, whole('lead', cols.lead))
+      + col('ready', cols.ready.length, whole('ready', cols.ready))
+      + col('follow', cols.followup.length,
+        half('followup', 'followup', 'Needs follow-up', '<i class="v2-half-dot"></i>', cols.followup)
+        + half('waiting', 'waiting', 'Waiting for reply', BOARD_ICONS.chat, cols.waiting))
+      + col('clients', cols.active.length + cols.issue.length,
+        half('active', 'client', 'Active paying', '<i class="v2-half-dot is-ok"></i>', cols.active)
+        + half('issue', 'client', 'Payment issue / cancelled', BOARD_ICONS.card, cols.issue));
     $$('.v2-list', board).forEach(l => { l.scrollTop = scrolls[l.dataset.list] || 0; });
+  }
+
+  const focusAdd = () => $('#v2AddInput').focus();
+  function openColumnMenu(anchor, id) {
+    const items = [{ label: 'Add a lead', act: focusAdd }];
+    if (v2.archivedCount) {
+      items.push({ label: `${v2.archivedOpen ? 'Hide' : 'Show'} not interested`, hint: String(v2.archivedCount), act: () => { v2.archivedOpen = !v2.archivedOpen; renderBoard(); } });
+    }
+    if (id === 'clients') {
+      items.push({ label: 'Check Stripe now', act: async () => { await core.refreshBilling(); render(); toast('Checked Stripe for payment changes.'); } });
+    }
+    openMenu(anchor, items, COLUMNS[id].title);
+  }
+  // "Build a website" on the empty Website ready column opens the newest lead.
+  function emptyAction(act) {
+    const first = act === 'build' && P.board(core.state.projects, Date.now()).lead[0];
+    return first ? openProfile(first.slug, { focusBuild: true }) : focusAdd();
   }
 
   const board = $('#v2Board');
   board.addEventListener('click', e => {
+    const more = e.target.closest('[data-card-more]');
+    if (more) {
+      const p = project(more.closest('.v2-card').dataset.slug);
+      return p && openMoveMenu(more, p);
+    }
+    const colMore = e.target.closest('[data-col-more]');
+    if (colMore) return openColumnMenu(colMore, colMore.dataset.colMore);
+    const empty = e.target.closest('[data-empty-act]');
+    if (empty) return emptyAction(empty.dataset.emptyAct);
     const card = e.target.closest('.v2-card');
     if (card) openProfile(card.dataset.slug, { focusBuild: card.dataset.stage === 'lead' });
   });
   board.addEventListener('keydown', e => {
-    const card = e.target.closest('.v2-card');
+    const card = e.target.classList.contains('v2-card') && e.target;
     if (card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); card.click(); }
   });
   $('#v2Archived').addEventListener('click', e => {
@@ -666,8 +746,7 @@
   }
 
   const MOVE_TARGETS = ['lead', 'ready', 'waiting', 'followup', 'client', 'archived'];
-  function openMoveMenu(anchor) {
-    const p = current();
+  function openMoveMenu(anchor, p = current()) {
     const stage = P.stageOf(p);
     const items = MOVE_TARGETS.filter(t => t !== stage).map(t => ({
       label: t === 'client' ? 'Client' : P.STAGE_LABELS[t],
