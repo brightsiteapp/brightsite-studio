@@ -572,6 +572,7 @@
     state.placementDismissed = null;
     renderSidebar();
     renderEditor();
+    if (el.preview.hasAttribute('src')) freshPreviewFrame();
     el.preview.srcdoc = '';
     delete el.preview.dataset.lastHtml;
     renderLiveActions();
@@ -599,6 +600,17 @@
     el.offlineBtn.hidden = !liveUrl || waiting;
     el.offlineBtn.disabled = goingOffline;
     el.offlineBtn.textContent = goingOffline ? 'Going offline…' : 'Take offline';
+    // Imported websites aren't template pages, so the text editor doesn't
+    // apply; a linked one is hosted elsewhere, so the button just opens it.
+    const site = state.current?.importedSite;
+    document.getElementById('editTextBtn').hidden = Boolean(site);
+    el.exportBtn.hidden = site?.mode === 'link';
+    if (site?.mode === 'link') {
+      el.deployBtn.textContent = 'Open website';
+      el.deployBtn.title = site.url;
+      el.deployBtn.classList.remove('status-not-live', 'status-needs-update', 'status-deploying');
+      el.deployBtn.classList.add('status-live');
+    }
     renderSidebar();
   }
 
@@ -917,19 +929,70 @@
     }
   }
 
+  // Facebook pages and Google listings are read for business details; any
+  // other website can also be imported as it is.
+  const isBusinessProfileLink = url => /(^|[/.])(facebook\.com|fb\.com|fb\.me)\//i.test(url)
+    || /google\.[a-z.]+\/maps|maps\.google\.|maps\.app\.goo\.gl|goo\.gl\/maps|g\.page\//i.test(url);
+
+  // Asked right under the bar, since the choice changes what gets made.
+  // Resolves to { mode: 'copy' | 'link' | 'build', paying } or null.
+  function chooseWebsiteImport(status, url) {
+    if (!status) return Promise.resolve({ mode: 'build', paying: false });
+    let host = url;
+    try { host = new URL(url).hostname.replace(/^www\./, ''); } catch { /* show as typed */ }
+    return new Promise(resolve => {
+      status.innerHTML = `
+        <div class="site-import-choice">
+          <div class="site-import-title">Import ${escapeHtml(host)}</div>
+          <button type="button" data-mode="copy"><b>Copy the whole site as it is</b><span>Every page and file, no templates — preview and make it live from Studio</span></button>
+          <button type="button" data-mode="link"><b>Link to it</b><span>Stays hosted where it is — shows in the preview and Clients</span></button>
+          <button type="button" data-mode="build"><b>Build a new site from its details</b><span>Reads the business details into one of Studio’s templates</span></button>
+          <label class="site-import-paying"><input type="checkbox"> Already a paying client</label>
+          <button type="button" class="site-import-cancel">Cancel</button>
+        </div>`;
+      status.onclick = e => {
+        const choice = e.target.closest('button');
+        if (!choice) return;
+        const paying = Boolean(status.querySelector('.site-import-paying input')?.checked);
+        status.onclick = null;
+        status.innerHTML = '';
+        resolve(choice.dataset.mode ? { mode: choice.dataset.mode, paying } : null);
+      };
+    });
+  }
+
   async function runSmartBuild(input, btn, status) {
     const parsed = classifyBuildInput(input.value);
-    if (parsed.mode === 'empty') return;
+    if (parsed.mode === 'empty' || btn.disabled) return;
     btn.disabled = true;
     try {
       if (parsed.mode === 'link') {
-        if (status) setLoading(status, 'Reading the page…');
-        const project = await api('/api/quick-import', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: parsed.url, url2: parsed.url2 })
-        });
+        const choice = parsed.url2 || isBusinessProfileLink(parsed.url)
+          ? { mode: 'build', paying: false }
+          : await chooseWebsiteImport(status, parsed.url);
+        if (!choice) return;
+        let project;
+        if (choice.mode === 'build') {
+          if (status) setLoading(status, 'Reading the page…');
+          project = await api('/api/quick-import', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: parsed.url, url2: parsed.url2 })
+          });
+          if (choice.paying) await saveProjectFields(project.slug, { paymentStatus: 'paid' });
+        } else {
+          if (status) setLoading(status, choice.mode === 'copy' ? 'Copying every page and file — bigger sites take a minute…' : 'Linking the website…');
+          project = await api('/api/import-site', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: parsed.url, mode: choice.mode, paying: choice.paying })
+          });
+        }
         await loadProjects();
         await selectProject(project.slug);
-        notify(`Built a site for ${project.raw?.name || 'this business'}.`);
+        const site = project.importedSite;
+        const where = choice.paying ? ' — added to Clients' : '';
+        notify(!site ? `Built a site for ${project.raw?.name || 'this business'}${where}.`
+          : site.mode === 'copy'
+            ? `Imported ${businessName(project)} as it is — ${site.pages} page${site.pages === 1 ? '' : 's'}${site.skipped ? `, ${site.skipped} file${site.skipped === 1 ? '' : 's'} couldn’t be copied` : ''}${where}.`
+            : `Linked ${businessName(project)}${where}.`);
       } else if (parsed.mode === 'name') {
         if (status) setLoading(status, 'Adding…');
         const project = await api('/api/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: parsed.name }) });
@@ -974,14 +1037,15 @@
     if (!state.current) return renderStartScreen();
     const raw = state.current.raw || {};
     const profile = raw.businessProfile || {};
+    const site = state.current.importedSite;
 
     el.editor.innerHTML = `
       <div class="sales-block" id="salesBlock"></div>
       <div class="section-divider"><span>Website</span></div>
-      <div class="link-bar compact">
+      ${site ? importedSiteHtml(site) : `<div class="link-bar compact">
         <input id="f_link" type="text" placeholder="Paste a Facebook or Google Maps link…" value="${escapeAttr(state.current.lastImportUrl || state.current.contact?.facebookUrl || profile.mapsUrl || '')}">
         <button id="importBtn">${state.current.lastImportUrl ? 'Re-fetch' : 'Fetch'}</button>
-      </div>
+      </div>`}
       <div class="import-status" id="importStatus"></div>
 
       <div class="form-grid name-row">
@@ -1008,7 +1072,7 @@
       <div class="field"><label>Location / address</label>
         <input id="f_location" value="${escapeAttr(profile.address || raw.location || '')}"></div>
 
-      <div class="media-row-3">
+      ${site ? '' : `<div class="media-row-3">
         ${mediaSlot('logo', 'Logo')}
         ${mediaSlot('hero', 'Hero image')}
         <div class="media-slot" data-slot="gallery">
@@ -1035,19 +1099,9 @@
         </div>
         <div class="ai-edit-status" id="aiEditStatus"></div>
         ${editLogHtml()}
-      </div>
+      </div>`}
     `;
 
-    document.getElementById('importBtn').onclick = runImport;
-    const linkInput = document.getElementById('f_link');
-    let linkTimer = null;
-    linkInput.addEventListener('input', () => {
-      clearTimeout(linkTimer);
-      linkTimer = setTimeout(() => {
-        const value = linkInput.value.trim();
-        if (/^https?:\/\//i.test(value) && value !== (state.current.lastImportUrl || '')) runImport();
-      }, 400);
-    });
     document.getElementById('f_name').oninput = e => { setRaw({ name: e.target.value }); scheduleSave(); };
     document.getElementById('f_category').onchange = e => { setRaw({ tagline: e.target.value }); scheduleSave(); };
     document.getElementById('f_contactName').oninput = e => {
@@ -1066,6 +1120,28 @@
       setRaw({ location: e.target.value, businessProfile: { ...profile, address: e.target.value } });
       scheduleSave();
     };
+    if (site) wireImportedSite(site);
+    else wireSiteBuilderControls(raw);
+    renderSales();
+    if (!site) {
+      wirePlacementSuggestion();
+      maybeSuggestPlacement();
+    }
+  }
+
+  // The template side of the editor — link fetch, template, colour, photos
+  // and AI edits. An imported website has none of these.
+  function wireSiteBuilderControls(raw) {
+    document.getElementById('importBtn').onclick = runImport;
+    const linkInput = document.getElementById('f_link');
+    let linkTimer = null;
+    linkInput.addEventListener('input', () => {
+      clearTimeout(linkTimer);
+      linkTimer = setTimeout(() => {
+        const value = linkInput.value.trim();
+        if (/^https?:\/\//i.test(value) && value !== (state.current.lastImportUrl || '')) runImport();
+      }, 400);
+    });
     document.getElementById('templateGrid').addEventListener('click', e => {
       const tile = e.target.closest('.template-tile');
       if (!tile) return;
@@ -1108,9 +1184,49 @@
     document.querySelectorAll('.gallery-grid .thumb-remove').forEach(btn => (btn.onclick = () => removeGalleryItem(Number(btn.dataset.i))));
     wireMediaSlot('logo');
     wireMediaSlot('hero');
-    renderSales();
-    wirePlacementSuggestion();
-    maybeSuggestPlacement();
+  }
+
+  // Imported website (no template): where it came from, what was copied,
+  // and Re-import to fetch a fresh copy after the original changes.
+  function importedSiteHtml(site) {
+    let host = site.url;
+    try { host = new URL(site.url).hostname.replace(/^www\./, ''); } catch { /* show as saved */ }
+    const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+    const detail = site.mode === 'copy'
+      ? `Copied ${plural(site.pages || 0, 'page')} and ${plural(site.files || 0, 'file')} · ${timeAgo(site.importedAt)}${site.skipped ? ` · ${site.skipped} couldn’t be copied` : ''}`
+      : 'Stays hosted where it is — Studio doesn’t publish it';
+    return `
+      <div class="imported-site">
+        <div class="imported-site-head">
+          <span class="imported-site-badge">${site.mode === 'copy' ? 'Imported as it is' : 'Linked website'}</span>
+          <a href="#" id="importedSiteOpen" title="${escapeAttr(site.url)}">${escapeHtml(host)}</a>
+        </div>
+        ${site.mode === 'copy' ? '<button type="button" id="reimportSiteBtn">Re-import</button>' : ''}
+        <div class="imported-site-detail">${escapeHtml(detail)}</div>
+      </div>`;
+  }
+
+  function wireImportedSite(site) {
+    document.getElementById('importedSiteOpen').onclick = e => { e.preventDefault(); openExternal(site.url); };
+    const btn = document.getElementById('reimportSiteBtn');
+    if (!btn) return;
+    btn.onclick = async () => {
+      const slug = state.current.slug;
+      const status = document.getElementById('importStatus');
+      btn.disabled = true;
+      setLoading(status, 'Copying the website again…');
+      try {
+        const saved = await api(`/api/projects/${slug}/reimport-site`, { method: 'POST' });
+        if (state.current?.slug !== slug) return;
+        replaceCurrent(saved);
+        renderEditor();
+        await renderPreview();
+        notify(`Re-imported ${businessName(saved)} — ${saved.importedSite.pages} page${saved.importedSite.pages === 1 ? '' : 's'}.`);
+      } catch (err) {
+        btn.disabled = false;
+        showTempStatus(status, friendlyError(err.message));
+      }
+    };
   }
 
   // Cold-calling details for the open business, at the top of the form.
@@ -1586,7 +1702,7 @@
           continue;
         }
         try {
-          const html = await buildSiteHtml(p);
+          const html = p.importedSite ? importedMarker(p) : await buildSiteHtml(p);
           const result = await api(`/api/projects/${p.slug}/deploy`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ html })
           });
@@ -1610,6 +1726,51 @@
   api('/api/can-deploy').then(r => { state.canDeploy = r.canDeploy; renderLiveActions(); }).catch(() => {});
   setInterval(processDeployRequests, 10000);
 
+  // An imported website (see /api/import-site) shows as it is — a copied
+  // one from its own files on this computer, a linked one straight from
+  // where it's hosted. lastHtml becomes a marker of which import is on
+  // screen, so the usual "matches what's live" check still works: it only
+  // changes when the site is re-imported.
+  // Switching between another website and Studio's own pages gets a brand
+  // new frame, so nothing left from the other site (a page that refused to
+  // load, its history) can keep the preview stuck on it.
+  const isExternal = src => /^https?:/i.test(src || '');
+  function freshPreviewFrame() {
+    const fresh = el.preview.cloneNode(false);
+    fresh.removeAttribute('src');
+    fresh.removeAttribute('srcdoc');
+    fresh.onload = el.preview.onload;
+    el.preview.replaceWith(fresh);
+    el.preview = fresh;
+  }
+
+  const importedMarker = p => `imported:${p.importedSite.mode}:${p.importedSite.importedAt}`;
+  async function renderImportedPreview(opts = {}) {
+    const p = state.current;
+    const site = p.importedSite;
+    let src = site.url;
+    if (site.mode === 'copy') {
+      const base = `/projects/${p.slug}/site/`;
+      const here = await fetch(`${base}index.html`, { method: 'HEAD' }).then(r => r.ok).catch(() => false);
+      if (state.current?.slug !== p.slug) return;
+      if (!here) {
+        if (el.preview.hasAttribute('src')) freshPreviewFrame();
+        el.preview.srcdoc = '<div style="font:14px -apple-system,system-ui,sans-serif;padding:40px;color:#6b6f76">This website was copied on another computer — click <b>Re-import</b> to copy it onto this one.</div>';
+        delete el.preview.dataset.lastHtml;
+        return renderLiveActions();
+      }
+      // The query changes on every re-import, so the frame reloads.
+      src = `${base}?v=${encodeURIComponent(site.importedAt)}`;
+    }
+    const current = el.preview.getAttribute('src');
+    if (current !== src && (isExternal(current) || isExternal(src))) freshPreviewFrame();
+    el.preview.removeAttribute('srcdoc');
+    if (el.preview.getAttribute('src') !== src) el.preview.src = src;
+    el.preview.dataset.lastHtml = importedMarker(p);
+    if (opts.seedDeployed) p.deployedHtml = el.preview.dataset.lastHtml;
+    renderLiveActions();
+  }
+
   async function renderPreview(opts = {}) {
     if (!state.current || !state.current.raw?.name) {
       // Nothing to preview yet (e.g. a brand-new blank project) — clear
@@ -1621,6 +1782,8 @@
       return;
     }
     const slug = state.current.slug;
+    if (state.current.importedSite) return renderImportedPreview(opts);
+    if (el.preview.hasAttribute('src')) freshPreviewFrame();
     try {
       const html = await buildSiteHtml(state.current);
       if (state.current?.slug !== slug) return; // project switched mid-render
@@ -2173,6 +2336,7 @@ document.addEventListener('focusout',e=>{
     // Green already means "live and matching what's on screen" — clicking
     // it then opens the site instead of redeploying something unchanged.
     // Red/amber (never deployed, or deployed but stale) still deploy.
+    if (state.current?.importedSite?.mode === 'link') return openExternal(state.current.importedSite.url);
     if (el.deployBtn.classList.contains('status-live') && state.current?.liveUrl) {
       return openExternal(ownerUrl(state.current.liveUrl));
     }
@@ -2545,10 +2709,13 @@ document.addEventListener('focusout',e=>{
   const LAPSED_BILLING = ['cancelling', 'failed', 'cancelled'];
   const liveSection = p => LAPSED_BILLING.includes(p.billing?.status) ? 'urgent'
     : (p.billing?.status === 'active' || isPaid(p)) ? 'live' : 'pending';
-  const siteBuiltHere = p => Boolean(p.raw?.name);
+  // A linked website (imported, hosted elsewhere) is up but never published
+  // from Studio, so it gets no Make live / Take offline.
+  const isLinkedSite = p => p.importedSite?.mode === 'link';
+  const siteBuiltHere = p => Boolean(p.raw?.name) && !isLinkedSite(p);
   // Green = live, red = a site built here that isn't up, grey = no site
   // of ours (e.g. a customer added with their own existing website).
-  const siteState = p => p.liveUrl ? 'up' : siteBuiltHere(p) ? 'down' : 'none';
+  const siteState = p => p.liveUrl || isLinkedSite(p) ? 'up' : siteBuiltHere(p) ? 'down' : 'none';
 
   function billingNote(p) {
     const b = p.billing;
@@ -2573,7 +2740,10 @@ document.addEventListener('focusout',e=>{
     const dot = siteState(p);
     const busy = isDeployPending(p) ? 'Waiting to go live…' : isOfflinePending(p) ? 'Going offline…' : '';
     const badge = section === 'urgent' ? `<span class="crm-stage stage-urgent">${escapeHtml(billingNote(p))}</span>`
-      : section === 'live' ? '<span class="crm-stage stage-paid">Paying</span>' : '<span class="crm-stage stage-pending">Pending</span>';
+      : section === 'live' ? (p.paidOutsideStripe && !p.billing
+        ? '<span class="crm-stage stage-paid" title="Marked paid by hand — not through Stripe">Paying · not Stripe</span>'
+        : '<span class="crm-stage stage-paid">Paying</span>')
+      : '<span class="crm-stage stage-pending">Pending</span>';
     const dotTitle = dot === 'up' ? 'Site is live' : dot === 'down' ? 'Site is offline' : 'No site built in Studio';
     return `
       <div class="crm-row live-row ${section === 'live' && dot === 'down' ? 'is-offline' : ''}" ${p.notes ? `title="${escapeAttr(p.notes.trim())}"` : ''}>
@@ -2630,10 +2800,17 @@ document.addEventListener('focusout',e=>{
       </section>`;
     const alert = offline.length ? `
       <div class="live-alert">⚠️ <span><b>${offline.length} paying customer${offline.length === 1 ? '’s site is' : 's’ sites are'} offline:</b> ${offline.map(p => escapeHtml(businessName(p))).join(', ')} — click “Make live” to put ${offline.length === 1 ? 'it' : 'them'} back up.</span></div>` : '';
-    el.liveList.innerHTML = form + alert
+    // Urgent customers get the bottom half to themselves, so they can never
+    // be pushed out of sight by a long Pending/Live list — each half
+    // scrolls on its own, and keeps its place when the list re-renders.
+    const scrolls = ['.live-main', '.live-urgent'].map(s => el.liveList.querySelector(s)?.scrollTop || 0);
+    el.liveList.classList.toggle('has-urgent', urgent.length > 0);
+    el.liveList.innerHTML = `<div class="live-main">${form}${alert}`
       + half('Pending', pending, 'Nobody pending. Set “Paying?” to Pending on a business in the Leads tab, or click “+ Add customer”.')
       + half('Live', paying, 'No paying customers yet. They move here automatically once their Stripe subscription is active, or click “Mark paid”.')
-      + (urgent.length ? half('⚠️ Urgent — stopped paying or cancelled', urgent, '', 'is-urgent') : '');
+      + '</div>'
+      + (urgent.length ? `<div class="live-urgent">${half('⚠️ Urgent — stopped paying or cancelled', urgent, '', 'is-urgent')}</div>` : '');
+    ['.live-main', '.live-urgent'].forEach((s, i) => { const box = el.liveList.querySelector(s); if (box) box.scrollTop = scrolls[i]; });
     if (state.liveAdding) el.liveList.querySelector('input[name="name"]').focus();
   }
 
@@ -2771,7 +2948,7 @@ document.addEventListener('focusout',e=>{
       if (!url) return;
       openExternal(url);
       try { await saveProjectFields(slug, { paymentLink: { ...(projectBySlug(slug)?.paymentLink || {}), sentAt: new Date().toISOString() } }); } catch {}
-      render('Opened — press send there. Click “Mark as paid” once the payment has gone through.', true);
+      render('Opened — press send there. They move to Live by themselves once Stripe shows the payment.', true);
     };
     render();
     payDialog.showModal();
@@ -2878,7 +3055,7 @@ document.addEventListener('focusout',e=>{
     btn.disabled = true;
     btn.innerHTML = '<span class="status-spinner light"></span>Going live…';
     try {
-      const html = await buildSiteHtml(p);
+      const html = p.importedSite ? importedMarker(p) : await buildSiteHtml(p);
       const result = await api(`/api/projects/${slug}/deploy`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ html })
       });
@@ -2939,6 +3116,38 @@ document.addEventListener('focusout',e=>{
   }
   setInterval(() => { refreshBilling(); recheckLiveSites(); }, 5 * 60 * 1000);
 
+  // "Mark paid" goes by Stripe: paid there → Live straight away; lapsed →
+  // Urgent; nothing yet → stays Pending and moves by itself once they pay,
+  // unless they pay some other way (bank transfer, cash) — then by hand.
+  async function markPaid(slug, btn) {
+    const p = projectBySlug(slug);
+    if (!p) return;
+    btn.disabled = true;
+    btn.textContent = 'Checking Stripe…';
+    try {
+      const r = await api(`/api/projects/${slug}/check-payment`, { method: 'POST' });
+      rememberProject(r.project);
+      if (r.billing && ['active', 'paid'].includes(r.billing.status)) {
+        notify(`Stripe shows ${businessName(p)} has paid — moved to Live.`);
+      } else if (r.billing) {
+        notify(`${businessName(p)}’s Stripe payments have stopped (${billingNote(r.project)}) — shown under Urgent.`, { sticky: false });
+      } else {
+        const why = r.noStripe
+          ? 'Add your Stripe key in Settings (⚙) and paying customers move to Live by themselves.'
+          : 'They’ll move to Live by themselves as soon as they pay through Stripe.';
+        const ok = await showConfirm(
+          r.noStripe ? 'Stripe isn’t connected' : `No Stripe payment from ${businessName(p)} yet`,
+          `${why} Mark them paid anyway only if they pay another way — bank transfer or cash.`,
+          'Mark paid anyway');
+        if (ok) await saveProjectFields(slug, { paymentStatus: 'paid', paidOutsideStripe: true });
+      }
+    } catch (err) {
+      notify(friendlyError(err.message), { sticky: false });
+    } finally {
+      renderLive();
+    }
+  }
+
   el.liveTotals.addEventListener('click', e => {
     if (e.target.closest('[data-add-customer]')) { state.liveAdding = true; renderLive(); }
   });
@@ -2961,6 +3170,7 @@ document.addEventListener('focusout',e=>{
       const p = projectBySlug(btn.dataset.delete);
       return deleteProject(btn.dataset.delete, p ? businessName(p) : btn.dataset.delete);
     }
+    if (btn.dataset.status === 'paid') return markPaid(btn.dataset.slug, btn);
     if (btn.dataset.status) {
       btn.disabled = true;
       try {

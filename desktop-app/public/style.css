@@ -547,6 +547,25 @@ dialog .account-row button:disabled { opacity: 0.6; cursor: default; }
 .follow-up-done:hover { background: #ffeddf; }
 .follow-up-done:disabled { opacity: .6; cursor: default; }
 .sidebar .project .project-opened { color: #1f9d55; font-weight: 700; margin-left: 5px; font-size: 12px; }
+.preview-actions button[hidden] { display: none; }
+
+/* Imported website (no template) — shown in place of the link bar. */
+.imported-site { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 10px 12px; margin-bottom: 6px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.imported-site-head { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; font-size: 13px; font-weight: 600; }
+.imported-site-head a { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.imported-site-badge { flex: none; padding: 2px 8px; border-radius: 20px; background: var(--accent-tint); color: var(--accent); font-size: 11px; font-weight: 700; }
+.imported-site-detail { flex-basis: 100%; font-size: 12px; color: var(--muted); }
+.imported-site button { font-size: 12px; padding: 5px 11px; }
+
+/* "Import this website" choice under the build bar. */
+.site-import-choice { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; text-align: left; }
+.site-import-title { font-size: 12.5px; font-weight: 700; color: var(--ink); }
+.site-import-choice button[data-mode] { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); font-family: inherit; text-align: left; cursor: pointer; }
+.site-import-choice button[data-mode]:hover { border-color: var(--accent); background: var(--accent-tint); }
+.site-import-choice button[data-mode] b { font-size: 13px; color: var(--ink); }
+.site-import-choice button[data-mode] span { font-size: 11.5px; font-weight: 500; color: var(--muted); }
+.site-import-paying { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink); cursor: pointer; }
+.site-import-cancel { align-self: flex-start; padding: 2px 0; border: none; background: none; color: var(--muted); font-family: inherit; font-size: 12px; cursor: pointer; }
 .contact-btn {
   width: 38px;
   height: 38px;

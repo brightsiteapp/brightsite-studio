@@ -11,6 +11,7 @@ const businessSearch = require('./lib/business-search');
 const places = require('./lib/places');
 const sync = require('./lib/supabase-sync');
 const { deployToVercel, canDeploy, resetCanDeploy, takeOffline, addDomain, removeDomain } = require('./lib/deploy');
+const siteImport = require('./lib/site-import');
 const connections = require('./lib/connections');
 const stripe = require('./lib/stripe');
 const { version: APP_VERSION } = require('./package.json');
@@ -23,6 +24,18 @@ const GENERATOR_DIR = fs.existsSync(path.join(__dirname, '..', 'demo-generator.j
 function createApp() {
   const app = express();
   app.use(express.json({ limit: '2mb' }));
+  // Scripts on a copied website sometimes load files by root path
+  // ("/assets/app.js"), which in the preview would hit Studio itself —
+  // when the request comes from a copied site, serve that site's file.
+  app.use((req, res, next) => {
+    const m = /\/projects\/([\w-]+)\/site\//.exec(req.get('referer') || '');
+    if (!m || req.path.startsWith('/projects/') || req.path.startsWith('/api/')) return next();
+    const siteDir = path.join(storage.projectDir(m[1]), 'site');
+    let file;
+    try { file = path.join(siteDir, decodeURIComponent(req.path)); } catch { return next(); }
+    if (!file.startsWith(siteDir + path.sep)) return next();
+    fs.stat(file, (err, stat) => (err || !stat.isFile() ? next() : res.sendFile(file)));
+  });
   app.use(express.static(path.join(__dirname, 'public')));
   app.use('/generator', express.static(GENERATOR_DIR));
   app.use('/projects', express.static(storage.ROOT));
@@ -324,17 +337,51 @@ function createApp() {
   // Checks Stripe for each customer's subscription and saves it on their
   // record (so teammates without the Stripe key see it through sync). An
   // active subscription always puts the customer on the Live tab as paying.
+  // Stripe decides who's paying: an active subscription or a completed
+  // one-off payment makes a business paid (Live), a lapsed subscription
+  // shows as urgent (liveSection in app.js), no payment leaves it pending.
+  function billingPatch(project, billing) {
+    const patch = {};
+    if (project.billing?.status !== billing.status || (project.billing?.until || '') !== billing.until) patch.billing = billing;
+    if (['active', 'paid'].includes(billing.status) && project.paymentStatus !== 'paid') patch.paymentStatus = 'paid';
+    if (project.paidOutsideStripe) patch.paidOutsideStripe = false;
+    return patch;
+  }
+
+  // "Mark paid" asks Stripe first. Found → saved the way a refresh would;
+  // not found → billing: null, and the app offers "mark paid anyway".
+  app.post('/api/projects/:slug/check-payment', async (req, res) => {
+    const project = /^[\w-]+$/.test(req.params.slug) ? storage.readProject(req.params.slug) : null;
+    if (!project) return res.status(404).json({ error: 'Business not found' });
+    if (!stripe.getKey()) return res.json({ noStripe: true, billing: null, project });
+    try {
+      const billing = (await stripe.billingBySlug())[project.slug] || await stripe.billingForEmail(project.contact?.email);
+      if (!billing) return res.json({ billing: null, project });
+      const patch = billingPatch(project, billing);
+      if (!Object.keys(patch).length) return res.json({ billing, project });
+      const saved = storage.saveProject(project.slug, patch);
+      sync.pushOne(saved);
+      res.json({ billing, project: saved });
+    } catch (err) {
+      res.status(502).json({ error: `Couldn’t check Stripe: ${err.message}` });
+    }
+  });
+
   app.post('/api/billing/refresh', async (req, res) => {
     if (!stripe.getKey()) return res.json({ skipped: true, changed: [] });
     try {
       const bySlug = await stripe.billingBySlug();
+      // Pending customers who paid without one of Studio's links: by email.
+      for (const p of storage.listProjects()) {
+        if (bySlug[p.slug] || p.paymentStatus !== 'pending' || !p.contact?.email) continue;
+        const billing = await stripe.billingForEmail(p.contact.email).catch(() => null);
+        if (billing) bySlug[p.slug] = billing;
+      }
       const changed = [];
       for (const [slug, billing] of Object.entries(bySlug)) {
         const project = storage.readProject(slug);
         if (!project) continue;
-        const patch = {};
-        if (project.billing?.status !== billing.status || (project.billing?.until || '') !== billing.until) patch.billing = billing;
-        if (billing.status === 'active' && project.paymentStatus !== 'paid') patch.paymentStatus = 'paid';
+        const patch = billingPatch(project, billing);
         if (!Object.keys(patch).length) continue;
         sync.pushOne(storage.saveProject(slug, patch));
         changed.push(slug);
@@ -450,6 +497,53 @@ function createApp() {
       res.json(saved);
     } catch (err) {
       res.status(502).json({ error: `Could not read that page: ${err.message}` });
+    }
+  });
+
+  // Import an existing website as it is — no templates. "link" points the
+  // preview (and Clients) at a site hosted elsewhere; "copy" downloads its
+  // pages and files into the project's site/ folder (lib/site-import.js)
+  // so Studio can preview and publish it unchanged.
+  app.post('/api/import-site', async (req, res) => {
+    const url = siteImport.normalizeUrl(req.body?.url);
+    const mode = req.body?.mode === 'copy' ? 'copy' : 'link';
+    if (!url) return res.status(400).json({ error: 'A website link is required' });
+    let project;
+    try {
+      const name = await siteImport.siteName(url);
+      project = storage.createProject(name);
+      const importedSite = { mode, url, importedAt: new Date().toISOString() };
+      if (mode === 'copy') {
+        const result = await siteImport.importSite(url, path.join(storage.projectDir(project.slug), 'site'));
+        Object.assign(importedSite, result);
+      }
+      const saved = storage.saveProject(project.slug, {
+        raw: { name },
+        contact: { ...project.contact, existingWebsite: importedSite.url },
+        paymentStatus: req.body?.paying ? 'paid' : project.paymentStatus,
+        paidOutsideStripe: Boolean(req.body?.paying),
+        importedSite
+      });
+      sync.pushOne(saved);
+      res.json(saved);
+    } catch (err) {
+      if (project) try { storage.deleteProject(project.slug); } catch { /* nothing to undo */ }
+      res.status(502).json({ error: `Could not import that website: ${err.message}` });
+    }
+  });
+
+  app.post('/api/projects/:slug/reimport-site', async (req, res) => {
+    const slug = req.params.slug;
+    const project = /^[\w-]+$/.test(slug) ? storage.readProject(slug) : null;
+    const site = project?.importedSite;
+    if (site?.mode !== 'copy') return res.status(400).json({ error: 'This isn’t a copied website' });
+    try {
+      const result = await siteImport.importSite(site.url, path.join(storage.projectDir(slug), 'site'));
+      const saved = storage.saveProject(slug, { importedSite: { ...site, ...result, importedAt: new Date().toISOString() } });
+      sync.pushOne(saved);
+      res.json(saved);
+    } catch (err) {
+      res.status(502).json({ error: `Could not re-import: ${err.message}` });
     }
   });
 
@@ -607,24 +701,54 @@ function createApp() {
     // The preview points uploaded photos at this local server; the export
     // ships its own copy of img/, so make those links relative.
     const local = new RegExp(`https?://(?:localhost|127\\.0\\.0\\.1):\\d+/projects/${slug.replace(/[^\w-]/g, '\\$&')}/`, 'g');
-    let out = html.replace(local, '');
-    const beacon = sync.viewBeaconScript(slug);
-    const bodyEnd = out.toLowerCase().lastIndexOf('</body>');
-    out = bodyEnd === -1 ? out + beacon : out.slice(0, bodyEnd) + beacon + out.slice(bodyEnd);
-    fs.writeFileSync(path.join(outDir, 'index.html'), out);
+    fs.writeFileSync(path.join(outDir, 'index.html'), withBeacon(html.replace(local, ''), slug));
     const srcImg = path.join(dir, 'img');
     const outImg = path.join(outDir, 'img');
     if (fs.existsSync(srcImg)) fs.cpSync(srcImg, outImg, { recursive: true });
     return outDir;
   }
 
+  // The "Demo opened" counter (see lib/supabase-sync.js) goes just before
+  // </body> on every published page.
+  function withBeacon(html, slug) {
+    const beacon = sync.viewBeaconScript(slug);
+    const bodyEnd = html.toLowerCase().lastIndexOf('</body>');
+    return bodyEnd === -1 ? html + beacon : html.slice(0, bodyEnd) + beacon + html.slice(bodyEnd);
+  }
+
+  // A copied website (lib/site-import.js) publishes its own files as they
+  // are, with the view counter added to each page.
+  function writeImportedExport(slug) {
+    const dir = storage.projectDir(slug);
+    const siteDir = path.join(dir, 'site');
+    if (!fs.existsSync(path.join(siteDir, 'index.html'))) {
+      throw new Error('The copied website isn’t on this computer yet — open it and click Re-import first');
+    }
+    const outDir = path.join(dir, 'export');
+    fs.rmSync(outDir, { recursive: true, force: true });
+    fs.cpSync(siteDir, outDir, { recursive: true });
+    for (const file of siteImport.htmlFiles(outDir)) {
+      fs.writeFileSync(file, Buffer.from(withBeacon(fs.readFileSync(file, 'latin1'), slug), 'latin1'));
+    }
+    return outDir;
+  }
+
+  // A linked website is hosted elsewhere, so there's nothing to publish.
+  function exportFor(slug, html) {
+    const site = storage.readProject(slug)?.importedSite;
+    if (site?.mode === 'link') {
+      throw Object.assign(new Error('This website is hosted elsewhere — Studio only links to it'), { status: 400 });
+    }
+    if (site?.mode === 'copy') return writeImportedExport(slug);
+    if (!html) throw Object.assign(new Error('html is required'), { status: 400 });
+    return writeExport(slug, html);
+  }
+
   app.post('/api/projects/:slug/export', (req, res) => {
-    const html = req.body?.html;
-    if (!html) return res.status(400).json({ error: 'html is required' });
     try {
-      res.json({ path: writeExport(req.params.slug, html) });
+      res.json({ path: exportFor(req.params.slug, req.body?.html) });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(err.status || 500).json({ error: err.message });
     }
   });
 
@@ -660,10 +784,8 @@ function createApp() {
   });
 
   app.post('/api/projects/:slug/deploy', async (req, res) => {
-    const html = req.body?.html;
-    if (!html) return res.status(400).json({ error: 'html is required' });
     try {
-      const outDir = writeExport(req.params.slug, html);
+      const outDir = exportFor(req.params.slug, req.body?.html);
       const url = await deployToVercel(outDir, req.params.slug);
       const saved = storage.saveProject(req.params.slug, { liveUrl: url, deployRequestedAt: '', offlineRequestedAt: '', deployError: '' });
       sync.pushOne(saved);
@@ -672,7 +794,7 @@ function createApp() {
       const message = err.message === 'vercel-not-found'
         ? 'Vercel CLI not found — install it with `npm install -g vercel` and run `vercel login` once.'
         : err.message;
-      res.status(502).json({ error: message });
+      res.status(err.status || 502).json({ error: message });
     }
   });
 

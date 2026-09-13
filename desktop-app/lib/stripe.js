@@ -76,11 +76,16 @@ async function createPaymentLink({ business, slug, planName, setup, amount, inte
   return (await call('payment_links', params)).url;
 }
 
-// Where each customer's subscription stands, keyed by business slug:
-// 'active', 'cancelling' (cancelled, runs until `until`), 'failed' (payment
-// failing) or 'cancelled'. Found through the payment links Studio made
-// (tagged with brightsite_slug) and the checkouts completed on them.
-const BILLING_RANK = { active: 4, cancelling: 3, failed: 2, cancelled: 1 };
+// Where each customer's payments stand, keyed by business slug: 'active',
+// 'cancelling' (cancelled, runs until `until`), 'failed' (payment failing),
+// 'cancelled', or 'paid' — a one-off payment with no subscription (a
+// setup-only plan). Found through the payment links Studio made (tagged
+// with brightsite_slug) and the checkouts completed on them, or — for a
+// payment taken some other way in Stripe — the customer's email.
+// Any subscription outranks a one-off payment, and an active one outranks
+// a lapsed one (a customer who re-subscribed has both).
+const BILLING_RANK = { active: 4, cancelling: 3, failed: 2, cancelled: 1, paid: 0 };
+const better = (current, next) => (!current || BILLING_RANK[next.status] > BILLING_RANK[current.status] ? next : current);
 
 function billingOf(sub) {
   const until = sub.cancel_at ? new Date(sub.cancel_at * 1000).toISOString() : '';
@@ -97,13 +102,28 @@ async function billingBySlug() {
     const slug = link.metadata.brightsite_slug;
     const sessions = (await call(`checkout/sessions?payment_link=${link.id}&status=complete&limit=20&expand[]=data.subscription`)).data;
     for (const session of sessions) {
-      if (!session.subscription || typeof session.subscription !== 'object') continue;
-      const billing = billingOf(session.subscription);
-      // A customer who re-subscribed has an active one alongside the old one.
-      if (!out[slug] || BILLING_RANK[billing.status] > BILLING_RANK[out[slug].status]) out[slug] = billing;
+      if (session.subscription && typeof session.subscription === 'object') out[slug] = better(out[slug], billingOf(session.subscription));
+      else if (session.payment_status === 'paid') out[slug] = better(out[slug], { status: 'paid', until: '' });
     }
   }
   return out;
 }
 
-module.exports = { getKey, setKey, status, testKey, createPaymentLink, billingBySlug };
+// The same answer for a customer who paid without one of Studio's links,
+// matched on their email. Checkouts that were never paid don't count.
+async function billingForEmail(email) {
+  if (!getKey() || !email) return null;
+  let found = null;
+  const customers = (await call(`customers?email=${encodeURIComponent(email)}&limit=5`)).data;
+  for (const customer of customers) {
+    const subs = (await call(`subscriptions?customer=${customer.id}&status=all&limit=10`)).data
+      .filter(sub => !['incomplete', 'incomplete_expired'].includes(sub.status));
+    subs.forEach(sub => { found = better(found, billingOf(sub)); });
+    if (subs.length) continue;
+    const charges = (await call(`charges?customer=${customer.id}&limit=10`)).data;
+    if (charges.some(c => c.paid && !c.refunded)) found = better(found, { status: 'paid', until: '' });
+  }
+  return found;
+}
+
+module.exports = { getKey, setKey, status, testKey, createPaymentLink, billingBySlug, billingForEmail, billingOf, better };

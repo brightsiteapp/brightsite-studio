@@ -1,6 +1,6 @@
 {
   "name": "brightsite-studio",
-  "version": "0.2.20",
+  "version": "0.2.21",
   "private": true,
   "description": "Personal Mac app for building BrightSite demo websites fast from a Facebook/Google Business link",
   "main": "main.js",
