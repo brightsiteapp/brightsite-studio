@@ -911,14 +911,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const controls = document.createElement('div');
   controls.className = 'builder-glass-tools';
-  const whatsappIcon = builderChatPill.querySelector('svg').outerHTML;
+  const messageIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.3 8.9 8.9 0 0 1-3.9-.9L3 20.5l1.6-4.6A8.1 8.1 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3.2 8.4 8.4 0 0 1 21 11.5z"/><path d="M8.5 11.5h.01M12.5 11.5h.01M16.5 11.5h.01" stroke-width="2.6"/></svg>';
   controls.innerHTML = `<div class="builder-options" id="builderOptions" hidden></div>
-    <button type="button" class="glass-circle whatsapp-circle" data-tool="send" aria-label="Contact designer" aria-expanded="false">${whatsappIcon}</button>
+    <button type="button" class="glass-circle whatsapp-circle" data-tool="send" aria-label="Contact designer" aria-expanded="false">${messageIcon}</button>
     <button type="button" class="glass-circle" data-tool="colour" aria-label="Choose colours" aria-expanded="false"><span class="palette-orb"></span></button>
     <button type="button" class="glass-circle" data-tool="font" aria-label="Choose fonts" aria-expanded="false"><span class="font-orb">Aa</span></button>
     <button type="button" class="glass-circle" data-tool="layout" aria-label="Choose layout" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 10h18M12 10v11"/></svg></button>`;
   builderBarWrap.append(controls);
-  builderChatPill.textContent = 'Send To Designer';
+  builderChatPill.textContent = 'WhatsApp';
   builderChatPill.className = 'designer-send';
   builderChatPill.hidden = true;
   const mobileActions = document.createElement('div');
@@ -1062,7 +1062,9 @@ document.addEventListener('DOMContentLoaded', () => {
     mobileChoices.hidden = true;
     mobileSubmit.setAttribute('aria-expanded', 'false');
     if (action === 'whatsapp') builderChatPill.click();
-    if (action === 'email') {
+    if (action === 'email') sendDesignEmail();
+  });
+  function sendDesignEmail() {
       const businessName = bizNameInput.value.trim();
       const design = selectedDesignSummary();
       const message = `Hi, I'd like you to finish my website.
@@ -1081,8 +1083,7 @@ Colour palette: ${design.palette}`;
         Location: bizLocation.value.trim() || 'Not provided', Template: design.template,
         Font: design.font, 'Colour scheme': design.palette
       }, []).then(sent => { status.textContent = sent ? 'Your design details have been emailed to Tom.' : 'Please press Send in your email app to reach Tom.'; });
-    }
-  });
+  }
   // Finger travel per option. Roughly double the old 34px so a slow drag
   // steps through fonts/colours deliberately rather than skipping several.
   const SWIPE_STEP_PX = 68;
@@ -1231,7 +1232,12 @@ Colour palette: ${design.palette}`;
     options.hidden = false;
     options.setAttribute('aria-label', `Choose ${activeTool}`);
     if (activeTool === 'send') {
-      options.replaceChildren(builderChatPill);
+      const emailButton = document.createElement('button');
+      emailButton.type = 'button';
+      emailButton.className = 'designer-send designer-email';
+      emailButton.dataset.sendEmail = 'true';
+      emailButton.textContent = 'Email';
+      options.replaceChildren(builderChatPill, emailButton);
       builderChatPill.hidden = false;
     } else if (activeTool === 'colour') {
       options.innerHTML = `<div class="palette-tabs" role="group" aria-label="Palette mood">${Object.keys(palettes).map(f => `<button type="button" data-family="${f}" aria-pressed="${f === paletteFamily}">${f}</button>`).join('')}</div><div class="palette-scroll">${palettes[paletteFamily].map(([name,hex]) => { const t = tonesFromHex(hex); return `<button type="button" class="palette-choice" data-colour="${hex}" data-palette-name="${name}" aria-label="${name} palette"><span style="background:${t.light}"></span><span style="background:${t.base}"></span><span style="background:${t.dark}"></span><small>${name}</small></button>`; }).join('')}</div><p>Swipe to explore colours</p>`;
@@ -1268,6 +1274,9 @@ Colour palette: ${design.palette}`;
     if (!button) return;
     if (button.dataset.tool) {
       openTool(button.dataset.tool);
+    } else if (button.dataset.sendEmail) {
+      closeOptions();
+      sendDesignEmail();
     } else if (button.dataset.family) {
       paletteFamily = button.dataset.family;
       renderOptions();
