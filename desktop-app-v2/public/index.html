@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BrightSite Studio V2</title>
+<link rel="icon" href="icon.png">
+<!-- V1's stylesheet (served from ../desktop-app/public) for everything V2
+     reuses — settings, dialogs, builder, preview, loading screen — with
+     V2's own layer on top. -->
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="v2.css">
+</head>
+<body class="v2">
+<div id="loadingScreen">
+  <div class="loading-logo">
+    <div class="loading-letters" id="loadingLetters">
+      <span class="ll-letter" style="--i:0; left:0px; width:41.44px; mask-position:0px 0;"></span>
+      <span class="ll-letter" style="--i:1; left:45.88px; width:39.96px; mask-position:-45.88px 0;"></span>
+      <span class="ll-letter" style="--i:2; left:90.28px; width:14.06px; mask-position:-90.28px 0;"></span>
+      <span class="ll-letter" style="--i:3; left:108.04px; width:48.1px; mask-position:-108.04px 0;"></span>
+      <span class="ll-letter" style="--i:4; left:159.1px; width:43.66px; mask-position:-159.1px 0;"></span>
+      <span class="ll-letter" style="--i:5; left:205.72px; width:39.22px; mask-position:-205.72px 0;"></span>
+      <span class="ll-letter" style="--i:6; left:244.94px; width:39.96px; mask-position:-244.94px 0;"></span>
+      <span class="ll-letter ll-i2body" style="--i:7; left:289.34px; width:13.32px; mask-position:-289.34px -16.28px;"></span>
+      <span class="ll-dot" style="--i:7; left:289.34px; width:13.32px;"></span>
+      <span class="ll-letter" style="--i:8; left:305.62px; width:38.48px; mask-position:-305.62px 0;"></span>
+      <span class="ll-letter" style="--i:9; left:346.32px; width:34.78px; mask-position:-346.32px 0;"></span>
+    </div>
+  </div>
+  <div class="ls-update" aria-live="polite">
+    <div class="ls-update-line"><span class="ls-spinner" aria-hidden="true"></span><span id="lsUpdateText">Checking for updates…</span></div>
+    <button type="button" class="ls-skip" id="lsSkip" hidden>Continue without updating</button>
+  </div>
+</div>
+<script src="launch-gate.js"></script>
+
+<div class="v2-app">
+  <nav class="v2-rail" aria-label="Main">
+    <div class="v2-rail-logo"><img src="icon.png" alt="BrightSite"></div>
+    <button type="button" class="v2-nav is-active" data-view="pipeline">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="9.5" y="4" width="5" height="11" rx="1.5"/><rect x="16" y="4" width="5" height="7" rx="1.5"/></svg>
+      <span>Pipeline</span><b class="v2-nav-badge" id="v2PipelineBadge" hidden></b>
+    </button>
+    <button type="button" class="v2-nav" data-view="tasks">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 12.5l2.7 2.7L16 9.8"/></svg>
+      <span>Tasks</span><b class="v2-nav-badge" id="v2TasksBadge" hidden></b>
+    </button>
+    <button type="button" class="v2-nav" id="v2SettingsBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+      <span>Settings</span><i class="v2-update-dot" id="v2UpdateDot" title="A new version is ready" hidden></i>
+    </button>
+    <div class="v2-rail-foot">
+      <div id="v2BellSlot"></div>
+      <span class="v2-sync" id="v2Sync" hidden></span>
+    </div>
+  </nav>
+
+  <main class="v2-main">
+    <div id="v2Strips"></div>
+
+    <section class="v2-view" id="v2PipelineView">
+      <header class="v2-page-head">
+        <div class="v2-page-title"><h1>Pipeline</h1><p class="v2-summary" id="v2Summary"></p></div>
+        <div class="v2-add">
+          <div class="link-bar">
+            <input id="v2AddInput" type="text" placeholder="Add a lead — paste a link, type a name, or ask AI to find some…">
+            <button id="v2AddBtn">Build website</button>
+          </div>
+          <div class="v2-add-pop"><div class="import-status" id="v2AddStatus"></div></div>
+        </div>
+        <div class="v2-head-tools">
+          <input id="v2Search" class="v2-search" type="search" placeholder="Search…" autocomplete="off">
+          <button type="button" class="v2-btn ghost" id="v2ArchivedBtn" hidden></button>
+        </div>
+      </header>
+      <div class="v2-archived" id="v2Archived" hidden></div>
+      <div class="v2-board" id="v2Board"></div>
+    </section>
+
+    <section class="v2-view" id="v2TasksView" hidden>
+      <header class="v2-page-head">
+        <div class="v2-page-title"><h1>Tasks</h1><p class="v2-summary">One-off jobs. Building, sending and follow-ups are handled by the Pipeline.</p></div>
+      </header>
+      <form class="v2-task-add" id="v2TaskForm" autocomplete="off">
+        <input name="text" placeholder="Add a task — e.g. Update Bella Beauty gallery" required>
+        <select name="slug" id="v2TaskBiz" title="Business"><option value="">No business</option></select>
+        <input name="due" type="date" title="Due date">
+        <select name="type" id="v2TaskType" title="Type"></select>
+        <button class="v2-btn primary" type="submit">Add task</button>
+      </form>
+      <div class="v2-task-scroll">
+        <div class="v2-task-list" id="v2TaskList"></div>
+        <button type="button" class="v2-link v2-done-toggle" id="v2DoneToggle" hidden></button>
+        <div class="v2-task-list is-done" id="v2DoneList" hidden></div>
+      </div>
+    </section>
+
+    <section class="v2-view" id="v2ProfileView" hidden>
+      <header class="v2-profile-head" id="v2ProfileHead"></header>
+      <div id="v2ProfileAlert"></div>
+      <div class="v2-profile-body">
+        <aside class="v2-details" id="v2Details">
+          <section class="v2-panel" id="v2dContact"></section>
+          <section class="v2-panel" id="v2dLinks"></section>
+          <section class="v2-panel" id="v2dInfo"></section>
+          <section class="v2-panel" id="v2dNotes"></section>
+          <section class="v2-panel" id="v2dTasks"></section>
+        </aside>
+        <section class="v2-site-col">
+          <div id="v2BuildBanner"></div>
+          <div class="v2-site" id="v2Site">
+            <div class="v2-edit-bar">
+              <button type="button" class="v2-btn" data-act="edit-done">‹ Back to profile</button>
+              <div class="v2-edit-title">Editing <b id="v2EditTitle"></b></div>
+              <span class="v2-edit-hint">Changes save automatically</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="v1Hidden" hidden></div>
+<div class="v2-toast" id="v2Toast" role="status" hidden></div>
+
+<!-- The shared site generator, exactly as V1 loads it. -->
+<script src="/generator/template-designs.js"></script>
+<script src="/generator/fresh-templates.js"></script>
+<script src="/generator/demo-generator.js"></script>
+<script src="/generator/hero-brand-compositor.js"></script>
+<script src="/generator/logo-realistic-placement.js"></script>
+
+<script src="pipeline.js"></script>
+<script src="v2.js"></script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+{
+  "name": "brightsite-studio-v2",
+  "productName": "BrightSite Studio V2",
+  "version": "2.0.0",
+  "private": true,
+  "description": "BrightSite Studio V2 — the same Studio, with a simple pipeline, tasks and business profiles",
+  "main": "main.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "electron .",
+    "server": "node server.js",
+    "build": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "test": "node --test tests/*.test.js"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9",
+    "express": "^4.22.2",
+    "multer": "^1.4.5-lts.2"
+  },
+  "devDependencies": {
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "app.brightsite.studio.v2",
+    "productName": "BrightSite Studio V2",
+    "files": [
+      "main.js",
+      "server.js",
+      "package.json",
+      "lib/**/*",
+      "public/**/*",
+      {
+        "from": "../desktop-app",
+        "to": "v1",
+        "filter": [
+          "server.js",
+          "preload.js",
+          "package.json",
+          "lib/**/*",
+          "public/**/*"
+        ]
+      }
+    ],
+    "extraResources": [
+      {
+        "from": "..",
+        "to": "generator",
+        "filter": [
+          "demo-generator.js",
+          "template-designs.js",
+          "fresh-templates.js",
+          "hero-brand-compositor.js",
+          "hero-palette.js",
+          "logo-realistic-placement.js",
+          "img/**/*"
+        ]
+      }
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "wellnesswebsolutions",
+        "repo": "brightsite-studio-v2",
+        "releaseType": "release"
+      }
+    ],
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.productivity",
+      "icon": "../desktop-app/public/icon.png",
+      "artifactName": "BrightSite-Studio-V2-${version}-${arch}.${ext}"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "../desktop-app/public/icon.png"
+    },
+    "nsis": {
+      "artifactName": "BrightSite-Studio-V2-Setup-${version}.${ext}",
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
