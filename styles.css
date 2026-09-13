@@ -1458,6 +1458,8 @@ html,body{max-width:100%}
 .management-line b{color:var(--ink)}
 #handoffStatus{margin:0 auto 8px;max-width:780px;text-align:center;font-size:13px;color:#26344c;background:#fff}
 #handoffStatus:empty{display:none}
+.account-cta{display:block;margin:0 auto 10px;max-width:780px;text-align:center;font-size:13px;font-weight:600;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.account-cta:hover{color:var(--ink)}
 @media(max-width:700px){
 .home-price-grid{grid-template-columns:1fr}
 .mobile-demo-cta{display:none}

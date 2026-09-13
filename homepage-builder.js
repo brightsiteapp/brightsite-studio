@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const builderDeviceDesktop = document.getElementById('builderDeviceDesktop');
   const builderDeviceMobile = document.getElementById('builderDeviceMobile');
   const builderChatPill = document.getElementById('builderChatPill');
+  const accountCta = document.getElementById('accountCta');
 
   const creatingOverlay = document.getElementById('creatingOverlay');
   const creatingVerb = document.getElementById('creatingVerb');
@@ -740,6 +741,16 @@ document.addEventListener('DOMContentLoaded', () => {
       setDocumentScrollLock(true);
 
       postLead(name, 'Demo created — ' + bizTagline.value + ' in ' + loc).catch(() => {});
+
+      // let the client jump straight into self-managing this preview's
+      // content — carries the same slug the generated site's own
+      // account-link icon will guess (see fresh-templates.js), so both
+      // paths land the customer on the same account/business row.
+      if (accountCta) {
+        const previewSlug = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+        accountCta.href = `account/login.html?slug=${encodeURIComponent(previewSlug)}&signup=1`;
+        accountCta.hidden = false;
+      }
     } catch (error) {
       console.error(error);
       creatingOverlay.classList.remove('active');
