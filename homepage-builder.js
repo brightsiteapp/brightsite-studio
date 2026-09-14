@@ -677,6 +677,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const previewSlug = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
     const params = new URLSearchParams({ slug: previewSlug, signup: '1' });
     if (email) params.set('email', email);
+    if (name) params.set('name', name);
     return `${location.origin}/account/login.html?${params.toString()}`;
   }
 
