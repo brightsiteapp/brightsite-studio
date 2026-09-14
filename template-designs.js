@@ -217,6 +217,18 @@ function templateDesignCSS() {
   @media(prefers-reduced-motion:reduce){.reveal{opacity:1!important;transform:none!important}.motion-track{height:auto!important}.motion-sticky{position:static}.layout-kinetic .motion-rail{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));transform:none!important;will-change:auto}.layout-kinetic .motion-rail> *{min-width:0}.scroll-progress{display:none}}
   @media(prefers-reduced-motion:reduce) and (max-width:760px){.layout-kinetic .motion-rail{grid-template-columns:1fr}}
   ${studioLayoutCSS()}
+  /* Safety net: every layout above sets its own unconditional (non-media)
+     card heading size for desktop impact, which — tied in specificity and
+     declared later — silently wins over the responsive mobile size set
+     earlier in this file. On a narrow 2-column card a single long word
+     ("Bookkeeping", "Consultation") then overflows the card edge. Re-cap
+     it here, last in the cascade and specificity-matched, so every layout
+     gets a mobile-safe size regardless of what it set above. */
+  @media(max-width:760px){
+    .card-content.card-content h3{font-size:22px;line-height:1.15;overflow-wrap:anywhere}
+    .service-card:first-child .card-content.card-content h3{font-size:22px}
+  }
+  @media(max-width:380px){.card-content.card-content h3{font-size:20px}}
   /* Services / prices page — compact menu rows across every visual style. */
   .service-directory{padding-top:32px}.service-group{margin-bottom:52px}.group-heading{margin-bottom:16px}
   .directory-grid{display:block!important;border-top:1px solid var(--line)}
