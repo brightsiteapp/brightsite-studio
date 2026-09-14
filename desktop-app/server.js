@@ -71,6 +71,7 @@ function createApp(options = {}) {
   });
 
   app.get('/api/sync-status', (req, res) => res.json(sync.getStatus()));
+  app.get('/api/accounts', async (req, res) => res.json({ enabled: sync.accountsEnabled(), accounts: await sync.fetchAccounts() }));
   app.get('/api/demo-views', async (req, res) => res.json(await sync.pullDemoViews()));
   app.get('/api/can-deploy', async (req, res) => res.json({ canDeploy: await canDeploy() }));
   app.get('/api/app-info', (req, res) => res.json({ version: appVersion }));

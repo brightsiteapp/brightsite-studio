@@ -107,6 +107,28 @@ Env vars `SUPABASE_URL` / `SUPABASE_ANON_KEY` still override
 `shared-config.js` if set, useful for testing against a different project
 without editing that file.
 
+## Accounts tab (customer logins from account/login.html)
+
+Studio's **Accounts** tab lists everyone who has signed up at
+`account/login.html` (Supabase Auth) and the business each has designed via
+`account/dashboard.html` (their row in `businesses`, matched by
+`user_id` — see `supabase/business_owners.sql`).
+
+Reading the list of signed-up users needs Supabase's **service role**
+key — the anon key can't see `auth.users`. Set it as an env var before
+starting the app:
+
+```
+export SUPABASE_SERVICE_ROLE_KEY=... # Supabase dashboard → Settings → API
+```
+
+Deliberately **not** added to `shared-config.js`: unlike the anon key, the
+service role key bypasses Row Level Security entirely, so bundling it into
+the packaged app would give every install (and anyone who decompiles it)
+full admin access to every customer's data. Set it only on the machine(s)
+running Studio for admin use — without it, the Accounts tab just shows
+"not connected yet" and the rest of the app works exactly as before.
+
 ## Publishing app updates
 
 Installed copies check GitHub Releases on

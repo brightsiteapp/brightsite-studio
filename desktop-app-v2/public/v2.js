@@ -76,6 +76,7 @@
     renderNav();
     if (v2.view === 'pipeline') renderBoard();
     else if (v2.view === 'tasks') renderTasks();
+    else if (v2.view === 'accounts') renderAccounts();
     else if (v2.view === 'profile') renderProfile();
   }
   document.addEventListener('studio:projects', render);
@@ -91,6 +92,7 @@
     if (slug) v2.slug = slug;
     $('#v2PipelineView').hidden = view !== 'pipeline';
     $('#v2TasksView').hidden = view !== 'tasks';
+    $('#v2AccountsView').hidden = view !== 'accounts';
     $('#v2SettingsView').hidden = view !== 'settings';
     $('#v2ProfileView').hidden = view !== 'profile';
     $$('.v2-nav[data-view]').forEach(b => b.classList.toggle('is-active', b.dataset.view === (view === 'profile' ? 'pipeline' : view)));
@@ -1434,6 +1436,43 @@
     form.reset();
     form.elements.text.focus();
   });
+
+  // ---------------- accounts (customer logins at account/login.html) ----------------
+  let accountsCache = null;
+  async function renderAccounts() {
+    const mount = $('#v2Accounts');
+    if (!accountsCache) {
+      mount.innerHTML = '<p class="v2-empty v2-empty-big">Loading accounts…</p>';
+      try {
+        accountsCache = await (await fetch('/api/accounts')).json();
+      } catch {
+        accountsCache = { enabled: false, accounts: [] };
+      }
+    }
+    if (v2.view !== 'accounts') return;
+    if (!accountsCache.enabled) {
+      mount.innerHTML = '<p class="v2-empty v2-empty-big">Accounts aren’t connected yet — set SUPABASE_SERVICE_ROLE_KEY for this app to list customer logins here.</p>';
+      return;
+    }
+    const accounts = accountsCache.accounts.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    mount.innerHTML = accounts.length ? `<div class="v2-task-list">${accounts.map(accountRow).join('')}</div>`
+      : '<p class="v2-empty v2-empty-big">No customer accounts yet.</p>';
+  }
+  function accountRow(a) {
+    const sites = a.sites.length
+      ? a.sites.map(s => `<button type="button" class="v2-task-biz" data-biz="${esc(s.slug)}">${esc(s.name || s.slug)}</button>`).join(' ')
+      : '<span class="v2-task-type">No site designed yet</span>';
+    return `<div class="v2-task">
+      <span class="v2-task-text">${esc(a.email || a.id)}</span>
+      ${sites}
+      <span class="v2-task-due">${a.createdAt ? new Date(a.createdAt).toLocaleDateString() : ''}</span>
+    </div>`;
+  }
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('#v2Accounts [data-biz]');
+    if (btn) openProfile(btn.dataset.biz);
+  });
+
   document.addEventListener('submit', async e => {
     if (e.target.dataset.form !== 'profile-task') return;
     e.preventDefault();

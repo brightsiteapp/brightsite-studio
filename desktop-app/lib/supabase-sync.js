@@ -28,6 +28,48 @@ function enabled() {
   return !!(url && key);
 }
 
+// Service role key, for admin-only reads (listing customer accounts) that
+// the anon key can't do — auth.users isn't exposed to it. Deliberately env
+// var only, never bundled in shared-config.js: unlike the anon key, this
+// key bypasses RLS entirely, so shipping it in the packaged app would hand
+// every install full admin access to every customer's data.
+function accountsEnabled() {
+  const { url } = config();
+  return !!(url && process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
+// One account per Supabase Auth user (account/login.html signups), with
+// the business(es) they've designed via account/dashboard.html — [] if no
+// service role key is configured (see accountsEnabled above) or the
+// request fails.
+async function fetchAccounts() {
+  if (!accountsEnabled()) return [];
+  const { url } = config();
+  const serviceHeaders = {
+    apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
+  };
+  try {
+    const [usersRes, businessesRes] = await Promise.all([
+      fetch(`${url}/auth/v1/admin/users?per_page=1000`, { headers: serviceHeaders }),
+      fetch(`${url}/rest/v1/${TABLE}?select=id,name,user_id,updated_at&user_id=not.is.null`, { headers: serviceHeaders })
+    ]);
+    if (!usersRes.ok) throw new Error(`accounts fetch failed: ${usersRes.status}`);
+    const { users } = await usersRes.json();
+    const businesses = businessesRes.ok ? await businessesRes.json() : [];
+    return users.map(u => ({
+      id: u.id,
+      email: u.email,
+      createdAt: u.created_at,
+      lastSignInAt: u.last_sign_in_at,
+      sites: businesses.filter(b => b.user_id === u.id).map(b => ({ slug: b.id, name: b.name, updatedAt: b.updated_at }))
+    }));
+  } catch (err) {
+    console.error('[supabase-sync] fetchAccounts failed:', err.message);
+    return [];
+  }
+}
+
 function headers(extra) {
   const { key } = config();
   return { apikey: key, Authorization: `Bearer ${key}`, ...extra };
@@ -267,5 +309,6 @@ module.exports = {
   viewBeaconScript,
   pullDemoViews,
   enabled, pullAll, pushOne, deleteOne, flushPending, getStatus,
-  uploadMedia, downloadMedia, deleteMedia, syncMediaForProject
+  uploadMedia, downloadMedia, deleteMedia, syncMediaForProject,
+  accountsEnabled, fetchAccounts
 };
