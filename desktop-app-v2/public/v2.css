@@ -61,7 +61,6 @@ body.v2 {
 .v2-update-dot { margin-left: auto; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
 .v2-rail-foot { margin-top: auto; }
 .v2-rail-status { display: flex; align-items: center; gap: 8px; padding: 4px 6px; }
-.v2-rail .notif-wrap { position: static; }
 .v2-rail .bell {
   position: relative; width: 40px; height: 40px; border: 0; border-radius: 12px; background: transparent; color: #475467;
   display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, color 0.15s;
