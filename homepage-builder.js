@@ -1224,12 +1224,7 @@ Colour palette: ${design.palette}`;
     const category = typeInfo(bizTagline.value)?.cat;
     const layoutId = selectedLayout || demoLayoutForCategory(category);
     const layout = DEMO_LAYOUTS.find(item => item.id === layoutId);
-    const fallbackFontByLayout = {
-      minimal: 'Manrope', soft: 'Manrope', serene: 'Cormorant Garamond',
-      organic: 'Manrope', editorial: 'Fraunces', bold: 'Cormorant Garamond',
-      luxe: 'Cormorant Garamond', kinetic: 'Lora',
-      index: 'Manrope', studio: 'Bebas Neue'
-    };
+    const fallbackFontByLayout = {salon:'Space Grotesk',garden:'Fraunces',electric:'Archivo'};
     const chosenFont = DEMO_FONTS.find(item => item.id === selectedFont);
     const fontFamily = chosenFont?.family || layout?.font || fallbackFontByLayout[layoutId] || 'Manrope';
     const fontLabel = chosenFont ? `${chosenFont.name} (${chosenFont.family})` : fontFamily;
@@ -1276,8 +1271,12 @@ Colour palette: ${design.palette}`;
     } else if (activeTool === 'font') {
       options.innerHTML = `<h3>Choose your type</h3><div class="builder-choice-list">${DEMO_FONTS.map(f => `<button type="button" data-font="${f.id}" aria-pressed="${selectedFont === f.id}" style="font-family:${f.family}">${f.name}<span>Aa</span></button>`).join('')}</div>`;
     } else {
-      const recommended = demoLayoutForCategory(typeInfo(bizTagline.value)?.cat);
-      options.innerHTML = `<h2 class="builder-options-title">Choose your template</h2><div class="builder-choice-list">${DEMO_LAYOUTS.map(l => `<button type="button" data-layout="${l.id}" aria-pressed="${(selectedLayout || recommended) === l.id}">${l.name}<small>${l.id === recommended ? 'Recommended' : l.detail}</small></button>`).join('')}</div>`;
+      const category = typeInfo(bizTagline.value);
+      const recommended = demoLayoutForCategory(category?.cat);
+      const current = selectedLayout || recommended;
+      const template = DEMO_LAYOUTS.find(item => item.id === current) || DEMO_LAYOUTS[0];
+      const categoryName = category?.label || 'your business';
+      options.innerHTML = `<h2 class="builder-options-title">Your template</h2><div class="template-current"><span>Best match for ${categoryName}</span><strong>${template.name}</strong><small>${current === recommended ? 'Recommended for this type of business' : 'Your chosen template'}</small></div><label class="template-select-label" for="templateSelect">Change template</label><select id="templateSelect" data-layout-select aria-label="Change website template">${DEMO_LAYOUTS.map(l => `<option value="${l.id}" ${l.id === current ? 'selected' : ''}>${l.name} — ${l.detail}</option>`).join('')}</select>`;
     }
   }
   function openTool(tool) {
@@ -1326,6 +1325,15 @@ Colour palette: ${design.palette}`;
       await rerenderPersonalisedHero({ appearanceOnly: true, refreshSite: false });
       controls.querySelector(`[data-tool="${button.dataset.font ? 'font' : 'layout'}"]`).focus();
     }
+  });
+  controls.addEventListener('change', async event => {
+    const select = event.target.closest('[data-layout-select]');
+    if (!select) return;
+    selectedLayout = select.value;
+    closeOptions();
+    refreshPreview();
+    await rerenderPersonalisedHero({ appearanceOnly: true, refreshSite: false });
+    controls.querySelector('[data-tool="layout"]')?.focus();
   });
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape' && activeTool) {

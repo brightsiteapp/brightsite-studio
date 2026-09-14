@@ -156,15 +156,15 @@ async function runHomepageFlow(label, contextOptions, mobile) {
   assert.equal(await page.locator('.glass-circle[data-tool]').count(), 4, `${label}: builder should offer four style tools (send, colour, font, layout)`);
 
   await activate(page.locator('[data-tool="layout"]'));
-  await page.locator('.builder-choice-list [data-layout]').first().waitFor();
-  assert.ok(await page.locator('.builder-choice-list [data-layout]').count() > 5, `${label}: layout picker should offer several templates`);
+  await page.locator('[data-layout-select]').waitFor();
+  assert.equal(await page.locator('[data-layout-select] option').count(), 3, `${label}: template picker should offer the three reference-led templates`);
   const previewBeforeLayout = await page.locator('#previewFrame').getAttribute('srcdoc');
-  await activate(page.locator('[data-layout="torque"]'));
+  await page.locator('[data-layout-select]').selectOption('electric');
   await page.waitForFunction((before) => (
     document.querySelector('#previewFrame').getAttribute('srcdoc') !== before
   ), previewBeforeLayout);
   await activate(page.locator('[data-tool="layout"]'));
-  assert.equal(await page.locator('[data-layout="torque"]').getAttribute('aria-pressed'), 'true', `${label}: choosing a layout should mark it selected`);
+  assert.equal(await page.locator('[data-layout-select]').inputValue(), 'electric', `${label}: choosing a template should retain it`);
   await activate(page.locator('[data-tool="layout"]'));
 
   await activate(page.locator('[data-tool="colour"]'));

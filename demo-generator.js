@@ -2,27 +2,13 @@
 // Included by both index.html (the live builder) and preview.html (a
 // standalone, shareable rendering of one generated site from a URL param),
 // so both stay byte-for-byte the same generator instead of drifting apart.
-  // each business type's services are organised into ~6 groups of 5 (30
-  // total), matching a real treatment-menu/price-list page. `services`/
-  // `prices` (used for hidden auto-fill + homepage teaser tiles) are
-  // derived from the groups by flattenGroups() below.
-  // Each name says what kind of business the layout is built for (matching
-  // the category labels in hero-brand-compositor.js's CATEGORY_ALIASES),
-  // not an abstract style name — "Torque" told nobody it was for trades.
+  // The templates are deliberately few and concrete. Each begins with one
+  // of our downloaded, production-quality demo sites—not a stack of abstract
+  // style variants—so the choice in Studio maps to a recognisable site type.
   const DEMO_LAYOUTS = [
-    {id:'editorial',name:'Professional Services',detail:'Magazine grids & oversized type',tier:'Essential'},
-    {id:'bold',name:'Automotive',detail:'Immersive image panels & refined contrast',font:'Cormorant Garamond',tier:'Essential'},
-    {id:'kinetic',name:'Home & Garden',detail:'Sculpted split hero & scrolling showcases',font:'Lora',tier:'Essential'},
-    {id:'serene',name:'Health & Wellness',detail:'Full-screen cinematic hero & flowing sections',font:'Cormorant Garamond',round:'18px',tier:'Essential'},
-    {id:'index',name:'Directory & Listings',detail:'Ultra-minimal directory & typographic grid',font:'Manrope',round:'0px',tier:'Pro'},
-    {id:'studio',name:'Fitness',detail:'Bold portfolio marquee & case-study chapters',font:'Bebas Neue',round:'0px',tier:'Pro'},
-    {id:'flux',name:'Creative',detail:'Parallax hero, kinetic type & magnetic cards',font:'Sora',round:'6px',tier:'Pro'},
-    {id:'bloom',name:'Aesthetics & Skin',detail:'Full-bleed parallax hero & pastel colour blocks',font:'Fraunces',round:'28px',tier:'Pro'},
-    {id:'torque',name:'Trades & Construction',detail:'Industrial dark hero, angled tags & bold type',font:'Bebas Neue',round:'2px',tier:'Pro'},
-    {id:'minimal',name:'General Business',detail:'Quiet information column beside a portfolio',font:'Manrope',round:'12px',tier:'Pro'},
-    {id:'luxe',name:'Hair & Beauty',detail:'Sculpted images & floating panels',font:'Cormorant Garamond',round:'28px',tier:'Pro'},
-    {id:'soft',name:'Food & Drink',detail:'Rounded capsule cards on a gentle palette',font:'Quicksand',round:'24px',tier:'Pro'},
-    {id:'organic',name:'Pet Care',detail:'Warm blocks & a scrolling photo strip',font:'DM Serif Display',round:'12px',tier:'Pro'}
+    {id:'salon',name:'Modern Salon',detail:'Inspired by the Muse Hull demo: quiet editorial spacing and cream paper',font:'Space Grotesk',round:'4px',tier:'Essential'},
+    {id:'garden',name:'Garden Services',detail:'Inspired by the MGS Beverley demo: green image-led service business',font:'Fraunces',round:'14px',tier:'Essential'},
+    {id:'electric',name:'Local Trades',detail:'Inspired by the Brian Griffin demo: clear red-accent service site',font:'Archivo',round:'6px',tier:'Essential'}
   ];
   const DEMO_FONTS = [
     {id:'classic',name:'Classic',family:'Cormorant Garamond'},
@@ -32,9 +18,10 @@
     {id:'strong',name:'Strong',family:'Bebas Neue'},
     {id:'clean',name:'Clean',family:'Montserrat'}
   ];
-  // Every category gets its own distinct template — no two share a look.
+  // Recommend the nearest of the three proven reference designs. A user can
+  // still choose any template; this only sets the sensible first option.
   function demoLayoutForCategory(cat) {
-    return ({hairbeauty:'luxe',aesthetics:'bloom',health:'serene',trades:'torque',homegarden:'kinetic',fooddrink:'soft',fitness:'studio',creative:'flux',professional:'editorial',automotive:'bold',pets:'organic'})[cat] || 'minimal';
+    return ({hairbeauty:'salon',aesthetics:'salon',health:'salon',trades:'electric',homegarden:'garden',fooddrink:'salon',fitness:'electric',creative:'salon',professional:'electric',automotive:'electric',pets:'garden'})[cat] || 'electric';
   }
   // Business content is selected only from the user's industry, never from
   // their visual template. Keep this mapping independent of recommendations.

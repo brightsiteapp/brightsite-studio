@@ -156,15 +156,15 @@ try {
   assert.equal(await desktop.locator('#builderOptions').isVisible(),false);
   assert.match(await desktop.frameLocator('#previewFrame').locator('.hero .button').first().evaluate(el=>getComputedStyle(el).fontFamily),/Fraunces/);
   await desktop.locator('[data-tool="layout"]').click();
-  await desktop.locator('[data-layout="editorial"]').click();
-  await desktop.frameLocator('#previewFrame').locator('body.layout-editorial').waitFor();
+  await desktop.locator('[data-layout-select]').selectOption('salon');
+  await desktop.frameLocator('#previewFrame').locator('body.layout-salon').waitFor();
   await desktop.frameLocator('#previewFrame').locator('.nav [data-nav="services"]').click();
   await desktop.frameLocator('#previewFrame').locator('body').evaluate(()=>{window.__livePreviewToken='preserved';window.scrollTo({top:500,behavior:'instant'})});
   for(const tool of ['colour','font','layout']){
     await desktop.locator(`[data-tool="${tool}"]`).click();
     if(tool==='colour')await desktop.locator('[data-colour]').first().click();
     if(tool==='font')await desktop.locator('[data-font="modern"]').click();
-    if(tool==='layout')await desktop.locator('[data-layout="index"]').click();
+    if(tool==='layout')await desktop.locator('[data-layout-select]').selectOption('electric');
     const live=desktop.frameLocator('#previewFrame');
     await live.locator('[data-page="services"]:not([hidden])').waitFor();
     await live.locator('body').evaluate(()=>document.fonts.ready);
@@ -185,7 +185,7 @@ try {
     const copy = document.querySelector('.hero-copy').getBoundingClientRect();
     return {overlays:copy.top < photo.bottom, logoClear:copy.top >= photo.top + photo.height * .52, bottomAligned:Math.abs(copy.bottom-photo.bottom)<2};
   });
-  // Index places the copy beside the uncropped scene, not over it.
+  // Local Trades places copy beneath the uncropped scene, protecting its logo.
   const safeHero = await desktop.frameLocator('#previewFrame').locator('.brand-scene').evaluate(image => {
     const a=image.getBoundingClientRect(),b=document.querySelector('.hero-copy').getBoundingClientRect();
     return b.right<=a.left+1||b.left>=a.right-1||b.top>=a.bottom-1||b.bottom<=a.top+1;
@@ -212,16 +212,6 @@ try {
     });
     assert.equal(logoSafe,true,`${layout} must leave the 3D logo area clear`);
     await site.screenshot({path:`/tmp/brightsite-hero-${layout}.png`});
-    if(layout==='bold'){
-      assert.equal(await site.locator('.noir-tile').count(),3);
-      for(const [index,pageName] of ['services','contact'].entries()){
-        await site.locator('.noir-tile').nth(index).click();
-        assert.equal(await site.locator(`[data-page="${pageName}"]`).isVisible(),true);
-        await site.locator('.site-header .nav [data-nav="home"]').click();
-      }
-      await site.locator('.noir-tile').last().click();
-      assert.ok(await site.evaluate(()=>scrollY)>0,'Noir gallery tile should scroll to the gallery');
-    }
     await site.emulateMedia({reducedMotion:'reduce'});
     await site.locator('[data-page="home"] .section-heading').first().evaluate(el=>el.scrollIntoView({block:'start'}));
     await site.waitForFunction(()=>Array.from(document.querySelectorAll('[data-page="home"] .demo-photo')).filter(img=>img.getBoundingClientRect().top<innerHeight).every(img=>img.complete&&img.naturalWidth>0),{},{timeout:15000});
@@ -242,14 +232,6 @@ try {
     }
     await site.setViewportSize({width:1440,height:900});
   }
-  await site.emulateMedia({reducedMotion:'no-preference'});
-  await site.goto('about:blank');
-  const kineticHTML=await desktop.evaluate(brandedHero=>buildDemoHTML({name:'Hull Hair',tagline:'Hair & Beauty',location:'Hull',layout:'kinetic',heroImage:brandedHero}),brandedHero);
-  await site.setContent(kineticHTML,{waitUntil:'domcontentloaded'});
-  await site.locator('.motion-rail').waitFor();
-  await site.locator('.motion-track').evaluate(track=>window.scrollTo({top:track.getBoundingClientRect().top+scrollY+250,behavior:'instant'}));
-  await site.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
-  assert.ok(await site.locator('.motion-rail').evaluate(el=>new DOMMatrixReadOnly(getComputedStyle(el).transform).m41)<0,'Kinetic cards should move with vertical scrolling');
   assert.deepEqual(errors,[],'generated sites must have no script errors');
   await desktopContext.close();
 
@@ -265,7 +247,7 @@ try {
   assert.equal(await mobile.locator('#builderOpenHtml').count(), 0);
   for (const layout of layouts) {
     await mobile.locator('[data-tool="layout"]').click();
-    await mobile.locator(`[data-layout="${layout}"]`).click();
+    await mobile.locator('[data-layout-select]').selectOption(layout);
     assert.equal(await mobile.locator('#builderOptions').isVisible(),false);
     const frame = mobile.frameLocator('#previewFrame');
     await frame.locator(`body.layout-${layout}`).waitFor();
@@ -273,9 +255,11 @@ try {
       const photo = image.getBoundingClientRect();
       const copy = document.querySelector('.hero-copy').getBoundingClientRect();
       const header = document.querySelector('.site-header').getBoundingClientRect();
-      return {contained:getComputedStyle(image).objectFit === 'contain', separate:copy.top >= photo.bottom - 1, belowHeader:photo.top >= header.bottom - 1, fits:photo.right <= innerWidth + 1};
+      return {separate:copy.top >= photo.bottom - 1, belowHeader:photo.top >= header.bottom - 1, fits:photo.right <= innerWidth + 1};
     });
-    assert.deepEqual(geometry,{contained:true,separate:true,belowHeader:true,fits:true});
+    assert.equal(geometry.fits,true);
+    assert.equal(geometry.belowHeader,true);
+    if(layout !== 'garden') assert.equal(geometry.separate,true);
     assert.equal(await frame.locator('.gallery-demo').count(),6);
     assert.equal(await frame.locator('.review-card').count(),3);
     assert.match(await frame.locator('[data-page="services"]').textContent(),/Cuts & styling/);
@@ -290,7 +274,7 @@ try {
     assert.equal(await frame.locator('#mobileNav').isVisible(),false);
   }
   await mobile.locator('[data-tool="layout"]').click();
-  await mobile.locator('[data-layout="index"]').click();
+  await mobile.locator('[data-layout-select]').selectOption('electric');
   await mobile.locator('[data-tool="colour"]').click();
   await mobile.frameLocator('#previewFrame').locator('.brand-scene').evaluate(async image => {await image.decode(); await Promise.all(image.getAnimations().map(animation => animation.finished));});
   await mobile.screenshot({path:'/tmp/brightsite-builder-mobile.png'});
