@@ -228,13 +228,13 @@ document.addEventListener('DOMContentLoaded', () => {
         creatingOverlay.classList.toggle('final', i === CREATING_STEPS.length - 1);
         i++;
         if (i < CREATING_STEPS.length) {
-          setTimeout(step, 320);
+          setTimeout(step, 1500);
         } else {
           setTimeout(() => {
             creatingOverlay.classList.remove('active');
             creatingOverlay.setAttribute('aria-hidden', 'true');
             resolve();
-          }, 360);
+          }, 500);
         }
       }
       setTimeout(step, 80);
