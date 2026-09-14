@@ -725,7 +725,7 @@ document.addEventListener('DOMContentLoaded', () => {
           height: isNarrowViewport ? 506 : 900
         });
       }).catch((error) => {
-        console.error('DEBUG heroImagePromise failed', error);
+        console.error(error);
         return null;
       });
 
@@ -733,7 +733,6 @@ document.addEventListener('DOMContentLoaded', () => {
         runCreatingAnimation(name.toUpperCase()),
         heroImagePromise
       ]);
-      console.log('DEBUG heroImage result', heroImage ? heroImage.slice(0,40) : heroImage);
       uploadedHeroImage = heroImage;
 
       qaProgress.classList.add('done');
@@ -819,12 +818,6 @@ document.addEventListener('DOMContentLoaded', () => {
       businessProfile
     };
   }
-  const _origGatherData = gatherData;
-  gatherData = function() {
-    const d = _origGatherData();
-    console.log('DEBUG gatherData heroImage', d.heroImage ? d.heroImage.slice(0,40) : d.heroImage, 'businessProfile', !!d.businessProfile, 'uploadedHeroImage set?', !!uploadedHeroImage);
-    return d;
-  };
   // the preview is a REAL iframe filling the screen — no scaled-down
   // mockup, no browser-chrome wrapper. It just renders at its own natural
   // size, so the generated site's own responsive CSS applies exactly as
@@ -840,7 +833,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const position = {...previewPosition};
     const version = ++previewRenderVersion;
     const html = buildDemoHTML(gatherData());
-    console.log('DEBUG refreshPreview html brand-scene', appearanceOnly, html.match(/class="brand-scene" src="([^"]{0,40})/)?.[1]);
     if (smooth) previewFrame.classList.add('is-refreshing');
     updatePaletteOrb();
     if (appearanceOnly && activePage) {
@@ -893,6 +885,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const shown = previewFrame;
     const incoming = shown.cloneNode(false);
     incoming.removeAttribute('id');
+    // cloneNode copies the srcdoc attribute too, so without this the clone
+    // starts loading the OLD page the instant it's inserted below — a load
+    // that can still be mid-flight when the real srcdoc is assigned a
+    // moment later, occasionally winning the race and leaving the preview
+    // stuck on stale content (e.g. the branded hero silently reverting to
+    // the generic stock photo). Clearing it keeps the clone inert until it
+    // has the real, final content to load.
+    incoming.removeAttribute('srcdoc');
     incoming.classList.remove('is-refreshing');
     incoming.classList.add('preview-buffer');
     pendingFrame = incoming;
