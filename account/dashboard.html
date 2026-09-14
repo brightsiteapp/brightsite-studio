@@ -121,12 +121,12 @@
   .gallery-counter{font-size:12px;color:var(--muted);margin-bottom:8px}
   .gallery-counter.full{color:#b23b2c;font-weight:600}
 
-  .save-bar{flex:none;padding:14px 18px;border-top:1px solid var(--line);background:var(--bg);display:flex;align-items:center;gap:12px}
-  .save-btn{flex:1;min-height:46px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
-  .save-btn:disabled{opacity:.65;cursor:wait}
-  .save-status{font-size:12.5px;color:var(--muted);white-space:nowrap}
+  .save-bar{flex:none;padding:12px 18px;border-top:1px solid var(--line);background:var(--bg);display:flex;align-items:center;justify-content:flex-end;gap:8px}
+  .save-status{font-size:12.5px;color:var(--muted);white-space:nowrap;display:flex;align-items:center;gap:6px}
   .save-status.ok{color:#1f9d55;font-weight:600}
   .save-status.err{color:#b23b2c}
+  .save-status .spin{width:11px;height:11px;border-radius:50%;border:2px solid #c9c6bd;border-top-color:var(--accent);animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
 
   /* ---------------- request-an-update mini modal ---------------- */
   .modal-veil{position:fixed;inset:0;background:rgba(23,20,15,.4);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
@@ -289,8 +289,7 @@
     </div>
 
     <div class="save-bar" id="saveBar" hidden>
-      <button type="button" class="save-btn" id="saveBtn">Save changes</button>
-      <span class="save-status" id="saveStatus"></span>
+      <span class="save-status" id="saveStatus">All changes saved</span>
     </div>
   </div>
 
@@ -401,6 +400,13 @@
     document.getElementById('saveBar').hidden = !on;
     document.getElementById('editToggle').classList.toggle('active', on);
     document.getElementById('editToggle').innerHTML = on ? '&#10005; Close' : '&#9998; Edit';
+    if (on) {
+      var statusEl = document.getElementById('saveStatus');
+      statusEl.textContent = 'All changes saved'; statusEl.className = 'save-status ok';
+    } else {
+      clearTimeout(autoSaveTimer);
+      if (hasPendingEdit && !autoSaveInFlight) runAutoSave();
+    }
   }
   document.getElementById('editToggle').addEventListener('click', function () { setEditing(!isEditing); });
   document.getElementById('builderBack').addEventListener('click', function () { setEditing(false); });
@@ -645,18 +651,18 @@
       mount.appendChild(card);
     });
 
-    mount.querySelectorAll('[data-gf]').forEach(function (input) { input.addEventListener('input', function () { services[+input.dataset.gi][input.dataset.gf] = input.value; renderPreview(); }); });
-    mount.querySelectorAll('[data-f]').forEach(function (input) { input.addEventListener('input', function () { services[+input.dataset.gi].items[+input.dataset.i][input.dataset.f] = input.value; renderPreview(); }); });
-    mount.querySelectorAll('[data-item-add]').forEach(function (btn) { btn.addEventListener('click', function () { services[+btn.dataset.itemAdd].items.push({ name: '', price: '', duration: '' }); renderServices(); renderPreview(); }); });
-    mount.querySelectorAll('[data-group-remove]').forEach(function (btn) { btn.addEventListener('click', function () { services.splice(+btn.dataset.groupRemove, 1); renderServices(); renderPreview(); }); });
-    mount.querySelectorAll('[data-item-remove]').forEach(function (btn) { btn.addEventListener('click', function () { var p = btn.dataset.itemRemove.split(':'); services[+p[0]].items.splice(+p[1], 1); renderServices(); renderPreview(); }); });
-    mount.querySelectorAll('[data-group-up],[data-group-down]').forEach(function (btn) { btn.addEventListener('click', function () { var i = +(btn.dataset.groupUp || btn.dataset.groupDown); var j = btn.dataset.groupUp ? i - 1 : i + 1; if (j < 0 || j >= services.length) return; var t = services[i]; services[i] = services[j]; services[j] = t; renderServices(); renderPreview(); }); });
-    mount.querySelectorAll('[data-item-up],[data-item-down]').forEach(function (btn) { btn.addEventListener('click', function () { var p = (btn.dataset.itemUp || btn.dataset.itemDown).split(':'); var gi = +p[0], i = +p[1]; var j = btn.dataset.itemUp ? i - 1 : i + 1; var items = services[gi].items; if (j < 0 || j >= items.length) return; var t = items[i]; items[i] = items[j]; items[j] = t; renderServices(); renderPreview(); }); });
+    mount.querySelectorAll('[data-gf]').forEach(function (input) { input.addEventListener('input', function () { services[+input.dataset.gi][input.dataset.gf] = input.value; renderPreview(); scheduleAutoSave(); }); });
+    mount.querySelectorAll('[data-f]').forEach(function (input) { input.addEventListener('input', function () { services[+input.dataset.gi].items[+input.dataset.i][input.dataset.f] = input.value; renderPreview(); scheduleAutoSave(); }); });
+    mount.querySelectorAll('[data-item-add]').forEach(function (btn) { btn.addEventListener('click', function () { services[+btn.dataset.itemAdd].items.push({ name: '', price: '', duration: '' }); renderServices(); renderPreview(); scheduleAutoSave(); }); });
+    mount.querySelectorAll('[data-group-remove]').forEach(function (btn) { btn.addEventListener('click', function () { services.splice(+btn.dataset.groupRemove, 1); renderServices(); renderPreview(); scheduleAutoSave(); }); });
+    mount.querySelectorAll('[data-item-remove]').forEach(function (btn) { btn.addEventListener('click', function () { var p = btn.dataset.itemRemove.split(':'); services[+p[0]].items.splice(+p[1], 1); renderServices(); renderPreview(); scheduleAutoSave(); }); });
+    mount.querySelectorAll('[data-group-up],[data-group-down]').forEach(function (btn) { btn.addEventListener('click', function () { var i = +(btn.dataset.groupUp || btn.dataset.groupDown); var j = btn.dataset.groupUp ? i - 1 : i + 1; if (j < 0 || j >= services.length) return; var t = services[i]; services[i] = services[j]; services[j] = t; renderServices(); renderPreview(); scheduleAutoSave(); }); });
+    mount.querySelectorAll('[data-item-up],[data-item-down]').forEach(function (btn) { btn.addEventListener('click', function () { var p = (btn.dataset.itemUp || btn.dataset.itemDown).split(':'); var gi = +p[0], i = +p[1]; var j = btn.dataset.itemUp ? i - 1 : i + 1; var items = services[gi].items; if (j < 0 || j >= items.length) return; var t = items[i]; items[i] = items[j]; items[j] = t; renderServices(); renderPreview(); scheduleAutoSave(); }); });
   }
-  document.getElementById('svcGroupAdd').addEventListener('click', function () { services.push({ name: '', items: [{ name: '', price: '', duration: '' }] }); renderServices(); renderPreview(); });
+  document.getElementById('svcGroupAdd').addEventListener('click', function () { services.push({ name: '', items: [{ name: '', price: '', duration: '' }] }); renderServices(); renderPreview(); scheduleAutoSave(); });
 
   ['fName', 'fPhone', 'fEmail2', 'fAddress', 'fHours'].forEach(function (id) {
-    document.getElementById(id).addEventListener('input', renderPreview);
+    document.getElementById(id).addEventListener('input', function () { renderPreview(); scheduleAutoSave(); });
   });
 
   // ---------------- media (logo / hero) ----------------
@@ -677,13 +683,13 @@
     var file = e.target.files[0]; e.target.value = '';
     if (!file) return;
     var err = validateImageFile(file); if (err) { showUploadError(err); return; }
-    pendingUploads.logo = file; renderMediaThumbs(); renderPreview();
+    pendingUploads.logo = file; renderMediaThumbs(); renderPreview(); scheduleAutoSave();
   });
   document.getElementById('heroInput').addEventListener('change', function (e) {
     var file = e.target.files[0]; e.target.value = '';
     if (!file) return;
     var err = validateImageFile(file); if (err) { showUploadError(err); return; }
-    pendingUploads.hero = file; renderMediaThumbs(); renderPreview();
+    pendingUploads.hero = file; renderMediaThumbs(); renderPreview(); scheduleAutoSave();
   });
 
   // ---------------- gallery ----------------
@@ -707,7 +713,7 @@
         var i = +btn.dataset.i;
         if (btn.dataset.kind === 'existing') { galleryRemoved.push(media.gallery[i]); media.gallery.splice(i, 1); }
         else { pendingUploads.gallery.splice(i, 1); }
-        renderGallery(); renderPreview();
+        renderGallery(); renderPreview(); scheduleAutoSave();
       });
     });
     var counter = document.getElementById('galleryCounter');
@@ -725,7 +731,7 @@
     if (room <= 0) files = []; else if (files.length > room) files = files.slice(0, room);
     pendingUploads.gallery = pendingUploads.gallery.concat(files);
     if (errs.length) showUploadError(errs[0]);
-    renderGallery(); renderPreview();
+    renderGallery(); renderPreview(); scheduleAutoSave();
   });
 
   // ---------------- save ----------------
@@ -779,31 +785,57 @@
     });
   }
 
-  document.getElementById('saveBtn').addEventListener('click', function () {
-    var btn = this;
+  // ---------------- autosave ----------------
+  var autoSaveTimer = null;
+  var autoSaveInFlight = false;
+  var autoSaveQueued = false;
+  var hasPendingEdit = false;
+
+  function scheduleAutoSave() {
+    if (!isEditing) return;
+    hasPendingEdit = true;
     var statusEl = document.getElementById('saveStatus');
-    btn.disabled = true;
-    statusEl.textContent = 'Saving…'; statusEl.className = 'save-status';
+    statusEl.textContent = 'Editing…'; statusEl.className = 'save-status';
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(runAutoSave, 900);
+  }
+
+  function runAutoSave() {
+    var statusEl = document.getElementById('saveStatus');
+    if (autoSaveInFlight) { autoSaveQueued = true; return; }
+    hasPendingEdit = false;
+    autoSaveInFlight = true;
+    statusEl.innerHTML = '<span class="spin"></span> Saving…'; statusEl.className = 'save-status';
     saveBusiness({}).then(function () {
-      statusEl.textContent = 'Saved'; statusEl.className = 'save-status ok'; btn.disabled = false;
+      statusEl.textContent = 'All changes saved'; statusEl.className = 'save-status ok';
     }).catch(function (err) {
-      statusEl.textContent = err.message || 'Something went wrong — please try again.'; statusEl.className = 'save-status err'; btn.disabled = false;
+      statusEl.textContent = err.message || 'Couldn’t save — retrying…'; statusEl.className = 'save-status err';
+      autoSaveQueued = true;
+    }).then(function () {
+      autoSaveInFlight = false;
+      if (autoSaveQueued) { autoSaveQueued = false; autoSaveTimer = setTimeout(runAutoSave, 1200); }
     });
-  });
+  }
 
   // ---------------- make live / publish ----------------
   document.getElementById('liveBtn').addEventListener('click', function () {
     if (!isPaying) return;
     var btn = this;
     var wasLive = isLive;
+    clearTimeout(autoSaveTimer);
+    autoSaveInFlight = true;
     btn.disabled = true;
     btn.classList.add('pending');
     btn.textContent = wasLive ? 'Publishing…' : 'Making live…';
     saveBusiness({ publish: true }).then(function () {
+      autoSaveInFlight = false;
+      var statusEl = document.getElementById('saveStatus');
+      statusEl.textContent = 'All changes saved'; statusEl.className = 'save-status ok';
       btn.classList.remove('pending');
       btn.disabled = false;
       btn.textContent = 'Publish changes';
     }).catch(function () {
+      autoSaveInFlight = false;
       btn.classList.remove('pending');
       btn.disabled = false;
       btn.textContent = wasLive ? 'Publish changes' : 'Make live';
