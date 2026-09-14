@@ -147,11 +147,27 @@
   </div>
 </div>
 
+<div id="dashPreviewSection" class="dash-wrap" hidden>
+  <div class="dash-section">
+    <h2>Sections</h2>
+    <p class="dash-hint">Turn sections on your homepage on/off and reorder them.</p>
+    <div id="sectionsList"></div>
+  </div>
+  <div class="dash-section">
+    <h2>Preview</h2>
+    <p class="dash-hint">Updates as you edit — this is exactly what your live site shows.</p>
+    <iframe id="sitePreview" title="Website preview" style="width:100%;height:520px;border:1px solid var(--line);border-radius:14px;background:#fff" sandbox="allow-scripts"></iframe>
+  </div>
+</div>
+
 <div class="dash-save-bar" id="saveBar" hidden>
   <span class="dash-save-status" id="saveStatus"></span>
   <button class="dash-save" id="saveBtn" type="button">Save changes</button>
 </div>
 
+<script src="../template-designs.js"></script>
+<script src="../fresh-templates.js"></script>
+<script src="../demo-generator.js"></script>
 <script>
 (function(){
   var SUPABASE_URL = 'https://estqrftkrpqlrxnsltgw.supabase.co';
@@ -211,6 +227,79 @@
   function setupPanel() { return document.getElementById('setupPanel'); }
   function dashWrap() { return document.getElementById('dashWrap'); }
   function saveBar() { return document.getElementById('saveBar'); }
+  function previewSection() { return document.getElementById('dashPreviewSection'); }
+
+  // ---------------- sections (reuses Studio's own field names, so the
+  // real renderer below picks the choice up exactly like it does in Studio) ----------------
+  var HOME_SECTIONS = [
+    { id: 'reviews', label: 'Reviews' },
+    { id: 'gallery', label: 'Gallery' },
+    { id: 'booking', label: 'Call to action' }
+  ];
+  function homeSectionOrder(raw) {
+    var order = (raw.sectionOrder || []).filter(function (id) { return HOME_SECTIONS.some(function (s) { return s.id === id; }); });
+    return order.concat(HOME_SECTIONS.map(function (s) { return s.id; }).filter(function (id) { return order.indexOf(id) === -1; }));
+  }
+  function renderSections() {
+    var raw = (business.data && business.data.raw) || {};
+    var layout = raw.layout;
+    var mount = document.getElementById('sectionsList');
+    if (layout === 'lume' || layout === 'studio') {
+      mount.innerHTML = '<p class="dash-hint">This template has its own fixed page layout, so sections can’t be turned off or reordered.</p>';
+      return;
+    }
+    var hidden = raw.hiddenSections || [];
+    var ids = homeSectionOrder(raw);
+    mount.innerHTML = ids.map(function (id, i) {
+      var meta = HOME_SECTIONS.filter(function (s) { return s.id === id; })[0];
+      return '<div class="svc-row" style="grid-template-columns:1fr auto auto">' +
+        '<label style="display:flex;align-items:center;gap:8px;font-size:14px"><input type="checkbox" data-section-toggle="' + id + '" ' + (hidden.indexOf(id) === -1 ? 'checked' : '') + '> ' + meta.label + '</label>' +
+        '<button type="button" class="svc-remove" data-section-up="' + id + '" ' + (i === 0 ? 'disabled' : '') + ' aria-label="Move up">↑</button>' +
+        '<button type="button" class="svc-remove" data-section-down="' + id + '" ' + (i === ids.length - 1 ? 'disabled' : '') + ' aria-label="Move down">↓</button>' +
+        '</div>';
+    }).join('');
+    mount.querySelectorAll('[data-section-toggle]').forEach(function (el) {
+      el.addEventListener('change', function () {
+        var raw = business.data.raw;
+        var hidden = raw.hiddenSections || [];
+        var id = el.dataset.sectionToggle;
+        raw.hiddenSections = el.checked ? hidden.filter(function (h) { return h !== id; }) : hidden.concat([id]);
+        renderSections();
+        renderPreview();
+      });
+    });
+    mount.querySelectorAll('[data-section-up],[data-section-down]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var raw = business.data.raw;
+        var order = homeSectionOrder(raw);
+        var id = btn.dataset.sectionUp || btn.dataset.sectionDown;
+        var i = order.indexOf(id);
+        var j = btn.dataset.sectionUp ? i - 1 : i + 1;
+        if (j < 0 || j >= order.length) return;
+        var tmp = order[i]; order[i] = order[j]; order[j] = tmp;
+        raw.sectionOrder = order;
+        renderSections();
+        renderPreview();
+      });
+    });
+  }
+
+  // ---------------- live preview (the same renderer Studio/deploy uses) ----------------
+  function renderPreview() {
+    var frame = document.getElementById('sitePreview');
+    if (!business || typeof buildDemoHTML !== 'function') return;
+    var raw = Object.assign({}, business.data.raw, {
+      logoImage: mediaUrl(media.logoImage) || undefined,
+      heroImage: mediaUrl(media.heroImage) || undefined,
+      gallery: media.gallery.map(function (p) { return mediaUrl(p); })
+    });
+    try {
+      frame.srcdoc = buildDemoHTML(raw);
+    } catch (e) {
+      // Missing fields the generator needs (e.g. no category yet) — leave
+      // the previous preview showing rather than a blank/broken frame.
+    }
+  }
 
   // ---------------- load existing business row ----------------
   function loadBusiness() {
@@ -232,6 +321,7 @@
   function showSetup() {
     setupPanel().hidden = false;
     dashWrap().hidden = true;
+    previewSection().hidden = true;
     saveBar().hidden = true;
     var pendingName = localStorage.getItem('bs_pending_business_name') || '';
     var pendingSlug = params.get('slug') || localStorage.getItem('bs_pending_slug') || '';
@@ -320,11 +410,12 @@
   function renderDashboard() {
     setupPanel().hidden = true;
     dashWrap().hidden = false;
+    previewSection().hidden = false;
     saveBar().hidden = false;
 
-    var data = business.data || {};
-    var raw = data.raw || {};
-    services = Array.isArray(raw.services) ? raw.services.slice() : [];
+    var data = business.data = business.data || {};
+    var raw = data.raw = data.raw || {};
+    services = servicesFromRaw(raw);
     media.logoImage = raw.logoImage || null;
     media.heroImage = raw.heroImage || null;
     media.gallery = Array.isArray(raw.gallery) ? raw.gallery.slice() : [];
@@ -338,9 +429,36 @@
     renderServices();
     renderMediaThumbs();
     renderGallery();
+    renderSections();
+    renderPreview();
   }
 
   // ---------------- services ----------------
+  // The real site renderer (fresh-templates.js, used both for the live
+  // export and the preview below) expects `raw.services` as a plain array
+  // of name strings with a parallel `raw.prices` array — not the
+  // {name,price} objects this form edits, which is friendlier to type
+  // into. servicesFromRaw()/servicesToRaw() convert between the two so
+  // what's saved is what the real site actually reads. (Also tolerates
+  // rows saved by an earlier version of this page that wrote objects
+  // straight into raw.services.)
+  function servicesFromRaw(raw) {
+    var names = Array.isArray(raw.services) ? raw.services : [];
+    var prices = Array.isArray(raw.prices) ? raw.prices : [];
+    var durations = Array.isArray(raw.serviceDurations) ? raw.serviceDurations : [];
+    return names.map(function (n, i) {
+      if (n && typeof n === 'object') return { name: n.name || '', price: n.price || '', duration: n.duration || '' };
+      return { name: n || '', price: prices[i] || '', duration: durations[i] || '' };
+    });
+  }
+  function servicesToRaw(list) {
+    var kept = list.filter(function (s) { return s.name && s.name.trim(); });
+    return {
+      services: kept.map(function (s) { return s.name.trim(); }),
+      prices: kept.map(function (s) { return (s.price || '').trim(); }),
+      serviceDurations: kept.map(function (s) { return (s.duration || '').trim(); })
+    };
+  }
   function renderServices() {
     var list = document.getElementById('svcList');
     list.innerHTML = '';
@@ -531,11 +649,10 @@
           email: document.getElementById('fEmail2').value.trim(),
           address: document.getElementById('fAddress').value.trim(),
           hours: document.getElementById('fHours').value.trim(),
-          services: services.filter(function (s) { return s.name && s.name.trim(); }),
           logoImage: media.logoImage,
           heroImage: media.heroImage,
           gallery: media.gallery
-        });
+        }, servicesToRaw(services));
         var record = {
           slug: slug,
           name: raw.name,
@@ -564,6 +681,7 @@
         galleryRemoved = [];
         renderMediaThumbs();
         renderGallery();
+        renderPreview();
         statusEl.textContent = 'Saved';
         statusEl.className = 'dash-save-status ok';
         btn.disabled = false;
