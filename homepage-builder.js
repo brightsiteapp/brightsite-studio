@@ -202,16 +202,13 @@ document.addEventListener('DOMContentLoaded', () => {
     opt.textContent = t.label;
     bizTagline.appendChild(opt);
   });
-  // A quick, polished build transition. The customer's business name stays
-  // fixed while the supporting copy and progress line move smoothly.
+  // A short handoff: this is a design brief for the BrightSite team, not a
+  // claim that the automated preview is the finished website.
   const CREATING_STEPS = [
-    { verb: 'Finding your business', sub: 'checking local listings', progress: 14 },
-    { verb: 'Importing contact details', sub: 'adding your real location', progress: 32 },
-    { verb: 'Adding business hours', sub: 'making visits easy to plan', progress: 50 },
-    { verb: 'Importing reviews', sub: 'bringing in your reputation', progress: 68 },
-    { verb: 'Choosing your style', sub: 'matching your business', progress: 84 },
-    { verb: 'Building your homepage', sub: 'optimising every screen', progress: 94 },
-    { verb: 'Ready', sub: 'your preview is complete', progress: 100 }
+    { verb: 'Loading your design brief', sub: 'using the details you shared', progress: 30 },
+    { verb: 'Shaping a direction', sub: 'matching the feel of your business', progress: 62 },
+    { verb: 'Preparing layout ideas', sub: 'ready for you to choose a style', progress: 86 },
+    { verb: 'Ready', sub: 'your design brief is ready', progress: 100 }
   ];
   function swapText(el, text) {
     el.classList.add('is-swapping');
@@ -241,13 +238,13 @@ document.addEventListener('DOMContentLoaded', () => {
         creatingOverlay.classList.toggle('final', i === CREATING_STEPS.length - 1);
         i++;
         if (i < CREATING_STEPS.length) {
-          setTimeout(step, 480);
+          setTimeout(step, 320);
         } else {
           setTimeout(() => {
             creatingOverlay.classList.remove('active');
             creatingOverlay.setAttribute('aria-hidden', 'true');
             resolve();
-          }, 620);
+          }, 360);
         }
       }
       setTimeout(step, 80);
