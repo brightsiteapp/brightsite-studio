@@ -43,6 +43,13 @@
   .dash-add{margin-top:4px;background:none;border:1px dashed var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:13px;font-weight:600;color:var(--accent);cursor:pointer}
   .dash-add:hover{border-color:var(--accent);background:rgba(59,130,246,.06)}
 
+  .svc-group{border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px;background:#faf7f2}
+  .svc-group-head{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+  .svc-group-head input{flex:1;font:inherit;font-size:14.5px;font-weight:700;color:var(--ink);border:1px solid transparent;background:transparent;padding:7px 9px;border-radius:8px;min-width:0}
+  .svc-group-head input:focus,.svc-group-head input:hover{border-color:var(--line);background:#fff;outline:none}
+  .svc-group-head .svc-remove{flex:none}
+  .svc-arrows{display:flex;gap:2px;flex:none}
+
   .media-row{display:flex;align-items:center;gap:14px;margin-bottom:14px}
   .media-thumb{width:64px;height:64px;border-radius:12px;border:1px solid var(--line);object-fit:cover;background:#f3efe8;flex:none}
   .media-thumb.empty{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:10px;text-align:center}
@@ -114,9 +121,9 @@
 
   <div class="dash-section">
     <h2>Services &amp; prices</h2>
-    <p class="dash-hint">Listed on your site in this order. Time is optional — leave blank to hide it. Leave price blank if it varies.</p>
-    <div id="svcList"></div>
-    <button type="button" class="dash-add" id="svcAdd">+ Add a service</button>
+    <p class="dash-hint">Group services under a section title (e.g. "Massage"). Time is optional — leave blank to hide it. Leave price blank if it varies.</p>
+    <div id="svcGroups"></div>
+    <button type="button" class="dash-add" id="svcGroupAdd">+ Add section</button>
   </div>
 
   <div class="dash-section">
@@ -219,7 +226,7 @@
   // ---------------- state ----------------
   var business = null;   // full row from `businesses` (data column parsed)
   var slug = null;
-  var services = [];     // [{name, price}]
+  var services = [];     // groups: [{name, items:[{name,price,duration}]}]
   var media = { logoImage: null, heroImage: null, gallery: [] }; // relPaths already on the row
   var pendingUploads = { logo: null, hero: null, gallery: [] };  // {file} staged, not yet saved
   var galleryRemoved = [];
@@ -435,60 +442,149 @@
 
   // ---------------- services ----------------
   // The real site renderer (fresh-templates.js, used both for the live
-  // export and the preview below) expects `raw.services` as a plain array
-  // of name strings with a parallel `raw.prices` array — not the
-  // {name,price} objects this form edits, which is friendlier to type
-  // into. servicesFromRaw()/servicesToRaw() convert between the two so
-  // what's saved is what the real site actually reads. (Also tolerates
-  // rows saved by an earlier version of this page that wrote objects
-  // straight into raw.services.)
+  // export and the preview below) reads named service sections from
+  // `raw.serviceGroups` ([{name, items:[[name,price],...]}]) when present,
+  // falling back to the older flat `raw.services`/`raw.prices` arrays for
+  // businesses saved before grouping existed. servicesFromRaw()/
+  // servicesToRaw() convert between that on-disk shape and the friendlier
+  // in-memory groups this form edits, and always write both shapes so
+  // nothing that still reads the flat arrays breaks.
   function servicesFromRaw(raw) {
+    if (Array.isArray(raw.serviceGroups) && raw.serviceGroups.length) {
+      return raw.serviceGroups.map(function (g) {
+        return {
+          name: g.name || '',
+          items: (g.items || []).map(function (it) {
+            if (Array.isArray(it)) return { name: it[0] || '', price: it[1] || '', duration: '' };
+            return { name: it.name || '', price: it.price || '', duration: it.duration || '' };
+          })
+        };
+      });
+    }
     var names = Array.isArray(raw.services) ? raw.services : [];
     var prices = Array.isArray(raw.prices) ? raw.prices : [];
     var durations = Array.isArray(raw.serviceDurations) ? raw.serviceDurations : [];
-    return names.map(function (n, i) {
+    var items = names.map(function (n, i) {
       if (n && typeof n === 'object') return { name: n.name || '', price: n.price || '', duration: n.duration || '' };
       return { name: n || '', price: prices[i] || '', duration: durations[i] || '' };
     });
+    return [{ name: '', items: items }];
   }
-  function servicesToRaw(list) {
-    var kept = list.filter(function (s) { return s.name && s.name.trim(); });
+  function servicesToRaw(groups) {
+    var kept = groups
+      .map(function (g) { return { name: (g.name || '').trim(), items: g.items.filter(function (s) { return s.name && s.name.trim(); }) }; })
+      .filter(function (g) { return g.items.length; });
+    var flatItems = [].concat.apply([], kept.map(function (g) { return g.items; }));
     return {
-      services: kept.map(function (s) { return s.name.trim(); }),
-      prices: kept.map(function (s) { return (s.price || '').trim(); }),
-      serviceDurations: kept.map(function (s) { return (s.duration || '').trim(); })
+      serviceGroups: kept.map(function (g) {
+        return { name: g.name, items: g.items.map(function (s) { return [s.name.trim(), (s.price || '').trim()]; }) };
+      }),
+      services: flatItems.map(function (s) { return s.name.trim(); }),
+      prices: flatItems.map(function (s) { return (s.price || '').trim(); }),
+      serviceDurations: flatItems.map(function (s) { return (s.duration || '').trim(); })
     };
   }
   function renderServices() {
-    var list = document.getElementById('svcList');
-    list.innerHTML = '';
-    services.forEach(function (svc, i) {
-      var row = document.createElement('div');
-      row.className = 'svc-row';
-      row.innerHTML =
-        '<input type="text" placeholder="Service name" data-i="' + i + '" data-f="name" value="' + escapeAttr(svc.name || '') + '">' +
-        '<input type="text" placeholder="Time" data-i="' + i + '" data-f="duration" value="' + escapeAttr(svc.duration || '') + '">' +
-        '<input type="text" placeholder="Price" data-i="' + i + '" data-f="price" value="' + escapeAttr(svc.price || '') + '">' +
-        '<button type="button" class="svc-remove" data-i="' + i + '" aria-label="Remove">&times;</button>';
-      list.appendChild(row);
+    var mount = document.getElementById('svcGroups');
+    mount.innerHTML = '';
+    services.forEach(function (group, gi) {
+      var card = document.createElement('div');
+      card.className = 'svc-group';
+      var head = document.createElement('div');
+      head.className = 'svc-group-head';
+      head.innerHTML =
+        '<input type="text" placeholder="Section title (e.g. Massage)" data-gi="' + gi + '" data-gf="name" value="' + escapeAttr(group.name || '') + '">' +
+        '<div class="svc-arrows">' +
+        '<button type="button" class="svc-remove" data-group-up="' + gi + '" ' + (gi === 0 ? 'disabled' : '') + ' aria-label="Move section up">↑</button>' +
+        '<button type="button" class="svc-remove" data-group-down="' + gi + '" ' + (gi === services.length - 1 ? 'disabled' : '') + ' aria-label="Move section down">↓</button>' +
+        '</div>' +
+        '<button type="button" class="svc-remove" data-group-remove="' + gi + '" aria-label="Remove section">&times;</button>';
+      card.appendChild(head);
+      group.items.forEach(function (svc, i) {
+        var row = document.createElement('div');
+        row.className = 'svc-row';
+        row.innerHTML =
+          '<input type="text" placeholder="Service name" data-gi="' + gi + '" data-i="' + i + '" data-f="name" value="' + escapeAttr(svc.name || '') + '">' +
+          '<input type="text" placeholder="Time" data-gi="' + gi + '" data-i="' + i + '" data-f="duration" value="' + escapeAttr(svc.duration || '') + '">' +
+          '<input type="text" placeholder="Price" data-gi="' + gi + '" data-i="' + i + '" data-f="price" value="' + escapeAttr(svc.price || '') + '">' +
+          '<div class="svc-arrows">' +
+          '<button type="button" class="svc-remove" data-item-up="' + gi + ':' + i + '" ' + (i === 0 ? 'disabled' : '') + ' aria-label="Move up">↑</button>' +
+          '<button type="button" class="svc-remove" data-item-down="' + gi + ':' + i + '" ' + (i === group.items.length - 1 ? 'disabled' : '') + ' aria-label="Move down">↓</button>' +
+          '</div>' +
+          '<button type="button" class="svc-remove" data-item-remove="' + gi + ':' + i + '" aria-label="Remove service">&times;</button>';
+        card.appendChild(row);
+      });
+      var addBtn = document.createElement('button');
+      addBtn.type = 'button';
+      addBtn.className = 'dash-add';
+      addBtn.dataset.itemAdd = gi;
+      addBtn.textContent = '+ Add service';
+      card.appendChild(addBtn);
+      mount.appendChild(card);
     });
-    list.querySelectorAll('input').forEach(function (input) {
+
+    mount.querySelectorAll('[data-gf]').forEach(function (input) {
       input.addEventListener('input', function () {
-        var i = +input.dataset.i, f = input.dataset.f;
-        services[i][f] = input.value;
+        services[+input.dataset.gi][input.dataset.gf] = input.value;
+        renderPreview();
       });
     });
-    list.querySelectorAll('.svc-remove').forEach(function (btn) {
+    mount.querySelectorAll('[data-f]').forEach(function (input) {
+      input.addEventListener('input', function () {
+        services[+input.dataset.gi].items[+input.dataset.i][input.dataset.f] = input.value;
+        renderPreview();
+      });
+    });
+    mount.querySelectorAll('[data-item-add]').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        services.splice(+btn.dataset.i, 1);
+        services[+btn.dataset.itemAdd].items.push({ name: '', price: '', duration: '' });
         renderServices();
+        renderPreview();
+      });
+    });
+    mount.querySelectorAll('[data-group-remove]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        services.splice(+btn.dataset.groupRemove, 1);
+        renderServices();
+        renderPreview();
+      });
+    });
+    mount.querySelectorAll('[data-item-remove]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var parts = btn.dataset.itemRemove.split(':');
+        services[+parts[0]].items.splice(+parts[1], 1);
+        renderServices();
+        renderPreview();
+      });
+    });
+    mount.querySelectorAll('[data-group-up],[data-group-down]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var i = +(btn.dataset.groupUp || btn.dataset.groupDown);
+        var j = btn.dataset.groupUp ? i - 1 : i + 1;
+        if (j < 0 || j >= services.length) return;
+        var tmp = services[i]; services[i] = services[j]; services[j] = tmp;
+        renderServices();
+        renderPreview();
+      });
+    });
+    mount.querySelectorAll('[data-item-up],[data-item-down]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var parts = (btn.dataset.itemUp || btn.dataset.itemDown).split(':');
+        var gi = +parts[0], i = +parts[1];
+        var j = btn.dataset.itemUp ? i - 1 : i + 1;
+        var items = services[gi].items;
+        if (j < 0 || j >= items.length) return;
+        var tmp = items[i]; items[i] = items[j]; items[j] = tmp;
+        renderServices();
+        renderPreview();
       });
     });
   }
 
-  document.getElementById('svcAdd').addEventListener('click', function () {
-    services.push({ name: '', price: '' });
+  document.getElementById('svcGroupAdd').addEventListener('click', function () {
+    services.push({ name: '', items: [{ name: '', price: '', duration: '' }] });
     renderServices();
+    renderPreview();
   });
 
   function escapeAttr(s) {
