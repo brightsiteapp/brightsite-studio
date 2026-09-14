@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const creatingOverlay = document.getElementById('creatingOverlay');
   const creatingVerb = document.getElementById('creatingVerb');
   const creatingName = document.getElementById('creatingName');
-  const creatingSub = document.getElementById('creatingSub');
+  const creatingList = document.getElementById('creatingList');
   const creatingProgress = document.getElementById('creatingProgress');
   const personalisingStatus = document.getElementById('personalisingStatus');
   const personalisingText = document.getElementById('personalisingText');
@@ -205,23 +205,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // A short handoff: this is a design brief for the BrightSite team, not a
   // claim that the automated preview is the finished website.
   const CREATING_STEPS = [
-    { verb: 'Loading your design brief', sub: 'using the details you shared', progress: 30 },
-    { verb: 'Shaping a direction', sub: 'matching the feel of your business', progress: 62 },
-    { verb: 'Preparing layout ideas', sub: 'ready for you to choose a style', progress: 86 },
-    { verb: 'Ready', sub: 'your design brief is ready', progress: 100 }
+    { progress: 30 }, { progress: 62 }, { progress: 86 }, { progress: 100 }
   ];
-  function swapText(el, text) {
-    el.classList.add('is-swapping');
-    setTimeout(() => {
-      el.textContent = text;
-      el.classList.remove('is-swapping');
-    }, 130);
-  }
   function runCreatingAnimation(name) {
     return new Promise((resolve) => {
       creatingName.textContent = name;
       creatingProgress.style.width = '6%';
       creatingOverlay.classList.remove('final');
+      creatingList?.querySelectorAll('li').forEach(item => item.classList.remove('is-visible'));
       creatingOverlay.setAttribute('aria-hidden', 'false');
       // rAF is paused in a backgrounded tab while the timers below still run,
       // so it could fire after the overlay was already dismissed and pin it
@@ -232,8 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
       let i = 0;
       function step() {
         const currentStep = CREATING_STEPS[i];
-        swapText(creatingVerb, currentStep.verb);
-        swapText(creatingSub, currentStep.sub);
+        creatingList?.querySelectorAll('li')[i]?.classList.add('is-visible');
         creatingProgress.style.width = currentStep.progress + '%';
         creatingOverlay.classList.toggle('final', i === CREATING_STEPS.length - 1);
         i++;

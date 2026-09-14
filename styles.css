@@ -770,16 +770,18 @@
     letter-spacing:-.025em;line-height:1.06;margin-bottom:16px;word-break:break-word;
     text-shadow:0 0 34px rgba(255,255,255,.28);transition:text-shadow .35s ease}
   .creating-overlay.final .creating-name{text-shadow:0 0 44px rgba(255,255,255,.5),0 0 90px rgba(255,255,255,.22)}
-  .creating-sub{font-family:var(--body);font-size:clamp(11px,1.5vw,14px);font-weight:600;letter-spacing:.2em;
-    text-transform:uppercase;color:rgba(255,255,255,.58);min-height:1.25em;
-    transform:translateY(0);transition:opacity .13s ease,transform .13s ease}
-  .creating-verb.is-swapping,.creating-sub.is-swapping{opacity:0;transform:translateY(5px)}
+  .creating-list{display:grid;gap:9px;width:min(390px,82vw);margin:0 auto;padding:0;list-style:none;text-align:left}
+  .creating-list li{position:relative;padding-left:28px;color:rgba(255,255,255,.58);font-size:13px;font-weight:600;opacity:0;transform:translateY(7px);transition:opacity .42s ease,transform .42s cubic-bezier(.22,.7,.3,1),color .42s ease}
+  .creating-list li::before{content:'✓';position:absolute;left:0;top:0;width:18px;height:18px;border:1px solid rgba(255,255,255,.38);border-radius:50%;display:grid;place-items:center;font-size:11px;color:transparent}
+  .creating-list li.is-visible{opacity:1;transform:none;color:rgba(255,255,255,.94)}
+  .creating-list li.is-visible::before{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.75);color:#fff}
+  .creating-verb.is-swapping{opacity:0;transform:translateY(5px)}
   .creating-progress{width:min(360px,72vw);height:3px;margin:30px auto 0;border-radius:999px;
     overflow:hidden;background:rgba(255,255,255,.2)}
   .creating-progress span{display:block;width:6%;height:100%;border-radius:inherit;background:#fff;
     box-shadow:0 0 15px rgba(255,255,255,.62);transition:width .5s cubic-bezier(.22,.7,.3,1)}
   @media(prefers-reduced-motion:reduce){
-    .creating-overlay,.creating-overlay:before,.creating-inner,.creating-verb,.creating-name,.creating-sub,.creating-progress span{transition:none}
+    .creating-overlay,.creating-overlay:before,.creating-inner,.creating-verb,.creating-name,.creating-list li,.creating-progress span{transition:none}
   }
 
   /* three compact cards, BrightSite highlighted in the centre — collapsed
