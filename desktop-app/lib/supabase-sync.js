@@ -106,6 +106,23 @@ function headers(extra) {
   return { apikey: key, Authorization: `Bearer ${key}`, ...extra };
 }
 
+// New rows in the public site's write-only `leads` table (account/dashboard.html's
+// "Request an update" modal, see supabase/leads_schema.sql) since `afterId` —
+// the anon key can insert but not read it, so this needs the same service
+// role key as fetchAccounts. [] if accounts aren't connected or the request fails.
+async function fetchNewLeads(afterId = 0) {
+  if (!accountsEnabled()) return [];
+  const { url } = config();
+  try {
+    const res = await fetch(`${url}/rest/v1/leads?id=gt.${Number(afterId) || 0}&order=id.asc&limit=200`, { headers: accountHeaders() });
+    if (!res.ok) throw new Error(`leads fetch failed: ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.error('[supabase-sync] fetchNewLeads failed:', err.message);
+    return [];
+  }
+}
+
 function accountHeaders(extra) {
   const key = accountsKey();
   return { apikey: key, Authorization: `Bearer ${key}`, ...extra };
@@ -356,5 +373,5 @@ module.exports = {
   pullDemoViews,
   enabled, pullAll, pushOne, deleteOne, flushPending, getStatus,
   uploadMedia, downloadMedia, deleteMedia, syncMediaForProject,
-  accountsEnabled, fetchAccounts, testAccountsKey, setAccountsKey, deleteAccount
+  accountsEnabled, fetchAccounts, testAccountsKey, setAccountsKey, deleteAccount, fetchNewLeads
 };

@@ -10,6 +10,7 @@ const browserFetch = require('./lib/browser-fetch');
 const businessSearch = require('./lib/business-search');
 const places = require('./lib/places');
 const sync = require('./lib/supabase-sync');
+const requests = require('./lib/customer-requests');
 const { deployToVercel, canDeploy, resetCanDeploy, takeOffline, addDomain, removeDomain } = require('./lib/deploy');
 const siteImport = require('./lib/site-import');
 const connections = require('./lib/connections');
@@ -71,6 +72,30 @@ function createApp(options = {}) {
   });
 
   app.get('/api/sync-status', (req, res) => res.json(sync.getStatus()));
+  // New "Request an update" / "Request a domain change" submissions from
+  // account/dashboard.html land in Supabase's `leads` table (public site,
+  // no backend of its own) — queue any not seen before as a customer
+  // request (see lib/customer-requests.js), for V2's Tasks poll to turn
+  // into an actual task. Piggybacks on whatever already polls accounts/
+  // tasks rather than running its own timer, since Studio has no
+  // server-side background jobs.
+  async function pollLeadsIntoRequests() {
+    if (!sync.accountsEnabled()) return;
+    const rows = await sync.fetchNewLeads(requests.getLastLeadId());
+    for (const row of rows) {
+      let details = {};
+      try { details = JSON.parse(row.details || '{}'); } catch { /* older/plain-text lead row */ }
+      requests.queueRequest({
+        type: details.type === 'domain_change_request' ? 'domain' : 'update',
+        slug: details.slug || '',
+        business: row.business_name || '',
+        email: details.email || '',
+        message: details.message || (typeof row.details === 'string' ? row.details : ''),
+        dedupeKey: `lead-${row.id}`
+      });
+    }
+    if (rows.length) requests.setLastLeadId(rows[rows.length - 1].id);
+  }
   // A signup at account/login.html with no business yet is an inbound
   // lead — they asked for a site, so unlike a cold-call lead they don't
   // need finding or calling. Give each one a real (empty) project the
@@ -95,6 +120,7 @@ function createApp(options = {}) {
     });
   }
   app.get('/api/accounts', async (req, res) => {
+    await pollLeadsIntoRequests().catch(err => console.error('[leads] poll failed:', err.message));
     const accounts = await sync.fetchAccounts();
     res.json({ enabled: sync.accountsEnabled(), accounts: ensureSignupLeads(accounts) });
   });
@@ -377,6 +403,19 @@ function createApp(options = {}) {
     res.json(stripe.status());
   });
 
+  // Turns on the cancellation-reason survey in Stripe's Billing Portal, so
+  // a customer cancelling gets asked why (see stripe.ensureCancellationSurvey)
+  // — a one-time, explicit action from Settings, not automatic, since it
+  // changes what the customer sees when they cancel.
+  app.post('/api/stripe/cancellation-survey', async (req, res) => {
+    try {
+      await stripe.ensureCancellationSurvey();
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
   // The Supabase service role key itself is never sent back to the page.
   app.post('/api/accounts-key', async (req, res) => {
     const serviceRoleKey = String(req.body?.serviceRoleKey || '').trim();
@@ -405,6 +444,30 @@ function createApp(options = {}) {
     return patch;
   }
 
+  // A cancellation just reached Stripe for the first time (not already
+  // cancelling/cancelled) with a reason attached — only set when the
+  // Billing Portal's cancellation survey is on (stripe.ensureCancellationSurvey,
+  // wired to a Settings button). Queued as a customer request the same
+  // way a "Request an update" submission is, so it shows up as a task.
+  // Stripe's cancellation reasons are a fixed set with no "domain" option —
+  // 'switched_service' or a comment mentioning "domain" is the closest signal.
+  function queueCancellationIfNew(project, billing) {
+    if (!billing.cancellation) return;
+    const wasCancelling = ['cancelling', 'cancelled'].includes(project.billing?.status);
+    const isCancelling = ['cancelling', 'cancelled'].includes(billing.status);
+    if (wasCancelling || !isCancelling) return;
+    const { reason, comment } = billing.cancellation;
+    const domainish = reason === 'switched_service' || /domain/i.test(comment || '');
+    requests.queueRequest({
+      type: domainish ? 'domain' : 'cancellation',
+      slug: project.slug,
+      business: project.raw?.name || project.name || project.slug,
+      email: project.contact?.email || '',
+      message: comment || (reason ? `Cancelled — reason given: ${reason.replace(/_/g, ' ')}` : 'Cancelled — no reason given.'),
+      dedupeKey: `cancel-${project.slug}-${billing.until || billing.status}`
+    });
+  }
+
   // "Mark paid" asks Stripe first. Found → saved the way a refresh would;
   // not found → billing: null, and the app offers "mark paid anyway".
   app.post('/api/projects/:slug/check-payment', async (req, res) => {
@@ -416,6 +479,7 @@ function createApp(options = {}) {
       if (!billing) return res.json({ billing: null, project });
       const patch = billingPatch(project, billing);
       if (!Object.keys(patch).length) return res.json({ billing, project });
+      queueCancellationIfNew(project, billing);
       const saved = storage.saveProject(project.slug, patch);
       sync.pushOne(saved);
       res.json({ billing, project: saved });
@@ -457,6 +521,7 @@ function createApp(options = {}) {
         if (!project) continue;
         const patch = billingPatch(project, billing);
         if (!Object.keys(patch).length) continue;
+        queueCancellationIfNew(project, billing);
         sync.pushOne(storage.saveProject(slug, patch));
         changed.push(slug);
       }

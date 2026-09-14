@@ -221,8 +221,24 @@
     }
     if (services.stripe?.signedIn) stripeForm.hidden = true;
     if (services.accounts?.signedIn) accountsForm.hidden = true;
+    document.getElementById('cancelSurveyRow').hidden = !services.stripe?.signedIn;
     if (!serviceRows().some(r => r.dataset.waiting)) { clearInterval(servicePoll); servicePoll = null; }
   }
+  document.getElementById('cancelSurveyBtn').onclick = async e => {
+    const status = document.getElementById('cancelSurveyStatus');
+    e.target.disabled = true;
+    status.textContent = 'Turning it on…';
+    try {
+      await api('/api/stripe/cancellation-survey', { method: 'POST' });
+      status.textContent = 'On — customers are asked why when they cancel.';
+      status.classList.add('is-signed-in');
+      e.target.textContent = 'On ✓';
+    } catch (err) {
+      status.textContent = err.message;
+      status.classList.remove('is-signed-in');
+      e.target.disabled = false;
+    }
+  };
   el.settingsDialog.addEventListener('click', async e => {
     const btn = e.target.closest('[data-service] button');
     if (!btn) return;

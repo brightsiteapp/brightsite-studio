@@ -87,11 +87,25 @@ async function createPaymentLink({ business, slug, planName, setup, amount, inte
 const BILLING_RANK = { active: 4, cancelling: 3, failed: 2, cancelled: 1, paid: 0 };
 const better = (current, next) => (!current || BILLING_RANK[next.status] > BILLING_RANK[current.status] ? next : current);
 
+// Set when a customer cancels through the Billing Portal's cancellation
+// survey (see ensureCancellationSurvey below) — {reason, comment} or null
+// if they cancelled some other way (API, Dashboard) or the survey isn't on.
+function cancellationOf(sub) {
+  const d = sub.cancellation_details;
+  if (!d || (!d.reason && !d.comment)) return null;
+  return { reason: d.reason || '', comment: d.comment || '' };
+}
+
 function billingOf(sub) {
   const until = sub.cancel_at ? new Date(sub.cancel_at * 1000).toISOString() : '';
-  if (['active', 'trialing'].includes(sub.status)) return sub.cancel_at_period_end || sub.cancel_at ? { status: 'cancelling', until } : { status: 'active', until: '' };
+  const cancellation = cancellationOf(sub);
+  if (['active', 'trialing'].includes(sub.status)) {
+    return sub.cancel_at_period_end || sub.cancel_at
+      ? { status: 'cancelling', until, cancellation }
+      : { status: 'active', until: '' };
+  }
   if (['past_due', 'unpaid', 'incomplete'].includes(sub.status)) return { status: 'failed', until: '' };
-  return { status: 'cancelled', until: sub.ended_at ? new Date(sub.ended_at * 1000).toISOString() : '' };
+  return { status: 'cancelled', until: sub.ended_at ? new Date(sub.ended_at * 1000).toISOString() : '', cancellation };
 }
 
 async function billingBySlug() {
@@ -139,4 +153,46 @@ async function billingEventsSince(since) {
   return (await call(`events?limit=1&created[gt]=${since}&${types}`)).data.length;
 }
 
-module.exports = { getKey, setKey, status, testKey, createPaymentLink, billingBySlug, billingForEmail, billingEventsSince, billingOf, better };
+// Turns on the Billing Portal's cancellation-reason survey (Stripe's own
+// fixed reason list — no custom "domain" option, but customers can add a
+// free-text comment, and 'switched_service' is the closest fit for someone
+// leaving to point their domain elsewhere) so cancellation_details actually
+// gets populated on the subscription for billingOf() to read. Safe to call
+// repeatedly — updates the account's existing active configuration if there
+// is one, otherwise creates it. Call from Settings, not automatically, since
+// it changes the customer-facing portal.
+async function ensureCancellationSurvey() {
+  if (!getKey()) throw new Error('Add your Stripe secret key in Settings first.');
+  const existing = await call('billing_portal/configurations?is_default=true&limit=1');
+  const reasons = ['too_expensive', 'missing_features', 'switched_service', 'unused', 'customer_service', 'too_complex', 'low_quality', 'other'];
+  const params = {
+    'features[subscription_cancel][enabled]': 'true',
+    'features[subscription_cancel][cancellation_reason][enabled]': 'true'
+  };
+  reasons.forEach((r, i) => { params[`features[subscription_cancel][cancellation_reason][options][${i}]`] = r; });
+  const config = existing.data[0];
+  if (config) return call(`billing_portal/configurations/${config.id}`, params);
+  params['business_profile[headline]'] = 'Manage your BrightSite website plan';
+  return call('billing_portal/configurations', params);
+}
+
+// A portal session the customer is redirected to — created server-side
+// (this call needs the secret key) then handed back as a URL. `customerId`
+// is a Stripe customer id (cus_...), found by email via billingForEmail's
+// same customers?email= lookup.
+async function createPortalSession(customerId, returnUrl) {
+  if (!getKey()) throw new Error('Stripe isn’t connected.');
+  const res = await call('billing_portal/sessions', { customer: customerId, return_url: returnUrl });
+  return res.url;
+}
+
+async function findCustomerId(email) {
+  if (!getKey() || !email) return null;
+  const customers = (await call(`customers?email=${encodeURIComponent(email)}&limit=1`)).data;
+  return customers[0]?.id || null;
+}
+
+module.exports = {
+  getKey, setKey, status, testKey, createPaymentLink, billingBySlug, billingForEmail, billingEventsSince, billingOf, better,
+  ensureCancellationSurvey, createPortalSession, findCustomerId
+};

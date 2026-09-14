@@ -131,10 +131,57 @@ async function handleFormLead(form, env, cors) {
   }
 }
 
+// account/dashboard.html's "Manage billing" button — Studio itself runs on
+// the admin's Mac, not the public internet, so the one call that needs a
+// live Stripe secret key from a page the *customer's* browser can reach has
+// to happen here instead. Verifies the caller is actually signed in (via
+// their own Supabase access token — this worker only holds the anon key,
+// never a customer's password) before ever touching Stripe, then hands
+// back a Billing Portal URL for the browser to redirect to.
+async function handlePortalSession(body, env, cors) {
+  const { access_token } = body || {};
+  if (!access_token) return Response.json({ error: 'Not signed in.' }, { status: 401, headers: cors });
+
+  const userRes = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+    headers: { apikey: env.SUPABASE_ANON_KEY, Authorization: `Bearer ${access_token}` },
+  });
+  if (!userRes.ok) return Response.json({ error: 'Your session has expired — log in again.' }, { status: 401, headers: cors });
+  const user = await userRes.json();
+  if (!user.email) return Response.json({ error: 'No email on this account.' }, { status: 400, headers: cors });
+
+  const customers = await stripeCall(env, `customers?email=${encodeURIComponent(user.email)}&limit=1`);
+  const customerId = customers.data?.[0]?.id;
+  if (!customerId) {
+    return Response.json({ error: 'We don’t have a billing record for this email yet — contact us to sort out your plan.' }, { status: 404, headers: cors });
+  }
+
+  const session = await stripeCall(env, 'billing_portal/sessions', {
+    customer: customerId,
+    return_url: env.PORTAL_RETURN_URL || 'https://brightsite.app/account/dashboard.html',
+  });
+  return Response.json({ url: session.url }, { headers: cors });
+}
+
+async function stripeCall(env, endpoint, params) {
+  if (!env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY not configured');
+  const res = await fetch(`https://api.stripe.com/v1/${endpoint}`, {
+    method: params ? 'POST' : 'GET',
+    headers: {
+      Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
+      ...(params ? { 'Content-Type': 'application/x-www-form-urlencoded' } : {}),
+    },
+    body: params ? new URLSearchParams(params) : undefined,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error?.message || `Stripe error ${res.status}`);
+  return data;
+}
+
 export default {
   async fetch(req, env) {
     const origin = req.headers.get('Origin') || '';
     const cors = corsHeaders(origin);
+    const url = new URL(req.url);
 
     if (req.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: cors });
@@ -142,6 +189,21 @@ export default {
 
     if (req.method !== 'POST') {
       return Response.json({ error: 'Method not allowed' }, { status: 405, headers: cors });
+    }
+
+    if (url.pathname === '/billing-portal') {
+      try {
+        let body;
+        try {
+          body = await req.json();
+        } catch {
+          body = {};
+        }
+        return await handlePortalSession(body, env, cors);
+      } catch (error) {
+        console.error('billing-portal failed:', error);
+        return Response.json({ error: 'Couldn’t open billing — please try again.' }, { status: 502, headers: cors });
+      }
     }
 
     if (!env.RESEND_API_KEY) {

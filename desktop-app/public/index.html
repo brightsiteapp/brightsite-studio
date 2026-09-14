@@ -175,6 +175,11 @@
     <input type="text" id="stripeKeyInput" placeholder="Paste your Stripe secret key (sk_live_… or rk_live_…)" autocomplete="off" spellcheck="false">
     <button type="button" class="primary" id="stripeSaveBtn">Save</button>
   </div>
+  <div class="account-row" id="cancelSurveyRow">
+    <span class="account-icon stripe" aria-hidden="true">?</span>
+    <div class="account-text"><b>Cancellation survey</b><span class="account-status" id="cancelSurveyStatus">Asks a customer why when they cancel, in the Billing Portal</span></div>
+    <button type="button" class="primary" id="cancelSurveyBtn">Turn on</button>
+  </div>
   <div class="account-row" data-service="sync">
     <span class="account-icon sync" aria-hidden="true">⟳</span>
     <div class="account-text"><b>Shared sync (Supabase)</b><span class="account-status">Checking…</span></div>

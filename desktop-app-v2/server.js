@@ -18,16 +18,52 @@ if (!process.env.PORT) process.env.PORT = '4174';
 const { createApp, PORT } = require(path.join(V1_DIR, 'server'));
 const storage = require(path.join(V1_DIR, 'lib', 'site-storage'));
 const { spawnEnv } = require(path.join(V1_DIR, 'lib', 'shell-path'));
+const customerRequests = require(path.join(V1_DIR, 'lib', 'customer-requests'));
 const tasks = require('./lib/tasks');
+const P = require('./public/pipeline');
 const pricePhoto = require('./lib/price-photo');
 const { version } = require('./package.json');
+
+// V1 queues "Request an update"/domain-change submissions and cancellations
+// with a reason (see lib/customer-requests.js there) but has no concept of
+// a Task — that's V2-only. Turn any not yet converted into one here,
+// business-linked when the request's slug still exists, otherwise a plain
+// task in the global list, same as one typed in by hand.
+const REQUEST_TASK_TYPE = { domain: 'Domain', update: 'Other', cancellation: 'Other' };
+const REQUEST_LABEL = { domain: 'Domain change requested', update: 'Website update requested', cancellation: 'Cancelled' };
+function processCustomerRequests() {
+  const pending = customerRequests.pending(storage.ROOT);
+  if (!pending.length) return;
+  const byBusinessSlug = new Map();
+  const globalAdds = [];
+  for (const r of pending) {
+    const text = `${REQUEST_LABEL[r.type] || 'Customer request'} — ${r.business || r.email || 'unknown business'}${r.message ? `: ${r.message}` : ''}`;
+    const task = P.newTask({ text, type: REQUEST_TASK_TYPE[r.type] || 'Other' }, new Date(r.createdAt).getTime() || Date.now());
+    const project = r.slug && storage.readProject(r.slug);
+    if (project) {
+      if (!byBusinessSlug.has(r.slug)) byBusinessSlug.set(r.slug, []);
+      byBusinessSlug.get(r.slug).push(task);
+    } else {
+      globalAdds.push(task);
+    }
+  }
+  for (const [slug, newTasks] of byBusinessSlug) {
+    const project = storage.readProject(slug);
+    storage.saveProject(slug, { tasks: [...(project.tasks || []), ...newTasks] });
+  }
+  if (globalAdds.length) tasks.write(storage.ROOT, [...tasks.read(storage.ROOT), ...globalAdds]);
+  customerRequests.markConverted(pending.map(r => r.id), storage.ROOT);
+}
 
 function createV2App() {
   const app = createApp({ publicDir: path.join(__dirname, 'public'), appVersion: version });
   // V1's own page and scripts, which V2 loads for its settings, dialogs and builder.
   app.use('/v1', express.static(path.join(V1_DIR, 'public')));
 
-  app.get('/api/v2/tasks', (req, res) => res.json(tasks.read(storage.ROOT)));
+  app.get('/api/v2/tasks', (req, res) => {
+    try { processCustomerRequests(); } catch (err) { console.error('[customer-requests] convert failed:', err.message); }
+    res.json(tasks.read(storage.ROOT));
+  });
   app.put('/api/v2/tasks', (req, res) => {
     try {
       res.json(tasks.write(storage.ROOT, req.body));

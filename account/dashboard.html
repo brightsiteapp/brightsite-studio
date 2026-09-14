@@ -68,7 +68,9 @@
   .plan-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;background:#fdf2dd;color:#8a5d08;font-size:11.5px;font-weight:700}
   .plan-pill.active{background:#e6f6ec;color:#1f9d55}
   .plan-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
-  .billing-btn{width:100%;margin-top:6px;background:none;border:1px solid var(--line);border-radius:999px;padding:10px 16px;font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);cursor:not-allowed}
+  .billing-btn{width:100%;margin-top:6px;background:none;border:1px solid var(--line);border-radius:999px;padding:10px 16px;font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;transition:border-color .18s ease,color .18s ease}
+  .billing-btn:hover{border-color:var(--accent);color:var(--ink)}
+  .billing-btn:disabled{cursor:not-allowed;opacity:.7}
   .upgrade-btn{width:100%;margin-top:6px;border:0;border-radius:999px;padding:11px 16px;font:inherit;font-size:12.5px;font-weight:700;color:#fff;background:var(--accent);cursor:pointer}
   .info-hint{font-size:12px;color:var(--muted);line-height:1.5;margin-top:2px}
 
@@ -101,7 +103,7 @@
   .acct-pwd-show input{width:auto;margin:0;min-height:auto}
   .acct-pwd-show label{cursor:pointer}
   .acct-field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}
-  .acct-field input,.acct-field textarea{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--ink);font:inherit;font-size:14px;outline:none;transition:border-color .18s ease}
+  .acct-field input,.acct-field textarea,.acct-field select{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--ink);font:inherit;font-size:14px;outline:none;transition:border-color .18s ease}
   .acct-field input{min-height:42px}
   .acct-field textarea{min-height:64px;resize:vertical}
   .acct-field input:focus,.acct-field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
@@ -253,7 +255,7 @@
           <h2>Billing</h2>
           <p class="info-hint" id="billingHint">Upgrade your plan to make your site live and take it beyond a draft.</p>
           <button type="button" class="upgrade-btn" id="upgradeBtn" hidden>Upgrade plan</button>
-          <button type="button" class="billing-btn" id="billingBtn" disabled title="Coming soon">Manage billing</button>
+          <button type="button" class="billing-btn" id="billingBtn">Manage billing</button>
         </div>
 
         <div class="req-btn-wrap">
@@ -366,7 +368,14 @@
     <h2>Tell us what you'd like to change</h2>
     <p class="hint">Write it however feels natural — “please add a new service”, “change my phone number”, “I want a darker look”, “I need online booking”.</p>
     <div class="acct-field">
-      <label for="reqMessage">Your update</label>
+      <label for="reqType">What's this about?</label>
+      <select id="reqType">
+        <option value="update">A change to my website</option>
+        <option value="domain">Connecting or changing my domain</option>
+      </select>
+    </div>
+    <div class="acct-field">
+      <label for="reqMessage" id="reqMessageLabel">Your update</label>
       <textarea id="reqMessage" placeholder="e.g. Please add a new service called deep tissue massage, £60 for 60 minutes."></textarea>
     </div>
     <div class="modal-actions">
@@ -1131,9 +1140,27 @@
 
   // ---------------- request an update ----------------
   var reqVeil = document.getElementById('reqVeil');
-  function openReq() { reqVeil.hidden = false; document.getElementById('reqMessage').focus(); }
+  var reqType = document.getElementById('reqType');
+  var reqMessage = document.getElementById('reqMessage');
+  var reqMessageLabel = document.getElementById('reqMessageLabel');
+  function openReq(type) {
+    reqVeil.hidden = false;
+    reqType.value = type === 'domain' ? 'domain' : 'update';
+    updateReqCopy();
+    reqMessage.focus();
+  }
+  function updateReqCopy() {
+    if (reqType.value === 'domain') {
+      reqMessageLabel.textContent = 'Your domain';
+      reqMessage.placeholder = 'e.g. I own willowbeauty.co.uk and want my site to use it, or I want to buy a new domain.';
+    } else {
+      reqMessageLabel.textContent = 'Your update';
+      reqMessage.placeholder = 'e.g. Please add a new service called deep tissue massage, £60 for 60 minutes.';
+    }
+  }
+  reqType.addEventListener('change', updateReqCopy);
   function closeReq() { reqVeil.hidden = true; document.getElementById('reqStatus').textContent = ''; }
-  document.getElementById('requestBtn').addEventListener('click', openReq);
+  document.getElementById('requestBtn').addEventListener('click', function () { openReq('update'); });
   document.getElementById('reqClose').addEventListener('click', closeReq);
   document.getElementById('reqCancel').addEventListener('click', closeReq);
   reqVeil.addEventListener('click', function (e) { if (e.target === reqVeil) closeReq(); });
@@ -1141,14 +1168,15 @@
   document.getElementById('reqSend').addEventListener('click', function () {
     var btn = this;
     var statusEl = document.getElementById('reqStatus');
-    var message = document.getElementById('reqMessage').value.trim();
-    if (!message) { statusEl.textContent = 'Let us know what you’d like changed first.'; statusEl.className = 'save-status err'; return; }
+    var message = reqMessage.value.trim();
+    var isDomain = reqType.value === 'domain';
+    if (!message) { statusEl.textContent = isDomain ? 'Let us know the domain you’d like first.' : 'Let us know what you’d like changed first.'; statusEl.className = 'save-status err'; return; }
 
     var businessName = (business && business.data && business.data.raw && business.data.raw.name) || (business && business.name) || (session.email || '');
     btn.disabled = true;
     statusEl.textContent = 'Sending…'; statusEl.className = 'save-status';
 
-    var details = JSON.stringify({ type: 'account_update_request', slug: slug, email: session.email || '', message: message });
+    var details = JSON.stringify({ type: isDomain ? 'domain_change_request' : 'account_update_request', slug: slug, email: session.email || '', message: message });
     var databaseRequest = fetch(SUPABASE_URL + '/rest/v1/leads', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY, Prefer: 'return=minimal' },
@@ -1157,7 +1185,7 @@
     var formData = new FormData();
     formData.append('Business', businessName);
     formData.append('Email', session.email || '');
-    formData.append('Update', message);
+    formData.append(isDomain ? 'Domain change' : 'Update', message);
     var emailRequest = fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/', { method: 'POST', body: formData, keepalive: true });
 
     Promise.allSettled([databaseRequest, emailRequest]).then(function (results) {
@@ -1170,6 +1198,32 @@
         statusEl.textContent = 'Something went wrong — please try again.'; statusEl.className = 'save-status err';
       }
     });
+  });
+
+  // Redirects to Stripe's own Billing Portal, so a customer can update
+  // their card, see invoices, or cancel — including Stripe's cancellation
+  // survey if it's been turned on (Studio's Settings), which is how a
+  // cancellation reason like wanting a different domain reaches us.
+  document.getElementById('billingBtn').addEventListener('click', function () {
+    var btn = this;
+    btn.disabled = true;
+    var originalText = btn.textContent;
+    btn.textContent = 'Opening billing…';
+    fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/billing-portal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ access_token: session.access_token })
+    })
+      .then(function (res) { return res.json().then(function (data) { return { res: res, data: data }; }); })
+      .then(function (r) {
+        if (!r.res.ok || !r.data.url) throw new Error((r.data && r.data.error) || 'Something went wrong.');
+        location.href = r.data.url;
+      })
+      .catch(function (err) {
+        btn.disabled = false;
+        btn.textContent = originalText;
+        alert(err.message || 'Couldn’t open billing — please try again.');
+      });
   });
 
   loadBusiness();
