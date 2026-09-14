@@ -97,6 +97,9 @@
   .acct-status.ok{color:var(--accent);font-weight:600}
   .acct-status.err{color:#b23b2c}
   .acct-field{margin-bottom:12px}
+  .acct-pwd-show{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:13px;color:var(--muted)}
+  .acct-pwd-show input{width:auto;margin:0;min-height:auto}
+  .acct-pwd-show label{cursor:pointer}
   .acct-field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}
   .acct-field input,.acct-field textarea{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--ink);font:inherit;font-size:14px;outline:none;transition:border-color .18s ease}
   .acct-field input{min-height:42px}
@@ -233,7 +236,14 @@
           <h2>Password</h2>
           <button type="button" class="sec-btn" id="pwdCardToggle">Change password<span class="chev">&#8250;</span></button>
           <form id="pwdForm" hidden>
-            <div class="acct-field" style="margin-top:10px"><label for="fNewPassword">New password</label><input type="password" id="fNewPassword" autocomplete="new-password" minlength="6" placeholder="••••••••"></div>
+            <div class="acct-field" style="margin-top:10px">
+              <label for="fNewPassword">New password</label>
+              <input type="password" id="fNewPassword" autocomplete="new-password" minlength="6" placeholder="••••••••">
+              <div class="acct-pwd-show">
+                <input type="checkbox" id="pwdShowToggle">
+                <label for="pwdShowToggle">Show password</label>
+              </div>
+            </div>
             <button type="submit" class="upgrade-btn" id="pwdSubmit">Save new password</button>
             <div class="acct-status" id="pwdStatus" style="min-height:18px;margin-top:8px;font-size:12.5px"></div>
           </form>
@@ -421,6 +431,11 @@
     var pwdInput = document.getElementById('fNewPassword');
     var pwdSubmit = document.getElementById('pwdSubmit');
     var pwdStatus = document.getElementById('pwdStatus');
+    var pwdShowToggle = document.getElementById('pwdShowToggle');
+
+    pwdShowToggle.addEventListener('change', function () {
+      pwdInput.type = pwdShowToggle.checked ? 'text' : 'password';
+    });
 
     toggleBtn.addEventListener('click', function () {
       pwdForm.hidden = !pwdForm.hidden;

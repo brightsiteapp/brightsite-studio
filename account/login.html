@@ -45,10 +45,9 @@
   .acct-prefill-email.show{display:block}
   .acct-prefill-email strong{color:var(--ink);font-weight:700}
   .acct-prefill-email button{background:none;border:0;color:var(--accent);font:inherit;font-weight:700;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:2px}
-  .acct-pwd-wrap{position:relative}
-  .acct-pwd-wrap input{padding-right:44px}
-  .acct-pwd-toggle{position:absolute;right:5px;top:50%;transform:translateY(-50%);width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:none;border:0;border-radius:8px;color:var(--muted);cursor:pointer}
-  .acct-pwd-toggle:hover{color:var(--ink);background:rgba(23,32,31,.05)}
+  .acct-pwd-show{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:13px;color:var(--muted)}
+  .acct-pwd-show input{width:auto;margin:0}
+  .acct-pwd-show label{cursor:pointer}
   .acct-forgot{display:block;margin:8px 0 0;text-align:right;font-size:12.5px}
   .acct-forgot button{background:none;border:0;color:var(--muted);font:inherit;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:2px}
   .acct-forgot button:hover{color:var(--accent)}
@@ -73,12 +72,10 @@
       </div>
       <div class="acct-field">
         <label for="fPassword">Password</label>
-        <div class="acct-pwd-wrap">
-          <input type="password" id="fPassword" required autocomplete="current-password" placeholder="••••••••" minlength="6">
-          <button type="button" class="acct-pwd-toggle" id="pwdToggle" aria-label="Show password">
-            <svg id="pwdIconShow" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-            <svg id="pwdIconHide" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a21.6 21.6 0 0 1 5.06-5.94M9.9 4.24A10.4 10.4 0 0 1 12 5c7 0 11 7 11 7a21.6 21.6 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>
-          </button>
+        <input type="password" id="fPassword" required autocomplete="current-password" placeholder="••••••••" minlength="6">
+        <div class="acct-pwd-show">
+          <input type="checkbox" id="pwdToggle">
+          <label for="pwdToggle">Show password</label>
         </div>
         <p class="acct-forgot" id="forgotWrap"><button type="button" id="forgotBtn">Forgot password?</button></p>
       </div>
@@ -129,8 +126,6 @@
   var prefillEmailValueEl = document.getElementById('acctPrefillEmailValue');
   var prefillEmailEditBtn = document.getElementById('acctPrefillEmailEdit');
   var pwdToggle = document.getElementById('pwdToggle');
-  var pwdIconShow = document.getElementById('pwdIconShow');
-  var pwdIconHide = document.getElementById('pwdIconHide');
   var forgotWrap = document.getElementById('forgotWrap');
   var forgotBtn = document.getElementById('forgotBtn');
   var googleWrap = document.querySelector('.acct-divider');
@@ -154,12 +149,8 @@
     emailInput.focus();
   });
 
-  pwdToggle.addEventListener('click', function () {
-    var showing = passwordInput.type === 'text';
-    passwordInput.type = showing ? 'password' : 'text';
-    pwdIconShow.hidden = !showing;
-    pwdIconHide.hidden = showing;
-    pwdToggle.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+  pwdToggle.addEventListener('change', function () {
+    passwordInput.type = pwdToggle.checked ? 'text' : 'password';
   });
 
   // If already logged in, go straight to the dashboard.

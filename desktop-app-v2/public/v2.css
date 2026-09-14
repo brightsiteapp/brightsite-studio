@@ -65,9 +65,9 @@ body.v2 {
   position: relative; width: 40px; height: 40px; border: 0; border-radius: 12px; background: transparent; color: #475467;
   display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, color 0.15s;
 }
-.v2-rail .bell svg { width: 21px; height: 21px; }
+.v2-rail .bell svg { width: 26px; height: 26px; }
 .v2-rail .bell:hover, .v2-rail .bell.open { background: var(--accent-tint); color: var(--accent); }
-.v2-rail .bell-badge { top: 3px; right: 3px; }
+.v2-rail .bell-badge { top: 1px; right: 1px; }
 .v2-rail .notif-panel { position: fixed; left: 198px; right: auto; top: auto; bottom: 16px; width: 360px; max-height: 72vh; z-index: 120; }
 .v2-sync-label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
 .v2-sync { width: 7px; height: 7px; border-radius: 50%; background: var(--tone-ok); }

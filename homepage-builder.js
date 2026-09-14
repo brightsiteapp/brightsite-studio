@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const builderForName = document.getElementById('builderForName');
   const builderDeviceDesktop = document.getElementById('builderDeviceDesktop');
   const builderDeviceMobile = document.getElementById('builderDeviceMobile');
-  const builderChatPill = document.getElementById('builderChatPill');
   const accountCta = document.getElementById('accountCta');
   const builderExtras = document.getElementById('builderExtras');
 
@@ -958,9 +957,6 @@ document.addEventListener('DOMContentLoaded', () => {
     <button type="button" class="glass-circle" data-tool="font" aria-label="Choose fonts" aria-expanded="false"><span class="font-orb">Aa</span></button>
     <button type="button" class="glass-circle" data-tool="layout" aria-label="Choose layout" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 10h18M12 10v11"/></svg></button>`;
   builderBarWrap.append(controls);
-  builderChatPill.textContent = 'WhatsApp';
-  builderChatPill.className = 'designer-send';
-  builderChatPill.hidden = true;
   // Account creation and add-on questions only make sense once someone is
   // about to send their details, so they live inside the send popup rather
   // than sitting permanently in the floating bar over the live preview.
@@ -972,10 +968,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const mobileActions = document.createElement('div');
   mobileActions.className = 'mobile-builder-actions';
   mobileActions.innerHTML = `
-    <div class="mobile-send-choices" hidden>
-      <button type="button" data-mobile-send="whatsapp">WhatsApp</button>
-      <button type="button" data-mobile-send="email">Email</button>
-    </div>
     <div class="mobile-swipe-rail" aria-label="Website style controls" aria-hidden="true" inert>
       <button type="button" data-mobile-swipe="font" aria-label="Swipe to change font"><div class="swipe-dots" data-dots="font"></div><span>F<br>O<br>N<br>T</span></button>
       <button type="button" data-mobile-swipe="colour" aria-label="Swipe to change colour"><div class="swipe-dots" data-dots="colour"></div><span>C<br>O<br>L<br>O<br>U<br>R</span></button>
@@ -993,7 +985,6 @@ document.addEventListener('DOMContentLoaded', () => {
   builderOverlay.append(mobileActions);
   const mobileSubmit = mobileActions.querySelector('.mobile-submit');
   const mobileEdit = mobileActions.querySelector('.mobile-edit');
-  const mobileChoices = mobileActions.querySelector('.mobile-send-choices');
   const mobileRail = mobileActions.querySelector('.mobile-swipe-rail');
   const mobileSwipeZones = mobileActions.querySelector('.mobile-swipe-zones');
 
@@ -1017,11 +1008,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!bar) return;
     bar.classList.remove('is-idle');
     clearTimeout(bar.idleTimer);
-    bar.idleTimer = setTimeout(() => {
-      const choicesOpen = !document.querySelector('.mobile-send-choices')?.hidden;
-      if (choicesOpen) wakeMobileBar();
-      else bar.classList.add('is-idle');
-    }, 1000);
+    bar.idleTimer = setTimeout(() => bar.classList.add('is-idle'), 1000);
   }
   mobileActions.addEventListener('pointerdown', wakeMobileBar, { passive: true });
   wakeMobileBar();
@@ -1100,22 +1087,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (open) updateSwipeIndicators();
   });
   mobileSubmit.addEventListener('click', () => {
-    const open = mobileChoices.hidden;
-    mobileChoices.hidden = !open;
-    mobileSubmit.setAttribute('aria-expanded', String(open));
+    sendDesignEmail();
   });
-  mobileChoices.addEventListener('click', event => {
-    const action = event.target.closest('[data-mobile-send]')?.dataset.mobileSend;
-    if (!action) return;
-    mobileChoices.hidden = true;
-    mobileSubmit.setAttribute('aria-expanded', 'false');
-    if (action === 'whatsapp') builderChatPill.click();
-    if (action === 'email') sendDesignEmail();
-  });
-  // shared "we've got it" status shown under the WhatsApp/Email buttons —
-  // kept in one place so both channels read the same and always carry the
-  // self-serve account link, in case the customer would rather set that up
-  // themselves than wait to hear back.
+  // shared "we've got it" status shown under the Email button — kept in one
+  // place so it always carries the self-serve account link, in case the
+  // customer would rather set that up themselves than wait to hear back.
   function renderHandoffStatus(el, sent, accountUrl) {
     const base = sent
       ? "We've received your design idea — we'll be in touch today, and a welcome email is on its way."
@@ -1128,6 +1104,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const customerEmail = bizEmail.value.trim();
       const accountUrl = buildAccountSetupUrl(businessName, customerEmail);
       const design = selectedDesignSummary();
+      const wantsBooking = document.getElementById('bizWantsBooking')?.checked;
+      const wantsEcommerce = document.getElementById('bizWantsEcommerce')?.checked;
+      const extras = [wantsBooking && 'Booking form', wantsEcommerce && 'Online store (e-commerce)'].filter(Boolean);
       const message = `Hi, I'd like you to finish my website.
 
 Business: ${businessName}
@@ -1135,16 +1114,26 @@ Industry: ${bizTagline.value || 'Not provided'}
 Location: ${bizLocation.value.trim() || 'Not provided'}
 Template: ${design.template}
 Font: ${design.font}
-Colour palette: ${design.palette}`;
+Colour palette: ${design.palette}${extras.length ? `
+Also interested in: ${extras.join(', ')}` : ''}`;
       const status = document.getElementById('handoffStatus');
       status.textContent = 'Opening your email app…';
       window.location.href = `mailto:brightsiteapp@gmail.com?subject=${encodeURIComponent(`Website preview - ${businessName || 'New enquiry'}`)}&body=${encodeURIComponent(message)}`;
+
+      let previewFile = null;
+      try {
+        const previewHtml = buildDemoHTML(gatherData());
+        previewFile = new File([previewHtml], `${businessName || 'preview'}-site-preview.html`, { type: 'text/html' });
+      } catch (err) {
+        console.error('Could not build site preview attachment', err);
+      }
       postLeadWithMedia({
         Business: businessName, Industry: bizTagline.value || 'Not provided',
         Location: bizLocation.value.trim() || 'Not provided', Template: design.template,
         Font: design.font, 'Colour scheme': design.palette,
+        ...(extras.length ? { 'Interested in': extras.join(', ') } : {}),
         'Customer email': customerEmail, 'Account setup url': accountUrl
-      }, []).then(sent => renderHandoffStatus(status, sent, accountUrl));
+      }, [{ name: 'Site preview', file: previewFile }]).then(sent => renderHandoffStatus(status, sent, accountUrl));
   }
   // Finger travel per option. Roughly double the old 34px so a slow drag
   // steps through fonts/colours deliberately rather than skipping several.
@@ -1282,7 +1271,6 @@ Colour palette: ${design.palette}`;
   function closeOptions() {
     activeTool = null;
     options.hidden = true;
-    builderChatPill.hidden = true;
     controls.querySelectorAll('[data-tool]').forEach(button => button.setAttribute('aria-expanded','false'));
   }
   function renderOptions() {
@@ -1297,9 +1285,8 @@ Colour palette: ${design.palette}`;
       const sendChildren = [];
       if (!accountCta.hidden) sendChildren.push(accountCta);
       if (builderExtras) sendChildren.push(builderExtras);
-      sendChildren.push(builderChatPill, emailButton);
+      sendChildren.push(emailButton);
       options.replaceChildren(...sendChildren);
-      builderChatPill.hidden = false;
     } else if (activeTool === 'colour') {
       options.innerHTML = `<div class="palette-tabs" role="group" aria-label="Palette mood">${Object.keys(palettes).map(f => `<button type="button" data-family="${f}" aria-pressed="${f === paletteFamily}">${f}</button>`).join('')}</div><div class="palette-scroll">${palettes[paletteFamily].map(([name,hex]) => { const t = tonesFromHex(hex); return `<button type="button" class="palette-choice" data-colour="${hex}" data-palette-name="${name}" aria-label="${name} palette"><span style="background:${t.light}"></span><span style="background:${t.base}"></span><span style="background:${t.dark}"></span><small>${name}</small></button>`; }).join('')}</div><p>Swipe to explore colours</p>`;
       if (heroMatchedTones) {
@@ -1459,65 +1446,6 @@ Colour palette: ${design.palette}`;
       console.error('Lead email notification failed', await emailResult.value.text());
     }
     return emailResult.status === 'fulfilled' && emailResult.value.ok;
-  }
-
-  const designerWhatsAppNumber = '447535928879';
-
-  // handoff is a single floating "Chat now" pill over the full-page live
-  // preview — no question flow, straight to WhatsApp with what we already
-  // know from the first 3 questions.
-  if (builderChatPill) {
-    builderChatPill.addEventListener('click', () => {
-      const businessName = bizNameInput.value.trim();
-      const businessType = bizTagline.value;
-      const location_ = bizLocation.value.trim();
-      const customerEmail = bizEmail.value.trim();
-      const accountUrl = buildAccountSetupUrl(businessName, customerEmail);
-      const design = selectedDesignSummary();
-      const wantsBooking = document.getElementById('bizWantsBooking')?.checked;
-      const wantsEcommerce = document.getElementById('bizWantsEcommerce')?.checked;
-      const extras = [wantsBooking && 'Booking form', wantsEcommerce && 'Online store (e-commerce)'].filter(Boolean);
-
-      const message = `Hi, I'd like you to finish my website.
-
-Business: ${businessName}
-Industry: ${businessType}
-Location: ${location_}
-Template: ${design.template}
-Font: ${design.font}
-Colour palette: ${design.palette}${extras.length ? `
-Also interested in: ${extras.join(', ')}` : ''}
-
-I'll also set up my account here in the meantime: ${accountUrl}`;
-
-      const status = document.getElementById('handoffStatus');
-      status.textContent = 'Opening WhatsApp…';
-
-      let previewFile = null;
-      try {
-        const previewHtml = buildDemoHTML(gatherData());
-        previewFile = new File([previewHtml], `${businessName || 'preview'}-site-preview.html`, { type: 'text/html' });
-      } catch (err) {
-        console.error('Could not build site preview attachment', err);
-      }
-      postLeadWithMedia({
-        Business: businessName,
-        Industry: businessType || 'Not provided',
-        Location: location_ || 'Not provided',
-        Template: design.template,
-        Font: design.font,
-        'Colour scheme': design.palette,
-        ...(extras.length ? { 'Interested in': extras.join(', ') } : {}),
-        'Customer email': customerEmail, 'Account setup url': accountUrl,
-      }, [{ name: 'Site preview', file: previewFile }]).then(sent => {
-        renderHandoffStatus(status, sent, accountUrl);
-      }).catch(() => {
-        status.innerHTML = `Email could not be confirmed. Please press Send inside WhatsApp so we receive your details. <a href="${accountUrl}" target="_blank" rel="noopener">Set up your account</a> in the meantime.`;
-      });
-
-      const whatsappUrl = `https://wa.me/${designerWhatsAppNumber}?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, '_blank');
-    });
   }
 
   // toggles the full-page preview to a centred, phone-width column — since
