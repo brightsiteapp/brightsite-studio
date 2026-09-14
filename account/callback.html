@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Signing in — BrightSite</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.png" type="image/png">
+<meta name="theme-color" content="#F7F2EC">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .cb-status{max-width:380px;text-align:center;color:var(--muted);font-size:14px;line-height:1.6}
+  .cb-status.err{color:#b23b2c}
+  .cb-status a{color:var(--accent);font-weight:600}
+</style>
+</head>
+<body>
+<p class="cb-status" id="cbStatus">Signing you in…</p>
+<script>
+(function(){
+  var SUPABASE_URL = 'https://estqrftkrpqlrxnsltgw.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_MfwWqSIcsfVE6d5Q7jIxJA_V3Pyf2oP';
+  var statusEl = document.getElementById('cbStatus');
+
+  function fail(msg) {
+    statusEl.textContent = msg;
+    statusEl.className = 'cb-status err';
+    statusEl.innerHTML += ' <a href="login.html">Back to log in</a>';
+  }
+
+  var hash = location.hash.replace(/^#/, '');
+  var params = new URLSearchParams(hash);
+  var accessToken = params.get('access_token');
+  var refreshToken = params.get('refresh_token');
+  var errorDescription = params.get('error_description');
+
+  if (errorDescription) {
+    fail(decodeURIComponent(errorDescription.replace(/\+/g, ' ')));
+    return;
+  }
+  if (!accessToken) {
+    fail('Sign-in did not complete.');
+    return;
+  }
+
+  fetch(SUPABASE_URL + '/auth/v1/user', {
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + accessToken }
+  })
+    .then(function (res) { return res.json().then(function (data) { return { res: res, data: data }; }); })
+    .then(function (r) {
+      if (!r.res.ok || !r.data || !r.data.id) { fail('Could not complete sign-in.'); return; }
+      var session = {
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        user_id: r.data.id,
+        email: r.data.email
+      };
+      localStorage.setItem('bs_session', JSON.stringify(session));
+      var slug = localStorage.getItem('bs_pending_slug') || '';
+      location.replace('dashboard.html' + (slug ? ('?slug=' + encodeURIComponent(slug)) : ''));
+    })
+    .catch(function () { fail('Network error — please try again.'); });
+})();
+</script>
+</body>
+</html>
