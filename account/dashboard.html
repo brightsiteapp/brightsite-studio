@@ -93,6 +93,9 @@
   .section-back:hover{color:var(--ink)}
   .builder-section h3{font-family:var(--display);font-size:15px;font-weight:700;margin-bottom:14px}
 
+  .acct-status{color:var(--muted)}
+  .acct-status.ok{color:var(--accent);font-weight:600}
+  .acct-status.err{color:#b23b2c}
   .acct-field{margin-bottom:12px}
   .acct-field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}
   .acct-field input,.acct-field textarea{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--ink);font:inherit;font-size:14px;outline:none;transition:border-color .18s ease}
@@ -224,6 +227,16 @@
           <div class="info-row"><span class="label">Plan</span><span class="value"><span class="plan-pill" id="planPill"><span class="plan-dot"></span><span id="planLabel">Payment required</span></span></span></div>
           <div class="info-row"><span class="label">Login email</span><span class="value" id="acctEmailRow"></span></div>
           <div class="info-row"><span class="label">Website status</span><span class="value" id="statusRow">Not live yet</span></div>
+        </div>
+
+        <div class="info-card">
+          <h2>Password</h2>
+          <button type="button" class="sec-btn" id="pwdCardToggle">Change password<span class="chev">&#8250;</span></button>
+          <form id="pwdForm" hidden>
+            <div class="acct-field" style="margin-top:10px"><label for="fNewPassword">New password</label><input type="password" id="fNewPassword" autocomplete="new-password" minlength="6" placeholder="••••••••"></div>
+            <button type="submit" class="upgrade-btn" id="pwdSubmit">Save new password</button>
+            <div class="acct-status" id="pwdStatus" style="min-height:18px;margin-top:8px;font-size:12.5px"></div>
+          </form>
         </div>
 
         <div class="info-card">
@@ -400,6 +413,55 @@
     localStorage.removeItem('bs_session');
     location.href = 'login.html';
   });
+
+  // ---------------- change password ----------------
+  (function () {
+    var toggleBtn = document.getElementById('pwdCardToggle');
+    var pwdForm = document.getElementById('pwdForm');
+    var pwdInput = document.getElementById('fNewPassword');
+    var pwdSubmit = document.getElementById('pwdSubmit');
+    var pwdStatus = document.getElementById('pwdStatus');
+
+    toggleBtn.addEventListener('click', function () {
+      pwdForm.hidden = !pwdForm.hidden;
+      if (!pwdForm.hidden) pwdInput.focus();
+    });
+
+    pwdForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var password = pwdInput.value;
+      if (!password || password.length < 6) {
+        pwdStatus.textContent = 'Password must be at least 6 characters.';
+        pwdStatus.className = 'acct-status err';
+        return;
+      }
+      pwdSubmit.disabled = true;
+      pwdStatus.textContent = 'Saving…';
+      pwdStatus.className = 'acct-status';
+      fetch(SUPABASE_URL + '/auth/v1/user', {
+        method: 'PUT',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ password: password })
+      })
+        .then(function (res) { return res.json().then(function (data) { return { res: res, data: data }; }); })
+        .then(function (r) {
+          pwdSubmit.disabled = false;
+          if (!r.res.ok) {
+            pwdStatus.textContent = (r.data && (r.data.msg || r.data.message)) || 'Something went wrong.';
+            pwdStatus.className = 'acct-status err';
+            return;
+          }
+          pwdInput.value = '';
+          pwdStatus.textContent = 'Password updated.';
+          pwdStatus.className = 'acct-status ok';
+        })
+        .catch(function () {
+          pwdSubmit.disabled = false;
+          pwdStatus.textContent = 'Network error — please try again.';
+          pwdStatus.className = 'acct-status err';
+        });
+    });
+  })();
 
   // ---------------- state ----------------
   var business = null;

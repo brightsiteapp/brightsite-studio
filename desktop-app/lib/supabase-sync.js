@@ -106,6 +106,35 @@ function headers(extra) {
   return { apikey: key, Authorization: `Bearer ${key}`, ...extra };
 }
 
+function accountHeaders(extra) {
+  const key = accountsKey();
+  return { apikey: key, Authorization: `Bearer ${key}`, ...extra };
+}
+
+// Removes their Supabase login only — an account's associated business(es)
+// (if any) are untouched, since a business is the customer's site/data,
+// not their credentials.
+async function deleteAccount(id) {
+  if (!accountsEnabled()) throw new Error('Accounts aren’t connected — add the Supabase service role key in Settings first.');
+  const { url } = config();
+  const res = await fetch(`${url}/auth/v1/admin/users/${encodeURIComponent(id)}`, { method: 'DELETE', headers: accountHeaders() });
+  if (!res.ok) throw new Error(`Couldn’t delete that account (${res.status}).`);
+}
+
+async function updateAccountEmail(id, email) {
+  if (!accountsEnabled()) throw new Error('Accounts aren’t connected — add the Supabase service role key in Settings first.');
+  const { url } = config();
+  const res = await fetch(`${url}/auth/v1/admin/users/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: accountHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ email, email_confirm: true })
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.msg || body.message || `Couldn’t update that account (${res.status}).`);
+  }
+}
+
 // ---------------- status, for the UI's sync indicator ----------------
 // 'disabled' — sync not configured, app is local-only (not shown as an
 // error state, just doesn't render an indicator at all).
@@ -341,5 +370,5 @@ module.exports = {
   pullDemoViews,
   enabled, pullAll, pushOne, deleteOne, flushPending, getStatus,
   uploadMedia, downloadMedia, deleteMedia, syncMediaForProject,
-  accountsEnabled, fetchAccounts, testAccountsKey, setAccountsKey
+  accountsEnabled, fetchAccounts, testAccountsKey, setAccountsKey, deleteAccount, updateAccountEmail
 };

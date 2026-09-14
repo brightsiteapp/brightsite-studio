@@ -1438,7 +1438,19 @@
   });
 
   // ---------------- accounts (customer logins at account/login.html) ----------------
+  // Grouped by the same pipeline stage as their first business (see
+  // pipeline.js's P.stageOf) so "website to be built", "paid and active"
+  // etc. line up with the Pipeline board's own columns — no separate stage
+  // model to keep in sync. Accounts with no business yet get their own group.
+  const ACCOUNT_GROUP_ORDER = ['lead', 'ready', 'waiting', 'followup', 'client', 'archived', 'none'];
+  const ACCOUNT_GROUP_LABELS = { ...P.STAGE_LABELS, none: 'No website started' };
   let accountsCache = null;
+  let editingAccountId = null;
+  function accountStage(a) {
+    const slug = a.sites[0]?.slug;
+    const p = slug && project(slug);
+    return p ? P.stageOf(p, Date.now()) : 'none';
+  }
   async function renderAccounts() {
     const mount = $('#v2Accounts');
     if (!accountsCache) {
@@ -1455,22 +1467,78 @@
       return;
     }
     const accounts = accountsCache.accounts.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    mount.innerHTML = accounts.length ? `<div class="v2-task-list">${accounts.map(accountRow).join('')}</div>`
-      : '<p class="v2-empty v2-empty-big">No customer accounts yet.</p>';
+    if (!accounts.length) { mount.innerHTML = '<p class="v2-empty v2-empty-big">No customer accounts yet.</p>'; return; }
+    const groups = new Map(ACCOUNT_GROUP_ORDER.map(k => [k, []]));
+    accounts.forEach(a => groups.get(accountStage(a)).push(a));
+    mount.innerHTML = ACCOUNT_GROUP_ORDER.filter(k => groups.get(k).length).map(k => `
+      <div class="v2-account-group">
+        <h4>${esc(ACCOUNT_GROUP_LABELS[k])} <span class="v2-account-count">${groups.get(k).length}</span></h4>
+        <div class="v2-task-list">${groups.get(k).map(accountRow).join('')}</div>
+      </div>`).join('');
   }
   function accountRow(a) {
     const sites = a.sites.length
       ? a.sites.map(s => `<button type="button" class="v2-task-biz" data-biz="${esc(s.slug)}">${esc(s.name || s.slug)}</button>`).join(' ')
       : '<span class="v2-task-type">No site designed yet</span>';
-    return `<div class="v2-task">
+    if (editingAccountId === a.id) {
+      return `<div class="v2-task" data-account="${esc(a.id)}">
+        <form data-account-edit-form class="v2-account-edit">
+          <input type="email" name="email" value="${esc(a.email || '')}" required autofocus>
+          <button type="submit" class="v2-task-biz is-primary">Save</button>
+          <button type="button" data-account-edit-cancel class="v2-task-biz">Cancel</button>
+        </form>
+      </div>`;
+    }
+    return `<div class="v2-task" data-account="${esc(a.id)}">
       <span class="v2-task-text">${esc(a.email || a.id)}</span>
       ${sites}
       <span class="v2-task-due">${a.createdAt ? new Date(a.createdAt).toLocaleDateString() : ''}</span>
+      <button type="button" class="v2-task-edit" data-account-edit title="Edit email">✎</button>
+      <button type="button" class="v2-task-del" data-account-del title="Delete login">×</button>
     </div>`;
   }
-  document.addEventListener('click', e => {
-    const btn = e.target.closest('#v2Accounts [data-biz]');
-    if (btn) openProfile(btn.dataset.biz);
+  document.addEventListener('click', async e => {
+    const biz = e.target.closest('#v2Accounts [data-biz]');
+    if (biz) return openProfile(biz.dataset.biz);
+    const row = e.target.closest('#v2Accounts .v2-task[data-account]');
+    if (!row) return;
+    const id = row.dataset.account;
+    const account = accountsCache?.accounts.find(a => a.id === id);
+    if (!account) return;
+    if (e.target.closest('[data-account-edit]')) {
+      editingAccountId = id;
+      renderAccounts();
+    } else if (e.target.closest('[data-account-edit-cancel]')) {
+      editingAccountId = null;
+      renderAccounts();
+    } else if (e.target.closest('[data-account-del]')) {
+      const ok = await core.showConfirm('Delete this login?', `${account.email || id} won’t be able to sign in any more. Their business/site isn’t affected.`, 'Delete');
+      if (!ok) return;
+      try {
+        await core.api(`/api/accounts/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        accountsCache.accounts = accountsCache.accounts.filter(a => a.id !== id);
+        renderAccounts();
+      } catch (err) {
+        core.notify(core.friendlyError(err.message), { sticky: false });
+      }
+    }
+  });
+  document.addEventListener('submit', async e => {
+    if (!e.target.matches('[data-account-edit-form]')) return;
+    e.preventDefault();
+    const row = e.target.closest('.v2-task[data-account]');
+    const id = row.dataset.account;
+    const account = accountsCache?.accounts.find(a => a.id === id);
+    const email = new FormData(e.target).get('email').trim();
+    if (!account || !email || email === account.email) { editingAccountId = null; return renderAccounts(); }
+    try {
+      await core.api(`/api/accounts/${encodeURIComponent(id)}`, { method: 'PUT', headers: JSON_HEADERS, body: JSON.stringify({ email }) });
+      account.email = email;
+      editingAccountId = null;
+      renderAccounts();
+    } catch (err) {
+      core.notify(core.friendlyError(err.message), { sticky: false });
+    }
   });
 
   document.addEventListener('submit', async e => {

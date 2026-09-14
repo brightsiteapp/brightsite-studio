@@ -49,6 +49,9 @@
   .acct-pwd-wrap input{padding-right:44px}
   .acct-pwd-toggle{position:absolute;right:5px;top:50%;transform:translateY(-50%);width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:none;border:0;border-radius:8px;color:var(--muted);cursor:pointer}
   .acct-pwd-toggle:hover{color:var(--ink);background:rgba(23,32,31,.05)}
+  .acct-forgot{display:block;margin:8px 0 0;text-align:right;font-size:12.5px}
+  .acct-forgot button{background:none;border:0;color:var(--muted);font:inherit;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:2px}
+  .acct-forgot button:hover{color:var(--accent)}
 </style>
 </head>
 <body>
@@ -77,6 +80,7 @@
             <svg id="pwdIconHide" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a21.6 21.6 0 0 1 5.06-5.94M9.9 4.24A10.4 10.4 0 0 1 12 5c7 0 11 7 11 7a21.6 21.6 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>
           </button>
         </div>
+        <p class="acct-forgot" id="forgotWrap"><button type="button" id="forgotBtn">Forgot password?</button></p>
       </div>
       <button type="submit" class="acct-submit" id="acctSubmit">Log in</button>
       <div class="acct-status" id="acctStatus"></div>
@@ -91,6 +95,9 @@
     <div class="acct-toggle">
       <span id="toggleText">Don't have an account?</span>
       <button type="button" id="toggleBtn">Sign up</button>
+    </div>
+    <div class="acct-toggle" id="backToLogin" style="display:none">
+      <button type="button" id="backToLoginBtn">&larr; Back to log in</button>
     </div>
   </div>
   <a href="/" class="acct-back">&larr; Back to BrightSite</a>
@@ -124,6 +131,10 @@
   var pwdToggle = document.getElementById('pwdToggle');
   var pwdIconShow = document.getElementById('pwdIconShow');
   var pwdIconHide = document.getElementById('pwdIconHide');
+  var forgotWrap = document.getElementById('forgotWrap');
+  var forgotBtn = document.getElementById('forgotBtn');
+  var googleWrap = document.querySelector('.acct-divider');
+  var isForgot = false;
 
   // Arriving from the homepage builder, we already know their email —
   // skip re-typing it and go straight to just choosing a password. "not
@@ -161,7 +172,13 @@
   } catch (e) {}
 
   function setMode(signup) {
+    isForgot = false;
     isSignup = signup;
+    passwordInput.closest('.acct-field').style.display = '';
+    googleWrap.style.display = '';
+    googleBtn.style.display = '';
+    document.querySelector('.acct-toggle').style.display = '';
+    backToLogin.style.display = 'none';
     if (isSignup) {
       title.textContent = 'Create your account';
       sub.textContent = 'Set up a login so you can manage your own website — services, prices, contact info and photos.';
@@ -170,6 +187,7 @@
       toggleBtn.textContent = 'Log in';
       slugField.classList.add('show');
       passwordInput.autocomplete = 'new-password';
+      forgotWrap.style.display = 'none';
     } else {
       title.textContent = 'Log in';
       sub.textContent = "Manage your website's services, prices, contact info and photos.";
@@ -178,12 +196,37 @@
       toggleBtn.textContent = 'Sign up';
       slugField.classList.remove('show');
       passwordInput.autocomplete = 'current-password';
+      forgotWrap.style.display = '';
     }
     statusEl.textContent = '';
     statusEl.className = 'acct-status';
   }
 
+  var backToLogin = document.getElementById('backToLogin');
+  var backToLoginBtn = document.getElementById('backToLoginBtn');
+
+  function setForgotMode() {
+    isForgot = true;
+    title.textContent = 'Reset your password';
+    sub.textContent = "We'll email you a link to set a new one.";
+    submitBtn.textContent = 'Send reset link';
+    submitBtn.disabled = false;
+    slugField.classList.remove('show');
+    prefillEmailEl.classList.remove('show');
+    emailField.style.display = '';
+    passwordInput.closest('.acct-field').style.display = 'none';
+    googleWrap.style.display = 'none';
+    googleBtn.style.display = 'none';
+    document.querySelector('.acct-toggle').style.display = 'none';
+    backToLogin.style.display = '';
+    statusEl.textContent = '';
+    statusEl.className = 'acct-status';
+    emailInput.focus();
+  }
+
   toggleBtn.addEventListener('click', function () { setMode(!isSignup); });
+  forgotBtn.addEventListener('click', function () { setForgotMode(); });
+  backToLoginBtn.addEventListener('click', function () { backToLogin.style.display = 'none'; setMode(false); });
 
   var googleBtn = document.getElementById('googleBtn');
   googleBtn.addEventListener('click', function (e) {
@@ -211,6 +254,30 @@
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
+
+    if (isForgot) {
+      var forgotEmail = emailInput.value.trim();
+      if (!forgotEmail) { showStatus('Enter your email.', 'err'); return; }
+      submitBtn.disabled = true;
+      showStatus('Sending…');
+      fetch(SUPABASE_URL + '/auth/v1/recover', {
+        method: 'POST',
+        headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail, options: { redirect_to: location.origin + '/account/reset-password.html' } })
+      })
+        .then(function () {
+          // Supabase always replies 200 here, whether or not the address
+          // has an account — never reveal which, so this message covers both.
+          showStatus('If that email has an account, a reset link is on its way.', 'ok');
+          submitBtn.disabled = false;
+        })
+        .catch(function () {
+          showStatus('Network error — please try again.', 'err');
+          submitBtn.disabled = false;
+        });
+      return;
+    }
+
     var email = emailInput.value.trim();
     var password = passwordInput.value;
     if (!email || !password) { showStatus('Enter your email and password.', 'err'); return; }

@@ -72,6 +72,24 @@ function createApp(options = {}) {
 
   app.get('/api/sync-status', (req, res) => res.json(sync.getStatus()));
   app.get('/api/accounts', async (req, res) => res.json({ enabled: sync.accountsEnabled(), accounts: await sync.fetchAccounts() }));
+  app.put('/api/accounts/:id', async (req, res) => {
+    const email = String(req.body?.email || '').trim();
+    if (!email) return res.status(400).json({ error: 'Enter an email address.' });
+    try {
+      await sync.updateAccountEmail(req.params.id, email);
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+  app.delete('/api/accounts/:id', async (req, res) => {
+    try {
+      await sync.deleteAccount(req.params.id);
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  });
   app.get('/api/demo-views', async (req, res) => res.json(await sync.pullDemoViews()));
   app.get('/api/can-deploy', async (req, res) => res.json({ canDeploy: await canDeploy() }));
   app.get('/api/app-info', (req, res) => res.json({ version: appVersion }));
