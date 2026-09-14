@@ -97,7 +97,7 @@ function templateDesignCSS() {
   .layout-luxe .section-heading h2{font-size:clamp(55px,7vw,100px);font-weight:400;line-height:1}
   .layout-luxe .section-heading p{margin-left:auto;margin-right:auto}
   .layout-luxe .button{border-radius:999px;padding:16px 27px}
-  .layout-luxe .service-grid{grid-template-columns:repeat(4,1fr);gap:24px;align-items:start}
+  .layout-luxe .service-grid{grid-template-columns:repeat(3,1fr);gap:24px;align-items:start}
   .layout-luxe .service-card{border-radius:150px 150px 24px 24px;border:0;box-shadow:0 20px 45px color-mix(in srgb,var(--accent) 8%,transparent)}
   .layout-luxe .service-card:nth-child(even){margin-top:65px}
   .layout-luxe .card-picture{aspect-ratio:3/4}
@@ -434,7 +434,7 @@ function organicLayoutCSS() {
   .layout-organic .hero-actions .secondary{background:transparent;color:var(--ink);border-color:var(--line)}
   .layout-organic .section-heading h2{font-size:clamp(40px,4.5vw,66px);line-height:1.12;letter-spacing:-.05em}
   .layout-organic .signature .section-heading{max-width:680px}
-  .layout-organic .service-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:22px;align-items:start}
+  .layout-organic .service-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;align-items:start}
   .layout-organic .service-card{background:transparent;border:0;border-radius:0;overflow:visible;box-shadow:none}
   .layout-organic .card-picture{aspect-ratio:3/4;border-radius:12px;overflow:hidden}
   .layout-organic .card-content{background:var(--card);position:relative;margin:-36px 12px 0;padding:25px 20px;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 28px color-mix(in srgb,var(--ink) 6%,transparent)}
@@ -801,7 +801,7 @@ function bloomLayoutCSS() {
   .layout-bloom .section-heading p{margin:20px auto 0}
   .layout-bloom .signature .intro-pair{flex-direction:column;align-items:center;text-align:center;margin-bottom:56px}
   .layout-bloom .signature .intro-pair>.text-link{margin-top:22px}
-  .layout-bloom .service-grid,.layout-bloom .expertise-cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+  .layout-bloom .service-grid,.layout-bloom .expertise-cards{grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
   .layout-bloom .service-card{border:0;border-radius:var(--radius);background:var(--card);box-shadow:none}
   .layout-bloom .card-picture{aspect-ratio:4/5}
   .layout-bloom .card-content{text-align:center;padding:26px 20px}

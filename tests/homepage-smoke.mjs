@@ -145,9 +145,9 @@ async function runHomepageFlow(label, contextOptions, mobile) {
   assert.match(foodDemo, />Menu</, `${label}: food sites should use Menu navigation`);
   assert.match(foodDemo, /Reserve a table/, `${label}: food sites should use a relevant reservation CTA`);
   await page.waitForFunction(() => document.querySelector('#previewFrame').contentDocument?.querySelectorAll('.gallery-demo img').length === 6);
-  const galleryNotice = await page.locator('#previewFrame').evaluate((frame) => (
-    frame.contentDocument.body.textContent.includes('Demo photography, ready for your own')
-  ));
+  const galleryNotice = await page.waitForFunction(() => (
+    document.querySelector('#previewFrame').contentDocument?.body?.textContent.includes('Demo photography, ready for your own')
+  )).then(() => true).catch(() => false);
   assert.equal(galleryNotice, true, `${label}: demo gallery should explain that customer photographs replace it`);
 
   const rootLocked = await page.evaluate(() => document.documentElement.classList.contains('builder-scroll-lock'));
