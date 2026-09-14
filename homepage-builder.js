@@ -71,7 +71,11 @@ document.addEventListener('DOMContentLoaded', () => {
       uploadedHeroImage = image;
       if (appearanceOnly && previewFrame.contentDocument) {
         const scene = previewFrame.contentDocument.querySelector('.brand-scene');
-        if (scene) scene.src = image;
+        if (scene) {
+          scene.src = image;
+          scene.style.transition = 'opacity .25s ease';
+          scene.style.opacity = '1';
+        }
       }
       if (refreshSite) refreshPreview({ appearanceOnly });
       return image;
@@ -822,7 +826,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // size, so the generated site's own responsive CSS applies exactly as
   // it would on a real visit, and normal scrolling (wheel/trackpad/touch)
   // works inside it with no tricks needed.
-  function refreshPreview({appearanceOnly = false, smooth = false} = {}) {
+  function refreshPreview({appearanceOnly = false, smooth = false, heroPending = false} = {}) {
     if (!previewFrame) return;
     const current = previewFrame.contentDocument;
     const activePage = current?.querySelector('.page:not([hidden])');
@@ -903,6 +907,15 @@ document.addEventListener('DOMContentLoaded', () => {
       win.addEventListener('scroll', wakeMobileBar, { capture: true, passive: true });
       doc.addEventListener('touchstart', wakeMobileBar, { passive: true });
       doc.querySelectorAll('.page').forEach(page => {page.hidden = page.dataset.page !== position.page;});
+      // A layout/template change recomposites the branded hero photo, which is
+      // too heavy to redo on every swipe step and lags behind by a couple
+      // hundred ms (see settleHeroRender below). Left alone, this frame paints
+      // with the PREVIOUS layout's hero photo for that gap — hide it until the
+      // recomposited version lands instead of flashing the old picture.
+      if (heroPending) {
+        const scene = doc.querySelector('.brand-scene');
+        if (scene) { scene.style.transition = 'opacity .25s ease'; scene.style.opacity = '0'; }
+      }
       win.scrollTo({left:position.x,top:position.y,behavior:'instant'});
       win.requestAnimationFrame(() => win.requestAnimationFrame(() => {
         if (pendingFrame !== incoming) return;
@@ -1041,7 +1054,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fallback = demoLayoutForCategory(category);
     const current = DEMO_LAYOUTS.findIndex(item => item.id === (selectedLayout || fallback));
     selectedLayout = DEMO_LAYOUTS[(current + direction + DEMO_LAYOUTS.length) % DEMO_LAYOUTS.length].id;
-    refreshPreview();
+    refreshPreview({ heroPending: true });
     settleHeroRender();
     updateSwipeIndicators();
   }
@@ -1351,7 +1364,7 @@ Also interested in: ${extras.join(', ')}` : ''}`;
       if (button.dataset.font) selectedFont = button.dataset.font;
       if (button.dataset.layout) selectedLayout = button.dataset.layout;
       closeOptions();
-      refreshPreview({ appearanceOnly: Boolean(button.dataset.font) });
+      refreshPreview({ appearanceOnly: Boolean(button.dataset.font), heroPending: Boolean(button.dataset.layout) });
       await rerenderPersonalisedHero({ appearanceOnly: true, refreshSite: false });
       controls.querySelector(`[data-tool="${button.dataset.font ? 'font' : 'layout'}"]`).focus();
     }
