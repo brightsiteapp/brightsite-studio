@@ -25,7 +25,7 @@
   .dash-wrap>p.sub{color:var(--muted);font-size:14px;margin-bottom:26px}
   .dash-section{padding:clamp(20px,4vw,28px);border:1px solid var(--line);border-radius:18px;background:var(--card);box-shadow:0 10px 26px rgba(23,32,31,.04);margin-bottom:20px}
   .dash-section h2{font-family:var(--display);font-size:17px;font-weight:700;margin-bottom:4px}
-  .dash-section p.hint{color:var(--muted);font-size:13px;margin-bottom:16px;line-height:1.5}
+  .dash-section p.dash-hint{color:var(--muted);font-size:13px;margin-bottom:16px;line-height:1.5}
   .dash-field{margin-bottom:12px}
   .dash-field label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:6px}
   .dash-field input,.dash-field textarea{width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font:inherit;font-size:14.5px;outline:none;transition:border-color .18s ease}
@@ -102,7 +102,7 @@
 
   <div class="dash-section">
     <h2>Business info</h2>
-    <p class="hint">Your name and contact details, shown on your website.</p>
+    <p class="dash-hint">Your name and contact details, shown on your website.</p>
     <div class="dash-field"><label for="fName">Business name</label><input type="text" id="fName"></div>
     <div class="dash-grid2">
       <div class="dash-field"><label for="fPhone">Phone</label><input type="text" id="fPhone" placeholder="e.g. 020 7946 0958"></div>
@@ -114,36 +114,36 @@
 
   <div class="dash-section">
     <h2>Services &amp; prices</h2>
-    <p class="hint">Listed on your site in this order. Leave price blank if it varies.</p>
+    <p class="dash-hint">Listed on your site in this order. Leave price blank if it varies.</p>
     <div id="svcList"></div>
     <button type="button" class="dash-add" id="svcAdd">+ Add a service</button>
   </div>
 
   <div class="dash-section">
     <h2>Logo &amp; hero image</h2>
-    <p class="hint">Logo appears in your header; the hero image is the large photo at the top of your site.</p>
+    <p class="dash-hint">Logo appears in your header; the hero image is the large photo at the top of your site.</p>
     <div class="media-row">
       <img id="logoThumb" class="media-thumb empty" alt="">
       <div>
         <div style="font-size:13px;font-weight:600;margin-bottom:6px">Logo</div>
-        <label class="media-btn">Choose file<input type="file" accept="image/*" id="logoInput" hidden></label>
+        <label class="media-btn">Choose file<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="logoInput" hidden></label>
       </div>
     </div>
     <div class="media-row">
       <img id="heroThumb" class="media-thumb empty" alt="">
       <div>
         <div style="font-size:13px;font-weight:600;margin-bottom:6px">Hero image</div>
-        <label class="media-btn">Choose file<input type="file" accept="image/*" id="heroInput" hidden></label>
+        <label class="media-btn">Choose file<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="heroInput" hidden></label>
       </div>
     </div>
   </div>
 
   <div class="dash-section">
     <h2>Gallery</h2>
-    <p class="hint">Photo gallery shown on your site. Maximum 20 images.</p>
+    <p class="dash-hint">Photo gallery shown on your site. Maximum 20 images.</p>
     <div class="gallery-counter" id="galleryCounter">0 / 20 photos</div>
     <div class="gallery-grid" id="galleryGrid"></div>
-    <label class="media-btn" id="galleryAddWrap">Add photos<input type="file" accept="image/*" id="galleryInput" hidden multiple></label>
+    <label class="media-btn" id="galleryAddWrap">Add photos<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="galleryInput" hidden multiple></label>
   </div>
 </div>
 
@@ -172,6 +172,26 @@
       apikey: SUPABASE_ANON_KEY,
       Authorization: 'Bearer ' + session.access_token
     }, extra || {});
+  }
+
+  // ---------------- image upload validation ----------------
+  var MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2MB
+  var ALLOWED_IMAGE_TYPES = { 'image/jpeg': true, 'image/png': true, 'image/webp': true, 'image/gif': true };
+
+  function validateImageFile(file) {
+    if (!ALLOWED_IMAGE_TYPES[file.type]) {
+      return 'Please choose a JPEG, PNG, WEBP or GIF image.';
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      return 'That image is too large — please choose one under 2MB.';
+    }
+    return null;
+  }
+
+  function showUploadError(msg) {
+    var statusEl = document.getElementById('saveStatus');
+    if (statusEl) { statusEl.textContent = msg; statusEl.className = 'dash-save-status err'; }
+    else { alert(msg); }
   }
 
   document.getElementById('dashEmail').textContent = session.email || '';
@@ -352,10 +372,20 @@
   }
 
   document.getElementById('logoInput').addEventListener('change', function (e) {
-    if (e.target.files[0]) { pendingUploads.logo = e.target.files[0]; renderMediaThumbs(); }
+    var file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    var err = validateImageFile(file);
+    if (err) { showUploadError(err); return; }
+    pendingUploads.logo = file; renderMediaThumbs();
   });
   document.getElementById('heroInput').addEventListener('change', function (e) {
-    if (e.target.files[0]) { pendingUploads.hero = e.target.files[0]; renderMediaThumbs(); }
+    var file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    var err = validateImageFile(file);
+    if (err) { showUploadError(err); return; }
+    pendingUploads.hero = file; renderMediaThumbs();
   });
 
   // ---------------- gallery ----------------
@@ -405,18 +435,29 @@
 
   document.getElementById('galleryInput').addEventListener('change', function (e) {
     var files = Array.from(e.target.files || []);
+    e.target.value = '';
+
+    var valid = [];
+    var errs = [];
+    files.forEach(function (file) {
+      var err = validateImageFile(file);
+      if (err) { errs.push(file.name + ': ' + err); }
+      else { valid.push(file); }
+    });
+    files = valid;
+
     var room = GALLERY_MAX - galleryCount();
     if (room <= 0) { files = []; }
     else if (files.length > room) { files = files.slice(0, room); }
     pendingUploads.gallery = pendingUploads.gallery.concat(files);
-    e.target.value = '';
+    if (errs.length) showUploadError(errs[0]);
     renderGallery();
   });
 
   // ---------------- save ----------------
+  var EXT_FOR_TYPE = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'image/gif': '.gif' };
   function extFor(file) {
-    var m = /\.(\w+)$/.exec(file.name || '');
-    return m ? '.' + m[1].toLowerCase() : '.jpg';
+    return EXT_FOR_TYPE[file.type] || '.jpg';
   }
 
   function uploadFile(relPath, file) {
