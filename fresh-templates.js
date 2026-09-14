@@ -55,7 +55,7 @@ function buildFreshDemoHTML(raw) {
   const area = esc(d.location || 'your area');
   const matchedAddress = profile?.address || d.location || 'your area';
   const businessAbout = profile?.about || info.desc.replace('{name}', d.name);
-  const hourLines = Array.isArray(profile?.hours) ? profile.hours : [];
+  const hourLines = Array.isArray(profile?.hours) ? profile.hours : (Array.isArray(d.hours) ? d.hours : []);
   const hoursMarkup = hourLines.length
     ? hourLines.map(line => {
         const split = line.indexOf(':');

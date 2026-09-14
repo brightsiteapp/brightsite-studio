@@ -27,10 +27,13 @@
   .app-logout:hover{border-color:var(--muted)}
 
   /* ---------------- body split ---------------- */
-  .app-body{flex:1;min-height:0;display:grid;grid-template-columns:380px 1fr}
+  .app-body{flex:1;min-height:0;display:grid;grid-template-columns:380px 1fr;position:relative}
 
-  .left-panel{min-height:0;overflow-y:auto;border-right:1px solid var(--line);background:var(--bg);display:flex;flex-direction:column}
+  .left-panel{min-height:0;overflow-y:auto;border-right:1px solid var(--line);background:var(--bg);display:flex;flex-direction:column;transition:width .18s ease}
   .left-inner{padding:18px;flex:1}
+  @media(min-width:861px){
+    .left-panel.wide{position:absolute;inset:0;width:min(860px,92vw);z-index:6;box-shadow:0 20px 50px rgba(0,0,0,.18)}
+  }
 
   .right-panel{min-height:0;display:flex;flex-direction:column;background:#efe9df}
   .preview-toolbar{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--bg)}
@@ -52,7 +55,8 @@
   .live-btn.pending{background:#c0392b}
 
   .preview-frame-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:18px}
-  #sitePreview{width:100%;height:100%;max-width:1180px;border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:0 16px 34px rgba(23,32,31,.08)}
+  #sitePreview{width:100%;height:100%;max-width:1180px;border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:0 16px 34px rgba(23,32,31,.08);opacity:1;transition:opacity .16s ease}
+  #sitePreview.refreshing{opacity:.55}
 
   /* ---------------- account view cards ---------------- */
   .info-card{padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 8px 20px rgba(23,32,31,.04);margin-bottom:16px}
@@ -78,13 +82,16 @@
   .builder-back{background:none;border:0;color:var(--muted);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:4px 0}
   .builder-back:hover{color:var(--ink)}
 
-  .accordion{border:1px solid var(--line);border-radius:14px;background:var(--card);margin-bottom:10px;overflow:hidden}
-  .accordion summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;font-size:13.5px;font-weight:700;color:var(--ink);user-select:none}
-  .accordion summary::-webkit-details-marker{display:none}
-  .accordion summary .chev{transition:transform .18s ease;font-size:11px;color:var(--muted)}
-  .accordion[open] summary .chev{transform:rotate(90deg)}
-  .accordion[open] summary{border-bottom:1px solid var(--line)}
-  .accordion-body{padding:14px 16px 16px}
+  .sec-btn{width:100%;border:1px solid var(--line);border-radius:14px;background:var(--card);margin-bottom:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;font:inherit;font-size:13.5px;font-weight:700;color:var(--ink);text-align:left}
+  .sec-btn:hover{border-color:var(--accent)}
+  .sec-btn .chev{font-size:13px;color:var(--muted)}
+
+  .builder-section{animation:sectionIn .16s ease}
+  @keyframes sectionIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+  .section-head{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+  .section-back{background:none;border:0;color:var(--muted);font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:4px 0;display:flex;align-items:center;gap:4px}
+  .section-back:hover{color:var(--ink)}
+  .builder-section h3{font-family:var(--display);font-size:15px;font-weight:700;margin-bottom:14px}
 
   .acct-field{margin-bottom:12px}
   .acct-field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}
@@ -99,6 +106,20 @@
   .svc-row .svc-meta{display:flex;flex:1 1 100%;gap:6px;align-items:center;margin-left:34px}
   .svc-row .svc-meta input{flex:1;min-width:0}
   .svc-row input{min-height:38px;padding:0 10px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:13px}
+  @media(min-width:760px){
+    .svc-row{flex-wrap:nowrap}
+    .svc-row .svc-name{flex:1 1 auto}
+    .svc-row .svc-meta{flex:0 0 auto;margin-left:0;width:auto}
+    .svc-row .svc-meta input{width:84px;flex:none}
+  }
+
+  .hours-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .hours-row:last-child{border-bottom:0}
+  .hours-check{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink);width:92px;flex:none;cursor:pointer}
+  .hours-check input{width:16px;height:16px;accent-color:var(--accent);flex:none}
+  .hours-times{display:flex;gap:6px;flex:1;min-width:0}
+  .hours-times input{flex:1;min-width:0;min-height:36px;padding:0 10px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:12.5px}
+  .hours-closed{flex:1;color:var(--muted);font-size:12.5px}
   .svc-remove{background:none;border:0;color:var(--muted);font-size:16px;line-height:1;cursor:pointer;width:28px;height:28px;border-radius:7px;flex:none}
   .svc-remove:hover{background:#f3efe8;color:#b23b2c}
   .dash-add{margin-top:2px;background:none;border:1px dashed var(--line);border-radius:9px;padding:8px 12px;font:inherit;font-size:12.5px;font-weight:600;color:var(--accent);cursor:pointer}
@@ -219,71 +240,75 @@
 
       <!-- ---------------- edit mode ---------------- -->
       <div id="builderPanel" hidden>
-        <div class="builder-head">
-          <h2>Edit your website</h2>
-          <button type="button" class="builder-back" id="builderBack">Done</button>
+
+        <div id="builderList">
+          <div class="builder-head">
+            <h2>Edit your website</h2>
+            <button type="button" class="builder-back" id="builderBack">Done</button>
+          </div>
+          <button type="button" class="sec-btn" data-section="name">Business name<span class="chev">&#8250;</span></button>
+          <button type="button" class="sec-btn" data-section="contact">Phone &amp; email<span class="chev">&#8250;</span></button>
+          <button type="button" class="sec-btn" data-section="hours">Opening hours<span class="chev">&#8250;</span></button>
+          <button type="button" class="sec-btn" data-section="address">Location / address<span class="chev">&#8250;</span></button>
+          <button type="button" class="sec-btn" data-section="prices">Prices &amp; timetable<span class="chev">&#8250;</span></button>
+          <button type="button" class="sec-btn" data-section="media">Media<span class="chev">&#8250;</span></button>
         </div>
 
-        <details class="accordion" open>
-          <summary>Business name<span class="chev">&#9656;</span></summary>
-          <div class="accordion-body">
-            <div class="acct-field"><label for="fName">Business name</label><input type="text" id="fName"></div>
-          </div>
-        </details>
+        <div class="builder-section" data-section-panel="name" hidden>
+          <div class="section-head"><button type="button" class="section-back" data-back>&#8249; Edit your website</button></div>
+          <h3>Business name</h3>
+          <div class="acct-field"><label for="fName">Business name</label><input type="text" id="fName"></div>
+        </div>
 
-        <details class="accordion">
-          <summary>Phone &amp; email<span class="chev">&#9656;</span></summary>
-          <div class="accordion-body">
-            <div class="acct-field"><label for="fPhone">Phone number</label><input type="text" id="fPhone" placeholder="e.g. 020 7946 0958"></div>
-            <div class="acct-field"><label for="fEmail2">Email</label><input type="email" id="fEmail2" placeholder="you@example.com"></div>
-          </div>
-        </details>
+        <div class="builder-section" data-section-panel="contact" hidden>
+          <div class="section-head"><button type="button" class="section-back" data-back>&#8249; Edit your website</button></div>
+          <h3>Phone &amp; email</h3>
+          <div class="acct-field"><label for="fPhone">Phone number</label><input type="text" id="fPhone" placeholder="e.g. 020 7946 0958"></div>
+          <div class="acct-field"><label for="fEmail2">Email</label><input type="email" id="fEmail2" placeholder="you@example.com"></div>
+        </div>
 
-        <details class="accordion">
-          <summary>Opening hours<span class="chev">&#9656;</span></summary>
-          <div class="accordion-body">
-            <div class="acct-field"><label for="fHours">Opening hours</label><textarea id="fHours" placeholder="e.g. Mon-Fri 9am-6pm, Sat 10am-4pm"></textarea></div>
-          </div>
-        </details>
+        <div class="builder-section" data-section-panel="hours" hidden>
+          <div class="section-head"><button type="button" class="section-back" data-back>&#8249; Edit your website</button></div>
+          <h3>Opening hours</h3>
+          <div id="hoursRows"></div>
+        </div>
 
-        <details class="accordion">
-          <summary>Location / address<span class="chev">&#9656;</span></summary>
-          <div class="accordion-body">
-            <div class="acct-field"><label for="fAddress">Address</label><input type="text" id="fAddress" placeholder="e.g. 12 High Street, London"></div>
-          </div>
-        </details>
+        <div class="builder-section" data-section-panel="address" hidden>
+          <div class="section-head"><button type="button" class="section-back" data-back>&#8249; Edit your website</button></div>
+          <h3>Location / address</h3>
+          <div class="acct-field"><label for="fAddress">Address</label><input type="text" id="fAddress" placeholder="e.g. 12 High Street, London"></div>
+        </div>
 
-        <details class="accordion">
-          <summary>Prices &amp; timetable<span class="chev">&#9656;</span></summary>
-          <div class="accordion-body">
-            <div id="svcGroups"></div>
-            <button type="button" class="dash-add" id="svcGroupAdd">+ Add section</button>
-          </div>
-        </details>
+        <div class="builder-section" data-section-panel="prices" hidden>
+          <div class="section-head"><button type="button" class="section-back" data-back>&#8249; Edit your website</button></div>
+          <h3>Prices &amp; timetable</h3>
+          <div id="svcGroups"></div>
+          <button type="button" class="dash-add" id="svcGroupAdd">+ Add section</button>
+        </div>
 
-        <details class="accordion">
-          <summary>Media<span class="chev">&#9656;</span></summary>
-          <div class="accordion-body">
-            <div class="media-row">
-              <img id="logoThumb" class="media-thumb empty" alt="">
-              <div>
-                <div style="font-size:12.5px;font-weight:600;margin-bottom:6px">Logo</div>
-                <label class="media-btn">Choose file<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="logoInput" hidden></label>
-              </div>
+        <div class="builder-section" data-section-panel="media" hidden>
+          <div class="section-head"><button type="button" class="section-back" data-back>&#8249; Edit your website</button></div>
+          <h3>Media</h3>
+          <div class="media-row">
+            <img id="logoThumb" class="media-thumb empty" alt="">
+            <div>
+              <div style="font-size:12.5px;font-weight:600;margin-bottom:6px">Logo</div>
+              <label class="media-btn">Choose file<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="logoInput" hidden></label>
             </div>
-            <div class="media-row">
-              <img id="heroThumb" class="media-thumb empty" alt="">
-              <div>
-                <div style="font-size:12.5px;font-weight:600;margin-bottom:6px">Hero image</div>
-                <label class="media-btn">Choose file<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="heroInput" hidden></label>
-              </div>
-            </div>
-            <div style="font-size:12.5px;font-weight:600;margin-bottom:6px">Gallery</div>
-            <div class="gallery-counter" id="galleryCounter">0 / 20 photos</div>
-            <div class="gallery-grid" id="galleryGrid"></div>
-            <label class="media-btn" id="galleryAddWrap">Add photos<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="galleryInput" hidden multiple></label>
           </div>
-        </details>
+          <div class="media-row">
+            <img id="heroThumb" class="media-thumb empty" alt="">
+            <div>
+              <div style="font-size:12.5px;font-weight:600;margin-bottom:6px">Hero image</div>
+              <label class="media-btn">Choose file<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="heroInput" hidden></label>
+            </div>
+          </div>
+          <div style="font-size:12.5px;font-weight:600;margin-bottom:6px">Gallery</div>
+          <div class="gallery-counter" id="galleryCounter">0 / 20 photos</div>
+          <div class="gallery-grid" id="galleryGrid"></div>
+          <label class="media-btn" id="galleryAddWrap">Add photos<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="galleryInput" hidden multiple></label>
+        </div>
+
       </div>
 
     </div>
@@ -305,7 +330,7 @@
       </div>
     </div>
     <div class="preview-frame-wrap">
-      <iframe id="sitePreview" title="Your website" sandbox="allow-scripts"></iframe>
+      <iframe id="sitePreview" title="Your website" sandbox="allow-scripts allow-same-origin"></iframe>
     </div>
   </div>
 
@@ -386,6 +411,23 @@
   var isPaying = false;   // no billing check wired up yet — see Billing card
   var isLive = false;
   var isEditing = false;
+  var activeSection = null; // which builder section (if any) is drilled into
+  var hoursStructured = defaultHours();
+  var DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  var SECTION_PAGE = { name: 'home', media: 'home', contact: 'contact', hours: 'contact', address: 'contact', prices: 'services' };
+
+  function defaultHours() {
+    return ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(function (day, i) {
+      return { day: day, open: i < 5, from: i < 5 ? '9:00am' : '', to: i < 5 ? '6:00pm' : '' };
+    });
+  }
+  function hoursFromRaw(raw) {
+    if (Array.isArray(raw.hoursStructured) && raw.hoursStructured.length === 7) return raw.hoursStructured.map(function (d) { return { day: d.day, open: !!d.open, from: d.from || '', to: d.to || '' }; });
+    return defaultHours();
+  }
+  function hoursToRawLines(hours) {
+    return hours.map(function (d) { return d.day + ': ' + (d.open ? ((d.from || '?') + '–' + (d.to || '?')) : 'Closed'); });
+  }
 
   function setupPanel() { return document.getElementById('setupPanel'); }
   function appBody() { return document.getElementById('appBody'); }
@@ -406,10 +448,31 @@
     } else {
       clearTimeout(autoSaveTimer);
       if (hasPendingEdit && !autoSaveInFlight) runAutoSave();
+      openSection(null);
     }
   }
   document.getElementById('editToggle').addEventListener('click', function () { setEditing(!isEditing); });
   document.getElementById('builderBack').addEventListener('click', function () { setEditing(false); });
+
+  // ---------------- drill-in section navigation ----------------
+  var WIDE_SECTIONS = { prices: true, media: true };
+  function openSection(id) {
+    activeSection = id;
+    document.getElementById('builderList').hidden = !!id;
+    document.querySelectorAll('.builder-section').forEach(function (el) {
+      el.hidden = el.dataset.sectionPanel !== id;
+    });
+    var leftPanel = document.querySelector('.left-panel');
+    leftPanel.classList.toggle('wide', !!id && !!WIDE_SECTIONS[id]);
+    if (leftPanel.scrollTo) leftPanel.scrollTo({ top: 0, behavior: 'instant' });
+    renderPreview();
+  }
+  document.querySelectorAll('.sec-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () { openSection(btn.dataset.section); });
+  });
+  document.querySelectorAll('[data-back]').forEach(function (btn) {
+    btn.addEventListener('click', function () { openSection(null); });
+  });
 
   // ---------------- live preview (the same renderer Studio/deploy uses) ----------------
   function currentRaw() {
@@ -426,18 +489,38 @@
       phone: document.getElementById('fPhone').value.trim(),
       email: document.getElementById('fEmail2').value.trim(),
       address: document.getElementById('fAddress').value.trim(),
-      hours: document.getElementById('fHours').value.trim(),
+      hours: hoursToRawLines(hoursStructured),
       logoImage: mediaUrl(media.logoImage) || undefined,
       heroImage: mediaUrl(media.heroImage) || undefined,
       gallery: media.gallery.map(mediaUrl)
     }, servicesToRaw(services));
   }
 
+  var previewTimer = null;
+  function scheduleRenderPreview() {
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(renderPreview, 320);
+  }
+
   function renderPreview() {
+    clearTimeout(previewTimer);
     var frame = document.getElementById('sitePreview');
     if (!business || typeof buildDemoHTML !== 'function') return;
-    try { frame.srcdoc = buildDemoHTML(currentRaw()); } catch (e) {}
+    frame.classList.add('refreshing');
+    try { frame.srcdoc = buildDemoHTML(currentRaw()); } catch (e) { frame.classList.remove('refreshing'); }
   }
+
+  document.getElementById('sitePreview').addEventListener('load', function () {
+    var frame = this;
+    frame.classList.remove('refreshing');
+    if (!activeSection) return;
+    try {
+      var doc = frame.contentDocument;
+      var page = SECTION_PAGE[activeSection] || 'home';
+      doc.querySelectorAll('.page').forEach(function (p) { p.hidden = p.dataset.page !== page; });
+      if (frame.contentWindow) frame.contentWindow.scrollTo({ top: 0, behavior: 'instant' });
+    } catch (e) {}
+  });
 
   document.getElementById('fullscreenBtn').addEventListener('click', function () {
     if (!business || typeof buildDemoHTML !== 'function') return;
@@ -547,9 +630,10 @@
     document.getElementById('fPhone').value = raw.phone || '';
     document.getElementById('fEmail2').value = raw.email || session.email || '';
     document.getElementById('fAddress').value = raw.address || '';
-    document.getElementById('fHours').value = raw.hours || '';
+    hoursStructured = hoursFromRaw(raw);
 
     renderServices();
+    renderHours();
     renderMediaThumbs();
     renderGallery();
     renderPlanUI();
@@ -651,19 +735,47 @@
       mount.appendChild(card);
     });
 
-    mount.querySelectorAll('[data-gf]').forEach(function (input) { input.addEventListener('input', function () { services[+input.dataset.gi][input.dataset.gf] = input.value; renderPreview(); scheduleAutoSave(); }); });
-    mount.querySelectorAll('[data-f]').forEach(function (input) { input.addEventListener('input', function () { services[+input.dataset.gi].items[+input.dataset.i][input.dataset.f] = input.value; renderPreview(); scheduleAutoSave(); }); });
-    mount.querySelectorAll('[data-item-add]').forEach(function (btn) { btn.addEventListener('click', function () { services[+btn.dataset.itemAdd].items.push({ name: '', price: '', duration: '' }); renderServices(); renderPreview(); scheduleAutoSave(); }); });
-    mount.querySelectorAll('[data-group-remove]').forEach(function (btn) { btn.addEventListener('click', function () { services.splice(+btn.dataset.groupRemove, 1); renderServices(); renderPreview(); scheduleAutoSave(); }); });
-    mount.querySelectorAll('[data-item-remove]').forEach(function (btn) { btn.addEventListener('click', function () { var p = btn.dataset.itemRemove.split(':'); services[+p[0]].items.splice(+p[1], 1); renderServices(); renderPreview(); scheduleAutoSave(); }); });
-    mount.querySelectorAll('[data-group-up],[data-group-down]').forEach(function (btn) { btn.addEventListener('click', function () { var i = +(btn.dataset.groupUp || btn.dataset.groupDown); var j = btn.dataset.groupUp ? i - 1 : i + 1; if (j < 0 || j >= services.length) return; var t = services[i]; services[i] = services[j]; services[j] = t; renderServices(); renderPreview(); scheduleAutoSave(); }); });
-    mount.querySelectorAll('[data-item-up],[data-item-down]').forEach(function (btn) { btn.addEventListener('click', function () { var p = (btn.dataset.itemUp || btn.dataset.itemDown).split(':'); var gi = +p[0], i = +p[1]; var j = btn.dataset.itemUp ? i - 1 : i + 1; var items = services[gi].items; if (j < 0 || j >= items.length) return; var t = items[i]; items[i] = items[j]; items[j] = t; renderServices(); renderPreview(); scheduleAutoSave(); }); });
+    mount.querySelectorAll('[data-gf]').forEach(function (input) { input.addEventListener('input', function () { services[+input.dataset.gi][input.dataset.gf] = input.value; scheduleRenderPreview(); scheduleAutoSave(); }); });
+    mount.querySelectorAll('[data-f]').forEach(function (input) { input.addEventListener('input', function () { services[+input.dataset.gi].items[+input.dataset.i][input.dataset.f] = input.value; scheduleRenderPreview(); scheduleAutoSave(); }); });
+    mount.querySelectorAll('[data-item-add]').forEach(function (btn) { btn.addEventListener('click', function () { services[+btn.dataset.itemAdd].items.push({ name: '', price: '', duration: '' }); renderServices(); scheduleRenderPreview(); scheduleAutoSave(); }); });
+    mount.querySelectorAll('[data-group-remove]').forEach(function (btn) { btn.addEventListener('click', function () { services.splice(+btn.dataset.groupRemove, 1); renderServices(); scheduleRenderPreview(); scheduleAutoSave(); }); });
+    mount.querySelectorAll('[data-item-remove]').forEach(function (btn) { btn.addEventListener('click', function () { var p = btn.dataset.itemRemove.split(':'); services[+p[0]].items.splice(+p[1], 1); renderServices(); scheduleRenderPreview(); scheduleAutoSave(); }); });
+    mount.querySelectorAll('[data-group-up],[data-group-down]').forEach(function (btn) { btn.addEventListener('click', function () { var i = +(btn.dataset.groupUp || btn.dataset.groupDown); var j = btn.dataset.groupUp ? i - 1 : i + 1; if (j < 0 || j >= services.length) return; var t = services[i]; services[i] = services[j]; services[j] = t; renderServices(); scheduleRenderPreview(); scheduleAutoSave(); }); });
+    mount.querySelectorAll('[data-item-up],[data-item-down]').forEach(function (btn) { btn.addEventListener('click', function () { var p = (btn.dataset.itemUp || btn.dataset.itemDown).split(':'); var gi = +p[0], i = +p[1]; var j = btn.dataset.itemUp ? i - 1 : i + 1; var items = services[gi].items; if (j < 0 || j >= items.length) return; var t = items[i]; items[i] = items[j]; items[j] = t; renderServices(); scheduleRenderPreview(); scheduleAutoSave(); }); });
   }
-  document.getElementById('svcGroupAdd').addEventListener('click', function () { services.push({ name: '', items: [{ name: '', price: '', duration: '' }] }); renderServices(); renderPreview(); scheduleAutoSave(); });
+  document.getElementById('svcGroupAdd').addEventListener('click', function () { services.push({ name: '', items: [{ name: '', price: '', duration: '' }] }); renderServices(); scheduleRenderPreview(); scheduleAutoSave(); });
 
-  ['fName', 'fPhone', 'fEmail2', 'fAddress', 'fHours'].forEach(function (id) {
-    document.getElementById(id).addEventListener('input', function () { renderPreview(); scheduleAutoSave(); });
+  ['fName', 'fPhone', 'fEmail2', 'fAddress'].forEach(function (id) {
+    document.getElementById(id).addEventListener('input', function () { scheduleRenderPreview(); scheduleAutoSave(); });
   });
+
+  // ---------------- opening hours ----------------
+  function renderHours() {
+    var mount = document.getElementById('hoursRows');
+    mount.innerHTML = hoursStructured.map(function (d, i) {
+      return '<div class="hours-row">' +
+        '<label class="hours-check"><input type="checkbox" data-day="' + i + '" ' + (d.open ? 'checked' : '') + '> ' + d.day + '</label>' +
+        (d.open
+          ? '<div class="hours-times" data-day-times="' + i + '"><input type="text" placeholder="Opens e.g. 9:00am" data-day="' + i + '" data-hf="from" value="' + escapeAttr(d.from || '') + '"><input type="text" placeholder="Closes e.g. 6:00pm" data-day="' + i + '" data-hf="to" value="' + escapeAttr(d.to || '') + '"></div>'
+          : '<span class="hours-closed">Closed</span>') +
+        '</div>';
+    }).join('');
+    mount.querySelectorAll('[data-day][type="checkbox"]').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var i = +cb.dataset.day;
+        hoursStructured[i].open = cb.checked;
+        if (cb.checked && !hoursStructured[i].from) { hoursStructured[i].from = '9:00am'; hoursStructured[i].to = '6:00pm'; }
+        renderHours();
+        scheduleRenderPreview(); scheduleAutoSave();
+      });
+    });
+    mount.querySelectorAll('[data-hf]').forEach(function (input) {
+      input.addEventListener('input', function () {
+        hoursStructured[+input.dataset.day][input.dataset.hf] = input.value;
+        scheduleRenderPreview(); scheduleAutoSave();
+      });
+    });
+  }
 
   // ---------------- media (logo / hero) ----------------
   function renderMediaThumbs() {
@@ -683,13 +795,13 @@
     var file = e.target.files[0]; e.target.value = '';
     if (!file) return;
     var err = validateImageFile(file); if (err) { showUploadError(err); return; }
-    pendingUploads.logo = file; renderMediaThumbs(); renderPreview(); scheduleAutoSave();
+    pendingUploads.logo = file; renderMediaThumbs(); scheduleRenderPreview(); scheduleAutoSave();
   });
   document.getElementById('heroInput').addEventListener('change', function (e) {
     var file = e.target.files[0]; e.target.value = '';
     if (!file) return;
     var err = validateImageFile(file); if (err) { showUploadError(err); return; }
-    pendingUploads.hero = file; renderMediaThumbs(); renderPreview(); scheduleAutoSave();
+    pendingUploads.hero = file; renderMediaThumbs(); scheduleRenderPreview(); scheduleAutoSave();
   });
 
   // ---------------- gallery ----------------
@@ -713,7 +825,7 @@
         var i = +btn.dataset.i;
         if (btn.dataset.kind === 'existing') { galleryRemoved.push(media.gallery[i]); media.gallery.splice(i, 1); }
         else { pendingUploads.gallery.splice(i, 1); }
-        renderGallery(); renderPreview(); scheduleAutoSave();
+        renderGallery(); scheduleRenderPreview(); scheduleAutoSave();
       });
     });
     var counter = document.getElementById('galleryCounter');
@@ -731,7 +843,7 @@
     if (room <= 0) files = []; else if (files.length > room) files = files.slice(0, room);
     pendingUploads.gallery = pendingUploads.gallery.concat(files);
     if (errs.length) showUploadError(errs[0]);
-    renderGallery(); renderPreview(); scheduleAutoSave();
+    renderGallery(); scheduleRenderPreview(); scheduleAutoSave();
   });
 
   // ---------------- save ----------------
@@ -760,7 +872,8 @@
         phone: document.getElementById('fPhone').value.trim(),
         email: document.getElementById('fEmail2').value.trim(),
         address: document.getElementById('fAddress').value.trim(),
-        hours: document.getElementById('fHours').value.trim(),
+        hours: hoursToRawLines(hoursStructured),
+        hoursStructured: hoursStructured,
         logoImage: media.logoImage,
         heroImage: media.heroImage,
         gallery: media.gallery
@@ -790,10 +903,13 @@
   var autoSaveInFlight = false;
   var autoSaveQueued = false;
   var hasPendingEdit = false;
+  var autoSaveRetries = 0;
+  var MAX_AUTOSAVE_RETRIES = 4;
 
   function scheduleAutoSave() {
     if (!isEditing) return;
     hasPendingEdit = true;
+    autoSaveRetries = 0;
     var statusEl = document.getElementById('saveStatus');
     statusEl.textContent = 'Editing…'; statusEl.className = 'save-status';
     clearTimeout(autoSaveTimer);
@@ -807,10 +923,16 @@
     autoSaveInFlight = true;
     statusEl.innerHTML = '<span class="spin"></span> Saving…'; statusEl.className = 'save-status';
     saveBusiness({}).then(function () {
+      autoSaveRetries = 0;
       statusEl.textContent = 'All changes saved'; statusEl.className = 'save-status ok';
     }).catch(function (err) {
-      statusEl.textContent = err.message || 'Couldn’t save — retrying…'; statusEl.className = 'save-status err';
-      autoSaveQueued = true;
+      autoSaveRetries++;
+      if (autoSaveRetries < MAX_AUTOSAVE_RETRIES) {
+        statusEl.textContent = err.message || 'Couldn’t save — retrying…'; statusEl.className = 'save-status err';
+        autoSaveQueued = true;
+      } else {
+        statusEl.textContent = 'Couldn’t save — check your connection.'; statusEl.className = 'save-status err';
+      }
     }).then(function () {
       autoSaveInFlight = false;
       if (autoSaveQueued) { autoSaveQueued = false; autoSaveTimer = setTimeout(runAutoSave, 1200); }
