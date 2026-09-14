@@ -679,13 +679,6 @@
   }
   .builder-preview{position:fixed;top:var(--header-h, 75px);left:0;right:0;overflow:hidden;background:var(--bg);
     pointer-events:auto;transition:padding .3s var(--qa-ease),bottom .2s var(--qa-ease)}
-  /* Below 900px the bar-wrap still holds the add-on checkboxes above the
-     chat pill (not just the pill, as the comment in homepage-builder.js
-     assumes) — without this the iframe ran the full height behind a
-     transparent bar and the checkbox labels overlapped the live preview. */
-  @media(max-width:900px){
-    .builder-preview:not(.mobile-view){padding-bottom:var(--builder-tools-height,0px)}
-  }
   /* centred, because the desktop-ratio sizing above can make it narrower than
      the pane; the surrounding gutter reads as the space beside a browser window */
   .builder-phone-frame{width:100%;height:100%;display:block}
@@ -737,8 +730,8 @@
     background:#fff;border-top:1px solid rgba(36,27,46,.1);
     box-shadow:0 -8px 28px rgba(36,27,46,.08)}
   @media(max-width:900px){
-    .builder-bar-wrap{padding:10px 16px calc(14px + env(safe-area-inset-bottom, 0px));
-      background:transparent;border-top:0;box-shadow:none;flex-direction:column;gap:8px}
+    .builder-bar-wrap{padding:0 16px calc(18px + env(safe-area-inset-bottom, 0px));
+      background:transparent;border-top:0;box-shadow:none}
   }
   .builder-chat-pill{pointer-events:auto;display:inline-flex;align-items:center;gap:9px;
     padding:14px 26px;border-radius:999px;border:none;cursor:pointer;
@@ -1465,15 +1458,15 @@ html,body{max-width:100%}
 .management-line b{color:var(--ink)}
 #handoffStatus{margin:0 auto 8px;max-width:780px;text-align:center;font-size:13px;color:#26344c;background:#fff}
 #handoffStatus:empty{display:none}
-.account-cta{display:block;margin:0 auto 10px;max-width:780px;text-align:center;font-size:13px;font-weight:600;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+/* Both now render inside the "send" glass popup (see .builder-options in
+   builder-glass.css), above the WhatsApp/Email buttons — not in the
+   always-visible floating bar, which stays just the four glass circles. */
+.account-cta{display:block;margin:0 0 12px;text-align:center;font-size:13px;font-weight:600;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
 .account-cta:hover{color:var(--ink)}
-.builder-extras{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 14px;margin:0 auto 10px;max-width:780px;pointer-events:auto}
-.builder-extras-label{font-size:12px;font-weight:600;color:#5a6b85}
+.builder-extras{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 14px;margin:0 0 14px;pointer-events:auto}
+.builder-extras-label{font-size:12px;font-weight:600;color:#5a6b85;width:100%;text-align:center}
 .builder-extras-check{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#26344c;cursor:pointer}
 .builder-extras-check input{width:15px;height:15px;accent-color:var(--accent);cursor:pointer}
-@media(max-width:700px){.builder-extras{gap:6px 10px}.builder-extras-label{width:100%;text-align:center}}
-@media(max-width:900px){.builder-extras{background:#fffffff0;backdrop-filter:blur(18px);border:1px solid #fff;
-  box-shadow:0 5px 22px rgba(23,32,51,.13);border-radius:14px;padding:8px 14px;margin:0 auto}}
 @media(max-width:700px){
 .home-price-grid{grid-template-columns:1fr}
 .mobile-demo-cta{display:none}

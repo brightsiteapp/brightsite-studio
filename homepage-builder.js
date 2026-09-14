@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const builderDeviceMobile = document.getElementById('builderDeviceMobile');
   const builderChatPill = document.getElementById('builderChatPill');
   const accountCta = document.getElementById('accountCta');
+  const builderExtras = document.getElementById('builderExtras');
 
   const creatingOverlay = document.getElementById('creatingOverlay');
   const creatingVerb = document.getElementById('creatingVerb');
@@ -932,6 +933,14 @@ document.addEventListener('DOMContentLoaded', () => {
   builderChatPill.textContent = 'WhatsApp';
   builderChatPill.className = 'designer-send';
   builderChatPill.hidden = true;
+  // Account creation and add-on questions only make sense once someone is
+  // about to send their details, so they live inside the send popup rather
+  // than sitting permanently in the floating bar over the live preview.
+  const builderOptionsHost = controls.querySelector('.builder-options');
+  if (builderOptionsHost) {
+    if (accountCta) builderOptionsHost.append(accountCta);
+    if (builderExtras) { builderExtras.hidden = false; builderOptionsHost.append(builderExtras); }
+  }
   const mobileActions = document.createElement('div');
   mobileActions.className = 'mobile-builder-actions';
   mobileActions.innerHTML = `
@@ -1248,7 +1257,11 @@ Colour palette: ${design.palette}`;
       emailButton.className = 'designer-send designer-email';
       emailButton.dataset.sendEmail = 'true';
       emailButton.textContent = 'Email';
-      options.replaceChildren(builderChatPill, emailButton);
+      const sendChildren = [];
+      if (!accountCta.hidden) sendChildren.push(accountCta);
+      if (builderExtras) sendChildren.push(builderExtras);
+      sendChildren.push(builderChatPill, emailButton);
+      options.replaceChildren(...sendChildren);
       builderChatPill.hidden = false;
     } else if (activeTool === 'colour') {
       options.innerHTML = `<div class="palette-tabs" role="group" aria-label="Palette mood">${Object.keys(palettes).map(f => `<button type="button" data-family="${f}" aria-pressed="${f === paletteFamily}">${f}</button>`).join('')}</div><div class="palette-scroll">${palettes[paletteFamily].map(([name,hex]) => { const t = tonesFromHex(hex); return `<button type="button" class="palette-choice" data-colour="${hex}" data-palette-name="${name}" aria-label="${name} palette"><span style="background:${t.light}"></span><span style="background:${t.base}"></span><span style="background:${t.dark}"></span><small>${name}</small></button>`; }).join('')}</div><p>Swipe to explore colours</p>`;
