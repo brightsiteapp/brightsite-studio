@@ -71,16 +71,32 @@ function createApp(options = {}) {
   });
 
   app.get('/api/sync-status', (req, res) => res.json(sync.getStatus()));
-  app.get('/api/accounts', async (req, res) => res.json({ enabled: sync.accountsEnabled(), accounts: await sync.fetchAccounts() }));
-  app.put('/api/accounts/:id', async (req, res) => {
-    const email = String(req.body?.email || '').trim();
-    if (!email) return res.status(400).json({ error: 'Enter an email address.' });
-    try {
-      await sync.updateAccountEmail(req.params.id, email);
-      res.json({ ok: true });
-    } catch (err) {
-      res.status(400).json({ error: err.message });
-    }
+  // A signup at account/login.html with no business yet is an inbound
+  // lead — they asked for a site, so unlike a cold-call lead they don't
+  // need finding or calling. Give each one a real (empty) project the
+  // first time it's seen, tagged so the Pipeline can flag it and Accounts
+  // can link straight into its builder — signupAccountId dedupes on every
+  // request so this never creates the same lead twice.
+  function ensureSignupLeads(accounts) {
+    const bySignupId = new Map(storage.listProjects().filter(p => p.signupAccountId).map(p => [p.signupAccountId, p]));
+    return accounts.map(a => {
+      if (a.sites.length) return a;
+      let stub = bySignupId.get(a.id);
+      if (!stub) {
+        stub = storage.createProject(a.email.split('@')[0] || a.email, { pipelineStage: 'uncontacted' });
+        stub = storage.saveProject(stub.slug, {
+          leadSource: 'signup',
+          signupAccountId: a.id,
+          contact: { ...stub.contact, email: a.email },
+          createdAt: a.createdAt || stub.createdAt
+        });
+      }
+      return { ...a, sites: [{ slug: stub.slug, name: stub.raw?.name || stub.name, updatedAt: stub.updatedAt }] };
+    });
+  }
+  app.get('/api/accounts', async (req, res) => {
+    const accounts = await sync.fetchAccounts();
+    res.json({ enabled: sync.accountsEnabled(), accounts: ensureSignupLeads(accounts) });
   });
   app.delete('/api/accounts/:id', async (req, res) => {
     try {

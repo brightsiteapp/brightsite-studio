@@ -1441,20 +1441,40 @@
   // Grouped by the same pipeline stage as their first business (see
   // pipeline.js's P.stageOf) so "website to be built", "paid and active"
   // etc. line up with the Pipeline board's own columns — no separate stage
-  // model to keep in sync. Accounts with no business yet get their own group.
+  // model to keep in sync. Accounts with no business yet get their own group
+  // (in practice rare — server.js gives every signup a stub lead straight
+  // away, see ensureSignupLeads there).
   const ACCOUNT_GROUP_ORDER = ['lead', 'ready', 'waiting', 'followup', 'client', 'archived', 'none'];
   const ACCOUNT_GROUP_LABELS = { ...P.STAGE_LABELS, none: 'No website started' };
+  // Status filter, coarser than the stage groups above — billing-shaped,
+  // for "who's paying" at a glance rather than "where are they in the pipeline".
+  const ACCOUNT_STATUSES = [
+    ['all', 'All'],
+    ['in-progress', 'In progress'],
+    ['active', 'Active'],
+    ['cancelled', 'Cancelled']
+  ];
   let accountsCache = null;
-  let editingAccountId = null;
-  function accountStage(a) {
+  let accountStatusFilter = 'all';
+  function accountProject(a) {
     const slug = a.sites[0]?.slug;
-    const p = slug && project(slug);
+    return slug && project(slug);
+  }
+  function accountStage(a) {
+    const p = accountProject(a);
     return p ? P.stageOf(p, Date.now()) : 'none';
+  }
+  function accountStatus(a) {
+    const p = accountProject(a);
+    if (!p || !P.isClient(p)) return 'in-progress';
+    return P.paymentState(p) === 'cancelled' ? 'cancelled' : 'active';
   }
   async function renderAccounts() {
     const mount = $('#v2Accounts');
+    const filtersEl = $('#v2AccountFilters');
     if (!accountsCache) {
       mount.innerHTML = '<p class="v2-empty v2-empty-big">Loading accounts…</p>';
+      filtersEl.innerHTML = '';
       try {
         accountsCache = await (await fetch('/api/accounts')).json();
       } catch {
@@ -1463,11 +1483,27 @@
     }
     if (v2.view !== 'accounts') return;
     if (!accountsCache.enabled) {
+      filtersEl.innerHTML = '';
       mount.innerHTML = '<p class="v2-empty v2-empty-big">Accounts aren’t connected yet — add the Supabase service role key in Settings (⚙) to list customer logins here.</p>';
       return;
     }
-    const accounts = accountsCache.accounts.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    if (!accounts.length) { mount.innerHTML = '<p class="v2-empty v2-empty-big">No customer accounts yet.</p>'; return; }
+    const all = accountsCache.accounts;
+    if (!all.length) {
+      filtersEl.innerHTML = '';
+      mount.innerHTML = '<p class="v2-empty v2-empty-big">No customer accounts yet.</p>';
+      return;
+    }
+    const counts = { all: all.length, 'in-progress': 0, active: 0, cancelled: 0 };
+    all.forEach(a => { counts[accountStatus(a)]++; });
+    if (!ACCOUNT_STATUSES.some(([k]) => k === accountStatusFilter)) accountStatusFilter = 'all';
+    filtersEl.innerHTML = ACCOUNT_STATUSES.map(([k, label]) => `
+      <button type="button" class="v2-account-filter${k === accountStatusFilter ? ' is-active' : ''}" data-status-filter="${k}">
+        ${esc(label)} <span class="v2-account-count">${counts[k]}</span>
+      </button>`).join('');
+    const accounts = all
+      .filter(a => accountStatusFilter === 'all' || accountStatus(a) === accountStatusFilter)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    if (!accounts.length) { mount.innerHTML = '<p class="v2-empty v2-empty-big">No accounts in this status.</p>'; return; }
     const groups = new Map(ACCOUNT_GROUP_ORDER.map(k => [k, []]));
     accounts.forEach(a => groups.get(accountStage(a)).push(a));
     mount.innerHTML = ACCOUNT_GROUP_ORDER.filter(k => groups.get(k).length).map(k => `
@@ -1480,38 +1516,27 @@
     const sites = a.sites.length
       ? a.sites.map(s => `<button type="button" class="v2-task-biz" data-biz="${esc(s.slug)}">${esc(s.name || s.slug)}</button>`).join(' ')
       : '<span class="v2-task-type">No site designed yet</span>';
-    if (editingAccountId === a.id) {
-      return `<div class="v2-task" data-account="${esc(a.id)}">
-        <form data-account-edit-form class="v2-account-edit">
-          <input type="email" name="email" value="${esc(a.email || '')}" required autofocus>
-          <button type="submit" class="v2-task-biz is-primary">Save</button>
-          <button type="button" data-account-edit-cancel class="v2-task-biz">Cancel</button>
-        </form>
-      </div>`;
-    }
-    return `<div class="v2-task" data-account="${esc(a.id)}">
+    return `<div class="v2-task${a.sites.length ? ' is-clickable' : ''}" data-account="${esc(a.id)}">
       <span class="v2-task-text">${esc(a.email || a.id)}</span>
       ${sites}
       <span class="v2-task-due">${a.createdAt ? new Date(a.createdAt).toLocaleDateString() : ''}</span>
-      <button type="button" class="v2-task-edit" data-account-edit title="Edit email">✎</button>
       <button type="button" class="v2-task-del" data-account-del title="Delete login">×</button>
     </div>`;
   }
+  $('#v2AccountFilters').addEventListener('click', e => {
+    const btn = e.target.closest('[data-status-filter]');
+    if (!btn) return;
+    accountStatusFilter = btn.dataset.statusFilter;
+    renderAccounts();
+  });
   document.addEventListener('click', async e => {
     const biz = e.target.closest('#v2Accounts [data-biz]');
     if (biz) return openProfile(biz.dataset.biz);
-    const row = e.target.closest('#v2Accounts .v2-task[data-account]');
-    if (!row) return;
-    const id = row.dataset.account;
-    const account = accountsCache?.accounts.find(a => a.id === id);
-    if (!account) return;
-    if (e.target.closest('[data-account-edit]')) {
-      editingAccountId = id;
-      renderAccounts();
-    } else if (e.target.closest('[data-account-edit-cancel]')) {
-      editingAccountId = null;
-      renderAccounts();
-    } else if (e.target.closest('[data-account-del]')) {
+    if (e.target.closest('#v2Accounts [data-account-del]')) {
+      const row = e.target.closest('.v2-task[data-account]');
+      const id = row.dataset.account;
+      const account = accountsCache?.accounts.find(a => a.id === id);
+      if (!account) return;
       const ok = await core.showConfirm('Delete this login?', `${account.email || id} won’t be able to sign in any more. Their business/site isn’t affected.`, 'Delete');
       if (!ok) return;
       try {
@@ -1521,24 +1546,19 @@
       } catch (err) {
         core.notify(core.friendlyError(err.message), { sticky: false });
       }
+      return;
     }
-  });
-  document.addEventListener('submit', async e => {
-    if (!e.target.matches('[data-account-edit-form]')) return;
-    e.preventDefault();
-    const row = e.target.closest('.v2-task[data-account]');
+    // Clicking anywhere else on a row with a site goes straight into its
+    // builder — this is an admin looking a client up to work on their site,
+    // not a lead board to triage.
+    const row = e.target.closest('#v2Accounts .v2-task.is-clickable[data-account]');
+    if (!row) return;
     const id = row.dataset.account;
     const account = accountsCache?.accounts.find(a => a.id === id);
-    const email = new FormData(e.target).get('email').trim();
-    if (!account || !email || email === account.email) { editingAccountId = null; return renderAccounts(); }
-    try {
-      await core.api(`/api/accounts/${encodeURIComponent(id)}`, { method: 'PUT', headers: JSON_HEADERS, body: JSON.stringify({ email }) });
-      account.email = email;
-      editingAccountId = null;
-      renderAccounts();
-    } catch (err) {
-      core.notify(core.friendlyError(err.message), { sticky: false });
-    }
+    const slug = account?.sites[0]?.slug;
+    if (!slug) return;
+    const p = project(slug);
+    openProfile(slug, { focusBuild: p ? P.stageOf(p) === 'lead' : false });
   });
 
   document.addEventListener('submit', async e => {

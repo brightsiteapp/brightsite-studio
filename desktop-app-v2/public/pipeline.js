@@ -35,6 +35,11 @@
 
   const isClient = p => p.paymentStatus === 'paid' || p.paymentStatus === 'pending';
 
+  // Signed up themselves at account/login.html, wanting a site — unlike a
+  // cold-call lead they don't need finding or calling, so they're flagged
+  // and pinned to the top of the Leads column (see board() below).
+  const isSignupLead = p => Boolean(p.signupAccountId || p.leadSource === 'signup');
+
   // Built = someone set it (V2), or, for records from before V2, signs of a
   // real site: live, imported, read from a business link (not just found by
   // AI search, which also records a link), or worked on in the builder.
@@ -92,7 +97,7 @@
     const created = p => time(p.createdAt) || 0;
     const byName = (a, b) => nameOf(a).localeCompare(nameOf(b));
     const newest = (a, b) => created(b) - created(a);
-    cols.lead.sort(newest);
+    cols.lead.sort((a, b) => (isSignupLead(b) - isSignupLead(a)) || newest(a, b));
     cols.ready.sort(newest);
     cols.followup.sort((a, b) => (lastContactAt(a) ?? 0) - (lastContactAt(b) ?? 0));
     cols.waiting.sort((a, b) => (followUpDueAt(a) ?? Infinity) - (followUpDueAt(b) ?? Infinity));
@@ -143,7 +148,11 @@
   // only) a small flag. `tone` picks the colour.
   function card(p, now = Date.now()) {
     const stage = stageOf(p, now);
-    if (stage === 'lead') return { stage, tone: 'lead', sub: placeAndCategory(p), task: 'Build website' };
+    if (stage === 'lead') {
+      return isSignupLead(p)
+        ? { stage, tone: 'lead', sub: 'Signed up for a site — no cold call needed', task: 'Build website', flag: 'SIGNED UP' }
+        : { stage, tone: 'lead', sub: placeAndCategory(p), task: 'Build website' };
+    }
     if (stage === 'ready') return { stage, tone: 'ready', sub: 'Demo complete', task: 'Ready to send' };
     if (stage === 'archived') return { stage, tone: 'archived', sub: placeAndCategory(p), task: 'Not interested' };
     if (stage === 'client') {
@@ -297,7 +306,7 @@
 
   const api = {
     DAY_MS, FOLLOW_UP_AFTER_MS, CONTACTED_STAGES, STAGE_LABELS, TASK_TYPES, PAYMENT_LABELS,
-    isClient, websiteBuilt, lastContactAt, followUpDueAt, paymentState, stageOf, board,
+    isClient, isSignupLead, websiteBuilt, lastContactAt, followUpDueAt, paymentState, stageOf, board,
     relativeDay, shortPlace, placeAndCategory, siteUrl, siteLabel, card, statusLine,
     message, subject, contactCard, stripeUrl,
     markBuilt, markContacted, markFollowedUp, moveTo, summary,
