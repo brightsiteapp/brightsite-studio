@@ -110,15 +110,13 @@
           <div class="price-row">
             <span class="price"><span class="setup-price">£0</span><small class="hosting-price">+ £19/mo</small></span>
           </div>
-          <div class="price-note">One-off build, then monthly management</div>
-          <label class="price-addon"><input type="checkbox" class="price-addon-check" data-addon="Booking form"><span>Booking form</span><b>+£20/mo</b></label>
-          <label class="price-addon"><input type="checkbox" class="price-addon-check" data-addon="E-commerce"><span>Online store (e-commerce)</span><b>+£20/mo</b></label>
+          <div class="price-note">No setup fee — simple monthly management</div>
           <ul>
             <li>Up to 3 pages</li>
             <li>SEO &amp; SEO-focused content</li>
             <li>Mobile optimisation</li>
             <li>Hosting, security &amp; maintenance</li>
-            <li>Contact details &amp; enquiry links</li>
+            <li>Contact details &amp; enquiry forms</li>
           </ul>
           <a href="#" class="go plan-enquire" data-plan="Essential" data-price="£0 setup + £19/mo" data-fixed target="_blank" rel="noopener">Enquire</a>
         </div>
@@ -130,14 +128,12 @@
             <span class="price"><span class="price-was">£199</span><span class="setup-price">£99</span><small class="hosting-price">+ £180/yr</small><span class="price-save">Save 50%</span></span>
           </div>
           <div class="price-note">One-off build, then hosting &amp; management</div>
-          <label class="price-addon"><input type="checkbox" class="price-addon-check" data-addon="Booking form"><span>Booking form</span><b>+£20/mo</b></label>
-          <label class="price-addon"><input type="checkbox" class="price-addon-check" data-addon="E-commerce"><span>Online store (e-commerce)</span><b>+£20/mo</b></label>
           <ul>
             <li>Everything in Essential</li>
             <li>3-5 custom-designed pages</li>
             <li>Custom sections built for you</li>
             <li>Interactions &amp; animations</li>
-            <li>Third-party integrations</li>
+            <li>Booking system or online store included</li>
           </ul>
           <a href="#" class="go plan-enquire" data-plan="Pro" data-price="£99 setup + £180/yr" target="_blank" rel="noopener">Enquire</a>
         </div>
@@ -149,18 +145,17 @@
             <span class="price"><span class="price-was">£299</span><span class="setup-price">£149</span><small class="hosting-price">+ £180/yr</small><span class="price-save">Save 50%</span></span>
           </div>
           <div class="price-note">One-off build, then hosting &amp; management</div>
-          <label class="price-addon"><input type="checkbox" class="price-addon-check" data-addon="Booking form"><span>Booking form</span><b>+£20/mo</b></label>
-          <label class="price-addon"><input type="checkbox" class="price-addon-check" data-addon="E-commerce"><span>Online store (e-commerce)</span><b>+£20/mo</b></label>
           <ul>
             <li>Everything in Pro</li>
             <li>5-7 custom-designed pages</li>
             <li>Multi-location or multi-service structure</li>
+            <li>Booking system or online store included</li>
             <li>Priority same-day support</li>
           </ul>
           <a href="#" class="go plan-enquire" data-plan="Prestige" data-price="£149 setup + £180/yr" target="_blank" rel="noopener">Enquire</a>
         </div>
       </div>
-      <p class="pricing-note">See a free personalised preview before you commit. Hosting covers security, updates and ongoing management on every plan — add a booking form for £20/month extra. Cancel any time.</p>
+      <p class="pricing-note">See a free personalised preview before you commit. Hosting covers security, updates and ongoing management on every plan. Pro and Prestige include a booking system or online store. Cancel any time.</p>
     </div>
   </section>
 
@@ -192,13 +187,10 @@
 
   function updateWhatsAppLinks() {
     document.querySelectorAll('.plan-enquire').forEach(function(link){
-      var addons = Array.from(link.closest('.plan').querySelectorAll('.price-addon-check:checked'))
-        .map(function(chk){ return chk.dataset.addon; });
       var plan = link.dataset.plan;
       var price = link.dataset.price;
       var billingSuffix = link.dataset.fixed !== undefined ? '' : (', paid ' + (checkbox.checked ? 'Annually' : 'Monthly'));
-      var addonSuffix = addons.length ? (', plus the ' + addons.join(' and ') + ' add-on' + (addons.length > 1 ? 's' : '')) : '';
-      var message = 'Hi, I\'d like to enquire about the ' + plan + ' plan (' + price + billingSuffix + ')' + addonSuffix + '.';
+      var message = 'Hi, I\'d like to enquire about the ' + plan + ' plan (' + price + billingSuffix + ').';
       link.href = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(message);
     });
   }
@@ -232,10 +224,6 @@
   checkbox.addEventListener('change', updatePricing);
   labelMonthly.addEventListener('click', function() { checkbox.checked = false; updatePricing(); });
   labelAnnual.addEventListener('click', function() { checkbox.checked = true; updatePricing(); });
-
-  document.querySelectorAll('.price-addon-check').forEach(function(chk){
-    chk.addEventListener('change', updateWhatsAppLinks);
-  });
 
   // Initialize links on load
   updatePricing();
