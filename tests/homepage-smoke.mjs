@@ -153,7 +153,8 @@ async function runHomepageFlow(label, contextOptions, mobile) {
   const rootLocked = await page.evaluate(() => document.documentElement.classList.contains('builder-scroll-lock'));
   assert.equal(rootLocked, !mobile, `${label}: scroll lock should be desktop-only`);
 
-  assert.equal(await page.locator('.glass-circle[data-tool]').count(), 4, `${label}: builder should offer four style tools (send, colour, font, layout)`);
+  assert.equal(await page.locator('.builder-primary[data-tool="send"]').count(), 1, `${label}: builder should offer one personal handoff action`);
+  assert.equal(await page.locator('.glass-circle[data-tool]').count(), 3, `${label}: builder should offer three compact design controls`);
 
   await activate(page.locator('[data-tool="layout"]'));
   await page.locator('[data-layout-select]').waitFor();
