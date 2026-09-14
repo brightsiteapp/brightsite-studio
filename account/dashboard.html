@@ -631,6 +631,13 @@
       var h3s = doc.querySelectorAll('.contact-details h3');
       bindInlineField(h3s[0], 'fPhone');
       bindInlineField(h3s[1], 'fAddress');
+
+      doc.querySelectorAll('.service-group').forEach(function (groupEl, gi) {
+        groupEl.querySelectorAll('.directory-card').forEach(function (card, ii) {
+          bindInlineService(card.querySelector('h3'), gi, ii, 'name');
+          bindInlineService(card.querySelector('p'), gi, ii, 'price');
+        });
+      });
     } catch (e) {}
   }
   function bindInlineField(el, fieldId) {
@@ -644,6 +651,23 @@
       el.addEventListener('input', function () {
         document.getElementById(fieldId).value = el.textContent;
         scheduleAutoSave();
+      });
+    }
+  }
+  function bindInlineService(el, gi, ii, field) {
+    if (!el) return;
+    el.classList.add('bs-inline-editable');
+    el.contentEditable = 'true';
+    el.spellcheck = false;
+    el.style.pointerEvents = 'auto';
+    if (!el.dataset.bsBound) {
+      el.dataset.bsBound = '1';
+      el.addEventListener('input', function () {
+        if (services[gi] && services[gi].items[ii]) {
+          services[gi].items[ii][field] = el.textContent;
+          renderServices();
+          scheduleAutoSave();
+        }
       });
     }
   }
