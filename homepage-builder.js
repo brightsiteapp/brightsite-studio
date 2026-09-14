@@ -921,7 +921,7 @@ document.addEventListener('DOMContentLoaded', () => {
   controls.className = 'builder-glass-tools';
   const messageIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.3 8.9 8.9 0 0 1-3.9-.9L3 20.5l1.6-4.6A8.1 8.1 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3.2 8.4 8.4 0 0 1 21 11.5z"/><path d="M8.5 11.5h.01M12.5 11.5h.01M16.5 11.5h.01" stroke-width="2.6"/></svg>';
   controls.innerHTML = `<div class="builder-options" id="builderOptions" hidden></div>
-    <button type="button" class="builder-primary" data-tool="send" aria-label="This design direction feels right" aria-expanded="false"><span>This feels right</span>${messageIcon}</button>
+    <button type="button" class="builder-primary" data-tool="send" aria-label="Send to designer" aria-expanded="false"><span>Send To Designer</span>${messageIcon}</button>
     <button type="button" class="glass-circle" data-tool="colour" aria-label="Choose colours" aria-expanded="false"><span class="palette-orb"></span></button>
     <button type="button" class="glass-circle" data-tool="font" aria-label="Choose fonts" aria-expanded="false"><span class="font-orb">Aa</span></button>
     <button type="button" class="glass-circle" data-tool="layout" aria-label="Choose layout" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 10h18M12 10v11"/></svg></button>`;
