@@ -35,8 +35,8 @@
   .dash-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   @media(max-width:540px){.dash-grid2{grid-template-columns:1fr}}
 
-  .svc-row{display:grid;grid-template-columns:1fr 110px auto;gap:8px;margin-bottom:8px;align-items:center}
-  @media(max-width:540px){.svc-row{grid-template-columns:1fr 90px auto}}
+  .svc-row{display:grid;grid-template-columns:1fr 90px 110px auto;gap:8px;margin-bottom:8px;align-items:center}
+  @media(max-width:540px){.svc-row{grid-template-columns:1fr 70px 90px auto}}
   .svc-row input{min-height:42px;padding:0 12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px}
   .svc-remove{background:none;border:0;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;width:32px;height:32px;border-radius:8px}
   .svc-remove:hover{background:#f3efe8;color:#b23b2c}
@@ -114,7 +114,7 @@
 
   <div class="dash-section">
     <h2>Services &amp; prices</h2>
-    <p class="dash-hint">Listed on your site in this order. Leave price blank if it varies.</p>
+    <p class="dash-hint">Listed on your site in this order. Time is optional — leave blank to hide it. Leave price blank if it varies.</p>
     <div id="svcList"></div>
     <button type="button" class="dash-add" id="svcAdd">+ Add a service</button>
   </div>
@@ -257,26 +257,49 @@
     }
     statusEl.textContent = 'Creating…';
     statusEl.style.color = '';
-    var record = {
-      slug: chosenSlug,
-      name: name,
-      raw: { name: name, services: [], gallery: [] },
-      updatedAt: new Date().toISOString()
-    };
-    fetch(SUPABASE_URL + '/rest/v1/businesses', {
-      method: 'POST',
-      headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation,resolution=merge-duplicates' }),
-      body: JSON.stringify({
-        id: chosenSlug,
-        name: name,
-        user_id: session.user_id,
-        data: record,
-        updated_at: record.updatedAt
-      })
-    })
-      .then(function (res) {
-        if (!res.ok) return res.json().then(function (d) { throw new Error(d.message || d.msg || ('Failed (' + res.status + ')')); });
-        return res.json();
+
+    // BrightSite may already have built this business (from the 3-question
+    // form / Studio pipeline) before the customer ever logged in — that row
+    // exists at this slug with real name/location/services but no user_id.
+    // Claim it instead of overwriting it with a blank one, so their existing
+    // design and answers carry straight into the dashboard.
+    fetch(SUPABASE_URL + '/rest/v1/businesses?select=*&id=eq.' + encodeURIComponent(chosenSlug), { headers: authHeaders() })
+      .then(function (res) { return res.ok ? res.json() : []; })
+      .then(function (rows) {
+        var existing = rows && rows[0];
+        if (existing && existing.user_id && existing.user_id !== session.user_id) {
+          throw new Error('That web address is already taken — choose another.');
+        }
+        if (existing) {
+          return fetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(chosenSlug), {
+            method: 'PATCH',
+            headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
+            body: JSON.stringify({ user_id: session.user_id })
+          }).then(function (res) {
+            if (!res.ok) return res.json().then(function (d) { throw new Error(d.message || d.msg || ('Failed (' + res.status + ')')); });
+            return res.json();
+          });
+        }
+        var record = {
+          slug: chosenSlug,
+          name: name,
+          raw: { name: name, services: [], gallery: [] },
+          updatedAt: new Date().toISOString()
+        };
+        return fetch(SUPABASE_URL + '/rest/v1/businesses', {
+          method: 'POST',
+          headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation,resolution=merge-duplicates' }),
+          body: JSON.stringify({
+            id: chosenSlug,
+            name: name,
+            user_id: session.user_id,
+            data: record,
+            updated_at: record.updatedAt
+          })
+        }).then(function (res) {
+          if (!res.ok) return res.json().then(function (d) { throw new Error(d.message || d.msg || ('Failed (' + res.status + ')')); });
+          return res.json();
+        });
       })
       .then(function (rows) {
         localStorage.removeItem('bs_pending_business_name');
@@ -308,7 +331,7 @@
 
     document.getElementById('fName').value = raw.name || business.name || '';
     document.getElementById('fPhone').value = raw.phone || '';
-    document.getElementById('fEmail2').value = raw.email || '';
+    document.getElementById('fEmail2').value = raw.email || session.email || '';
     document.getElementById('fAddress').value = raw.address || '';
     document.getElementById('fHours').value = raw.hours || '';
 
@@ -326,6 +349,7 @@
       row.className = 'svc-row';
       row.innerHTML =
         '<input type="text" placeholder="Service name" data-i="' + i + '" data-f="name" value="' + escapeAttr(svc.name || '') + '">' +
+        '<input type="text" placeholder="Time" data-i="' + i + '" data-f="duration" value="' + escapeAttr(svc.duration || '') + '">' +
         '<input type="text" placeholder="Price" data-i="' + i + '" data-f="price" value="' + escapeAttr(svc.price || '') + '">' +
         '<button type="button" class="svc-remove" data-i="' + i + '" aria-label="Remove">&times;</button>';
       list.appendChild(row);
