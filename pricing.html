@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Pricing — BrightSite</title>
-<meta name="description" content="Simple pricing for custom websites: Essential (£0), Pro (£199) or Prestige (£299), each with SEO, hosting and management from £15/month.">
+<meta name="description" content="Simple pricing for custom websites: Essential (£0), Pro (£199) or Prestige (£299), each with SEO, hosting and management for £19/month.">
 <meta property="og:title" content="Straightforward Website Pricing | BrightSite">
 <meta property="og:description" content="Choose a custom website plan, then see a free personalised preview before you commit.">
 <meta property="og:type" content="website">
@@ -125,7 +125,7 @@
           <h4>Pro</h4>
           <div class="desc"><b>Best for:</b> businesses that need a website with lots of info.</div>
           <div class="price-row">
-            <span class="price"><span class="price-was">£199</span><span class="setup-price">£99</span><small class="hosting-price">+ £180/yr</small><span class="price-save">Save 50%</span></span>
+            <span class="price"><span class="price-was">£199</span><span class="setup-price">£99</span><small class="hosting-price">+ £228/yr</small><span class="price-save">Save 50%</span></span>
           </div>
           <div class="price-note">One-off build, then hosting &amp; management</div>
           <ul>
@@ -135,14 +135,14 @@
             <li>Interactions &amp; animations</li>
             <li>Booking system or online store included</li>
           </ul>
-          <a href="#" class="go plan-enquire" data-plan="Pro" data-price="£99 setup + £180/yr" target="_blank" rel="noopener">Enquire</a>
+          <a href="#" class="go plan-enquire" data-plan="Pro" data-price="£99 setup + £228/yr" target="_blank" rel="noopener">Enquire</a>
         </div>
 
         <div class="plan" data-setup-monthly="299" data-setup-annual="149" data-annual-discount>
           <h4>Prestige</h4>
           <div class="desc"><b>Best for:</b> corporate needs and multi-location brands.</div>
           <div class="price-row">
-            <span class="price"><span class="price-was">£299</span><span class="setup-price">£149</span><small class="hosting-price">+ £180/yr</small><span class="price-save">Save 50%</span></span>
+            <span class="price"><span class="price-was">£299</span><span class="setup-price">£149</span><small class="hosting-price">+ £228/yr</small><span class="price-save">Save 50%</span></span>
           </div>
           <div class="price-note">One-off build, then hosting &amp; management</div>
           <ul>
@@ -152,7 +152,7 @@
             <li>Booking system or online store included</li>
             <li>Priority same-day support</li>
           </ul>
-          <a href="#" class="go plan-enquire" data-plan="Prestige" data-price="£149 setup + £180/yr" target="_blank" rel="noopener">Enquire</a>
+          <a href="#" class="go plan-enquire" data-plan="Prestige" data-price="£149 setup + £228/yr" target="_blank" rel="noopener">Enquire</a>
         </div>
       </div>
       <p class="pricing-note">See a free personalised preview before you commit. Hosting covers security, updates and ongoing management on every plan. Pro and Prestige include a booking system or online store. Cancel any time.</p>
@@ -207,13 +207,13 @@
 
       if (isAnnual) {
         setupPrice.innerHTML = '£' + plan.dataset.setupAnnual;
-        hostingPrice.innerHTML = '+ £180/yr';
-        btn.dataset.price = '£' + plan.dataset.setupAnnual + ' setup + £180/yr hosting';
+        hostingPrice.innerHTML = '+ £228/yr';
+        btn.dataset.price = '£' + plan.dataset.setupAnnual + ' setup + £228/yr hosting';
         plan.setAttribute('data-annual-active', '');
       } else {
         setupPrice.innerHTML = '£' + plan.dataset.setupMonthly;
-        hostingPrice.innerHTML = '+ £15/mo';
-        btn.dataset.price = '£' + plan.dataset.setupMonthly + ' setup + £15/mo hosting';
+        hostingPrice.innerHTML = '+ £19/mo';
+        btn.dataset.price = '£' + plan.dataset.setupMonthly + ' setup + £19/mo hosting';
         plan.removeAttribute('data-annual-active');
       }
     });
