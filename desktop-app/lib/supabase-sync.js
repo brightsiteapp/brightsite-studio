@@ -12,9 +12,33 @@
 const fs = require('fs');
 const path = require('path');
 const bundled = require('./shared-config');
+const storage = require('./site-storage');
 
 const TABLE = 'businesses';
 const BUCKET = 'business-media';
+
+// The service role key, saved from Settings the same way the Stripe key
+// is (see lib/stripe.js) — lives on this computer only, in
+// ~/BrightSiteProjects/accounts-settings.json. SUPABASE_SERVICE_ROLE_KEY
+// in the environment overrides it for development. Deliberately never
+// bundled in shared-config.js: unlike the anon key, this key bypasses RLS
+// entirely, so shipping it in the packaged app would hand every install
+// full admin access to every customer's data.
+const ACCOUNTS_SETTINGS_FILE = path.join(storage.ROOT, 'accounts-settings.json');
+
+function readAccountsSettings() {
+  try { return JSON.parse(fs.readFileSync(ACCOUNTS_SETTINGS_FILE, 'utf8')); } catch { return {}; }
+}
+
+function accountsKey() {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY || readAccountsSettings().serviceRoleKey || '';
+}
+
+function setAccountsKey(serviceRoleKey) {
+  storage.ensureRoot();
+  if (serviceRoleKey) fs.writeFileSync(ACCOUNTS_SETTINGS_FILE, JSON.stringify({ serviceRoleKey }, null, 2));
+  else fs.rmSync(ACCOUNTS_SETTINGS_FILE, { force: true });
+}
 
 function config() {
   return {
@@ -29,13 +53,22 @@ function enabled() {
 }
 
 // Service role key, for admin-only reads (listing customer accounts) that
-// the anon key can't do — auth.users isn't exposed to it. Deliberately env
-// var only, never bundled in shared-config.js: unlike the anon key, this
-// key bypasses RLS entirely, so shipping it in the packaged app would hand
-// every install full admin access to every customer's data.
+// the anon key can't do — auth.users isn't exposed to it. Saved from
+// Settings (see accountsKey/setAccountsKey above) or SUPABASE_SERVICE_ROLE_KEY
+// in the environment for development.
 function accountsEnabled() {
   const { url } = config();
-  return !!(url && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  return !!(url && accountsKey());
+}
+
+// Proves the key can list auth users, for Settings to confirm before saving.
+async function testAccountsKey(key) {
+  const { url } = config();
+  if (!url) throw new Error('Shared sync isn’t configured, so there’s no Supabase project to check this key against.');
+  const res = await fetch(`${url}/auth/v1/admin/users?per_page=1`, {
+    headers: { apikey: key, Authorization: `Bearer ${key}` }
+  });
+  if (!res.ok) throw new Error(res.status === 401 || res.status === 403 ? 'Supabase rejected that key.' : `Supabase error ${res.status}`);
 }
 
 // One account per Supabase Auth user (account/login.html signups), with
@@ -45,10 +78,8 @@ function accountsEnabled() {
 async function fetchAccounts() {
   if (!accountsEnabled()) return [];
   const { url } = config();
-  const serviceHeaders = {
-    apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
-    Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
-  };
+  const key = accountsKey();
+  const serviceHeaders = { apikey: key, Authorization: `Bearer ${key}` };
   try {
     const [usersRes, businessesRes] = await Promise.all([
       fetch(`${url}/auth/v1/admin/users?per_page=1000`, { headers: serviceHeaders }),
@@ -310,5 +341,5 @@ module.exports = {
   pullDemoViews,
   enabled, pullAll, pushOne, deleteOne, flushPending, getStatus,
   uploadMedia, downloadMedia, deleteMedia, syncMediaForProject,
-  accountsEnabled, fetchAccounts
+  accountsEnabled, fetchAccounts, testAccountsKey, setAccountsKey
 };

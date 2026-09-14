@@ -1451,7 +1451,7 @@
     }
     if (v2.view !== 'accounts') return;
     if (!accountsCache.enabled) {
-      mount.innerHTML = '<p class="v2-empty v2-empty-big">Accounts aren’t connected yet — set SUPABASE_SERVICE_ROLE_KEY for this app to list customer logins here.</p>';
+      mount.innerHTML = '<p class="v2-empty v2-empty-big">Accounts aren’t connected yet — add the Supabase service role key in Settings (⚙) to list customer logins here.</p>';
       return;
     }
     const accounts = accountsCache.accounts.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));

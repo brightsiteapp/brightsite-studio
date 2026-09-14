@@ -303,7 +303,8 @@ function createApp(options = {}) {
     const syncStatus = sync.getStatus();
     res.json({
       claude, vercel, stripe: stripe.status(),
-      sync: { installed: true, signedIn: sync.enabled() && syncStatus.state !== 'offline', account: syncStatus.projectUrl ? new URL(syncStatus.projectUrl).host : '', state: syncStatus.state }
+      sync: { installed: true, signedIn: sync.enabled() && syncStatus.state !== 'offline', account: syncStatus.projectUrl ? new URL(syncStatus.projectUrl).host : '', state: syncStatus.state },
+      accounts: { installed: true, signedIn: sync.accountsEnabled() }
     });
   });
 
@@ -340,6 +341,20 @@ function createApp(options = {}) {
     }
     stripe.setKey(apiKey, account);
     res.json(stripe.status());
+  });
+
+  // The Supabase service role key itself is never sent back to the page.
+  app.post('/api/accounts-key', async (req, res) => {
+    const serviceRoleKey = String(req.body?.serviceRoleKey || '').trim();
+    if (serviceRoleKey) {
+      try {
+        await sync.testAccountsKey(serviceRoleKey);
+      } catch (err) {
+        return res.status(400).json({ error: err.message });
+      }
+    }
+    sync.setAccountsKey(serviceRoleKey);
+    res.json({ installed: true, signedIn: sync.accountsEnabled() });
   });
 
   // Checks Stripe for each customer's subscription and saves it on their

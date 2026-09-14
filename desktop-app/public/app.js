@@ -174,6 +174,8 @@
   const serviceRows = () => [...el.settingsDialog.querySelectorAll('[data-service]')];
   const stripeForm = document.getElementById('stripeForm');
   const stripeInput = document.getElementById('stripeKeyInput');
+  const accountsForm = document.getElementById('accountsForm');
+  const accountsInput = document.getElementById('accountsKeyInput');
   // Setup strip under the top bar: which optional services this copy is
   // missing. None are required, so ✕ hides it for good.
   const SETUP_SERVICES = [['claude', 'Claude'], ['vercel', 'Vercel'], ['stripe', 'Stripe'], ['sync', 'Sync']];
@@ -213,11 +215,12 @@
       status.classList.toggle('is-signed-in', Boolean(s.signedIn));
       const btn = row.querySelector('button');
       if (!btn) continue;
-      btn.textContent = target === 'stripe' ? (s.signedIn ? 'Remove' : 'Add key') : (s.signedIn ? 'Sign out' : 'Sign in');
+      btn.textContent = (target === 'stripe' || target === 'accounts') ? (s.signedIn ? 'Remove' : 'Add key') : (s.signedIn ? 'Sign out' : 'Sign in');
       btn.classList.toggle('primary', !s.signedIn);
       btn.disabled = s.installed === false;
     }
     if (services.stripe?.signedIn) stripeForm.hidden = true;
+    if (services.accounts?.signedIn) accountsForm.hidden = true;
     if (!serviceRows().some(r => r.dataset.waiting)) { clearInterval(servicePoll); servicePoll = null; }
   }
   el.settingsDialog.addEventListener('click', async e => {
@@ -233,12 +236,19 @@
       if (!stripeForm.hidden) stripeInput.focus();
       return;
     }
-    const why = { claude: 'Edit with AI, imports and AI search won’t work until you sign in again — this also signs Claude Code out on this computer.', vercel: 'Make live and domains won’t work on this computer until you sign in again.', stripe: 'You won’t be able to create payment links until you add a key again.' }[target];
-    if (connected && !await showConfirm(`${target === 'stripe' ? 'Remove the Stripe key' : `Sign out of ${label}`}?`, why, target === 'stripe' ? 'Remove' : 'Sign out')) return;
+    if (target === 'accounts' && !connected) {
+      accountsForm.hidden = !accountsForm.hidden;
+      if (!accountsForm.hidden) accountsInput.focus();
+      return;
+    }
+    const why = { claude: 'Edit with AI, imports and AI search won’t work until you sign in again — this also signs Claude Code out on this computer.', vercel: 'Make live and domains won’t work on this computer until you sign in again.', stripe: 'You won’t be able to create payment links until you add a key again.', accounts: 'Customer logins won’t show in Accounts until you add a key again.' }[target];
+    if (connected && !await showConfirm(`${(target === 'stripe' || target === 'accounts') ? 'Remove the key' : `Sign out of ${label}`}?`, why, (target === 'stripe' || target === 'accounts') ? 'Remove' : 'Sign out')) return;
     btn.disabled = true;
     try {
       if (target === 'stripe') {
         await api('/api/stripe-key', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ apiKey: '' }) });
+      } else if (target === 'accounts') {
+        await api('/api/accounts-key', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ serviceRoleKey: '' }) });
       } else if (connected) {
         await api(`/api/connections/${target}/sign-out`, { method: 'POST' });
       } else {
@@ -273,6 +283,23 @@
     e.target.disabled = false;
   };
   stripeInput.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('stripeSaveBtn').click(); });
+  document.getElementById('accountsSaveBtn').onclick = async e => {
+    const key = accountsInput.value.trim();
+    if (!key) return;
+    const status = el.settingsDialog.querySelector('[data-service="accounts"] .account-status');
+    e.target.disabled = true;
+    status.textContent = 'Checking the key with Supabase…';
+    try {
+      await api('/api/accounts-key', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ serviceRoleKey: key }) });
+      accountsInput.value = '';
+      await refreshServices();
+    } catch (err) {
+      status.textContent = err.message;
+      status.classList.remove('is-signed-in');
+    }
+    e.target.disabled = false;
+  };
+  accountsInput.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('accountsSaveBtn').click(); });
   el.settingsDialog.addEventListener('close', () => {
     clearInterval(servicePoll);
     servicePoll = null;

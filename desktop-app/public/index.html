@@ -179,7 +179,16 @@
     <span class="account-icon sync" aria-hidden="true">⟳</span>
     <div class="account-text"><b>Shared sync (Supabase)</b><span class="account-status">Checking…</span></div>
   </div>
-  <p class="dim" style="margin-top:8px">Claude powers Edit with AI and imports; Vercel makes sites live and connects domains; Stripe creates payment links. Claude and Vercel sign in through a Terminal window — follow the prompts there and this updates once you're in.</p>
+  <div class="account-row" data-service="accounts">
+    <span class="account-icon accounts" aria-hidden="true">👤</span>
+    <div class="account-text"><b>Customer logins</b><span class="account-status">Checking…</span></div>
+    <button type="button" class="primary">Add key</button>
+  </div>
+  <div class="places-key-form" id="accountsForm" hidden>
+    <input type="text" id="accountsKeyInput" placeholder="Paste your Supabase service role key" autocomplete="off" spellcheck="false">
+    <button type="button" class="primary" id="accountsSaveBtn">Save</button>
+  </div>
+  <p class="dim" style="margin-top:8px">Claude powers Edit with AI and imports; Vercel makes sites live and connects domains; Stripe creates payment links; the Supabase service role key lists customer logins in Accounts. Claude and Vercel sign in through a Terminal window — follow the prompts there and this updates once you're in.</p>
   <div class="dialog-actions"><button id="closeSettingsBtn">Done</button></div>
 </dialog>
 

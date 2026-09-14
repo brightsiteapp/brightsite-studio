@@ -1088,6 +1088,7 @@ iframe#preview {
 .account-icon.vercel { background: #000; color: #fff; font-size: 13px; }
 .account-icon.stripe { background: #635bff; color: #fff; }
 .account-icon.sync { background: #3ecf8e; color: #fff; }
+.account-icon.accounts { background: #3ecf8e; color: #fff; font-size: 15px; }
 .plan-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; }
 dialog .plan-card { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; margin: 0; padding: 12px 14px; text-align: left; border: 1.5px solid var(--line); border-radius: 12px; }
 dialog .plan-card b { font-size: 14px; }
