@@ -445,6 +445,7 @@
     if (on) {
       var statusEl = document.getElementById('saveStatus');
       statusEl.textContent = 'All changes saved'; statusEl.className = 'save-status ok';
+      renderPreview();
     } else {
       clearTimeout(autoSaveTimer);
       if (hasPendingEdit && !autoSaveInFlight) runAutoSave();
@@ -502,10 +503,14 @@
     previewTimer = setTimeout(renderPreview, 320);
   }
 
+  var lastScrollY = 0;
+  var renderedSection = null; // which section's page the preview is currently showing
+
   function renderPreview() {
     clearTimeout(previewTimer);
     var frame = document.getElementById('sitePreview');
     if (!business || typeof buildDemoHTML !== 'function') return;
+    try { if (frame.contentWindow) lastScrollY = frame.contentWindow.scrollY; } catch (e) {}
     frame.classList.add('refreshing');
     try { frame.srcdoc = buildDemoHTML(currentRaw()); } catch (e) { frame.classList.remove('refreshing'); }
   }
@@ -513,14 +518,73 @@
   document.getElementById('sitePreview').addEventListener('load', function () {
     var frame = this;
     frame.classList.remove('refreshing');
-    if (!activeSection) return;
+    if (activeSection) {
+      try {
+        var doc = frame.contentDocument;
+        var page = SECTION_PAGE[activeSection] || 'home';
+        doc.querySelectorAll('.page').forEach(function (p) { p.hidden = p.dataset.page !== page; });
+        var isNewSection = activeSection !== renderedSection;
+        if (frame.contentWindow) frame.contentWindow.scrollTo({ top: isNewSection ? 0 : lastScrollY, behavior: 'instant' });
+        renderedSection = activeSection;
+      } catch (e) {}
+    } else {
+      renderedSection = null;
+    }
+    if (isEditing) wireInlineEditing(frame);
+  });
+
+  // ---------------- direct on-page editing ----------------
+  // Mirrors the studio builder: while editing, text that maps to a known
+  // field (business name, phone, address) can be typed straight into the
+  // preview, and every link/button goes inert so clicks don't navigate.
+  function wireInlineEditing(frame) {
     try {
       var doc = frame.contentDocument;
-      var page = SECTION_PAGE[activeSection] || 'home';
-      doc.querySelectorAll('.page').forEach(function (p) { p.hidden = p.dataset.page !== page; });
-      if (frame.contentWindow) frame.contentWindow.scrollTo({ top: 0, behavior: 'instant' });
+      if (!doc.getElementById('bsInlineLock')) {
+        var style = doc.createElement('style');
+        style.id = 'bsInlineLock';
+        style.textContent = 'a,button{pointer-events:none!important;cursor:default!important}' +
+          '.bs-inline-editable{cursor:text;outline:1px dashed transparent;outline-offset:2px;border-radius:4px;transition:outline-color .15s ease,background-color .15s ease}' +
+          '.bs-inline-editable:hover,.bs-inline-editable:focus{outline-color:#3B82F6;background:rgba(59,130,246,.08);pointer-events:auto!important}';
+        doc.head.appendChild(style);
+      }
+
+      var nameEls = doc.querySelectorAll('.bs-name');
+      nameEls.forEach(function (el) {
+        el.classList.add('bs-inline-editable');
+        el.contentEditable = 'true';
+        el.spellcheck = false;
+        el.style.pointerEvents = 'auto';
+        if (!el.dataset.bsBound) {
+          el.dataset.bsBound = '1';
+          el.addEventListener('input', function () {
+            var val = el.textContent;
+            document.getElementById('fName').value = val;
+            nameEls.forEach(function (other) { if (other !== el) other.textContent = val; });
+            scheduleAutoSave();
+          });
+        }
+      });
+
+      var h3s = doc.querySelectorAll('.contact-details h3');
+      bindInlineField(h3s[0], 'fPhone');
+      bindInlineField(h3s[1], 'fAddress');
     } catch (e) {}
-  });
+  }
+  function bindInlineField(el, fieldId) {
+    if (!el) return;
+    el.classList.add('bs-inline-editable');
+    el.contentEditable = 'true';
+    el.spellcheck = false;
+    el.style.pointerEvents = 'auto';
+    if (!el.dataset.bsBound) {
+      el.dataset.bsBound = '1';
+      el.addEventListener('input', function () {
+        document.getElementById(fieldId).value = el.textContent;
+        scheduleAutoSave();
+      });
+    }
+  }
 
   document.getElementById('fullscreenBtn').addEventListener('click', function () {
     if (!business || typeof buildDemoHTML !== 'function') return;
