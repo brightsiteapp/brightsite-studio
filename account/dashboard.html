@@ -23,6 +23,20 @@
   .dash-wrap{max-width:720px;margin:0 auto;padding:32px 20px 0}
   .dash-wrap h1{font-family:var(--display);font-size:clamp(22px,3vw,28px);font-weight:600;margin-bottom:6px}
   .dash-wrap>p.sub{color:var(--muted);font-size:14px;margin-bottom:26px}
+  .dash-layout{max-width:720px;margin:0 auto;padding:32px 20px 60px}
+  .dash-col-left h1{font-family:var(--display);font-size:clamp(22px,3vw,28px);font-weight:600;margin-bottom:6px}
+  .dash-col-left>p.sub{color:var(--muted);font-size:14px;margin-bottom:26px}
+  .dash-col-right{margin-top:20px}
+  .dash-preview-card{padding:clamp(16px,3vw,22px)}
+  .dash-publish-row{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+  .dash-publish-row .dash-save-status{flex:1;text-align:right}
+  #sitePreview{width:100%;height:420px;border:1px solid var(--line);border-radius:14px;background:#fff;display:block}
+  @media(min-width:960px){
+    .dash-layout{max-width:1280px;display:grid;grid-template-columns:1fr 460px;gap:28px;align-items:start;padding:32px 24px 60px}
+    .dash-col-left{min-width:0}
+    .dash-col-right{margin-top:0;position:sticky;top:88px}
+    #sitePreview{height:calc(100vh - 260px);min-height:420px}
+  }
   .dash-section{padding:clamp(20px,4vw,28px);border:1px solid var(--line);border-radius:18px;background:var(--card);box-shadow:0 10px 26px rgba(23,32,31,.04);margin-bottom:20px}
   .dash-section h2{font-family:var(--display);font-size:17px;font-weight:700;margin-bottom:4px}
   .dash-section p.dash-hint{color:var(--muted);font-size:13px;margin-bottom:16px;line-height:1.5}
@@ -62,7 +76,6 @@
   .gallery-counter{font-size:12.5px;color:var(--muted);margin-bottom:10px}
   .gallery-counter.full{color:#b23b2c;font-weight:600}
 
-  .dash-save-bar{position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--line);padding:14px 20px;display:flex;align-items:center;gap:14px;justify-content:flex-end;max-width:720px;margin:0 auto}
   .dash-save{min-height:46px;padding:0 26px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:inherit;font-size:13.5px;font-weight:700;letter-spacing:.03em;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease}
   .dash-save:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(59,130,246,.28)}
   .dash-save:disabled{opacity:.65;cursor:wait;transform:none;box-shadow:none}
@@ -103,7 +116,8 @@
   <div class="acct-status" id="setupStatus" style="min-height:20px;margin-top:10px;font-size:13px;color:var(--muted)"></div>
 </div>
 
-<div id="dashWrap" class="dash-wrap" hidden>
+<div id="dashLayout" class="dash-layout" hidden>
+<div id="dashWrap" class="dash-col-left">
   <h1>My Website</h1>
   <p class="sub">Update what's shown on your live site. Changes save straight to BrightSite — no need to contact us for everyday edits.</p>
 
@@ -152,24 +166,24 @@
     <div class="gallery-grid" id="galleryGrid"></div>
     <label class="media-btn" id="galleryAddWrap">Add photos<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="galleryInput" hidden multiple></label>
   </div>
-</div>
 
-<div id="dashPreviewSection" class="dash-wrap" hidden>
   <div class="dash-section">
     <h2>Sections</h2>
     <p class="dash-hint">Turn sections on your homepage on/off and reorder them.</p>
     <div id="sectionsList"></div>
   </div>
-  <div class="dash-section">
-    <h2>Preview</h2>
-    <p class="dash-hint">Updates as you edit — this is exactly what your live site shows.</p>
-    <iframe id="sitePreview" title="Website preview" style="width:100%;height:520px;border:1px solid var(--line);border-radius:14px;background:#fff" sandbox="allow-scripts"></iframe>
-  </div>
 </div>
 
-<div class="dash-save-bar" id="saveBar" hidden>
-  <span class="dash-save-status" id="saveStatus"></span>
-  <button class="dash-save" id="saveBtn" type="button">Save changes</button>
+<div id="dashPreviewPane" class="dash-col-right">
+  <div class="dash-section dash-preview-card">
+    <div class="dash-publish-row">
+      <button class="dash-save" id="saveBtn" type="button">Publish changes</button>
+      <span class="dash-save-status" id="saveStatus"></span>
+    </div>
+    <p class="dash-hint">Updates as you edit — this is exactly what your live site shows. Click Publish to make it live.</p>
+    <iframe id="sitePreview" title="Website preview" sandbox="allow-scripts"></iframe>
+  </div>
+</div>
 </div>
 
 <script src="../template-designs.js"></script>
@@ -232,9 +246,7 @@
   var galleryRemoved = [];
 
   function setupPanel() { return document.getElementById('setupPanel'); }
-  function dashWrap() { return document.getElementById('dashWrap'); }
-  function saveBar() { return document.getElementById('saveBar'); }
-  function previewSection() { return document.getElementById('dashPreviewSection'); }
+  function dashWrap() { return document.getElementById('dashLayout'); }
 
   // ---------------- sections (reuses Studio's own field names, so the
   // real renderer below picks the choice up exactly like it does in Studio) ----------------
@@ -328,8 +340,6 @@
   function showSetup() {
     setupPanel().hidden = false;
     dashWrap().hidden = true;
-    previewSection().hidden = true;
-    saveBar().hidden = true;
     var pendingName = localStorage.getItem('bs_pending_business_name') || '';
     var pendingSlug = params.get('slug') || localStorage.getItem('bs_pending_slug') || '';
     document.getElementById('setupName').value = pendingName;
@@ -417,8 +427,6 @@
   function renderDashboard() {
     setupPanel().hidden = true;
     dashWrap().hidden = false;
-    previewSection().hidden = false;
-    saveBar().hidden = false;
 
     var data = business.data = business.data || {};
     var raw = data.raw = data.raw || {};
