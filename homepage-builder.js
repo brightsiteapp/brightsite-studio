@@ -744,9 +744,8 @@ document.addEventListener('DOMContentLoaded', () => {
       postLead(name, 'Demo created — ' + bizTagline.value + ' in ' + loc).catch(() => {});
 
       // let the client jump straight into self-managing this preview's
-      // content — carries the same slug the generated site's own
-      // account-link icon will guess (see fresh-templates.js), so both
-      // paths land the customer on the same account/business row.
+      // content — carries the same slug account/dashboard.html guesses
+      // from the business name, so both paths land on the same row.
       if (accountCta) {
         const previewSlug = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
         accountCta.href = `account/login.html?slug=${encodeURIComponent(previewSlug)}&signup=1`;
