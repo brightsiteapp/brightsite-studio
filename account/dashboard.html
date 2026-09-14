@@ -12,107 +12,166 @@
 <meta name="theme-color" content="#F7F2EC">
 <link rel="stylesheet" href="../styles.css">
 <style>
-  body{padding:0 0 80px}
+  html,body{height:100%;overflow:hidden}
+  body{padding:0;display:flex;flex-direction:column}
 
-  .acct-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0;z-index:10}
-  .acct-top .brand-mini{display:flex;align-items:center;gap:10px;text-decoration:none;flex:none}
-  .acct-top .brand-mini img{height:22px;width:auto}
-  .acct-top-right{display:flex;align-items:center;gap:10px;min-width:0}
-  .acct-top-right .who{text-align:right;line-height:1.25;min-width:0;overflow:hidden}
-  .acct-top-right .who .name{font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .acct-top-right .who .email{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .acct-logout{background:none;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font:inherit;font-size:12px;font-weight:600;color:var(--ink);cursor:pointer;flex:none;white-space:nowrap}
-  .acct-logout:hover{border-color:var(--muted)}
-  @media(max-width:420px){
-    .acct-top{flex-wrap:wrap}
-    .acct-top-right{width:100%;justify-content:space-between;order:2}
-    .acct-top-right .who{text-align:left}
-  }
+  /* ---------------- header ---------------- */
+  .app-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 18px;border-bottom:1px solid var(--line);background:var(--bg);flex:none}
+  .app-header .brand-mini{display:flex;align-items:center;gap:10px;text-decoration:none;flex:none}
+  .app-header .brand-mini img{height:22px;width:auto}
+  .app-header-right{display:flex;align-items:center;gap:10px;min-width:0}
+  .app-header-right .who{text-align:right;line-height:1.2;min-width:0;overflow:hidden}
+  .app-header-right .who .name{font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:32vw}
+  .app-header-right .who .email{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:32vw}
+  .app-logout{background:none;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font:inherit;font-size:12px;font-weight:600;color:var(--ink);cursor:pointer;flex:none;white-space:nowrap}
+  .app-logout:hover{border-color:var(--muted)}
 
-  .acct-wrap{max-width:640px;margin:0 auto;padding:40px 20px 0}
-  .acct-wrap h1{font-family:var(--display);font-size:clamp(24px,4vw,32px);font-weight:600;margin-bottom:8px;text-align:center}
-  .acct-wrap>p.sub{color:var(--muted);font-size:14.5px;margin-bottom:32px;text-align:center;line-height:1.6}
+  /* ---------------- body split ---------------- */
+  .app-body{flex:1;min-height:0;display:grid;grid-template-columns:380px 1fr}
 
-  .acct-preview-card{padding:0;border:1px solid var(--line);border-radius:20px;background:var(--card);box-shadow:0 14px 32px rgba(23,32,31,.06);overflow:hidden;margin-bottom:28px}
-  .acct-preview-frame-wrap{position:relative;background:#fff}
-  #sitePreview{width:100%;height:380px;border:0;display:block;background:#fff}
-  @media(min-width:640px){#sitePreview{height:460px}}
-  .acct-preview-caption{padding:14px 20px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);text-align:center}
+  .left-panel{min-height:0;overflow-y:auto;border-right:1px solid var(--line);background:var(--bg);display:flex;flex-direction:column}
+  .left-inner{padding:18px;flex:1}
 
-  .acct-primary-wrap{text-align:center;margin-bottom:36px}
-  .acct-primary{display:inline-flex;align-items:center;gap:10px;min-height:54px;padding:0 32px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:inherit;font-size:15px;font-weight:700;letter-spacing:.01em;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease;box-shadow:0 12px 26px rgba(59,130,246,.25)}
-  .acct-primary:hover{transform:translateY(-1px);box-shadow:0 16px 30px rgba(59,130,246,.32)}
+  .right-panel{min-height:0;display:flex;flex-direction:column;background:#efe9df}
+  .preview-toolbar{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--bg)}
+  .toolbar-left,.toolbar-right{display:flex;align-items:center;gap:8px}
+  .status-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font-size:11.5px;font-weight:700}
+  .status-pill.live{background:#e6f6ec;color:#1f9d55}
+  .status-pill.draft{background:#fdf2dd;color:#8a5d08}
+  .status-pill .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
 
-  .acct-card{padding:clamp(22px,4vw,30px);border:1px solid var(--line);border-radius:20px;background:var(--card);box-shadow:0 10px 26px rgba(23,32,31,.04);margin-bottom:24px}
-  .acct-card h2{font-family:var(--display);font-size:19px;font-weight:700;margin-bottom:6px;text-align:center}
-  .acct-card p.acct-hint{color:var(--muted);font-size:13.5px;margin-bottom:20px;line-height:1.55;text-align:center}
+  .icon-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;flex:none}
+  .icon-btn:hover{border-color:var(--muted)}
+  .edit-btn{border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink);padding:0 16px;height:36px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px}
+  .edit-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .edit-btn.active{background:var(--ink);border-color:var(--ink);color:#fff}
 
-  .acct-field{margin-bottom:16px}
-  .acct-field label{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:7px}
-  .acct-field textarea,.acct-field input{width:100%;padding:13px 15px;border:1px solid var(--line);border-radius:14px;background:#fff;color:var(--ink);font:inherit;font-size:14.5px;outline:none;transition:border-color .18s ease}
-  .acct-field textarea{min-height:110px;resize:vertical;line-height:1.55}
-  .acct-field input{min-height:48px}
-  .acct-field textarea:focus,.acct-field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+  .live-btn{border:0;border-radius:999px;padding:0 20px;height:36px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff;transition:background .15s ease,transform .12s ease}
+  .live-btn:hover{transform:translateY(-1px)}
+  .live-btn:disabled{background:#c9c6bd;cursor:not-allowed;transform:none}
+  .live-btn.pending{background:#c0392b}
 
-  .acct-disclosure{margin-top:4px;margin-bottom:6px}
-  .acct-disclosure summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13.5px;font-weight:600;color:var(--accent);padding:10px 0;user-select:none}
-  .acct-disclosure summary::-webkit-details-marker{display:none}
-  .acct-disclosure summary .chev{transition:transform .18s ease;font-size:11px}
-  .acct-disclosure[open] summary .chev{transform:rotate(90deg)}
-  .acct-disclosure-body{padding-top:10px}
+  .preview-frame-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:18px}
+  #sitePreview{width:100%;height:100%;max-width:1180px;border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:0 16px 34px rgba(23,32,31,.08)}
 
-  .acct-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  @media(max-width:480px){.acct-grid2{grid-template-columns:1fr}}
+  /* ---------------- account view cards ---------------- */
+  .info-card{padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 8px 20px rgba(23,32,31,.04);margin-bottom:16px}
+  .info-card h2{font-family:var(--display);font-size:15px;font-weight:700;margin-bottom:12px}
+  .info-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .info-row:last-child{border-bottom:0}
+  .info-row .label{color:var(--muted)}
+  .info-row .value{color:var(--ink);font-weight:600;text-align:right;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .plan-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;background:#fdf2dd;color:#8a5d08;font-size:11.5px;font-weight:700}
+  .plan-pill.active{background:#e6f6ec;color:#1f9d55}
+  .plan-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+  .billing-btn{width:100%;margin-top:6px;background:none;border:1px solid var(--line);border-radius:999px;padding:10px 16px;font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);cursor:not-allowed}
+  .upgrade-btn{width:100%;margin-top:6px;border:0;border-radius:999px;padding:11px 16px;font:inherit;font-size:12.5px;font-weight:700;color:#fff;background:var(--accent);cursor:pointer}
+  .info-hint{font-size:12px;color:var(--muted);line-height:1.5;margin-top:2px}
 
-  .acct-send{width:100%;min-height:50px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;margin-top:6px;transition:transform .18s ease,box-shadow .18s ease}
-  .acct-send:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(59,130,246,.28)}
-  .acct-send:disabled{opacity:.6;cursor:wait;transform:none;box-shadow:none}
-  .acct-req-status{min-height:20px;margin-top:12px;font-size:13px;text-align:center;color:var(--muted)}
-  .acct-req-status.ok{color:#1f9d55;font-weight:600}
-  .acct-req-status.err{color:#b23b2c}
+  .req-btn-wrap{margin-top:4px}
+  .req-btn{width:100%;min-height:44px;border:0;border-radius:999px;background:var(--ink);color:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+  .req-btn:hover{opacity:.92}
 
-  .acct-confirm{text-align:center;padding:10px 4px 4px}
-  .acct-confirm .tick{width:44px;height:44px;border-radius:50%;background:#e6f6ec;color:#1f9d55;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:20px}
-  .acct-confirm p{color:var(--muted);font-size:14px;line-height:1.6}
-  .acct-confirm p.big{color:var(--ink);font-weight:600;font-size:15.5px;margin-bottom:6px}
+  /* ---------------- builder accordion ---------------- */
+  .builder-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .builder-head h2{font-family:var(--display);font-size:16px;font-weight:700}
+  .builder-back{background:none;border:0;color:var(--muted);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:4px 0}
+  .builder-back:hover{color:var(--ink)}
 
-  .acct-account{max-width:640px;margin:0 auto;padding:0 20px}
-  .acct-account-toggle{width:100%;background:none;border:1px solid var(--line);border-radius:14px;padding:14px 18px;font:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px}
-  .acct-account-toggle:hover{border-color:var(--muted)}
-  .acct-account-toggle .chev{transition:transform .18s ease;font-size:11px}
-  .acct-account-panel{margin-top:12px}
-  .acct-account-panel[hidden]{display:none}
-  .acct-account-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);font-size:13.5px}
-  .acct-account-row:last-child{border-bottom:0}
-  .acct-account-row .label{color:var(--muted)}
-  .acct-account-row .value{color:var(--ink);font-weight:600;text-align:right}
-  .acct-plan-pill{display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:999px;background:#fdf2dd;color:#8a5d08;font-size:12px;font-weight:700}
-  .acct-plan-dot{width:7px;height:7px;border-radius:50%;background:#c98a08;flex:none}
-  .acct-billing-btn{background:none;border:1px solid var(--line);border-radius:999px;padding:8px 16px;font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);cursor:not-allowed}
+  .accordion{border:1px solid var(--line);border-radius:14px;background:var(--card);margin-bottom:10px;overflow:hidden}
+  .accordion summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;font-size:13.5px;font-weight:700;color:var(--ink);user-select:none}
+  .accordion summary::-webkit-details-marker{display:none}
+  .accordion summary .chev{transition:transform .18s ease;font-size:11px;color:var(--muted)}
+  .accordion[open] summary .chev{transform:rotate(90deg)}
+  .accordion[open] summary{border-bottom:1px solid var(--line)}
+  .accordion-body{padding:14px 16px 16px}
 
-  #setupPanel{max-width:460px;margin:70px auto;padding:clamp(24px,4vw,34px);border:1px solid var(--line);border-radius:22px;background:var(--card);box-shadow:0 14px 32px rgba(23,32,31,.06);text-align:center}
-  #setupPanel h1{font-family:var(--display);font-size:23px;font-weight:600;margin-bottom:8px}
-  #setupPanel p.sub{color:var(--muted);font-size:14px;margin-bottom:20px;line-height:1.6}
-  #setupPanel .acct-field{text-align:left}
-  #setupBtn{width:100%;min-height:50px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:inherit;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px}
+  .acct-field{margin-bottom:12px}
+  .acct-field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}
+  .acct-field input,.acct-field textarea{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--ink);font:inherit;font-size:14px;outline:none;transition:border-color .18s ease}
+  .acct-field input{min-height:42px}
+  .acct-field textarea{min-height:64px;resize:vertical}
+  .acct-field input:focus,.acct-field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+  .acct-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
-  .media-btn{border:1px solid var(--line);border-radius:999px;padding:9px 16px;font:inherit;font-size:12.5px;font-weight:600;background:#fff;cursor:pointer;display:inline-block}
+  .svc-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:7px;align-items:center}
+  .svc-row .svc-name{flex:1 1 100%;min-width:0}
+  .svc-row .svc-meta{display:flex;flex:1 1 100%;gap:6px;align-items:center;margin-left:34px}
+  .svc-row .svc-meta input{flex:1;min-width:0}
+  .svc-row input{min-height:38px;padding:0 10px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:13px}
+  .svc-remove{background:none;border:0;color:var(--muted);font-size:16px;line-height:1;cursor:pointer;width:28px;height:28px;border-radius:7px;flex:none}
+  .svc-remove:hover{background:#f3efe8;color:#b23b2c}
+  .dash-add{margin-top:2px;background:none;border:1px dashed var(--line);border-radius:9px;padding:8px 12px;font:inherit;font-size:12.5px;font-weight:600;color:var(--accent);cursor:pointer}
+  .dash-add:hover{border-color:var(--accent);background:rgba(59,130,246,.06)}
+  .svc-group{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;background:#faf7f2}
+  .svc-group-head{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+  .svc-group-head input{flex:1;font:inherit;font-size:13.5px;font-weight:700;color:var(--ink);border:1px solid transparent;background:transparent;padding:6px 8px;border-radius:8px;min-width:0}
+  .svc-group-head input:focus,.svc-group-head input:hover{border-color:var(--line);background:#fff;outline:none}
+  .svc-arrows{display:flex;gap:2px;flex:none}
+
+  .media-row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  .media-thumb{width:52px;height:52px;border-radius:10px;border:1px solid var(--line);object-fit:cover;background:#f3efe8;flex:none}
+  .media-thumb.empty{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:9px;text-align:center}
+  .media-btn{border:1px solid var(--line);border-radius:999px;padding:7px 14px;font:inherit;font-size:12px;font-weight:600;background:#fff;cursor:pointer}
   .media-btn:hover{border-color:var(--accent);color:var(--accent)}
-  .acct-file-name{font-size:12.5px;color:var(--muted);margin-top:8px}
+  .gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:7px;margin-bottom:10px}
+  .gallery-item{position:relative;aspect-ratio:1;border-radius:9px;overflow:hidden;border:1px solid var(--line)}
+  .gallery-item img{width:100%;height:100%;object-fit:cover;display:block}
+  .gallery-item button{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:11px;line-height:1;cursor:pointer}
+  .gallery-counter{font-size:12px;color:var(--muted);margin-bottom:8px}
+  .gallery-counter.full{color:#b23b2c;font-weight:600}
+
+  .save-bar{flex:none;padding:14px 18px;border-top:1px solid var(--line);background:var(--bg);display:flex;align-items:center;gap:12px}
+  .save-btn{flex:1;min-height:46px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
+  .save-btn:disabled{opacity:.65;cursor:wait}
+  .save-status{font-size:12.5px;color:var(--muted);white-space:nowrap}
+  .save-status.ok{color:#1f9d55;font-weight:600}
+  .save-status.err{color:#b23b2c}
+
+  /* ---------------- request-an-update mini modal ---------------- */
+  .modal-veil{position:fixed;inset:0;background:rgba(23,20,15,.4);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
+  .modal-card{width:100%;max-width:420px;max-height:90vh;overflow-y:auto;background:var(--card);border-radius:18px;padding:24px;box-shadow:0 20px 46px rgba(0,0,0,.22)}
+  .modal-card h2{font-family:var(--display);font-size:17px;font-weight:700;margin-bottom:6px}
+  .modal-card p.hint{color:var(--muted);font-size:13px;margin-bottom:16px;line-height:1.5}
+  .modal-close{float:right;background:none;border:0;font-size:18px;color:var(--muted);cursor:pointer;line-height:1}
+  .modal-actions{display:flex;gap:10px;margin-top:14px}
+  .modal-actions button{flex:1;min-height:44px;border-radius:999px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+  .modal-cancel{background:none;border:1px solid var(--line);color:var(--muted)}
+  .modal-send{background:var(--accent);border:0;color:#fff}
+
+  /* ---------------- setup panel ---------------- */
+  #setupPanel{max-width:440px;margin:auto;padding:clamp(24px,4vw,34px);border:1px solid var(--line);border-radius:22px;background:var(--card);box-shadow:0 14px 32px rgba(23,32,31,.06);text-align:center}
+  #setupPanel h1{font-family:var(--display);font-size:22px;font-weight:600;margin-bottom:8px}
+  #setupPanel p.sub{color:var(--muted);font-size:14px;margin-bottom:18px;line-height:1.6}
+  #setupPanel .acct-field{text-align:left}
+  #setupBtn{width:100%;min-height:48px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;margin-top:8px}
 
   [hidden]{display:none!important}
+
+  /* ---------------- mobile ---------------- */
+  @media(max-width:860px){
+    .app-body{grid-template-columns:1fr;position:relative}
+    .left-panel{position:absolute;inset:0;z-index:5;border-right:0}
+    body.mode-view .left-panel{display:none}
+    body.mode-edit .right-panel{display:none}
+    .right-panel{width:100%}
+    .preview-frame-wrap{padding:8px}
+    #sitePreview{border-radius:12px}
+    .app-header-right .who .name,.app-header-right .who .email{max-width:38vw}
+    .toolbar-left .status-pill{display:none}
+  }
 </style>
 </head>
-<body>
+<body class="mode-view">
 
-<div class="acct-top">
+<div class="app-header">
   <a href="/" class="brand-mini"><img src="../img/brightsite-logo.png" alt="BrightSite"></a>
-  <div class="acct-top-right">
+  <div class="app-header-right">
     <div class="who">
       <div class="name" id="acctName"></div>
       <div class="email" id="acctEmailTop"></div>
     </div>
-    <button class="acct-logout" id="logoutBtn" type="button">Log out</button>
+    <button class="app-logout" id="logoutBtn" type="button">Log out</button>
   </div>
 </div>
 
@@ -132,76 +191,143 @@
   <div class="acct-status" id="setupStatus" style="min-height:20px;margin-top:12px;font-size:13px;color:var(--muted)"></div>
 </div>
 
-<div id="dashLayout" hidden>
+<div id="appBody" class="app-body" hidden>
 
-  <div class="acct-wrap">
-    <h1>Your website</h1>
-    <p class="sub">This is your website direction — designed and managed by BrightSite.</p>
+  <div class="left-panel">
+    <div class="left-inner">
 
-    <div class="acct-preview-card">
-      <div class="acct-preview-frame-wrap">
-        <iframe id="sitePreview" title="Your website" sandbox="allow-scripts"></iframe>
-      </div>
-      <div class="acct-preview-caption">A live look at your site right now</div>
-    </div>
-
-    <div class="acct-primary-wrap">
-      <button type="button" class="acct-primary" id="requestBtn">Request an update</button>
-    </div>
-
-    <div class="acct-card" id="requestCard" hidden>
-      <h2>Tell us what you'd like to change</h2>
-      <p class="acct-hint">Write it however feels natural — “please add a new service”, “change my phone number”, “I want a darker look”, “I need online booking”.</p>
-
-      <div class="acct-field">
-        <label for="reqMessage">Your update</label>
-        <textarea id="reqMessage" placeholder="e.g. Please add a new service called deep tissue massage, £60 for 60 minutes."></textarea>
-      </div>
-
-      <details class="acct-disclosure" id="ideaDisclosure">
-        <summary><span class="chev">&#9656;</span> Share an idea with your designer (optional)</summary>
-        <div class="acct-disclosure-body">
-          <div class="acct-grid2">
-            <div class="acct-field"><label for="reqLayout">Layout idea</label><input type="text" id="reqLayout" placeholder="e.g. simple, one long page"></div>
-            <div class="acct-field"><label for="reqColour">Colour direction</label><input type="text" id="reqColour" placeholder="e.g. darker, warmer, more green"></div>
-          </div>
-          <div class="acct-field"><label for="reqType">Typography feel</label><input type="text" id="reqType" placeholder="e.g. elegant, bold, friendly"></div>
-          <div class="acct-field">
-            <label>Hero image or logo</label>
-            <label class="media-btn">Choose file<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="reqFile" hidden></label>
-            <div class="acct-file-name" id="reqFileName"></div>
-          </div>
-          <div class="acct-field"><label for="reqOther">Anything else specific you have in mind</label><textarea id="reqOther" placeholder="Anything else worth knowing"></textarea></div>
+      <!-- ---------------- view mode ---------------- -->
+      <div id="viewPanel">
+        <div class="info-card">
+          <h2>Account</h2>
+          <div class="info-row"><span class="label">Plan</span><span class="value"><span class="plan-pill" id="planPill"><span class="plan-dot"></span><span id="planLabel">Payment required</span></span></span></div>
+          <div class="info-row"><span class="label">Login email</span><span class="value" id="acctEmailRow"></span></div>
+          <div class="info-row"><span class="label">Website status</span><span class="value" id="statusRow">Not live yet</span></div>
         </div>
-      </details>
 
-      <button type="button" class="acct-send" id="reqSend">Send to my designer</button>
-      <div class="acct-req-status" id="reqStatus"></div>
+        <div class="info-card">
+          <h2>Billing</h2>
+          <p class="info-hint" id="billingHint">Upgrade your plan to make your site live and take it beyond a draft.</p>
+          <button type="button" class="upgrade-btn" id="upgradeBtn" hidden>Upgrade plan</button>
+          <button type="button" class="billing-btn" id="billingBtn" disabled title="Coming soon">Manage billing</button>
+        </div>
+
+        <div class="req-btn-wrap">
+          <button type="button" class="req-btn" id="requestBtn">Request an update</button>
+        </div>
+      </div>
+
+      <!-- ---------------- edit mode ---------------- -->
+      <div id="builderPanel" hidden>
+        <div class="builder-head">
+          <h2>Edit your website</h2>
+          <button type="button" class="builder-back" id="builderBack">Done</button>
+        </div>
+
+        <details class="accordion" open>
+          <summary>Business name<span class="chev">&#9656;</span></summary>
+          <div class="accordion-body">
+            <div class="acct-field"><label for="fName">Business name</label><input type="text" id="fName"></div>
+          </div>
+        </details>
+
+        <details class="accordion">
+          <summary>Phone &amp; email<span class="chev">&#9656;</span></summary>
+          <div class="accordion-body">
+            <div class="acct-field"><label for="fPhone">Phone number</label><input type="text" id="fPhone" placeholder="e.g. 020 7946 0958"></div>
+            <div class="acct-field"><label for="fEmail2">Email</label><input type="email" id="fEmail2" placeholder="you@example.com"></div>
+          </div>
+        </details>
+
+        <details class="accordion">
+          <summary>Opening hours<span class="chev">&#9656;</span></summary>
+          <div class="accordion-body">
+            <div class="acct-field"><label for="fHours">Opening hours</label><textarea id="fHours" placeholder="e.g. Mon-Fri 9am-6pm, Sat 10am-4pm"></textarea></div>
+          </div>
+        </details>
+
+        <details class="accordion">
+          <summary>Location / address<span class="chev">&#9656;</span></summary>
+          <div class="accordion-body">
+            <div class="acct-field"><label for="fAddress">Address</label><input type="text" id="fAddress" placeholder="e.g. 12 High Street, London"></div>
+          </div>
+        </details>
+
+        <details class="accordion">
+          <summary>Prices &amp; timetable<span class="chev">&#9656;</span></summary>
+          <div class="accordion-body">
+            <div id="svcGroups"></div>
+            <button type="button" class="dash-add" id="svcGroupAdd">+ Add section</button>
+          </div>
+        </details>
+
+        <details class="accordion">
+          <summary>Media<span class="chev">&#9656;</span></summary>
+          <div class="accordion-body">
+            <div class="media-row">
+              <img id="logoThumb" class="media-thumb empty" alt="">
+              <div>
+                <div style="font-size:12.5px;font-weight:600;margin-bottom:6px">Logo</div>
+                <label class="media-btn">Choose file<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="logoInput" hidden></label>
+              </div>
+            </div>
+            <div class="media-row">
+              <img id="heroThumb" class="media-thumb empty" alt="">
+              <div>
+                <div style="font-size:12.5px;font-weight:600;margin-bottom:6px">Hero image</div>
+                <label class="media-btn">Choose file<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="heroInput" hidden></label>
+              </div>
+            </div>
+            <div style="font-size:12.5px;font-weight:600;margin-bottom:6px">Gallery</div>
+            <div class="gallery-counter" id="galleryCounter">0 / 20 photos</div>
+            <div class="gallery-grid" id="galleryGrid"></div>
+            <label class="media-btn" id="galleryAddWrap">Add photos<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="galleryInput" hidden multiple></label>
+          </div>
+        </details>
+      </div>
+
     </div>
 
-    <div class="acct-card" id="requestConfirm" hidden>
-      <div class="acct-confirm">
-        <div class="tick">&#10003;</div>
-        <p class="big">Thanks — that's on its way to your designer.</p>
-        <p>We'll make the updates and let you know when they're ready.</p>
-      </div>
+    <div class="save-bar" id="saveBar" hidden>
+      <button type="button" class="save-btn" id="saveBtn">Save changes</button>
+      <span class="save-status" id="saveStatus"></span>
     </div>
   </div>
 
-  <div class="acct-account">
-    <button type="button" class="acct-account-toggle" id="acctToggle">
-      <span>Account &amp; billing</span>
-      <span class="chev">&#9656;</span>
-    </button>
-    <div class="acct-account-panel" id="acctPanel" hidden>
-      <div class="acct-card" style="margin-top:0">
-        <div class="acct-account-row"><span class="label">Plan</span><span class="value"><span class="acct-plan-pill"><span class="acct-plan-dot"></span><span id="acctPlanLabel">Payment required</span></span></span></div>
-        <div class="acct-account-row"><span class="label">Login email</span><span class="value" id="acctEmailRow"></span></div>
-        <div class="acct-account-row"><span class="label">Billing</span><span class="value"><button type="button" class="acct-billing-btn" disabled title="Coming soon">Manage billing</button></span></div>
+  <div class="right-panel">
+    <div class="preview-toolbar">
+      <div class="toolbar-left">
+        <button type="button" class="edit-btn" id="editToggle">&#9998; Edit</button>
+        <span class="status-pill draft" id="toolbarStatus"><span class="dot"></span><span id="toolbarStatusLabel">Not live</span></span>
       </div>
+      <div class="toolbar-right">
+        <button type="button" class="icon-btn" id="fullscreenBtn" title="Open full screen">&#10021;</button>
+        <button type="button" class="live-btn" id="liveBtn" disabled title="Upgrade your plan to go live">Make live</button>
+      </div>
+    </div>
+    <div class="preview-frame-wrap">
+      <iframe id="sitePreview" title="Your website" sandbox="allow-scripts"></iframe>
     </div>
   </div>
 
+</div>
+
+<!-- Request an update modal -->
+<div class="modal-veil" id="reqVeil" hidden>
+  <div class="modal-card">
+    <button type="button" class="modal-close" id="reqClose">&times;</button>
+    <h2>Tell us what you'd like to change</h2>
+    <p class="hint">Write it however feels natural — “please add a new service”, “change my phone number”, “I want a darker look”, “I need online booking”.</p>
+    <div class="acct-field">
+      <label for="reqMessage">Your update</label>
+      <textarea id="reqMessage" placeholder="e.g. Please add a new service called deep tissue massage, £60 for 60 minutes."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="modal-cancel" id="reqCancel">Cancel</button>
+      <button type="button" class="modal-send" id="reqSend">Send</button>
+    </div>
+    <div class="save-status" id="reqStatus" style="text-align:center;margin-top:10px"></div>
+  </div>
 </div>
 
 <script src="../template-designs.js"></script>
@@ -211,6 +337,7 @@
 (function(){
   var SUPABASE_URL = 'https://estqrftkrpqlrxnsltgw.supabase.co';
   var SUPABASE_ANON_KEY = 'sb_publishable_MfwWqSIcsfVE6d5Q7jIxJA_V3Pyf2oP';
+  var GALLERY_MAX = 20;
 
   var session = null;
   try { session = JSON.parse(localStorage.getItem('bs_session') || 'null'); } catch (e) {}
@@ -228,6 +355,21 @@
     }, extra || {});
   }
 
+  // ---------------- image upload validation ----------------
+  var MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2MB
+  var ALLOWED_IMAGE_TYPES = { 'image/jpeg': true, 'image/png': true, 'image/webp': true, 'image/gif': true };
+
+  function validateImageFile(file) {
+    if (!ALLOWED_IMAGE_TYPES[file.type]) return 'Please choose a JPEG, PNG, WEBP or GIF image.';
+    if (file.size > MAX_IMAGE_BYTES) return 'That image is too large — please choose one under 2MB.';
+    return null;
+  }
+  function showUploadError(msg) {
+    var statusEl = document.getElementById('saveStatus');
+    statusEl.textContent = msg; statusEl.className = 'save-status err';
+  }
+
+  document.getElementById('acctName').textContent = session.email || '';
   document.getElementById('acctEmailTop').textContent = session.email || '';
   document.getElementById('acctEmailRow').textContent = session.email || '';
   document.getElementById('logoutBtn').addEventListener('click', function () {
@@ -235,42 +377,68 @@
     location.href = 'login.html';
   });
 
-  document.getElementById('acctToggle').addEventListener('click', function () {
-    var panel = document.getElementById('acctPanel');
-    var open = !panel.hidden;
-    panel.hidden = open;
-    this.querySelector('.chev').style.transform = open ? '' : 'rotate(90deg)';
-  });
-
   // ---------------- state ----------------
   var business = null;
   var slug = null;
+  var services = [];
+  var media = { logoImage: null, heroImage: null, gallery: [] };
+  var pendingUploads = { logo: null, hero: null, gallery: [] };
+  var galleryRemoved = [];
+  var isPaying = false;   // no billing check wired up yet — see Billing card
+  var isLive = false;
+  var isEditing = false;
 
   function setupPanel() { return document.getElementById('setupPanel'); }
-  function dashWrap() { return document.getElementById('dashLayout'); }
+  function appBody() { return document.getElementById('appBody'); }
+
+  // ---------------- edit / view toggle ----------------
+  function setEditing(on) {
+    isEditing = on;
+    document.body.classList.toggle('mode-edit', on);
+    document.body.classList.toggle('mode-view', !on);
+    document.getElementById('viewPanel').hidden = on;
+    document.getElementById('builderPanel').hidden = !on;
+    document.getElementById('saveBar').hidden = !on;
+    document.getElementById('editToggle').classList.toggle('active', on);
+    document.getElementById('editToggle').innerHTML = on ? '&#10005; Close' : '&#9998; Edit';
+  }
+  document.getElementById('editToggle').addEventListener('click', function () { setEditing(!isEditing); });
+  document.getElementById('builderBack').addEventListener('click', function () { setEditing(false); });
 
   // ---------------- live preview (the same renderer Studio/deploy uses) ----------------
+  function currentRaw() {
+    var base = (business && business.data && business.data.raw) || {};
+    if (!isEditing) {
+      return Object.assign({}, base, {
+        logoImage: mediaUrl(base.logoImage) || undefined,
+        heroImage: mediaUrl(base.heroImage) || undefined,
+        gallery: Array.isArray(base.gallery) ? base.gallery.map(mediaUrl) : base.gallery
+      });
+    }
+    return Object.assign({}, base, {
+      name: document.getElementById('fName').value.trim() || base.name,
+      phone: document.getElementById('fPhone').value.trim(),
+      email: document.getElementById('fEmail2').value.trim(),
+      address: document.getElementById('fAddress').value.trim(),
+      hours: document.getElementById('fHours').value.trim(),
+      logoImage: mediaUrl(media.logoImage) || undefined,
+      heroImage: mediaUrl(media.heroImage) || undefined,
+      gallery: media.gallery.map(mediaUrl)
+    }, servicesToRaw(services));
+  }
+
   function renderPreview() {
     var frame = document.getElementById('sitePreview');
     if (!business || typeof buildDemoHTML !== 'function') return;
-    var src = (business.data && business.data.raw) || {};
-    var raw = Object.assign({}, src, {
-      logoImage: mediaUrl(src.logoImage) || undefined,
-      heroImage: mediaUrl(src.heroImage) || undefined,
-      gallery: Array.isArray(src.gallery) ? src.gallery.map(mediaUrl) : src.gallery
-    });
-    try {
-      frame.srcdoc = buildDemoHTML(raw);
-    } catch (e) {
-      // Missing fields the generator needs — leave the previous preview showing.
-    }
+    try { frame.srcdoc = buildDemoHTML(currentRaw()); } catch (e) {}
   }
 
-  function mediaUrl(relPath) {
-    if (!relPath || !slug) return null;
-    if (/^https?:\/\//.test(relPath)) return relPath;
-    return SUPABASE_URL + '/storage/v1/object/public/business-media/' + slug + '/' + relPath;
-  }
+  document.getElementById('fullscreenBtn').addEventListener('click', function () {
+    if (!business || typeof buildDemoHTML !== 'function') return;
+    var html = buildDemoHTML(currentRaw());
+    var blob = new Blob([html], { type: 'text/html' });
+    window.open(URL.createObjectURL(blob), '_blank');
+  });
 
   // ---------------- load existing business row ----------------
   function loadBusiness() {
@@ -291,7 +459,7 @@
 
   function showSetup() {
     setupPanel().hidden = false;
-    dashWrap().hidden = true;
+    appBody().hidden = true;
     var pendingName = localStorage.getItem('bs_pending_business_name') || '';
     var pendingSlug = params.get('slug') || localStorage.getItem('bs_pending_slug') || '';
     document.getElementById('setupName').value = pendingName;
@@ -299,10 +467,7 @@
   }
 
   function slugify(s) {
-    return (s || '').toLowerCase().trim()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 60);
+    return (s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
   }
 
   document.getElementById('setupBtn').addEventListener('click', function () {
@@ -317,11 +482,6 @@
     statusEl.textContent = 'Creating…';
     statusEl.style.color = '';
 
-    // BrightSite may already have built this business (from the 3-question
-    // form / Studio pipeline) before the customer ever logged in — that row
-    // exists at this slug with real name/location/services but no user_id.
-    // Claim it instead of overwriting it with a blank one, so their existing
-    // design and answers carry straight into the account page.
     fetch(SUPABASE_URL + '/rest/v1/businesses?select=*&id=eq.' + encodeURIComponent(chosenSlug), { headers: authHeaders() })
       .then(function (res) { return res.ok ? res.json() : []; })
       .then(function (rows) {
@@ -339,22 +499,11 @@
             return res.json();
           });
         }
-        var record = {
-          slug: chosenSlug,
-          name: name,
-          raw: { name: name, services: [], gallery: [] },
-          updatedAt: new Date().toISOString()
-        };
+        var record = { slug: chosenSlug, name: name, raw: { name: name, services: [], gallery: [] }, updatedAt: new Date().toISOString() };
         return fetch(SUPABASE_URL + '/rest/v1/businesses', {
           method: 'POST',
           headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation,resolution=merge-duplicates' }),
-          body: JSON.stringify({
-            id: chosenSlug,
-            name: name,
-            user_id: session.user_id,
-            data: record,
-            updated_at: record.updatedAt
-          })
+          body: JSON.stringify({ id: chosenSlug, name: name, user_id: session.user_id, data: record, updated_at: record.updatedAt })
         }).then(function (res) {
           if (!res.ok) return res.json().then(function (d) { throw new Error(d.message || d.msg || ('Failed (' + res.status + ')')); });
           return res.json();
@@ -368,116 +517,338 @@
         renderDashboard();
       })
       .catch(function (err) {
-        statusEl.textContent = /duplicate|already exists|23505/i.test(err.message)
-          ? 'That web address is already taken — choose another.'
-          : (err.message || 'Something went wrong.');
+        statusEl.textContent = /duplicate|already exists|23505/i.test(err.message) ? 'That web address is already taken — choose another.' : (err.message || 'Something went wrong.');
         statusEl.style.color = '#b23b2c';
       });
   });
 
-  // ---------------- render account page from business row ----------------
+  // ---------------- render ----------------
   function renderDashboard() {
     setupPanel().hidden = true;
-    dashWrap().hidden = false;
+    appBody().hidden = false;
 
     var data = business.data = business.data || {};
-    data.raw = data.raw || {};
+    var raw = data.raw = data.raw || {};
+    services = servicesFromRaw(raw);
+    media.logoImage = raw.logoImage || null;
+    media.heroImage = raw.heroImage || null;
+    media.gallery = Array.isArray(raw.gallery) ? raw.gallery.slice() : [];
+    isPaying = !!data.planActive;
+    isLive = !!data.published;
 
-    document.getElementById('acctName').textContent = data.raw.name || business.name || '';
+    document.getElementById('acctName').textContent = raw.name || business.name || '';
+    document.getElementById('fName').value = raw.name || business.name || '';
+    document.getElementById('fPhone').value = raw.phone || '';
+    document.getElementById('fEmail2').value = raw.email || session.email || '';
+    document.getElementById('fAddress').value = raw.address || '';
+    document.getElementById('fHours').value = raw.hours || '';
 
+    renderServices();
+    renderMediaThumbs();
+    renderGallery();
+    renderPlanUI();
     renderPreview();
+    setEditing(false);
   }
+
+  function renderPlanUI() {
+    var pill = document.getElementById('planPill');
+    pill.classList.toggle('active', isPaying);
+    document.getElementById('planLabel').textContent = isPaying ? 'Active plan' : 'Payment required';
+    document.getElementById('statusRow').textContent = isLive ? 'Live' : 'Not live yet';
+    document.getElementById('billingHint').textContent = isPaying
+      ? 'Your plan is active. Manage payment details any time.'
+      : 'Upgrade your plan to make your site live and take it beyond a draft.';
+    document.getElementById('upgradeBtn').hidden = isPaying;
+
+    var toolbar = document.getElementById('toolbarStatus');
+    toolbar.classList.toggle('live', isLive);
+    toolbar.classList.toggle('draft', !isLive);
+    document.getElementById('toolbarStatusLabel').textContent = isLive ? 'Live' : 'Not live';
+
+    var liveBtn = document.getElementById('liveBtn');
+    liveBtn.textContent = isLive ? 'Publish changes' : 'Make live';
+    liveBtn.disabled = !isPaying;
+    liveBtn.title = isPaying ? '' : 'Upgrade your plan to go live';
+  }
+
+  document.getElementById('upgradeBtn').addEventListener('click', function () {
+    document.getElementById('requestBtn').click();
+  });
+
+  // ---------------- services ----------------
+  function servicesFromRaw(raw) {
+    if (Array.isArray(raw.serviceGroups) && raw.serviceGroups.length) {
+      return raw.serviceGroups.map(function (g) {
+        return { name: g.name || '', items: (g.items || []).map(function (it) {
+          if (Array.isArray(it)) return { name: it[0] || '', price: it[1] || '', duration: '' };
+          return { name: it.name || '', price: it.price || '', duration: it.duration || '' };
+        }) };
+      });
+    }
+    var names = Array.isArray(raw.services) ? raw.services : [];
+    var prices = Array.isArray(raw.prices) ? raw.prices : [];
+    var durations = Array.isArray(raw.serviceDurations) ? raw.serviceDurations : [];
+    var items = names.map(function (n, i) {
+      if (n && typeof n === 'object') return { name: n.name || '', price: n.price || '', duration: n.duration || '' };
+      return { name: n || '', price: prices[i] || '', duration: durations[i] || '' };
+    });
+    return [{ name: '', items: items }];
+  }
+  function servicesToRaw(groups) {
+    var kept = groups.map(function (g) { return { name: (g.name || '').trim(), items: g.items.filter(function (s) { return s.name && s.name.trim(); }) }; }).filter(function (g) { return g.items.length; });
+    var flatItems = [].concat.apply([], kept.map(function (g) { return g.items; }));
+    return {
+      serviceGroups: kept.map(function (g) { return { name: g.name, items: g.items.map(function (s) { return [s.name.trim(), (s.price || '').trim()]; }) }; }),
+      services: flatItems.map(function (s) { return s.name.trim(); }),
+      prices: flatItems.map(function (s) { return (s.price || '').trim(); }),
+      serviceDurations: flatItems.map(function (s) { return (s.duration || '').trim(); })
+    };
+  }
+  function escapeAttr(s) { return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+
+  function renderServices() {
+    var mount = document.getElementById('svcGroups');
+    mount.innerHTML = '';
+    services.forEach(function (group, gi) {
+      var card = document.createElement('div');
+      card.className = 'svc-group';
+      var head = document.createElement('div');
+      head.className = 'svc-group-head';
+      head.innerHTML =
+        '<input type="text" placeholder="Section title (e.g. Massage)" data-gi="' + gi + '" data-gf="name" value="' + escapeAttr(group.name || '') + '">' +
+        '<div class="svc-arrows">' +
+        '<button type="button" class="svc-remove" data-group-up="' + gi + '" ' + (gi === 0 ? 'disabled' : '') + ' aria-label="Move section up">&#8593;</button>' +
+        '<button type="button" class="svc-remove" data-group-down="' + gi + '" ' + (gi === services.length - 1 ? 'disabled' : '') + ' aria-label="Move section down">&#8595;</button>' +
+        '</div>' +
+        '<button type="button" class="svc-remove" data-group-remove="' + gi + '" aria-label="Remove section">&times;</button>';
+      card.appendChild(head);
+      group.items.forEach(function (svc, i) {
+        var row = document.createElement('div');
+        row.className = 'svc-row';
+        row.innerHTML =
+          '<button type="button" class="svc-remove" data-item-remove="' + gi + ':' + i + '" aria-label="Remove service">&times;</button>' +
+          '<input type="text" class="svc-name" placeholder="Service name" data-gi="' + gi + '" data-i="' + i + '" data-f="name" value="' + escapeAttr(svc.name || '') + '">' +
+          '<div class="svc-meta">' +
+          '<input type="text" placeholder="Time" data-gi="' + gi + '" data-i="' + i + '" data-f="duration" value="' + escapeAttr(svc.duration || '') + '">' +
+          '<input type="text" placeholder="Price" data-gi="' + gi + '" data-i="' + i + '" data-f="price" value="' + escapeAttr(svc.price || '') + '">' +
+          '<div class="svc-arrows">' +
+          '<button type="button" class="svc-remove" data-item-up="' + gi + ':' + i + '" ' + (i === 0 ? 'disabled' : '') + ' aria-label="Move up">&#8593;</button>' +
+          '<button type="button" class="svc-remove" data-item-down="' + gi + ':' + i + '" ' + (i === group.items.length - 1 ? 'disabled' : '') + ' aria-label="Move down">&#8595;</button>' +
+          '</div>' +
+          '</div>';
+        card.appendChild(row);
+      });
+      var addBtn = document.createElement('button');
+      addBtn.type = 'button'; addBtn.className = 'dash-add'; addBtn.dataset.itemAdd = gi; addBtn.textContent = '+ Add service';
+      card.appendChild(addBtn);
+      mount.appendChild(card);
+    });
+
+    mount.querySelectorAll('[data-gf]').forEach(function (input) { input.addEventListener('input', function () { services[+input.dataset.gi][input.dataset.gf] = input.value; renderPreview(); }); });
+    mount.querySelectorAll('[data-f]').forEach(function (input) { input.addEventListener('input', function () { services[+input.dataset.gi].items[+input.dataset.i][input.dataset.f] = input.value; renderPreview(); }); });
+    mount.querySelectorAll('[data-item-add]').forEach(function (btn) { btn.addEventListener('click', function () { services[+btn.dataset.itemAdd].items.push({ name: '', price: '', duration: '' }); renderServices(); renderPreview(); }); });
+    mount.querySelectorAll('[data-group-remove]').forEach(function (btn) { btn.addEventListener('click', function () { services.splice(+btn.dataset.groupRemove, 1); renderServices(); renderPreview(); }); });
+    mount.querySelectorAll('[data-item-remove]').forEach(function (btn) { btn.addEventListener('click', function () { var p = btn.dataset.itemRemove.split(':'); services[+p[0]].items.splice(+p[1], 1); renderServices(); renderPreview(); }); });
+    mount.querySelectorAll('[data-group-up],[data-group-down]').forEach(function (btn) { btn.addEventListener('click', function () { var i = +(btn.dataset.groupUp || btn.dataset.groupDown); var j = btn.dataset.groupUp ? i - 1 : i + 1; if (j < 0 || j >= services.length) return; var t = services[i]; services[i] = services[j]; services[j] = t; renderServices(); renderPreview(); }); });
+    mount.querySelectorAll('[data-item-up],[data-item-down]').forEach(function (btn) { btn.addEventListener('click', function () { var p = (btn.dataset.itemUp || btn.dataset.itemDown).split(':'); var gi = +p[0], i = +p[1]; var j = btn.dataset.itemUp ? i - 1 : i + 1; var items = services[gi].items; if (j < 0 || j >= items.length) return; var t = items[i]; items[i] = items[j]; items[j] = t; renderServices(); renderPreview(); }); });
+  }
+  document.getElementById('svcGroupAdd').addEventListener('click', function () { services.push({ name: '', items: [{ name: '', price: '', duration: '' }] }); renderServices(); renderPreview(); });
+
+  ['fName', 'fPhone', 'fEmail2', 'fAddress', 'fHours'].forEach(function (id) {
+    document.getElementById(id).addEventListener('input', renderPreview);
+  });
+
+  // ---------------- media (logo / hero) ----------------
+  function renderMediaThumbs() {
+    setThumb(document.getElementById('logoThumb'), pendingUploads.logo ? URL.createObjectURL(pendingUploads.logo) : mediaUrl(media.logoImage));
+    setThumb(document.getElementById('heroThumb'), pendingUploads.hero ? URL.createObjectURL(pendingUploads.hero) : mediaUrl(media.heroImage));
+  }
+  function setThumb(el, url) {
+    if (url) { el.src = url; el.classList.remove('empty'); el.alt = ''; }
+    else { el.removeAttribute('src'); el.classList.add('empty'); el.textContent = 'No image'; el.alt = 'No image'; }
+  }
+  function mediaUrl(relPath) {
+    if (!relPath || !slug) return null;
+    if (/^https?:\/\//.test(relPath)) return relPath;
+    return SUPABASE_URL + '/storage/v1/object/public/business-media/' + slug + '/' + relPath;
+  }
+  document.getElementById('logoInput').addEventListener('change', function (e) {
+    var file = e.target.files[0]; e.target.value = '';
+    if (!file) return;
+    var err = validateImageFile(file); if (err) { showUploadError(err); return; }
+    pendingUploads.logo = file; renderMediaThumbs(); renderPreview();
+  });
+  document.getElementById('heroInput').addEventListener('change', function (e) {
+    var file = e.target.files[0]; e.target.value = '';
+    if (!file) return;
+    var err = validateImageFile(file); if (err) { showUploadError(err); return; }
+    pendingUploads.hero = file; renderMediaThumbs(); renderPreview();
+  });
+
+  // ---------------- gallery ----------------
+  function galleryCount() { return media.gallery.length + pendingUploads.gallery.length; }
+  function renderGallery() {
+    var grid = document.getElementById('galleryGrid');
+    grid.innerHTML = '';
+    media.gallery.forEach(function (relPath, i) {
+      var item = document.createElement('div'); item.className = 'gallery-item';
+      item.innerHTML = '<img src="' + mediaUrl(relPath) + '" alt=""><button type="button" data-kind="existing" data-i="' + i + '" aria-label="Remove">&times;</button>';
+      grid.appendChild(item);
+    });
+    pendingUploads.gallery.forEach(function (file, i) {
+      var item = document.createElement('div'); item.className = 'gallery-item';
+      var img = document.createElement('img'); img.src = URL.createObjectURL(file);
+      var btn = document.createElement('button'); btn.type = 'button'; btn.dataset.kind = 'pending'; btn.dataset.i = i; btn.setAttribute('aria-label', 'Remove'); btn.innerHTML = '&times;';
+      item.appendChild(img); item.appendChild(btn); grid.appendChild(item);
+    });
+    grid.querySelectorAll('button').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var i = +btn.dataset.i;
+        if (btn.dataset.kind === 'existing') { galleryRemoved.push(media.gallery[i]); media.gallery.splice(i, 1); }
+        else { pendingUploads.gallery.splice(i, 1); }
+        renderGallery(); renderPreview();
+      });
+    });
+    var counter = document.getElementById('galleryCounter');
+    var count = galleryCount();
+    counter.textContent = count + ' / ' + GALLERY_MAX + ' photos';
+    counter.className = 'gallery-counter' + (count >= GALLERY_MAX ? ' full' : '');
+    document.getElementById('galleryAddWrap').style.display = count >= GALLERY_MAX ? 'none' : '';
+  }
+  document.getElementById('galleryInput').addEventListener('change', function (e) {
+    var files = Array.from(e.target.files || []); e.target.value = '';
+    var valid = [], errs = [];
+    files.forEach(function (file) { var err = validateImageFile(file); if (err) errs.push(file.name + ': ' + err); else valid.push(file); });
+    files = valid;
+    var room = GALLERY_MAX - galleryCount();
+    if (room <= 0) files = []; else if (files.length > room) files = files.slice(0, room);
+    pendingUploads.gallery = pendingUploads.gallery.concat(files);
+    if (errs.length) showUploadError(errs[0]);
+    renderGallery(); renderPreview();
+  });
+
+  // ---------------- save ----------------
+  var EXT_FOR_TYPE = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'image/gif': '.gif' };
+  function extFor(file) { return EXT_FOR_TYPE[file.type] || '.jpg'; }
+  function uploadFile(relPath, file) {
+    return fetch(SUPABASE_URL + '/storage/v1/object/business-media/' + slug + '/' + relPath, {
+      method: 'POST', headers: authHeaders({ 'Content-Type': file.type || 'application/octet-stream', 'x-upsert': 'true' }), body: file
+    }).then(function (res) { if (!res.ok && res.status !== 409) throw new Error('Image upload failed (' + res.status + ')'); });
+  }
+  function deleteFile(relPath) {
+    return fetch(SUPABASE_URL + '/storage/v1/object/business-media/' + slug + '/' + relPath, { method: 'DELETE', headers: authHeaders() }).catch(function () {});
+  }
+
+  function saveBusiness(opts) {
+    opts = opts || {};
+    var uploads = [];
+    if (pendingUploads.logo) { var lp = 'img/logo' + extFor(pendingUploads.logo); uploads.push(uploadFile(lp, pendingUploads.logo).then(function () { media.logoImage = lp; })); }
+    if (pendingUploads.hero) { var hp = 'img/hero' + extFor(pendingUploads.hero); uploads.push(uploadFile(hp, pendingUploads.hero).then(function () { media.heroImage = hp; })); }
+    pendingUploads.gallery.forEach(function (file) { var rp = 'img/gallery/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + extFor(file); uploads.push(uploadFile(rp, file).then(function () { media.gallery.push(rp); })); });
+    galleryRemoved.forEach(function (relPath) { uploads.push(deleteFile(relPath)); });
+
+    return Promise.all(uploads).then(function () {
+      var raw = Object.assign({}, (business.data && business.data.raw) || {}, {
+        name: document.getElementById('fName').value.trim(),
+        phone: document.getElementById('fPhone').value.trim(),
+        email: document.getElementById('fEmail2').value.trim(),
+        address: document.getElementById('fAddress').value.trim(),
+        hours: document.getElementById('fHours').value.trim(),
+        logoImage: media.logoImage,
+        heroImage: media.heroImage,
+        gallery: media.gallery
+      }, servicesToRaw(services));
+      if (opts.publish) isLive = true;
+      var record = { slug: slug, name: raw.name, raw: raw, planActive: isPaying, published: isLive, updatedAt: new Date().toISOString() };
+      return fetch(SUPABASE_URL + '/rest/v1/businesses', {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation,resolution=merge-duplicates' }),
+        body: JSON.stringify({ id: slug, name: raw.name, user_id: session.user_id, data: record, updated_at: record.updatedAt })
+      }).then(function (res) {
+        if (!res.ok) return res.json().then(function (d) { throw new Error(d.message || d.msg || ('Save failed (' + res.status + ')')); });
+        return res.json();
+      }).then(function (rows) { business = Array.isArray(rows) ? rows[0] : rows; });
+    }).then(function () {
+      pendingUploads = { logo: null, hero: null, gallery: [] };
+      galleryRemoved = [];
+      renderMediaThumbs();
+      renderGallery();
+      renderPreview();
+      renderPlanUI();
+    });
+  }
+
+  document.getElementById('saveBtn').addEventListener('click', function () {
+    var btn = this;
+    var statusEl = document.getElementById('saveStatus');
+    btn.disabled = true;
+    statusEl.textContent = 'Saving…'; statusEl.className = 'save-status';
+    saveBusiness({}).then(function () {
+      statusEl.textContent = 'Saved'; statusEl.className = 'save-status ok'; btn.disabled = false;
+    }).catch(function (err) {
+      statusEl.textContent = err.message || 'Something went wrong — please try again.'; statusEl.className = 'save-status err'; btn.disabled = false;
+    });
+  });
+
+  // ---------------- make live / publish ----------------
+  document.getElementById('liveBtn').addEventListener('click', function () {
+    if (!isPaying) return;
+    var btn = this;
+    var wasLive = isLive;
+    btn.disabled = true;
+    btn.classList.add('pending');
+    btn.textContent = wasLive ? 'Publishing…' : 'Making live…';
+    saveBusiness({ publish: true }).then(function () {
+      btn.classList.remove('pending');
+      btn.disabled = false;
+      btn.textContent = 'Publish changes';
+    }).catch(function () {
+      btn.classList.remove('pending');
+      btn.disabled = false;
+      btn.textContent = wasLive ? 'Publish changes' : 'Make live';
+    });
+  });
 
   // ---------------- request an update ----------------
-  var reqFile = null;
-
-  document.getElementById('requestBtn').addEventListener('click', function () {
-    document.getElementById('requestConfirm').hidden = true;
-    var card = document.getElementById('requestCard');
-    card.hidden = !card.hidden;
-    if (!card.hidden) {
-      document.getElementById('reqMessage').focus();
-      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-  });
-
-  document.getElementById('reqFile').addEventListener('change', function (e) {
-    var file = e.target.files[0] || null;
-    reqFile = file;
-    document.getElementById('reqFileName').textContent = file ? file.name : '';
-  });
-
-  function fieldVal(id) {
-    var el = document.getElementById(id);
-    return el ? el.value.trim() : '';
-  }
+  var reqVeil = document.getElementById('reqVeil');
+  function openReq() { reqVeil.hidden = false; document.getElementById('reqMessage').focus(); }
+  function closeReq() { reqVeil.hidden = true; document.getElementById('reqStatus').textContent = ''; }
+  document.getElementById('requestBtn').addEventListener('click', openReq);
+  document.getElementById('reqClose').addEventListener('click', closeReq);
+  document.getElementById('reqCancel').addEventListener('click', closeReq);
+  reqVeil.addEventListener('click', function (e) { if (e.target === reqVeil) closeReq(); });
 
   document.getElementById('reqSend').addEventListener('click', function () {
     var btn = this;
     var statusEl = document.getElementById('reqStatus');
-    var message = fieldVal('reqMessage');
-    if (!message) {
-      statusEl.textContent = 'Let us know what you’d like changed first.';
-      statusEl.className = 'acct-req-status err';
-      return;
-    }
+    var message = document.getElementById('reqMessage').value.trim();
+    if (!message) { statusEl.textContent = 'Let us know what you’d like changed first.'; statusEl.className = 'save-status err'; return; }
 
     var businessName = (business && business.data && business.data.raw && business.data.raw.name) || (business && business.name) || (session.email || '');
-    var fields = {
-      Business: businessName,
-      Email: session.email || '',
-      Update: message,
-      'Layout idea': fieldVal('reqLayout'),
-      'Colour direction': fieldVal('reqColour'),
-      'Typography feel': fieldVal('reqType'),
-      'Anything else': fieldVal('reqOther')
-    };
-
     btn.disabled = true;
-    statusEl.textContent = 'Sending…';
-    statusEl.className = 'acct-req-status';
+    statusEl.textContent = 'Sending…'; statusEl.className = 'save-status';
 
-    var details = JSON.stringify(Object.assign({ type: 'account_update_request', slug: slug }, fields));
-
+    var details = JSON.stringify({ type: 'account_update_request', slug: slug, email: session.email || '', message: message });
     var databaseRequest = fetch(SUPABASE_URL + '/rest/v1/leads', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: 'Bearer ' + SUPABASE_ANON_KEY,
-        Prefer: 'return=minimal'
-      },
+      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY, Prefer: 'return=minimal' },
       body: JSON.stringify({ business_name: businessName, details: details, created_at: new Date().toISOString() })
     });
-
     var formData = new FormData();
-    Object.keys(fields).forEach(function (k) { formData.append(k, fields[k]); });
-    if (reqFile) formData.append('Hero image or logo', reqFile, reqFile.name);
-    var emailRequest = fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/', {
-      method: 'POST',
-      body: formData,
-      keepalive: true
-    });
+    formData.append('Business', businessName);
+    formData.append('Email', session.email || '');
+    formData.append('Update', message);
+    var emailRequest = fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/', { method: 'POST', body: formData, keepalive: true });
 
     Promise.allSettled([databaseRequest, emailRequest]).then(function (results) {
       btn.disabled = false;
       var ok = results.some(function (r) { return r.status === 'fulfilled' && r.value.ok; });
       if (ok) {
-        document.getElementById('requestCard').hidden = true;
-        document.getElementById('requestConfirm').hidden = false;
-        document.getElementById('requestConfirm').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         document.getElementById('reqMessage').value = '';
-        document.getElementById('reqLayout').value = '';
-        document.getElementById('reqColour').value = '';
-        document.getElementById('reqType').value = '';
-        document.getElementById('reqOther').value = '';
-        document.getElementById('reqFileName').textContent = '';
-        reqFile = null;
-        document.getElementById('ideaDisclosure').open = false;
-        statusEl.textContent = '';
+        closeReq();
       } else {
-        statusEl.textContent = 'Something went wrong — please try again.';
-        statusEl.className = 'acct-req-status err';
+        statusEl.textContent = 'Something went wrong — please try again.'; statusEl.className = 'save-status err';
       }
     });
   });
