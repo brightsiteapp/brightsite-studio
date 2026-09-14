@@ -135,6 +135,15 @@ async function runHomepageFlow(label, contextOptions, mobile) {
   assert.equal(await locationInput.inputValue(), 'Beverley', `${label}: location should stay typed`);
 
   await activate(page.locator('#qaLocationNext'));
+  await page.locator('#qaSlideEmail.qa-active').waitFor();
+  await page.locator('#qaSlideLocation[hidden]').waitFor({ state: 'attached' });
+
+  const emailInput = page.locator('#bizEmail');
+  await activate(emailInput);
+  await emailInput.pressSequentially('test@example.com', { delay: 20 });
+  assert.equal(await emailInput.inputValue(), 'test@example.com', `${label}: email should stay typed`);
+
+  await activate(page.locator('#qaEmailNext'));
   await page.locator('#builderOverlay:not([hidden])').waitFor({ timeout: 10000 });
   await page.locator('#previewFrame').waitFor();
   await page.waitForFunction(() => document.querySelector('#previewFrame').contentDocument?.body);

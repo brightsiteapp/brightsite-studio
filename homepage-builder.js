@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const bizNameInput = document.getElementById('bizName');
   const bizTagline = document.getElementById('bizTagline');
   const bizLocation = document.getElementById('bizLocation');
+  const bizEmail = document.getElementById('bizEmail');
   const qaSuggest = document.getElementById('qaSuggest');
   const bizServices = document.getElementById('bizServices');
   const bizPrices = document.getElementById('bizPrices');
@@ -253,17 +254,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const qaSlideName = document.getElementById('qaSlideName');
   const qaSlideType = document.getElementById('qaSlideType');
   const qaSlideLocation = document.getElementById('qaSlideLocation');
+  const qaSlideEmail = document.getElementById('qaSlideEmail');
   const qaFieldName = document.getElementById('qaFieldName');
   const qaFieldType = document.getElementById('qaFieldType');
   const qaFieldLocation = document.getElementById('qaFieldLocation');
+  const qaFieldEmail = document.getElementById('qaFieldEmail');
   const qaLocationNext = document.getElementById('qaLocationNext');
+  const qaEmailNext = document.getElementById('qaEmailNext');
   const qaProgress = document.getElementById('qaProgress');
   const qaProgressLabel = document.getElementById('qaProgressLabel');
   const qaProgressSegs = qaProgress.querySelectorAll('.qa-progress-seg');
 
   function setProgressStep(step) {
-    qaProgressLabel.textContent = step > 3 ? "You're all set" : `Step ${step} of 3`;
-    qaProgressSegs.forEach((seg, i) => seg.classList.toggle('filled', i < step - 1 || step > 3));
+    qaProgressLabel.textContent = step > 4 ? "You're all set" : `Step ${step} of 4`;
+    qaProgressSegs.forEach((seg, i) => seg.classList.toggle('filled', i < step - 1 || step > 4));
   }
 
   // a field's placeholder question fades away (revealing the real input
@@ -296,10 +300,11 @@ document.addEventListener('DOMContentLoaded', () => {
   wireField(qaFieldName, bizNameInput, qaNameGo);
   wireField(qaFieldType, bizTagline, qaTypeGo);
   wireField(qaFieldLocation, bizLocation, qaLocationNext);
+  wireField(qaFieldEmail, bizEmail, qaEmailNext);
 
   // crossfades the box's content from whichever slide is active to `next`
   // — same box, same position, the question just dissolves into the next.
-  const qaSlides = [qaSlideName, qaSlideType, qaSlideLocation];
+  const qaSlides = [qaSlideName, qaSlideType, qaSlideLocation, qaSlideEmail];
   let activeSlide = qaSlideName;
   let slideTransitionTimer = null;
 
@@ -352,7 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
     resetBuilderBar();
   }
   function removePillsFrom(step) {
-    [1, 2, 3].forEach((s) => { if (s >= step && pills[s]) { pills[s].remove(); delete pills[s]; } });
+    [1, 2, 3, 4].forEach((s) => { if (s >= step && pills[s]) { pills[s].remove(); delete pills[s]; } });
   }
   function goBackToName() {
     collapseGenerated();
@@ -374,7 +379,13 @@ document.addEventListener('DOMContentLoaded', () => {
     goToSlide(qaSlideLocation, bizLocation);
     setProgressStep(3);
   }
-  const goBackByStep = { 1: goBackToName, 2: goBackToType, 3: goBackToLocation };
+  function goBackToEmail() {
+    collapseGenerated();
+    removePillsFrom(4);
+    goToSlide(qaSlideEmail, bizEmail);
+    setProgressStep(4);
+  }
+  const goBackByStep = { 1: goBackToName, 2: goBackToType, 3: goBackToLocation, 4: goBackToEmail };
 
   function addPill(step, text) {
     const pill = document.createElement('div');
@@ -650,19 +661,36 @@ document.addEventListener('DOMContentLoaded', () => {
       .finally(() => finishEnrichment(run));
   }
 
-  async function finishLocation() {
+  function advanceToEmail() {
     const loc = formatBusinessName(bizLocation.value);
-    if (!loc || isCreatingPreview) return;
+    if (!loc) return;
     bizLocation.value = loc;
+    addPill(3, loc);
+    setProgressStep(4);
+    goToSlide(qaSlideEmail, bizEmail);
+  }
+
+  function buildAccountSetupUrl(name, email) {
+    const previewSlug = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+    const params = new URLSearchParams({ slug: previewSlug, signup: '1' });
+    if (email) params.set('email', email);
+    return `${location.origin}/account/login.html?${params.toString()}`;
+  }
+
+  async function finishEmail() {
+    const loc = formatBusinessName(bizLocation.value);
+    const email = bizEmail.value.trim();
+    if (!loc || !email || isCreatingPreview) return;
+    bizEmail.value = email;
     isCreatingPreview = true;
-    qaLocationNext.disabled = true;
-    bizLocation.readOnly = true;
+    qaEmailNext.disabled = true;
+    bizEmail.readOnly = true;
     status.textContent = '';
     status.className = 'quick-lead-status';
 
     try {
-      addPill(3, loc);
-      setProgressStep(4);
+      addPill(4, email);
+      setProgressStep(5);
 
       // a slightly more exciting flourish into the loading/preview experience
       qaBox.classList.add('qa-box-finish');
@@ -697,7 +725,7 @@ document.addEventListener('DOMContentLoaded', () => {
           height: isNarrowViewport ? 506 : 900
         });
       }).catch((error) => {
-        console.error(error);
+        console.error('DEBUG heroImagePromise failed', error);
         return null;
       });
 
@@ -705,6 +733,7 @@ document.addEventListener('DOMContentLoaded', () => {
         runCreatingAnimation(name.toUpperCase()),
         heroImagePromise
       ]);
+      console.log('DEBUG heroImage result', heroImage ? heroImage.slice(0,40) : heroImage);
       uploadedHeroImage = heroImage;
 
       qaProgress.classList.add('done');
@@ -728,14 +757,13 @@ document.addEventListener('DOMContentLoaded', () => {
       sizePreviewToDesktopRatio();
       setDocumentScrollLock(true);
 
-      postLead(name, 'Demo created — ' + bizTagline.value + ' in ' + loc).catch(() => {});
+      postLead(name, 'Demo created — ' + bizTagline.value + ' in ' + loc + ' — ' + email).catch(() => {});
 
       // let the client jump straight into self-managing this preview's
       // content — carries the same slug account/dashboard.html guesses
       // from the business name, so both paths land on the same row.
       if (accountCta) {
-        const previewSlug = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
-        accountCta.href = `account/login.html?slug=${encodeURIComponent(previewSlug)}&signup=1`;
+        accountCta.href = buildAccountSetupUrl(name, email);
         accountCta.hidden = false;
       }
     } catch (error) {
@@ -743,14 +771,14 @@ document.addEventListener('DOMContentLoaded', () => {
       creatingOverlay.classList.remove('active');
       creatingOverlay.setAttribute('aria-hidden', 'true');
       qaBox.classList.remove('qa-box-finish', 'qa-box-done');
-      removePillsFrom(3);
-      setProgressStep(3);
+      removePillsFrom(4);
+      setProgressStep(4);
       status.textContent = 'We could not build the preview just then. Please try again.';
       status.className = 'quick-lead-status err';
     } finally {
       isCreatingPreview = false;
-      qaLocationNext.disabled = false;
-      bizLocation.readOnly = false;
+      qaEmailNext.disabled = false;
+      bizEmail.readOnly = false;
     }
   }
   bizLocation.addEventListener('input', () => {
@@ -758,9 +786,16 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshPreview();
   });
   bizLocation.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); finishLocation(); }
+    if (e.key === 'Enter') { e.preventDefault(); advanceToEmail(); }
   });
-  qaLocationNext.addEventListener('click', finishLocation);
+  qaLocationNext.addEventListener('click', advanceToEmail);
+  bizEmail.addEventListener('input', () => {
+    qaEmailNext.classList.toggle('visible', !!bizEmail.value.trim());
+  });
+  bizEmail.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); finishEmail(); }
+  });
+  qaEmailNext.addEventListener('click', finishEmail);
 
   // gather the initial 3 questions into the shape buildDemoHTML expects.
   // Q2 collects an email address for the designer, not a phone number, so the
@@ -784,6 +819,12 @@ document.addEventListener('DOMContentLoaded', () => {
       businessProfile
     };
   }
+  const _origGatherData = gatherData;
+  gatherData = function() {
+    const d = _origGatherData();
+    console.log('DEBUG gatherData heroImage', d.heroImage ? d.heroImage.slice(0,40) : d.heroImage, 'businessProfile', !!d.businessProfile, 'uploadedHeroImage set?', !!uploadedHeroImage);
+    return d;
+  };
   // the preview is a REAL iframe filling the screen — no scaled-down
   // mockup, no browser-chrome wrapper. It just renders at its own natural
   // size, so the generated site's own responsive CSS applies exactly as
@@ -799,6 +840,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const position = {...previewPosition};
     const version = ++previewRenderVersion;
     const html = buildDemoHTML(gatherData());
+    console.log('DEBUG refreshPreview html brand-scene', appearanceOnly, html.match(/class="brand-scene" src="([^"]{0,40})/)?.[1]);
     if (smooth) previewFrame.classList.add('is-refreshing');
     updatePaletteOrb();
     if (appearanceOnly && activePage) {
@@ -1070,8 +1112,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (action === 'whatsapp') builderChatPill.click();
     if (action === 'email') sendDesignEmail();
   });
+  // shared "we've got it" status shown under the WhatsApp/Email buttons —
+  // kept in one place so both channels read the same and always carry the
+  // self-serve account link, in case the customer would rather set that up
+  // themselves than wait to hear back.
+  function renderHandoffStatus(el, sent, accountUrl) {
+    const base = sent
+      ? "We've received your design idea — we'll be in touch today, and a welcome email is on its way."
+      : 'Please press Send so we receive your design idea.';
+    el.innerHTML = `${base} <a href="${accountUrl}" target="_blank" rel="noopener">Set up your account</a> in the meantime.`;
+  }
+
   function sendDesignEmail() {
       const businessName = bizNameInput.value.trim();
+      const customerEmail = bizEmail.value.trim();
+      const accountUrl = buildAccountSetupUrl(businessName, customerEmail);
       const design = selectedDesignSummary();
       const message = `Hi, I'd like you to finish my website.
 
@@ -1087,8 +1142,9 @@ Colour palette: ${design.palette}`;
       postLeadWithMedia({
         Business: businessName, Industry: bizTagline.value || 'Not provided',
         Location: bizLocation.value.trim() || 'Not provided', Template: design.template,
-        Font: design.font, 'Colour scheme': design.palette
-      }, []).then(sent => { status.textContent = sent ? 'Your design details have been emailed to Tom.' : 'Please press Send in your email app to reach Tom.'; });
+        Font: design.font, 'Colour scheme': design.palette,
+        'Customer email': customerEmail, 'Account setup url': accountUrl
+      }, []).then(sent => renderHandoffStatus(status, sent, accountUrl));
   }
   // Finger travel per option. Roughly double the old 34px so a slow drag
   // steps through fonts/colours deliberately rather than skipping several.
@@ -1415,6 +1471,8 @@ Colour palette: ${design.palette}`;
       const businessName = bizNameInput.value.trim();
       const businessType = bizTagline.value;
       const location_ = bizLocation.value.trim();
+      const customerEmail = bizEmail.value.trim();
+      const accountUrl = buildAccountSetupUrl(businessName, customerEmail);
       const design = selectedDesignSummary();
       const wantsBooking = document.getElementById('bizWantsBooking')?.checked;
       const wantsEcommerce = document.getElementById('bizWantsEcommerce')?.checked;
@@ -1428,7 +1486,9 @@ Location: ${location_}
 Template: ${design.template}
 Font: ${design.font}
 Colour palette: ${design.palette}${extras.length ? `
-Also interested in: ${extras.join(', ')}` : ''}`;
+Also interested in: ${extras.join(', ')}` : ''}
+
+I'll also set up my account here in the meantime: ${accountUrl}`;
 
       const status = document.getElementById('handoffStatus');
       status.textContent = 'Opening WhatsApp…';
@@ -1448,12 +1508,11 @@ Also interested in: ${extras.join(', ')}` : ''}`;
         Font: design.font,
         'Colour scheme': design.palette,
         ...(extras.length ? { 'Interested in': extras.join(', ') } : {}),
+        'Customer email': customerEmail, 'Account setup url': accountUrl,
       }, [{ name: 'Site preview', file: previewFile }]).then(sent => {
-        status.textContent = sent
-          ? 'Your details were accepted for email delivery. Press Send inside WhatsApp to message Tom.'
-          : 'Email could not be confirmed. Please press Send inside WhatsApp so Tom receives your details.';
+        renderHandoffStatus(status, sent, accountUrl);
       }).catch(() => {
-        status.textContent = 'Email could not be confirmed. Please send your details in WhatsApp.';
+        status.innerHTML = `Email could not be confirmed. Please press Send inside WhatsApp so we receive your details. <a href="${accountUrl}" target="_blank" rel="noopener">Set up your account</a> in the meantime.`;
       });
 
       const whatsappUrl = `https://wa.me/${designerWhatsAppNumber}?text=${encodeURIComponent(message)}`;

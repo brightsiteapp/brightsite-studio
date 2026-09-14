@@ -162,7 +162,7 @@
   <div class="wrap hero-conv-wrap">
     <div class="hero-conv-head">
       <h1>Professional Websites<br>Starting From £0</h1>
-      <p class="hero-conv-sub">Enter three details and we’ll create a personalised preview while you wait.</p>
+      <p class="hero-conv-sub">Enter four details and we’ll create a personalised preview while you wait.</p>
     </div>
 
     <div class="wiz-grid" id="wizGrid">
@@ -172,8 +172,9 @@
             <span class="qa-progress-seg" data-seg="1"></span>
             <span class="qa-progress-seg" data-seg="2"></span>
             <span class="qa-progress-seg" data-seg="3"></span>
+            <span class="qa-progress-seg" data-seg="4"></span>
           </div>
-          <div class="qa-progress-label" id="qaProgressLabel">Step 1 of 3</div>
+          <div class="qa-progress-label" id="qaProgressLabel">Step 1 of 4</div>
         </div>
 
         <div class="qa-pills" id="qaPills"></div>
@@ -202,8 +203,15 @@
                   <span class="qa-ph">Where are you based?</span>
                   <input type="text" id="bizLocation" required autocomplete="off" autocapitalize="words" aria-label="Business location" placeholder="Where are you based?">
                 </div>
-                <button type="button" class="qa-go" id="qaLocationNext" aria-label="Create my website preview"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h13M12.5 6.2 18.8 12l-6.3 5.8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                <button type="button" class="qa-go" id="qaLocationNext" aria-label="Continue with your location"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h13M12.5 6.2 18.8 12l-6.3 5.8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
                 <ul class="qa-suggest" id="qaSuggest" role="listbox" aria-label="Matching businesses" hidden></ul>
+              </div>
+              <div class="qa-slide" id="qaSlideEmail" data-step="4" hidden>
+                <div class="qa-field" id="qaFieldEmail">
+                  <span class="qa-ph">What's your email address?</span>
+                  <input type="email" id="bizEmail" required autocomplete="email" inputmode="email" aria-label="Email address" placeholder="What's your email address?">
+                </div>
+                <button type="button" class="qa-go" id="qaEmailNext" aria-label="Create my website preview"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h13M12.5 6.2 18.8 12l-6.3 5.8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
               </div>
             </div>
           </div>

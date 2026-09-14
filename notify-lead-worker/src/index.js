@@ -60,8 +60,35 @@ async function handleJsonLead(body, env, cors) {
 const TEXT_FIELDS = [
   'Business', 'Customer', 'Customer email', 'Industry', 'Location',
   'Template', 'Font', 'Colour scheme', 'Interested in',
-  'Current website', 'Social media', 'Media notes',
+  'Current website', 'Social media', 'Media notes', 'Account setup url',
 ];
+
+// Fired alongside the internal notification whenever the handoff carried a
+// customer email address, so the customer isn't left wondering whether their
+// WhatsApp/email button-press actually did anything while they wait to hear
+// back. Best-effort: a failure here shouldn't fail the whole lead capture.
+async function sendCustomerWelcomeEmail(env, email, business, accountUrl) {
+  try {
+    const emailRes = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: 'BrightSite <leads@brightsite.app>',
+        to: [email],
+        subject: 'Welcome to BrightSite — we’ve got your design idea',
+        text: `Welcome to BrightSite!\n\nWe've received your website info${business ? ` for ${business}` : ''} and will be in touch today.\n\nIn the meantime, set up your account so you can manage your own site:\n${accountUrl || 'https://brightsite.app'}\n\nSpeak soon,\nThe BrightSite team`,
+      }),
+    });
+    if (!emailRes.ok) {
+      console.error(`Resend welcome email ${emailRes.status}: ${await emailRes.text()}`);
+    }
+  } catch (error) {
+    console.error('Customer welcome email failed', error);
+  }
+}
 
 async function handleFormLead(form, env, cors) {
   const business = form.get('Business') || 'Unknown business';
@@ -96,6 +123,11 @@ async function handleFormLead(form, env, cors) {
   });
   if (!emailRes.ok) {
     throw new Error(`Resend ${emailRes.status}: ${await emailRes.text()}`);
+  }
+
+  const customerEmail = form.get('Customer email');
+  if (customerEmail) {
+    await sendCustomerWelcomeEmail(env, customerEmail, business, form.get('Account setup url'));
   }
 }
 
