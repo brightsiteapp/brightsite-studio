@@ -452,7 +452,9 @@ document.addEventListener('DOMContentLoaded', () => {
     addPill(1, bizTagline.value);
     qaProgress.classList.add('started');
     setProgressStep(2);
-    goToSlide(qaSlideName, bizNameInput);
+    // Keep the question visible until the customer deliberately taps the
+    // name field; auto-focus made its prompt disappear immediately.
+    goToSlide(qaSlideName);
   }
   BUSINESS_TYPES.forEach(t => {
     const button = document.createElement('button');
