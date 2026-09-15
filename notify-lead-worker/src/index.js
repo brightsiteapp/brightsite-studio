@@ -162,6 +162,67 @@ async function handlePortalSession(body, env, cors) {
   return Response.json({ url: session.url }, { headers: cors });
 }
 
+// Our own cancellation reasons, since Stripe's Billing Portal survey only
+// offers its fixed enum (see BrightSite Studio's ensureCancellationSurvey).
+// Each maps to the closest Stripe `cancellation_details[feedback]` value —
+// the full label plus the customer's own comment goes in `comment` instead,
+// which is free text, so nothing customer-facing is actually lost.
+const CANCEL_REASONS = {
+  too_expensive: { label: 'Too expensive', feedback: 'too_expensive' },
+  missing_features: { label: 'Missing a feature I need', feedback: 'missing_features' },
+  closing_business: { label: 'Closing my business', feedback: 'other' },
+  changing_developer: { label: 'Changing developer / moving my site elsewhere', feedback: 'switched_service' },
+  unused: { label: 'Not using it enough', feedback: 'unused' },
+  customer_service: { label: 'Poor support experience', feedback: 'customer_service' },
+  too_complex: { label: 'Too complicated to manage', feedback: 'too_complex' },
+  other: { label: 'Other', feedback: 'other' },
+};
+
+// account/dashboard.html's own "Cancel my plan" flow — replaces sending the
+// customer through Stripe's Billing Portal cancel survey so we can offer
+// reasons that actually fit (closing the business, changing developer),
+// plus an optional request for their website files. Cancels at the end of
+// the current billing period (no refund questions), same as a customer
+// cancelling any other way. The existing Stripe webhook already emails
+// brightsiteapp@gmail.com and queues a Studio task off cancellation_details,
+// so this handler just needs to set that field correctly.
+async function handleCancelSubscription(body, env, cors) {
+  const { access_token, reason, comment, wantsFiles } = body || {};
+  if (!access_token) return Response.json({ error: 'Not signed in.' }, { status: 401, headers: cors });
+
+  const userRes = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+    headers: { apikey: env.SUPABASE_ANON_KEY, Authorization: `Bearer ${access_token}` },
+  });
+  if (!userRes.ok) return Response.json({ error: 'Your session has expired — log in again.' }, { status: 401, headers: cors });
+  const user = await userRes.json();
+  if (!user.email) return Response.json({ error: 'No email on this account.' }, { status: 400, headers: cors });
+
+  const customers = await stripeCall(env, `customers?email=${encodeURIComponent(user.email)}&limit=1`);
+  const customerId = customers.data?.[0]?.id;
+  if (!customerId) {
+    return Response.json({ error: 'We don’t have a billing record for this email yet — contact us to sort out your plan.' }, { status: 404, headers: cors });
+  }
+
+  const subs = await stripeCall(env, `subscriptions?customer=${customerId}&status=active&limit=1`);
+  const subscription = subs.data?.[0];
+  if (!subscription) {
+    return Response.json({ error: 'No active subscription found on this account.' }, { status: 404, headers: cors });
+  }
+
+  const known = CANCEL_REASONS[reason] || CANCEL_REASONS.other;
+  const parts = [known.label];
+  if (comment) parts.push(comment);
+  if (wantsFiles) parts.push('Requested a copy of their website files.');
+
+  await stripeCall(env, `subscriptions/${subscription.id}`, {
+    cancel_at_period_end: 'true',
+    'cancellation_details[feedback]': known.feedback,
+    'cancellation_details[comment]': parts.join(' — '),
+  });
+
+  return Response.json({ ok: true }, { headers: cors });
+}
+
 async function stripeCall(env, endpoint, params) {
   if (!env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY not configured');
   const res = await fetch(`https://api.stripe.com/v1/${endpoint}`, {
@@ -175,6 +236,75 @@ async function stripeCall(env, endpoint, params) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error?.message || `Stripe error ${res.status}`);
   return data;
+}
+
+function hex(bytes) {
+  return [...new Uint8Array(bytes)].map(byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function sameSignature(actual, expected) {
+  if (actual.length !== expected.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < actual.length; i += 1) mismatch |= actual.charCodeAt(i) ^ expected.charCodeAt(i);
+  return mismatch === 0;
+}
+
+// Stripe signs the exact raw request body. Verify it before parsing so this
+// public endpoint cannot be used to trigger cancellation emails.
+async function verifyStripeSignature(rawBody, signature, secret) {
+  if (!signature || !secret) return false;
+  const parts = signature.split(',').map(part => part.split('='));
+  const timestamp = parts.find(([key]) => key === 't')?.[1];
+  const signatures = parts.filter(([key]) => key === 'v1').map(([, value]) => value);
+  if (!timestamp || !signatures.length || Math.abs(Date.now() / 1000 - Number(timestamp)) > 300) return false;
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  const digest = hex(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${timestamp}.${rawBody}`)));
+  return signatures.some(candidate => sameSignature(candidate, digest));
+}
+
+async function sendCancellationEmail(env, subscription) {
+  const customer = typeof subscription.customer === 'string'
+    ? await stripeCall(env, `customers/${subscription.customer}`)
+    : subscription.customer;
+  const business = subscription.metadata?.brightsite_slug || 'a BrightSite customer';
+  const details = subscription.cancellation_details || {};
+  const ending = subscription.cancel_at_period_end
+    ? `at the end of the current billing period${subscription.cancel_at ? ` (${new Date(subscription.cancel_at * 1000).toLocaleDateString('en-GB')})` : ''}`
+    : 'immediately';
+  const reason = details.reason ? details.reason.replace(/_/g, ' ') : 'No reason supplied';
+  const text = [
+    `${business} has cancelled their Stripe subscription ${ending}.`,
+    `Customer: ${customer?.email || 'Unknown email'}`,
+    `Reason: ${reason}`,
+    details.comment ? `Comment: ${details.comment}` : '',
+    '',
+    'Studio will place this customer in the cancelled/payment-issue area on its next billing refresh.'
+  ].filter(Boolean).join('\n');
+  const emailRes = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.RESEND_API_KEY}` },
+    body: JSON.stringify({
+      from: 'BrightSite <leads@brightsite.app>',
+      to: ['brightsiteapp@gmail.com'],
+      subject: `Stripe cancellation: ${business}`,
+      text
+    })
+  });
+  if (!emailRes.ok) throw new Error(`Resend ${emailRes.status}: ${await emailRes.text()}`);
+}
+
+async function handleStripeWebhook(req, env) {
+  const rawBody = await req.text();
+  const valid = await verifyStripeSignature(rawBody, req.headers.get('Stripe-Signature'), env.STRIPE_WEBHOOK_SECRET);
+  if (!valid) return Response.json({ error: 'Invalid Stripe signature.' }, { status: 400 });
+  const event = JSON.parse(rawBody);
+  const subscription = event.data?.object;
+  const cancelling = event.type === 'customer.subscription.deleted'
+    || (event.type === 'customer.subscription.updated' && subscription?.cancel_at_period_end);
+  if (cancelling && subscription) await sendCancellationEmail(env, subscription);
+  return Response.json({ received: true });
 }
 
 export default {
@@ -191,6 +321,15 @@ export default {
       return Response.json({ error: 'Method not allowed' }, { status: 405, headers: cors });
     }
 
+    if (url.pathname === '/stripe-webhook') {
+      try {
+        return await handleStripeWebhook(req, env);
+      } catch (error) {
+        console.error('stripe webhook failed:', error);
+        return Response.json({ error: 'Could not process Stripe webhook.' }, { status: 500 });
+      }
+    }
+
     if (url.pathname === '/billing-portal') {
       try {
         let body;
@@ -203,6 +342,21 @@ export default {
       } catch (error) {
         console.error('billing-portal failed:', error);
         return Response.json({ error: 'Couldn’t open billing — please try again.' }, { status: 502, headers: cors });
+      }
+    }
+
+    if (url.pathname === '/cancel-subscription') {
+      try {
+        let body;
+        try {
+          body = await req.json();
+        } catch {
+          body = {};
+        }
+        return await handleCancelSubscription(body, env, cors);
+      } catch (error) {
+        console.error('cancel-subscription failed:', error);
+        return Response.json({ error: error.message || 'Couldn’t cancel your plan — please try again.' }, { status: 502, headers: cors });
       }
     }
 

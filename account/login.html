@@ -312,6 +312,9 @@
         if (isSignup && nameParam) {
           localStorage.setItem('bs_pending_business_name', nameParam);
         }
+        if (isSignup && typeParam) {
+          localStorage.setItem('bs_pending_business_type', typeParam);
+        }
         if (slugParam) localStorage.setItem('bs_pending_slug', slugParam);
         if (typeParam) localStorage.setItem('bs_pending_business_type', typeParam);
         showStatus('Success — redirecting…', 'ok');

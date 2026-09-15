@@ -157,14 +157,15 @@ async function runHomepageFlow(label, contextOptions, mobile) {
 
   await activate(page.locator('[data-tool="layout"]'));
   await page.locator('[data-layout-select]').waitFor();
-  assert.equal(await page.locator('[data-layout-select] option').count(), 3, `${label}: template picker should offer the three reference-led templates`);
+  assert.equal(await page.locator('[data-layout-select] option').count(), 13, `${label}: template picker should offer the full template catalogue`);
+  assert.equal(await page.locator('[data-layout-select] option[value="torque"]').count(), 1, `${label}: trades template should be available`);
   const previewBeforeLayout = await page.locator('#previewFrame').getAttribute('srcdoc');
-  await page.locator('[data-layout-select]').selectOption('electric');
+  await page.locator('[data-layout-select]').selectOption('torque');
   await page.waitForFunction((before) => (
     document.querySelector('#previewFrame').getAttribute('srcdoc') !== before
   ), previewBeforeLayout);
   await activate(page.locator('[data-tool="layout"]'));
-  assert.equal(await page.locator('[data-layout-select]').inputValue(), 'electric', `${label}: choosing a template should retain it`);
+  assert.equal(await page.locator('[data-layout-select]').inputValue(), 'torque', `${label}: choosing a template should retain it`);
   await activate(page.locator('[data-tool="layout"]'));
 
   await activate(page.locator('[data-tool="colour"]'));

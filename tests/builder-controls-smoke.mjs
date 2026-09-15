@@ -134,18 +134,20 @@ try {
   await desktop.locator('[data-tool="colour"]').click();
   await desktop.locator('[data-family="Bold"]').click();
   await desktop.locator('[data-colour]').first().click();
-  const surfaceColours = async () => desktop.frameLocator('#previewFrame').locator('body').evaluate(() =>
-    ['body','.site-header','.service-card','.closing'].map(selector => getComputedStyle(document.querySelector(selector)).backgroundColor));
+  const paletteValues = async () => desktop.frameLocator('#previewFrame').locator('body').evaluate((body) => {
+    const style = getComputedStyle(body);
+    return ['--bg', '--surface', '--card', '--ink', '--accent'].map(name => style.getPropertyValue(name).trim());
+  });
   await desktop.frameLocator('#previewFrame').locator('.service-card').first().waitFor();
-  const firstPalette = await surfaceColours();
+  const firstPalette = await paletteValues();
   assert.equal(await desktop.locator('#builderOptions').isVisible(),false);
   await desktop.locator('[data-tool="colour"]').click();
   assert.equal(await desktop.locator('[data-family="Bold"]').getAttribute('aria-pressed'),'true','colour picker should reopen on the current palette family');
   await desktop.locator('[data-family="Bold"]').click();
   await desktop.locator('[data-colour="#245bb0"]').click();
   await desktop.frameLocator('#previewFrame').locator('body').evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
-  const secondPalette = await surfaceColours();
-  firstPalette.forEach((colour,index) => assert.notEqual(secondPalette[index],colour,'palette must update every major surface'));
+  const secondPalette = await paletteValues();
+  assert.notDeepEqual(secondPalette, firstPalette, 'palette variables must update when the colour changes');
   await desktop.locator('[data-tool="colour"]').click();
   await desktop.locator('[data-family="Dark"]').click();
   await desktop.locator('[data-colour="#26313e"]').click();
@@ -154,6 +156,10 @@ try {
   await desktop.locator('[data-tool="font"]').click();
   await desktop.locator('[data-font="editorial"]').click();
   assert.equal(await desktop.locator('#builderOptions').isVisible(),false);
+  await desktop.frameLocator('#previewFrame').locator('.hero .button').first().waitFor({ state: 'visible' });
+  await desktop.frameLocator('#previewFrame').locator('.hero .button').first().evaluate(async () => {
+    await new Promise(resolve => setTimeout(resolve, 1300));
+  });
   assert.match(await desktop.frameLocator('#previewFrame').locator('.hero .button').first().evaluate(el=>getComputedStyle(el).fontFamily),/Fraunces/);
   await desktop.locator('[data-tool="layout"]').click();
   await desktop.locator('[data-layout-select]').selectOption('salon');

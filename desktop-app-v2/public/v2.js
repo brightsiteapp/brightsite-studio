@@ -1456,6 +1456,7 @@
     ['cancelled', 'Cancelled']
   ];
   let accountsCache = null;
+  let accountsRefreshInFlight = null;
   let accountStatusFilter = 'all';
   function accountProject(a) {
     const slug = a.sites[0]?.slug;
@@ -1476,11 +1477,7 @@
     if (!accountsCache) {
       mount.innerHTML = '<p class="v2-empty v2-empty-big">Loading accounts…</p>';
       filtersEl.innerHTML = '';
-      try {
-        accountsCache = await (await fetch('/api/accounts')).json();
-      } catch {
-        accountsCache = { enabled: false, accounts: [] };
-      }
+      await refreshAccounts();
     }
     if (v2.view !== 'accounts') return;
     if (!accountsCache.enabled) {
@@ -1513,6 +1510,27 @@
         <div class="v2-task-list">${groups.get(k).map(accountRow).join('')}</div>
       </div>`).join('');
   }
+  // Customer signups happen outside Studio. Poll only while this view is
+  // open so a new login (and its server-created lead) appears without a
+  // manual reload, while avoiding needless Supabase admin reads elsewhere.
+  async function refreshAccounts() {
+    if (accountsRefreshInFlight) return accountsRefreshInFlight;
+    accountsRefreshInFlight = (async () => {
+      try {
+        accountsCache = await (await fetch('/api/accounts')).json();
+      } catch {
+        accountsCache = { enabled: false, accounts: [] };
+      } finally {
+        accountsRefreshInFlight = null;
+      }
+    })();
+    return accountsRefreshInFlight;
+  }
+  setInterval(async () => {
+    if (v2.view !== 'accounts') return;
+    await refreshAccounts();
+    if (v2.view === 'accounts') render();
+  }, 15 * 1000);
   function accountRow(a) {
     const sites = a.sites.length
       ? a.sites.map(s => `<button type="button" class="v2-task-biz" data-biz="${esc(s.slug)}">${esc(s.name || s.slug)}</button>`).join(' ')

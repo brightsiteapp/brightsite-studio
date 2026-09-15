@@ -3,8 +3,9 @@ main = "src/index.js"
 compatibility_date = "2024-01-01"
 
 # Non-secret config for the /billing-portal endpoint (account/dashboard.html's
-# "Manage billing"). RESEND_API_KEY and STRIPE_SECRET_KEY are real secrets —
-# set those with `wrangler secret put <NAME>`, never here.
+# "Manage billing"). RESEND_API_KEY, STRIPE_SECRET_KEY and
+# STRIPE_WEBHOOK_SECRET are real secrets — set them with
+# `wrangler secret put <NAME>`, never here.
 [vars]
 SUPABASE_URL = "https://estqrftkrpqlrxnsltgw.supabase.co"
 SUPABASE_ANON_KEY = "sb_publishable_MfwWqSIcsfVE6d5Q7jIxJA_V3Pyf2oP"

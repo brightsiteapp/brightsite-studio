@@ -426,6 +426,7 @@
 <script src="../template-designs.js"></script>
 <script src="../fresh-templates.js"></script>
 <script src="../demo-generator.js"></script>
+<script src="../hero-brand-compositor.js?v=20260915-1"></script>
 <script>
 (function(){
   var SUPABASE_URL = 'https://estqrftkrpqlrxnsltgw.supabase.co';
@@ -530,6 +531,7 @@
   var services = [];
   var reviewQuotes = [];
   var media = { logoImage: null, heroImage: null, gallery: [] };
+  var generatedHeroImage = null;
   var pendingUploads = { logo: null, hero: null, gallery: [] };
   var galleryRemoved = [];
   var isPaying = false;   // no billing check wired up yet — see Billing card
@@ -604,10 +606,11 @@
   // ---------------- live preview (the same renderer Studio/deploy uses) ----------------
   function currentRaw() {
     var base = (business && business.data && business.data.raw) || {};
+    var heroImage = generatedHeroImage || (isEditing ? mediaUrl(media.heroImage) : mediaUrl(base.heroImage)) || undefined;
     if (!isEditing) {
       return Object.assign({}, base, {
         logoImage: mediaUrl(base.logoImage) || undefined,
-        heroImage: mediaUrl(base.heroImage) || undefined,
+        heroImage: heroImage,
         gallery: Array.isArray(base.gallery) ? base.gallery.map(mediaUrl) : base.gallery
       });
     }
@@ -618,7 +621,7 @@
       address: document.getElementById('fAddress').value.trim(),
       hours: hoursToRawLines(hoursStructured),
       logoImage: mediaUrl(media.logoImage) || undefined,
-      heroImage: mediaUrl(media.heroImage) || undefined,
+      heroImage: heroImage,
       gallery: media.gallery.map(mediaUrl)
     }, servicesToRaw(services));
   }
@@ -639,6 +642,30 @@
     try { if (frame.contentWindow) lastScrollY = frame.contentWindow.scrollY; } catch (e) {}
     frame.classList.add('refreshing');
     try { frame.srcdoc = buildDemoHTML(currentRaw()); } catch (e) { frame.classList.remove('refreshing'); }
+  }
+
+  // Older accounts can have a saved stock hero. Replace it in the editor
+  // with the matching 3D category scene, carrying either the uploaded logo
+  // or the business-name lockup onto the scene (including the trades van).
+  function renderAccountHero() {
+    var raw = (business && business.data && business.data.raw) || {};
+    var category = raw.tagline || raw.type || params.get('type') || localStorage.getItem('bs_pending_business_type') || '';
+    if (!window.HeroBrandCompositor || !category) return;
+    var name = document.getElementById('fName').value.trim() || raw.name || business.name || '';
+    var location = document.getElementById('fAddress').value.trim() || raw.location || '';
+    var logo = media.logoImage || raw.logoImage;
+    HeroBrandCompositor.render({
+      category: category,
+      businessName: name,
+      location: location,
+      logo: logo ? mediaUrl(logo) : null,
+      output: 'dataURL'
+    }).then(function (image) {
+      generatedHeroImage = image;
+      renderPreview();
+    }).catch(function (error) {
+      console.error('Could not render branded account hero:', error);
+    });
   }
 
   document.getElementById('sitePreview').addEventListener('load', function () {
@@ -877,6 +904,7 @@
     renderGallery();
     renderPlanUI();
     renderPreview();
+    renderAccountHero();
     setEditing(openEditorAfterSetup);
     openEditorAfterSetup = false;
     updateSectionChecks();
