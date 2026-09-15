@@ -1334,5 +1334,18 @@ dialog .dns-table button { margin: 0; padding: 4px 10px; font-size: 12px; }
    side padding), with the next section's title sat just under it. */
 .section-divider { margin: 8px -18px 12px; padding: 14px 18px 0; border-top: 1px solid #d9d6ce; font-size: 12px; font-weight: 700; color: var(--ink); letter-spacing: 0.02em; text-transform: uppercase; }
 .editor-hint { margin: -4px 0 14px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.customer-details-grid { display: grid; grid-template-columns: 1fr 1.35fr; gap: 10px; margin-bottom: 12px; }
+.customer-detail-card { padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.customer-detail-label { display: block; margin-bottom: 12px; color: var(--accent); font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.customer-detail-card .field + .field { margin-top: 10px; }
+.customer-detail-card .name-row { grid-template-columns: 1fr; gap: 10px; }
+.customer-detail-card .phone-row { margin: 10px 0; }
+.customer-preview-status { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 14px; padding: 12px 13px; border: 1px solid #eadba9; border-radius: 12px; background: #fffaf0; }
+.customer-preview-status.is-sent { border-color: #b9e1ca; background: #f4fcf7; }
+.customer-preview-dot { width: 8px; height: 8px; margin-top: 5px; border-radius: 50%; background: #b87912; flex: none; }
+.customer-preview-status.is-sent .customer-preview-dot { background: #209653; }
+.customer-preview-status b { display: block; font-size: 12px; color: var(--ink); }
+.customer-preview-status small { display: block; margin-top: 3px; font-size: 11px; color: var(--muted); line-height: 1.4; }
+@media (max-width: 900px) { .customer-details-grid { grid-template-columns: 1fr; } }
 .sales-row { display: grid; grid-template-columns: 1fr 0.7fr 1.1fr; gap: 0 8px; }
 .sales-block textarea { min-height: 44px; }

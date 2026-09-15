@@ -1112,6 +1112,13 @@
   }
 
   // ---------------- Builder editor ----------------
+  function customerPreviewStatusHtml(project) {
+    const sent = Boolean(project?.liveUrl);
+    return `<div class="customer-preview-status ${sent ? 'is-sent' : ''}">
+      <span class="customer-preview-dot"></span>
+      <div><b>${sent ? 'Finished preview sent to customer' : 'Customer is seeing the outline preview'}</b><small>${sent ? 'Updates here can be published to their account at any time.' : 'Complete the website, then use Publish & send to customer.'}</small></div>
+    </div>`;
+  }
   function renderEditor() {
     document.querySelector('.layout').classList.toggle('no-project', !state.current);
     if (!state.current) return renderStartScreen();
@@ -1130,30 +1137,13 @@
 
       <div class="section-divider"><span>Customer website details</span></div>
       <p class="editor-hint">These are the same core details the customer sees in their Website tab. Keep them up to date here while you build their finished website.</p>
+      ${customerPreviewStatusHtml(state.current)}
 
-      <div class="form-grid name-row">
-        <div class="field"><label>Business name</label>
-          <input id="f_name" value="${escapeAttr(raw.name || '')}"></div>
-        <div class="field field-compact"><label>Category</label>
-          <select id="f_category">${categoryOptions(raw.tagline)}</select></div>
-        <div class="field"><label>Name</label>
-          <input id="f_contactName" placeholder="Contact’s name" value="${escapeAttr(state.current.contact?.name || '')}"></div>
-      </div>
-      <div class="phone-row">
-        <div class="field"><label>Phone</label>
-          <input id="f_phone" value="${escapeAttr(profile.phone || '')}"></div>
-        <button id="whatsappBtn" class="contact-btn whatsapp-btn" title="WhatsApp a welcome message" aria-label="Open WhatsApp">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.9-2-1-.3-.1-.5-.1-.6.1-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.3-.4.1-.2 0-.3 0-.5s-.6-1.5-.9-2c-.2-.5-.5-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2.1 3.2 5 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.7-.7 2-1.4.2-.6.2-1.2.2-1.3-.1-.2-.3-.2-.6-.4z"/><path d="M12 2a10 10 0 0 0-8.5 15.2L2 22l4.9-1.5A10 10 0 1 0 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3 .9.9-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2z"/></svg>
-        </button>
-        <div class="field"><label>Email</label>
-          <input id="f_email" type="email" value="${escapeAttr(state.current.contact?.email || '')}"></div>
-        <button id="emailBtn" class="contact-btn email-btn" title="Email a welcome message" aria-label="Send email">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg>
-        </button>
+      <div class="customer-details-grid">
+        <section class="customer-detail-card"><span class="customer-detail-label">01 · Identity</span><div class="form-grid name-row"><div class="field"><label>Business name</label><input id="f_name" value="${escapeAttr(raw.name || '')}"></div><div class="field field-compact"><label>Category</label><select id="f_category">${categoryOptions(raw.tagline)}</select></div></div></section>
+        <section class="customer-detail-card"><span class="customer-detail-label">02 · Contact</span><div class="field"><label>Contact name</label><input id="f_contactName" placeholder="Contact’s name" value="${escapeAttr(state.current.contact?.name || '')}"></div><div class="phone-row"><div class="field"><label>Phone</label><input id="f_phone" value="${escapeAttr(profile.phone || '')}"></div><button id="whatsappBtn" class="contact-btn whatsapp-btn" title="WhatsApp a welcome message" aria-label="Open WhatsApp">W</button><div class="field"><label>Email</label><input id="f_email" type="email" value="${escapeAttr(state.current.contact?.email || '')}"></div><button id="emailBtn" class="contact-btn email-btn" title="Send email" aria-label="Send email">@</button></div><div class="field"><label>Location / address</label><input id="f_location" value="${escapeAttr(profile.address || raw.location || '')}"></div></section>
       </div>
       <div class="demo-views" id="demoViews" hidden></div>
-      <div class="field"><label>Location / address</label>
-        <input id="f_location" value="${escapeAttr(profile.address || raw.location || '')}"></div>
 
       ${site ? '' : `<div class="media-row-3">
         ${mediaSlot('logo', 'Logo')}
