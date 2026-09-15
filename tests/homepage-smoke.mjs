@@ -121,7 +121,6 @@ async function runHomepageFlow(label, contextOptions, mobile) {
   assert.equal(await nameInput.inputValue(), 'BrightSite Test Studio', `${label}: name should stay typed`);
 
   await activate(page.locator('#qaNameGo'));
-  await page.locator('#qaBox.qa-advancing').waitFor();
   await page.locator('#qaSlideType.qa-active').waitFor();
   await page.locator('#qaTypeGrid .qa-type-choice').first().waitFor();
   await page.locator('#qaSlideName[hidden]').waitFor({ state: 'attached' });

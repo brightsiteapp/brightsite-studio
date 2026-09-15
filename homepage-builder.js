@@ -427,12 +427,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!name) return;
     bizNameInput.value = name;
 
-    animateAdvance(() => {
-      addPill(1, name);
-      qaProgress.classList.add('started');
-      setProgressStep(2);
-      goToSlide(qaSlideType);
-    });
+    addPill(1, name);
+    qaProgress.classList.add('started');
+    setProgressStep(2);
+    goToSlide(qaSlideType);
   });
 
   function finishType() {
@@ -448,11 +446,9 @@ document.addEventListener('DOMContentLoaded', () => {
     heroMatchedTones = null;
     hasManualPalette = false;
     uploadedHeroImage = null;
-    animateAdvance(() => {
-      addPill(2, bizTagline.value);
-      setProgressStep(3);
-      goToSlide(qaSlideLocation);
-    });
+    addPill(2, bizTagline.value);
+    setProgressStep(3);
+    goToSlide(qaSlideLocation);
   }
   BUSINESS_TYPES.forEach(t => {
     const button = document.createElement('button');
@@ -713,11 +709,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const loc = formatBusinessName(bizLocation.value);
     if (!loc) return;
     bizLocation.value = loc;
-    animateAdvance(() => {
-      addPill(3, loc);
-      setProgressStep(4);
-      goToSlide(qaSlideEmail, bizEmail);
-    });
+    addPill(3, loc);
+    setProgressStep(4);
+    goToSlide(qaSlideEmail, bizEmail);
   }
 
   function buildAccountSetupUrl(name, email) {
@@ -1044,7 +1038,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <button type="button" data-mobile-swipe="layout" aria-label="Swipe left or right to change template"></button>
     </div>
     <div class="mobile-builder-bottom">
-      <button type="button" class="mobile-submit" aria-expanded="false">Submit to designer</button>
+      <button type="button" class="mobile-submit" aria-expanded="false">Send my brief</button>
       <button type="button" class="mobile-edit" aria-pressed="false"><span>✦</span><b>Edit</b></button>
     </div>`;
   builderOverlay.append(mobileActions);
