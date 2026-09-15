@@ -638,7 +638,7 @@
     const currentHtml = el.preview.dataset.lastHtml;
     const needsUpdate = Boolean(liveUrl) && currentHtml !== state.current?.deployedHtml;
     const waiting = isDeployPending(state.current);
-    el.deployBtn.textContent = waiting ? 'Waiting to go live…' : !liveUrl ? 'Make live' : needsUpdate ? 'Update live site' : 'Open live site';
+    el.deployBtn.textContent = waiting ? 'Waiting to publish…' : !liveUrl ? 'Publish & send to customer' : needsUpdate ? 'Update customer website' : 'Open live site';
     el.deployBtn.title = waiting ? 'Publishes automatically from the admin’s computer' : (state.current?.deployError ? `Last attempt failed: ${state.current.deployError}` : '');
     el.deployBtn.classList.remove('status-not-live', 'status-deploying', 'status-live', 'status-needs-update');
     el.deployBtn.classList.add(waiting ? 'status-deploying' : !liveUrl ? 'status-not-live' : needsUpdate ? 'status-needs-update' : 'status-live');
@@ -1127,6 +1127,9 @@
         <button id="importBtn">${state.current.lastImportUrl ? 'Re-fetch' : 'Fetch'}</button>
       </div>`}
       <div class="import-status" id="importStatus"></div>
+
+      <div class="section-divider"><span>Customer website details</span></div>
+      <p class="editor-hint">These are the same core details the customer sees in their Website tab. Keep them up to date here while you build their finished website.</p>
 
       <div class="form-grid name-row">
         <div class="field"><label>Business name</label>

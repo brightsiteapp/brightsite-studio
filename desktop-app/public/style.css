@@ -1333,5 +1333,6 @@ dialog .dns-table button { margin: 0; padding: 4px 10px; font-size: 12px; }
 /* Full-bleed rule across the whole form column (cancels .editor's 18px
    side padding), with the next section's title sat just under it. */
 .section-divider { margin: 8px -18px 12px; padding: 14px 18px 0; border-top: 1px solid #d9d6ce; font-size: 12px; font-weight: 700; color: var(--ink); letter-spacing: 0.02em; text-transform: uppercase; }
+.editor-hint { margin: -4px 0 14px; color: var(--muted); font-size: 12px; line-height: 1.5; }
 .sales-row { display: grid; grid-template-columns: 1fr 0.7fr 1.1fr; gap: 0 8px; }
 .sales-block textarea { min-height: 44px; }
