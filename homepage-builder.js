@@ -410,11 +410,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const goBackByStep = { 1: goBackToType, 2: goBackToName, 3: goBackToEmail };
 
   function addPill(step, text) {
-    const pill = document.createElement('div');
+    const pill = document.createElement('button');
+    pill.type = 'button';
     pill.className = 'qa-pill';
+    pill.setAttribute('aria-label', `Edit ${text}`);
+    pill.title = 'Click to edit this answer';
     pill.innerHTML = '<span class="qa-pill-check">✓</span><span class="qa-pill-text"></span>';
     pill.querySelector('.qa-pill-text').textContent = text;
-    pill.addEventListener('click', () => goBackByStep[step]());
+    pill.addEventListener('click', () => {
+      if (!qaIsAnimating) goBackByStep[step]?.();
+    });
     qaPills.appendChild(pill);
     pills[step] = pill;
   }

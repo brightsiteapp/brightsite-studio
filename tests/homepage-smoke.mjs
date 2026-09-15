@@ -114,6 +114,10 @@ async function runHomepageFlow(label, contextOptions, mobile) {
   await page.locator('#qaSlideType.qa-active').waitFor();
   await page.locator('#bizTagline').selectOption({ label: 'Hair & Beauty' });
   await page.locator('#qaSlideName.qa-active').waitFor();
+  await activate(page.locator('.qa-pill', { hasText: 'Hair & Beauty' }));
+  await page.locator('#qaSlideType.qa-active').waitFor();
+  await page.locator('#bizTagline').selectOption({ label: 'Hair & Beauty' });
+  await page.locator('#qaSlideName.qa-active').waitFor();
   const nameInput = page.locator('#bizName');
   await activate(nameInput);
   await nameInput.pressSequentially('BrightSite Test Studio', { delay: 20 });
