@@ -781,6 +781,7 @@
   function createSetupBusiness() {
     var name = document.getElementById('setupName').value.trim();
     var chosenSlug = slugify(document.getElementById('setupSlug').value || name);
+    var pendingType = params.get('type') || localStorage.getItem('bs_pending_business_type') || 'Professional Services';
     var statusEl = document.getElementById('setupStatus');
     if (!name || !chosenSlug) {
       statusEl.textContent = 'Enter a business name and web address.';
@@ -807,7 +808,7 @@
             return res.json();
           });
         }
-        var record = { slug: chosenSlug, name: name, raw: { name: name, email: session.email || '', services: [], gallery: [] }, updatedAt: new Date().toISOString() };
+        var record = { slug: chosenSlug, name: name, raw: { name: name, email: session.email || '', tagline: pendingType, services: [], gallery: [] }, updatedAt: new Date().toISOString() };
         return fetch(SUPABASE_URL + '/rest/v1/businesses', {
           method: 'POST',
           headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation,resolution=merge-duplicates' }),

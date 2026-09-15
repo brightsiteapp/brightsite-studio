@@ -443,7 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Use the category as a fallback until the completed hero is sampled.
     const firstColour = (COLOURS_BY_TYPE[bizTagline.value] || COLOURS_BY_TYPE.Other)[0];
     selectedTones = tonesFromHex(firstColour);
-    selectedLayout = bizTagline.value === 'Fitness' ? 'studio' : null;
+    selectedLayout = demoLayoutForCategory(info?.cat);
     selectedFont = null;
     selectedPaletteName = bizTagline.value === 'Fitness' ? 'Ink' : null;
     heroMatchedTones = null;
@@ -751,6 +751,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams({ slug: previewSlug, signup: '1', flow: '2' });
     if (email) params.set('email', email);
     if (name) params.set('name', name);
+    if (bizTagline.value) params.set('type', bizTagline.value);
     return `${location.origin}/account/login.html?${params.toString()}`;
   }
 
@@ -1015,8 +1016,7 @@ document.addEventListener('DOMContentLoaded', () => {
   controls.innerHTML = `<div class="builder-options" id="builderOptions" hidden></div>
     <button type="button" class="builder-primary" data-tool="send" aria-label="Send to designer" aria-expanded="false"><span>Send To Designer</span>${messageIcon}</button>
     <button type="button" class="glass-circle" data-tool="colour" aria-label="Choose colours" aria-expanded="false"><span class="palette-orb"></span></button>
-    <button type="button" class="glass-circle" data-tool="font" aria-label="Choose fonts" aria-expanded="false"><span class="font-orb">Aa</span></button>
-    <button type="button" class="glass-circle" data-tool="layout" aria-label="Choose layout" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 10h18M12 10v11"/></svg></button>`;
+    <button type="button" class="glass-circle" data-tool="font" aria-label="Choose fonts" aria-expanded="false"><span class="font-orb">Aa</span></button>`;
   builderBarWrap.append(controls);
   // Account creation and add-on questions only make sense once someone is
   // about to send their details, so they live inside the send popup rather
@@ -1032,12 +1032,10 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="mobile-swipe-rail" aria-label="Website style controls" aria-hidden="true" inert>
       <button type="button" data-mobile-swipe="font" aria-label="Swipe to change font"><div class="swipe-dots" data-dots="font"></div><span>F<br>O<br>N<br>T</span></button>
       <button type="button" data-mobile-swipe="colour" aria-label="Swipe to change colour"><div class="swipe-dots" data-dots="colour"></div><span>C<br>O<br>L<br>O<br>U<br>R</span></button>
-      <button type="button" data-mobile-swipe="layout" aria-label="Swipe to change template"><div class="swipe-dots" data-dots="layout"></div><span>T<br>E<br>M<br>P<br>L<br>A<br>T<br>E</span></button>
     </div>
     <div class="mobile-swipe-zones" aria-label="Swipe the preview to change its style" hidden>
       <button type="button" data-mobile-swipe="font" aria-label="Swipe left or right to change font"></button>
       <button type="button" data-mobile-swipe="colour" aria-label="Swipe left or right to change colour"></button>
-      <button type="button" data-mobile-swipe="layout" aria-label="Swipe left or right to change template"></button>
     </div>
     <div class="mobile-builder-bottom">
       <button type="button" class="mobile-submit" aria-expanded="false">Send my brief</button>
@@ -1098,13 +1096,9 @@ document.addEventListener('DOMContentLoaded', () => {
       updateSwipeIndicators();
       return;
     }
-    const category = typeInfo(bizTagline.value)?.cat;
-    const fallback = demoLayoutForCategory(category);
-    const current = DEMO_LAYOUTS.findIndex(item => item.id === (selectedLayout || fallback));
-    selectedLayout = DEMO_LAYOUTS[(current + direction + DEMO_LAYOUTS.length) % DEMO_LAYOUTS.length].id;
-    refreshPreview({ heroPending: true });
-    settleHeroRender();
-    updateSwipeIndicators();
+    // Templates are deliberately locked to the chosen business category.
+    // This keeps the preview coherent and preserves the matching 3D scene.
+    return;
   }
   // The branded hero image is a canvas render — far too heavy to redo on
   // every swipe step. Redraw it once the finger has settled instead.
@@ -1317,7 +1311,7 @@ Also interested in: ${extras.join(', ')}` : ''}`;
     const category = typeInfo(bizTagline.value)?.cat;
     const layoutId = selectedLayout || demoLayoutForCategory(category);
     const layout = DEMO_LAYOUTS.find(item => item.id === layoutId);
-    const fallbackFontByLayout = {salon:'Space Grotesk',garden:'Fraunces',electric:'Archivo'};
+    const fallbackFontByLayout = {minimal:'Manrope',soft:'Manrope',serene:'Cormorant Garamond',organic:'Manrope',editorial:'Fraunces',bold:'Cormorant Garamond',luxe:'Cormorant Garamond',kinetic:'Lora',index:'Manrope',studio:'Bebas Neue'};
     const chosenFont = DEMO_FONTS.find(item => item.id === selectedFont);
     const fontFamily = chosenFont?.family || layout?.font || fallbackFontByLayout[layoutId] || 'Manrope';
     const fontLabel = chosenFont ? `${chosenFont.name} (${chosenFont.family})` : fontFamily;
@@ -1364,10 +1358,10 @@ Also interested in: ${extras.join(', ')}` : ''}`;
     } else {
       const category = typeInfo(bizTagline.value);
       const recommended = demoLayoutForCategory(category?.cat);
-      const current = selectedLayout || recommended;
-      const template = DEMO_LAYOUTS.find(item => item.id === current) || DEMO_LAYOUTS[0];
+      selectedLayout = recommended;
+      const template = DEMO_LAYOUTS.find(item => item.id === recommended) || DEMO_LAYOUTS[0];
       const categoryName = category?.label || 'your business';
-      options.innerHTML = `<h2 class="builder-options-title">Your template</h2><div class="template-current"><span>Best match for ${categoryName}</span><strong>${template.name}</strong><small>${current === recommended ? 'Recommended for this type of business' : 'Your chosen template'}</small></div><label class="template-select-label" for="templateSelect">Change template</label><select id="templateSelect" data-layout-select aria-label="Change website template">${DEMO_LAYOUTS.map(l => `<option value="${l.id}" ${l.id === current ? 'selected' : ''}>${l.name} — ${l.detail}</option>`).join('')}</select>`;
+      options.innerHTML = `<h2 class="builder-options-title">Your template</h2><div class="template-current"><span>Matched to ${categoryName}</span><strong>${template.name}</strong><small>Selected automatically for your business type</small></div>`;
     }
   }
   function openTool(tool) {
@@ -1418,13 +1412,7 @@ Also interested in: ${extras.join(', ')}` : ''}`;
     }
   });
   controls.addEventListener('change', async event => {
-    const select = event.target.closest('[data-layout-select]');
-    if (!select) return;
-    selectedLayout = select.value;
-    closeOptions();
-    refreshPreview();
-    await rerenderPersonalisedHero({ appearanceOnly: true, refreshSite: false });
-    controls.querySelector('[data-tool="layout"]')?.focus();
+    return;
   });
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape' && activeTool) {
