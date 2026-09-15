@@ -294,6 +294,7 @@
           <button type="button" class="sec-btn" data-section="hours"><span class="sec-title"><span class="section-tick"></span>Opening hours</span><span class="chev">&#8250;</span></button>
           <button type="button" class="sec-btn" data-section="address"><span class="sec-title"><span class="section-tick"></span>Location / address</span><span class="chev">&#8250;</span></button>
           <button type="button" class="sec-btn" data-section="prices"><span class="sec-title"><span class="section-tick"></span>Prices &amp; timetable</span><span class="chev">&#8250;</span></button>
+          <button type="button" class="sec-btn" data-section="reviews"><span class="sec-title"><span class="section-tick"></span>Reviews</span><span class="chev">&#8250;</span></button>
           <button type="button" class="sec-btn" data-section="media"><span class="sec-title"><span class="section-tick"></span>Media</span><span class="chev">&#8250;</span></button>
           <p class="builder-guidance" id="builderGuidance">Fill these in to help your designer create your preview.</p>
         </div>
@@ -351,6 +352,14 @@
           <div class="gallery-counter" id="galleryCounter">0 / 20 photos</div>
           <div class="gallery-grid" id="galleryGrid"></div>
           <label class="media-btn" id="galleryAddWrap">Add photos<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="galleryInput" hidden multiple></label>
+        </div>
+
+        <div class="builder-section" data-section-panel="reviews" hidden>
+          <div class="section-head"><button type="button" class="section-back" data-back>&#8249; Edit your website</button></div>
+          <h3>Reviews</h3>
+          <p class="info-hint" style="margin-bottom:14px">Add a few customer quotes yourself, or link us to your Google or Trustpilot reviews.</p>
+          <div class="acct-field"><label for="fReviews">Customer review quotes</label><textarea id="fReviews" placeholder="“Brilliant service — I’d highly recommend them.” — Sarah, Beverley&#10;&#10;Add one review per line or paste a few here."></textarea></div>
+          <div class="acct-field"><label for="fReviewLink">Google or Trustpilot review link</label><input type="url" id="fReviewLink" placeholder="https://www.google.com/... or trustpilot.com/review/..."></div>
         </div>
 
       </div>
@@ -520,7 +529,7 @@
   var activeSection = null; // which builder section (if any) is drilled into
   var hoursStructured = defaultHours();
   var DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  var SECTION_PAGE = { name: 'home', media: 'home', contact: 'contact', hours: 'contact', address: 'contact', prices: 'services' };
+  var SECTION_PAGE = { name: 'home', media: 'home', reviews: 'home', contact: 'contact', hours: 'contact', address: 'contact', prices: 'services' };
 
   function defaultHours() {
     return ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(function (day, i) {
@@ -830,6 +839,8 @@
     document.getElementById('fPhone').value = raw.phone || '';
     document.getElementById('fEmail2').value = raw.email || session.email || '';
     document.getElementById('fAddress').value = raw.address || '';
+    document.getElementById('fReviews').value = raw.reviews || '';
+    document.getElementById('fReviewLink').value = raw.reviewLink || '';
     document.getElementById('developerNote').value = raw.developerNote || '';
     hoursStructured = hoursFromRaw(raw);
 
@@ -851,6 +862,7 @@
       hours: hoursStructured.some(function (day) { return day.open && day.from && day.to; }),
       address: !!document.getElementById('fAddress').value.trim(),
       prices: services.some(function (group) { return group.items.some(function (item) { return item.name && item.name.trim(); }); }),
+      reviews: !!document.getElementById('fReviews').value.trim() || !!document.getElementById('fReviewLink').value.trim(),
       media: !!media.logoImage || !!media.heroImage || media.gallery.length > 0 || !!pendingUploads.logo || !!pendingUploads.hero || pendingUploads.gallery.length > 0
     };
     Object.keys(complete).forEach(function (section) {
@@ -963,7 +975,7 @@
   }
   document.getElementById('svcGroupAdd').addEventListener('click', function () { services.push({ name: '', items: [{ name: '', price: '', duration: '' }] }); renderServices(); scheduleRenderPreview(); scheduleAutoSave(); });
 
-  ['fName', 'fPhone', 'fEmail2', 'fAddress'].forEach(function (id) {
+  ['fName', 'fPhone', 'fEmail2', 'fAddress', 'fReviews', 'fReviewLink'].forEach(function (id) {
     document.getElementById(id).addEventListener('input', function () { scheduleRenderPreview(); scheduleAutoSave(); });
   });
 
@@ -1090,6 +1102,8 @@
         phone: document.getElementById('fPhone').value.trim(),
         email: document.getElementById('fEmail2').value.trim(),
         address: document.getElementById('fAddress').value.trim(),
+        reviews: document.getElementById('fReviews').value.trim(),
+        reviewLink: document.getElementById('fReviewLink').value.trim(),
         hours: hoursToRawLines(hoursStructured),
         hoursStructured: hoursStructured,
         logoImage: media.logoImage,
