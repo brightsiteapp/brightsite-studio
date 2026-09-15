@@ -538,6 +538,7 @@
   var openEditorAfterSetup = false;
   var activeSection = null; // which builder section (if any) is drilled into
   var hoursStructured = defaultHours();
+  var hoursEdited = false;
   var DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   var SECTION_PAGE = { name: 'home', media: 'home', reviews: 'home', contact: 'contact', hours: 'contact', address: 'contact', prices: 'services' };
 
@@ -853,6 +854,7 @@
     document.getElementById('fReviewLink').value = raw.reviewLink || '';
     document.getElementById('developerNote').value = raw.developerNote || '';
     hoursStructured = hoursFromRaw(raw);
+    hoursEdited = raw.hoursEdited === true;
 
     renderServices();
     renderReviewEntries();
@@ -870,7 +872,7 @@
     var complete = {
       name: !!document.getElementById('fName').value.trim(),
       contact: !!document.getElementById('fPhone').value.trim() && !!document.getElementById('fEmail2').value.trim(),
-      hours: hoursStructured.some(function (day) { return day.open && day.from && day.to; }),
+      hours: hoursEdited,
       address: !!document.getElementById('fAddress').value.trim(),
       prices: services.some(function (group) { return group.items.some(function (item) { return item.name && item.name.trim(); }); }),
       reviews: reviewQuotes.some(function (quote) { return quote.trim(); }) || !!document.getElementById('fReviewLink').value.trim(),
@@ -1017,6 +1019,7 @@
         var i = +cb.dataset.day;
         hoursStructured[i].open = cb.checked;
         if (cb.checked && !hoursStructured[i].from) { hoursStructured[i].from = '9:00am'; hoursStructured[i].to = '6:00pm'; }
+        hoursEdited = true;
         renderHours();
         scheduleRenderPreview(); scheduleAutoSave();
       });
@@ -1024,6 +1027,7 @@
     mount.querySelectorAll('[data-hf]').forEach(function (input) {
       input.addEventListener('input', function () {
         hoursStructured[+input.dataset.day][input.dataset.hf] = input.value;
+        hoursEdited = true;
         scheduleRenderPreview(); scheduleAutoSave();
       });
     });
@@ -1129,6 +1133,7 @@
         reviewLink: document.getElementById('fReviewLink').value.trim(),
         hours: hoursToRawLines(hoursStructured),
         hoursStructured: hoursStructured,
+        hoursEdited: hoursEdited,
         logoImage: media.logoImage,
         heroImage: media.heroImage,
         gallery: media.gallery
