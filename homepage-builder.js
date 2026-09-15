@@ -477,7 +477,7 @@ document.addEventListener('DOMContentLoaded', () => {
   (function animateTypeExamples() {
     const prompt = bizTagline.options[0];
     const examples = ['Hair salon', 'Plumber', 'Café', 'Trainer', 'Electrician', 'Beauty clinic'];
-    const prefix = 'What is your business? ';
+    const prefix = 'What’s your business? ';
     let exampleIndex = 0;
     let count = 0;
     let erasing = false;
