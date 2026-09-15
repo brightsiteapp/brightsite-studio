@@ -200,11 +200,6 @@
   .modal-send{background:var(--accent);border:0;color:#fff}
 
   /* ---------------- setup panel ---------------- */
-  #setupPanel{max-width:440px;margin:auto;padding:clamp(24px,4vw,34px);border:1px solid var(--line);border-radius:22px;background:var(--card);box-shadow:0 14px 32px rgba(23,32,31,.06);text-align:center}
-  #setupPanel h1{font-family:var(--display);font-size:22px;font-weight:600;margin-bottom:8px}
-  #setupPanel p.sub{color:var(--muted);font-size:14px;margin-bottom:18px;line-height:1.6}
-  #setupPanel .acct-field{text-align:left}
-  #setupBtn{width:100%;min-height:48px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;margin-top:8px}
 
   [hidden]{display:none!important}
 
@@ -263,22 +258,6 @@
   <button type="button" data-mobile-section="reviews">Reviews</button>
   <button type="button" data-mobile-section="media">Photos &amp; logo</button>
 </nav>
-
-<!-- Shown when the logged-in customer has no business row yet -->
-<div id="setupPanel" hidden>
-  <h1 id="setupTitle">Let's set up your website</h1>
-  <p class="sub" id="setupSub">Tell us your business name and the web address you'd like. Your designer will take it from here.</p>
-  <div class="acct-field">
-    <label for="setupSlug">Web address</label>
-    <input type="text" id="setupSlug" placeholder="e.g. willow-beauty-studio" autocomplete="off">
-  </div>
-  <div class="acct-field">
-    <label for="setupName">Business name</label>
-    <input type="text" id="setupName" placeholder="e.g. Willow Beauty Studio" autocomplete="organization">
-  </div>
-  <button id="setupBtn" type="button">Create my website</button>
-  <div class="acct-status" id="setupStatus" style="min-height:20px;margin-top:12px;font-size:13px;color:var(--muted)"></div>
-</div>
 
 <div id="appBody" class="app-body" hidden>
 
@@ -596,7 +575,6 @@
     return hours.map(function (d) { return d.day + ': ' + (d.open ? ((d.from || '?') + '–' + (d.to || '?')) : 'Closed'); });
   }
 
-  function setupPanel() { return document.getElementById('setupPanel'); }
   function appBody() { return document.getElementById('appBody'); }
 
   // ---------------- edit / view toggle ----------------
@@ -877,39 +855,27 @@
 
   function showSetup() {
     // The builder already supplied these details before account creation.
-    // Create the starter record quietly rather than asking the customer to
-    // repeat them on a second setup screen.
-    setupPanel().hidden = false;
-    appBody().hidden = true;
+    // Create the starter record quietly rather than showing a second setup
+    // screen. Customers should never need to re-enter these details here.
     openEditorAfterSetup = true;
-    var pendingName = params.get('name') || localStorage.getItem('bs_pending_business_name') || (session.email || '').split('@')[0];
-    var pendingSlug = params.get('slug') || localStorage.getItem('bs_pending_slug') || '';
-    document.getElementById('setupName').value = pendingName;
-    document.getElementById('setupSlug').value = pendingSlug;
-    document.getElementById('setupTitle').textContent = 'Finishing your account';
-    document.getElementById('setupSub').textContent = 'Creating your website workspace…';
-    document.getElementById('setupName').closest('.acct-field').hidden = true;
-    document.getElementById('setupSlug').closest('.acct-field').hidden = true;
-    document.getElementById('setupBtn').hidden = true;
-    createSetupBusiness();
+    createSetupBusiness(
+      params.get('name') || localStorage.getItem('bs_pending_business_name') || (session.email || '').split('@')[0],
+      params.get('slug') || localStorage.getItem('bs_pending_slug') || ''
+    );
   }
 
   function slugify(s) {
     return (s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
   }
 
-  function createSetupBusiness() {
-    var name = document.getElementById('setupName').value.trim();
-    var chosenSlug = slugify(document.getElementById('setupSlug').value || name);
+  function createSetupBusiness(pendingName, pendingSlug) {
+    var name = (pendingName || '').trim();
+    var chosenSlug = slugify(pendingSlug || name);
     var pendingType = params.get('type') || localStorage.getItem('bs_pending_business_type') || 'Professional Services';
-    var statusEl = document.getElementById('setupStatus');
     if (!name || !chosenSlug) {
-      statusEl.textContent = 'Enter a business name and web address.';
-      statusEl.style.color = '#b23b2c';
+      location.replace('../');
       return;
     }
-    statusEl.textContent = 'Creating…';
-    statusEl.style.color = '';
 
     fetch(SUPABASE_URL + '/rest/v1/businesses?select=*&id=eq.' + encodeURIComponent(chosenSlug), { headers: authHeaders() })
       .then(function (res) { return res.ok ? res.json() : []; })
@@ -946,23 +912,15 @@
         renderDashboard();
       })
       .catch(function (err) {
-        // Never leave someone on a blank page if their handoff details are
-        // unavailable or the chosen address is already claimed.
-        setupPanel().hidden = false;
-        document.getElementById('setupTitle').textContent = 'We need one detail';
-        document.getElementById('setupSub').textContent = 'Check your business name and web address, then try again.';
-        document.getElementById('setupName').closest('.acct-field').hidden = false;
-        document.getElementById('setupSlug').closest('.acct-field').hidden = false;
-        document.getElementById('setupBtn').hidden = false;
-        statusEl.textContent = /duplicate|already exists|23505/i.test(err.message) ? 'That web address is already taken — choose another.' : (err.message || 'Something went wrong.');
-        statusEl.style.color = '#b23b2c';
+        // Do not expose an unfinished setup page. The account can be retried
+        // from a fresh builder handoff after the database issue is resolved.
+        console.error('Could not create customer workspace:', err);
+        location.replace('../');
       });
   }
-  document.getElementById('setupBtn').addEventListener('click', createSetupBusiness);
 
   // ---------------- render ----------------
   function renderDashboard() {
-    setupPanel().hidden = true;
     document.getElementById('mobileViewTabs').hidden = false;
     appBody().hidden = false;
 
