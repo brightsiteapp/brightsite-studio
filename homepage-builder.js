@@ -278,6 +278,25 @@ document.addEventListener('DOMContentLoaded', () => {
   // paired arrow button (if any) fades in once there's something to submit.
   const qaNameGo = document.getElementById('qaNameGo');
   const qaTypeGo = document.getElementById('qaTypeGo');
+  const qaTypeGrid = document.getElementById('qaTypeGrid');
+  let qaIsAnimating = false;
+
+  function animateAdvance(next) {
+    if (qaIsAnimating) return;
+    qaIsAnimating = true;
+    qaBox.classList.add('qa-advancing');
+    // Keep the blue state long enough to read as a physical takeover, then
+    // swap the mounted question beneath it and reveal it as the blue recedes.
+    setTimeout(() => {
+      next();
+      qaBox.classList.remove('qa-advancing');
+      qaBox.classList.add('qa-revealing');
+      setTimeout(() => {
+        qaBox.classList.remove('qa-revealing');
+        qaIsAnimating = false;
+      }, 190);
+    }, 420);
+  }
   function wireField(field, input, goBtn) {
     const sync = () => {
       field.classList.toggle('qa-filled', !!input.value.trim());
@@ -334,6 +353,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (leaving !== activeSlide) leaving.hidden = true;
       }, 320);
     }
+    qaBox.classList.toggle('qa-grid', next === qaSlideType);
+    next.classList.toggle('qa-grid-open', next === qaSlideType);
     if (focusTarget) setTimeout(() => focusTarget.focus(), 260);
   }
 
@@ -373,7 +394,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function goBackToType() {
     collapseGenerated();
     removePillsFrom(2);
-    goToSlide(qaSlideType, bizTagline);
+    goToSlide(qaSlideType);
     setProgressStep(2);
   }
   function goBackToLocation() {
@@ -406,10 +427,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!name) return;
     bizNameInput.value = name;
 
-    addPill(1, name);
-    qaProgress.classList.add('started');
-    setProgressStep(2);
-    goToSlide(qaSlideType);
+    animateAdvance(() => {
+      addPill(1, name);
+      qaProgress.classList.add('started');
+      setProgressStep(2);
+      goToSlide(qaSlideType);
+    });
   });
 
   function finishType() {
@@ -425,12 +448,34 @@ document.addEventListener('DOMContentLoaded', () => {
     heroMatchedTones = null;
     hasManualPalette = false;
     uploadedHeroImage = null;
-    addPill(2, bizTagline.value);
-    setProgressStep(3);
-    goToSlide(qaSlideLocation);
+    animateAdvance(() => {
+      addPill(2, bizTagline.value);
+      setProgressStep(3);
+      goToSlide(qaSlideLocation);
+    });
   }
-  bizTagline.addEventListener('change', finishType);
+  BUSINESS_TYPES.forEach(t => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'qa-type-choice';
+    button.textContent = t.label;
+    button.setAttribute('role', 'option');
+    button.setAttribute('aria-selected', String(bizTagline.value === t.label));
+    button.addEventListener('click', () => {
+      if (qaIsAnimating) return;
+      bizTagline.value = t.label;
+      qaTypeGrid.querySelectorAll('.qa-type-choice').forEach(choice => choice.setAttribute('aria-selected', String(choice === button)));
+      finishType();
+    });
+    qaTypeGrid.appendChild(button);
+  });
+  bizTagline.addEventListener('change', () => { if (!qaIsAnimating) finishType(); });
   qaTypeGo.addEventListener('click', finishType);
+  document.querySelectorAll('[data-qa-back]').forEach(button => button.addEventListener('click', () => {
+    if (qaIsAnimating) return;
+    const previous = Number(button.dataset.qaBack);
+    [goBackToName, goBackToType, goBackToLocation][previous - 1]?.();
+  }));
 
   let isCreatingPreview = false;
   let enrichmentRun = 0;
@@ -668,9 +713,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const loc = formatBusinessName(bizLocation.value);
     if (!loc) return;
     bizLocation.value = loc;
-    addPill(3, loc);
-    setProgressStep(4);
-    goToSlide(qaSlideEmail, bizEmail);
+    animateAdvance(() => {
+      addPill(3, loc);
+      setProgressStep(4);
+      goToSlide(qaSlideEmail, bizEmail);
+    });
   }
 
   function buildAccountSetupUrl(name, email) {
@@ -692,6 +739,10 @@ document.addEventListener('DOMContentLoaded', () => {
     status.textContent = '';
     status.className = 'quick-lead-status';
 
+    animateAdvance(() => finishEmailAfterTransition(loc, email));
+  }
+
+  async function finishEmailAfterTransition(loc, email) {
     try {
       addPill(4, email);
       setProgressStep(5);
