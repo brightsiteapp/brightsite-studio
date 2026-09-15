@@ -828,12 +828,45 @@
     });
   }
 
+  // Converts the existing category composition into a restrained technical
+  // drawing. It runs after the name/logo has been placed, so every outline
+  // retains exactly the same branded position as the finished 3D hero.
+  function applyOutlineTreatment(ctx, width, height) {
+    const source = ctx.getImageData(0, 0, width, height);
+    const output = ctx.createImageData(width, height);
+    const input = source.data, pixels = output.data;
+    const luminance = new Float32Array(width * height);
+    for (let i = 0, p = 0; i < input.length; i += 4, p++) {
+      luminance[p] = input[i] * .2126 + input[i + 1] * .7152 + input[i + 2] * .0722;
+    }
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const p = y * width + x;
+        const left = luminance[y * width + Math.max(0, x - 1)];
+        const right = luminance[y * width + Math.min(width - 1, x + 1)];
+        const up = luminance[Math.max(0, y - 1) * width + x];
+        const down = luminance[Math.min(height - 1, y + 1) * width + x];
+        const edge = Math.min(255, Math.abs(right - left) + Math.abs(down - up));
+        const ink = edge > 36 ? Math.max(20, 255 - edge * 3.1) : 255;
+        const index = p * 4;
+        // Preserve a quiet BrightSite-blue trace where the original artwork
+        // was already distinctly blue; all other detail is charcoal ink.
+        const blue = input[index + 2] > input[index] * 1.16 && input[index + 2] > input[index + 1] * 1.05 && input[index + 2] > 115;
+        pixels[index] = blue && edge > 22 ? 47 : ink;
+        pixels[index + 1] = blue && edge > 22 ? 125 : ink;
+        pixels[index + 2] = blue && edge > 22 ? 237 : ink;
+        pixels[index + 3] = 255;
+      }
+    }
+    ctx.putImageData(output, 0, 0);
+  }
+
   async function render(options) {
     const settings = options || {};
     const key = sceneKey(settings.category);
     const scene = SCENES[key];
     const cacheable = !settings.heroImage && !settings.logo && (!settings.output || settings.output === 'dataURL');
-    const cacheKey = cacheable ? [key, settings.businessName, settings.location, settings.layout, settings.fontFamily, settings.width || 1600, settings.height || 900, settings.quality || .88].join('|') : null;
+    const cacheKey = cacheable ? [key, settings.businessName, settings.location, settings.layout, settings.fontFamily, settings.outline ? 'outline' : 'colour', settings.width || 1600, settings.height || 900, settings.quality || .88].join('|') : null;
     if (cacheKey && renderCache.has(cacheKey)) return renderCache.get(cacheKey);
     const heroSource = settings.heroImage || new URL(scene.image, assetBase).href;
     const hero = await loadImage(heroSource);
@@ -895,6 +928,8 @@
       });
     }
     ctx.restore();
+
+    if (settings.outline) applyOutlineTreatment(ctx, canvas.width, canvas.height);
 
     const output = settings.output || 'dataURL';
     const quality = Number.isFinite(settings.quality) ? settings.quality : .88;

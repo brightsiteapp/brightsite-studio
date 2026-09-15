@@ -64,7 +64,7 @@
   .blueprint-brand{font-size:15px;font-weight:800;letter-spacing:-.04em}.blueprint-brand i{display:inline-block;width:8px;height:8px;margin-right:6px;border-radius:50%;background:#2f7ded}.blueprint-tag{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#2f7ded}
   .blueprint-hero{display:grid;grid-template-columns:1fr minmax(240px,.78fr);gap:clamp(24px,5vw,70px);align-items:center;padding:clamp(38px,8vw,92px) 0;border-bottom:1px solid #1d252b}
   .blueprint-kicker{margin:0 0 10px;font-size:11px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:#2f7ded}.blueprint-title{margin:0;max-width:12ch;font-size:clamp(34px,5vw,72px);line-height:.95;letter-spacing:-.07em}.blueprint-copy{max-width:420px;margin:20px 0 0;font-size:14px;line-height:1.65;color:#59636a}.blueprint-details{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}.blueprint-details span{padding:7px 9px;border:1px solid #aeb6bb;font-size:11px;font-weight:700}
-  .blueprint-illustration{position:relative;min-height:240px;border:1.5px solid #1d252b;background:#f5f6f6;display:grid;place-items:center;overflow:hidden}.blueprint-illustration::after{content:'';position:absolute;inset:12px;border:1px dashed #9ca6ad}.blueprint-illustration svg{position:relative;z-index:1;width:74%;height:auto;fill:none;stroke:#1d252b;stroke-width:2}.blueprint-illustration text{fill:#2f7ded;stroke:none;font:700 13px Inter,sans-serif;letter-spacing:.04em}.blueprint-illustration .blue-fill{fill:#2f7ded;stroke:none}
+  .blueprint-illustration{position:relative;min-height:240px;border:1.5px solid #1d252b;background:#f5f6f6;display:grid;place-items:center;overflow:hidden}.blueprint-illustration::after{content:'';position:absolute;inset:12px;border:1px dashed #9ca6ad}.blueprint-illustration svg,.blueprint-illustration img{position:relative;z-index:1;width:100%;height:100%;object-fit:cover}.blueprint-illustration svg{width:74%;height:auto;fill:none;stroke:#1d252b;stroke-width:2}.blueprint-illustration text{fill:#2f7ded;stroke:none;font:700 13px Inter,sans-serif;letter-spacing:.04em}.blueprint-illustration .blue-fill{fill:#2f7ded;stroke:none}
   .blueprint-section{padding:30px 0;border-bottom:1px solid #1d252b}.blueprint-section h3{margin:0 0 16px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#2f7ded}.blueprint-services{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.blueprint-service{min-height:94px;padding:14px;border:1px solid #1d252b;background:#fff}.blueprint-service b{display:block;margin-bottom:14px;font-size:14px}.blueprint-line{height:7px;width:72%;background:#e5e8e9}.blueprint-line.short{width:45%;margin-top:8px}.blueprint-footer{display:flex;justify-content:space-between;gap:12px;padding-top:20px;font-size:12px;color:#59636a}
   .loading-screen{position:fixed;inset:0;z-index:100;background:#fff;overflow:auto;color:#1d252b}.loading-inner{width:min(1100px,calc(100% - 32px));margin:0 auto;padding:24px 0 42px}.loading-head{display:flex;align-items:center;justify-content:space-between;padding-bottom:18px;border-bottom:1px solid #d7dcdf}.loading-head img{height:22px}.loading-status{font-size:12px;font-weight:800;color:#2f7ded}.loading-grid{display:grid;grid-template-columns:1fr 280px;gap:28px;margin-top:28px}.loading-grid .blueprint-site{height:520px}.loading-steps{padding:20px;border:1px solid #d7dcdf;align-self:start}.loading-steps h1{margin:0 0 9px;font-size:22px;letter-spacing:-.05em}.loading-steps p{margin:0 0 20px;color:#69747b;font-size:13px;line-height:1.55}.loading-step{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-top:1px solid #e4e7e8;font-size:13px;font-weight:700}.loading-step i{width:18px;height:18px;border:1px solid #2f7ded;border-radius:50%;display:grid;place-items:center;color:#2f7ded;font-style:normal;font-size:11px;flex:none}.loading-step.is-current i{background:#2f7ded;color:#fff}
   .preview-device-toggle{display:flex;align-items:center;padding:3px;border:1px solid var(--line);border-radius:11px;background:#fff}
@@ -534,7 +534,7 @@
     var items = (raw.services || []).filter(Boolean).slice(0, 3);
     while (items.length < 3) items.push(['Your service', 'What you offer', 'Get in touch'][items.length]);
     return '<div class="blueprint-top"><div class="blueprint-brand"><i></i>' + escapeHTML(name) + '</div><span class="blueprint-tag">Website blueprint</span></div>' +
-      '<section class="blueprint-hero"><div><p class="blueprint-kicker">' + escapeHTML(category) + '</p><h2 class="blueprint-title">' + escapeHTML(name) + '</h2><p class="blueprint-copy">A clear, thoughtful website for the people looking for your business.</p><div class="blueprint-details"><span>' + escapeHTML(phone) + '</span><span>' + escapeHTML(address) + '</span></div></div><div class="blueprint-illustration">' + blueprintArt(category, name) + '</div></section>' +
+      '<section class="blueprint-hero"><div><p class="blueprint-kicker">' + escapeHTML(category) + '</p><h2 class="blueprint-title">' + escapeHTML(name) + '</h2><p class="blueprint-copy">A clear, thoughtful website for the people looking for your business.</p><div class="blueprint-details"><span>' + escapeHTML(phone) + '</span><span>' + escapeHTML(address) + '</span></div></div><div class="blueprint-illustration">' + (outlineHeroImage ? '<img src="' + escapeHTML(outlineHeroImage) + '" alt="' + escapeHTML(name) + ' outline hero">' : blueprintArt(category, name)) + '</div></section>' +
       '<section class="blueprint-section"><h3>What we do</h3><div class="blueprint-services">' + items.map(function (item) { return '<div class="blueprint-service"><b>' + escapeHTML(item) + '</b><div class="blueprint-line"></div><div class="blueprint-line short"></div></div>'; }).join('') + '</div></section><div class="blueprint-footer"><span>' + escapeHTML(name) + '</span><span>Built with BrightSite</span></div>';
   }
   function renderBlueprint(data) {
@@ -605,6 +605,7 @@
   var reviewQuotes = [];
   var media = { logoImage: null, heroImage: null, gallery: [] };
   var generatedHeroImage = null;
+  var outlineHeroImage = null;
   var pendingUploads = { logo: null, hero: null, gallery: [] };
   var galleryRemoved = [];
   var isPaying = false;   // no billing check wired up yet — see Billing card
@@ -772,10 +773,11 @@
       businessName: name,
       location: location,
       logo: logo ? mediaUrl(logo) : null,
+      outline: true,
       output: 'dataURL'
     }).then(function (image) {
-      generatedHeroImage = image;
-      renderPreview();
+      outlineHeroImage = image;
+      renderBlueprint(business);
     }).catch(function (error) {
       console.error('Could not render branded account hero:', error);
     });
