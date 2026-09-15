@@ -786,6 +786,7 @@
   .creating-list li::before{content:'✓';position:absolute;left:0;top:0;width:18px;height:18px;border:1px solid rgba(255,255,255,.38);border-radius:50%;display:grid;place-items:center;font-size:11px;color:transparent}
   .creating-list li.is-visible{opacity:1;transform:none;color:rgba(255,255,255,.94)}
   .creating-list li.is-visible::before{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.75);color:#fff}
+  .creating-help{width:min(390px,82vw);margin:22px auto 0;color:rgba(255,255,255,.72);font-size:13px;line-height:1.5}
   .creating-verb.is-swapping{opacity:0;transform:translateY(5px)}
   .creating-progress{width:min(360px,72vw);height:3px;margin:30px auto 0;border-radius:999px;
     overflow:hidden;background:rgba(255,255,255,.2)}

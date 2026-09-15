@@ -269,8 +269,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const qaProgressSegs = qaProgress.querySelectorAll('.qa-progress-seg');
 
   function setProgressStep(step) {
-    qaProgressLabel.textContent = step > 4 ? "You're all set" : `Step ${step} of 4`;
-    qaProgressSegs.forEach((seg, i) => seg.classList.toggle('filled', i < step - 1 || step > 4));
+    qaProgressLabel.textContent = step > 3 ? "You're all set" : `Step ${step} of 3`;
+    qaProgressSegs.forEach((seg, i) => seg.classList.toggle('filled', i < step - 1 || step > 3));
   }
 
   // a field's placeholder question fades away (revealing the real input
@@ -326,8 +326,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // crossfades the box's content from whichever slide is active to `next`
   // — same box, same position, the question just dissolves into the next.
-  const qaSlides = [qaSlideName, qaSlideType, qaSlideLocation, qaSlideEmail];
-  let activeSlide = qaSlideName;
+  const qaSlides = [qaSlideType, qaSlideName, qaSlideEmail];
+  let activeSlide = qaSlideType;
   let slideTransitionTimer = null;
 
   function goToSlide(next, focusTarget) {
@@ -353,8 +353,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (leaving !== activeSlide) leaving.hidden = true;
       }, 320);
     }
-    qaBox.classList.toggle('qa-grid', next === qaSlideType);
-    next.classList.toggle('qa-grid-open', next === qaSlideType);
+    qaBox.classList.remove('qa-grid');
+    next.classList.remove('qa-grid-open');
     if (focusTarget) setTimeout(() => focusTarget.focus(), 260);
   }
 
@@ -383,18 +383,16 @@ document.addEventListener('DOMContentLoaded', () => {
   function removePillsFrom(step) {
     [1, 2, 3, 4].forEach((s) => { if (s >= step && pills[s]) { pills[s].remove(); delete pills[s]; } });
   }
-  function goBackToName() {
-    collapseGenerated();
-    removePillsFrom(1);
-    goToSlide(qaSlideName);
-    qaProgress.classList.remove('started');
-    setProgressStep(1);
-    setTimeout(() => { bizNameInput.focus(); bizNameInput.select(); }, 320);
-  }
   function goBackToType() {
     collapseGenerated();
+    removePillsFrom(1);
+    goToSlide(qaSlideType, bizTagline);
+    setProgressStep(1);
+  }
+  function goBackToName() {
+    collapseGenerated();
     removePillsFrom(2);
-    goToSlide(qaSlideType);
+    goToSlide(qaSlideName, bizNameInput);
     setProgressStep(2);
   }
   function goBackToLocation() {
@@ -409,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
     goToSlide(qaSlideEmail, bizEmail);
     setProgressStep(4);
   }
-  const goBackByStep = { 1: goBackToName, 2: goBackToType, 3: goBackToLocation, 4: goBackToEmail };
+  const goBackByStep = { 1: goBackToType, 2: goBackToName, 3: goBackToEmail };
 
   function addPill(step, text) {
     const pill = document.createElement('div');
@@ -427,10 +425,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!name) return;
     bizNameInput.value = name;
 
-    addPill(1, name);
+    addPill(2, name);
     qaProgress.classList.add('started');
-    setProgressStep(2);
-    goToSlide(qaSlideType);
+    setProgressStep(3);
+    goToSlide(qaSlideEmail, bizEmail);
   });
 
   function finishType() {
@@ -446,9 +444,10 @@ document.addEventListener('DOMContentLoaded', () => {
     heroMatchedTones = null;
     hasManualPalette = false;
     uploadedHeroImage = null;
-    addPill(2, bizTagline.value);
-    setProgressStep(3);
-    goToSlide(qaSlideLocation);
+    addPill(1, bizTagline.value);
+    qaProgress.classList.add('started');
+    setProgressStep(2);
+    goToSlide(qaSlideName, bizNameInput);
   }
   BUSINESS_TYPES.forEach(t => {
     const button = document.createElement('button');
@@ -470,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('[data-qa-back]').forEach(button => button.addEventListener('click', () => {
     if (qaIsAnimating) return;
     const previous = Number(button.dataset.qaBack);
-    [goBackToName, goBackToType, goBackToLocation][previous - 1]?.();
+    [goBackToType, goBackToName][previous - 1]?.();
   }));
 
   let isCreatingPreview = false;
@@ -723,9 +722,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function finishEmail() {
-    const loc = formatBusinessName(bizLocation.value);
+    const loc = 'United Kingdom';
     const email = bizEmail.value.trim();
-    if (!loc || !email || isCreatingPreview) return;
+    if (!email || isCreatingPreview) return;
     bizEmail.value = email;
     isCreatingPreview = true;
     qaEmailNext.disabled = true;
@@ -738,8 +737,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function finishEmailAfterTransition(loc, email) {
     try {
-      addPill(4, email);
-      setProgressStep(5);
+      addPill(3, email);
+      setProgressStep(4);
 
       // a slightly more exciting flourish into the loading/preview experience
       qaBox.classList.add('qa-box-finish');
@@ -784,43 +783,19 @@ document.addEventListener('DOMContentLoaded', () => {
       ]);
       uploadedHeroImage = heroImage;
 
-      qaProgress.classList.add('done');
-      convRow.classList.add('collapsed');
-      refreshPreview();
-
-      // hand off to the full-page builder: the generated site fills the
-      // screen below the header, with the 5-question bar floating over it
-      builderOverlay.hidden = false;
-      previewIsVisible = true;
-      showPersonalising(enrichmentPending <= 0);
-      if (builderForName) builderForName.textContent = `Designed for ${name}`;
-      // Must run here, not just at load: while the overlay is hidden the preview
-      // pane measures 0x0, so the sizing bails out and the frame would stay at
-      // full pane width — the exact case that pushed the hero's CTA off-screen.
-      // updateBuilderBottom also can't wait for its ResizeObserver alone: that
-      // observer doesn't reliably fire for this exact hidden-to-visible
-      // transition, which left the preview's bottom offset at 0 and the whole
-      // pane running under the bar until an actual window resize nudged it.
-      updateBuilderBottom();
-      sizePreviewToDesktopRatio();
-      setDocumentScrollLock(true);
-
-      postLead(name, 'Demo created — ' + bizTagline.value + ' in ' + loc + ' — ' + email).catch(() => {});
-
-      // let the client jump straight into self-managing this preview's
-      // content — carries the same slug account/dashboard.html guesses
-      // from the business name, so both paths land on the same row.
-      if (accountCta) {
-        accountCta.href = buildAccountSetupUrl(name, email);
-        accountCta.hidden = false;
-      }
+      // Account setup is the destination after the preview is prepared.
+      // It keeps the email/name paired with the new customer record.
+      const accountUrl = buildAccountSetupUrl(name, email);
+      postLead(name, 'Preview requested — ' + bizTagline.value + ' — ' + email).catch(() => {});
+      location.assign(accountUrl);
+      return;
     } catch (error) {
       console.error(error);
       creatingOverlay.classList.remove('active');
       creatingOverlay.setAttribute('aria-hidden', 'true');
       qaBox.classList.remove('qa-box-finish', 'qa-box-done');
-      removePillsFrom(4);
-      setProgressStep(4);
+      removePillsFrom(3);
+      setProgressStep(3);
       status.textContent = 'We could not build the preview just then. Please try again.';
       status.className = 'quick-lead-status err';
     } finally {
@@ -829,14 +804,6 @@ document.addEventListener('DOMContentLoaded', () => {
       bizEmail.readOnly = false;
     }
   }
-  bizLocation.addEventListener('input', () => {
-    qaLocationNext.classList.toggle('visible', !!bizLocation.value.trim());
-    refreshPreview();
-  });
-  bizLocation.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); advanceToEmail(); }
-  });
-  qaLocationNext.addEventListener('click', advanceToEmail);
   bizEmail.addEventListener('input', () => {
     qaEmailNext.classList.toggle('visible', !!bizEmail.value.trim());
   });

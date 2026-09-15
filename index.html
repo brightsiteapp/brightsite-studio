@@ -162,19 +162,18 @@
   <div class="wrap hero-conv-wrap">
     <div class="hero-conv-head">
       <h1>Bespoke Websites<br>Starting From £0</h1>
-      <p class="hero-conv-sub">Enter four details and we’ll create a personalised preview while you wait.</p>
+      <p class="hero-conv-sub">Answer three quick questions and we’ll create your personalised preview.</p>
     </div>
 
     <div class="wiz-grid" id="wizGrid">
       <div class="wiz-left">
-          <div class="qa-progress" id="qaProgress">
+          <div class="qa-progress started" id="qaProgress">
           <div class="qa-progress-bar">
             <span class="qa-progress-seg" data-seg="1"></span>
             <span class="qa-progress-seg" data-seg="2"></span>
             <span class="qa-progress-seg" data-seg="3"></span>
-            <span class="qa-progress-seg" data-seg="4"></span>
           </div>
-          <div class="qa-progress-label" id="qaProgressLabel">Step 1 of 4</div>
+          <div class="qa-progress-label" id="qaProgressLabel">Step 1 of 3</div>
         </div>
 
         <div class="qa-pills" id="qaPills"></div>
@@ -183,19 +182,19 @@
           <div class="glow-box qa-box" id="qaBox">
             <div class="glow-box-inner">
               <span class="qa-fill" aria-hidden="true"></span>
-              <div class="qa-slide qa-active" id="qaSlideName" data-step="1">
+              <div class="qa-slide" id="qaSlideName" data-step="2" hidden>
+                <button type="button" class="qa-back" data-qa-back="1" aria-label="Back to website type">←</button>
                 <div class="qa-field" id="qaFieldName">
                   <span class="qa-ph">What's your business called?</span>
                   <input type="text" id="bizName" name="business_name" required autocomplete="organization" autocapitalize="words" aria-label="Business name" placeholder="What's your business called?">
                 </div>
                 <button type="submit" class="qa-go" id="qaNameGo" aria-label="Continue with business name"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h13M12.5 6.2 18.8 12l-6.3 5.8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
               </div>
-              <div class="qa-slide" id="qaSlideType" data-step="2" hidden>
-                <button type="button" class="qa-back" data-qa-back="1" aria-label="Back to business name">←</button>
-                <div class="qa-field" id="qaFieldType">
-                  <span class="qa-ph">What type of business are you?</span>
+              <div class="qa-slide qa-active" id="qaSlideType" data-step="1">
+                <div class="qa-field qa-focused" id="qaFieldType">
+                  <span class="qa-ph">What type of website do you need?</span>
                   <select id="bizTagline" required aria-label="Business type">
-                    <option value="" selected disabled>What type of business are you?</option>
+                    <option value="" selected disabled>Choose your website type</option>
                   </select>
                 </div>
                 <button type="button" class="qa-go" id="qaTypeGo" aria-label="Continue with business type"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h13M12.5 6.2 18.8 12l-6.3 5.8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -210,8 +209,8 @@
                 <button type="button" class="qa-go" id="qaLocationNext" aria-label="Continue with your location"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h13M12.5 6.2 18.8 12l-6.3 5.8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
                 <ul class="qa-suggest" id="qaSuggest" role="listbox" aria-label="Matching businesses" hidden></ul>
               </div>
-              <div class="qa-slide" id="qaSlideEmail" data-step="4" hidden>
-                <button type="button" class="qa-back" data-qa-back="3" aria-label="Back to location">←</button>
+              <div class="qa-slide" id="qaSlideEmail" data-step="3" hidden>
+                <button type="button" class="qa-back" data-qa-back="2" aria-label="Back to business name">←</button>
                 <div class="qa-field" id="qaFieldEmail">
                   <span class="qa-ph">What's your email address?</span>
                   <input type="email" id="bizEmail" required autocomplete="email" inputmode="email" aria-label="Email address" placeholder="What's your email address?">
@@ -415,7 +414,7 @@
 <div class="creating-overlay" id="creatingOverlay" aria-hidden="true">
   <div class="creating-inner">
     <img class="creating-logo" src="img/brightsite-logo.png" alt="BrightSite" width="515" height="72">
-    <div class="creating-verb" id="creatingVerb">Creating your design brief</div>
+    <div class="creating-verb" id="creatingVerb">Preparing your account</div>
     <div class="creating-name" id="creatingName"></div>
     <ol class="creating-list" id="creatingList" aria-live="polite">
       <li>Loading your design brief</li>
@@ -423,6 +422,7 @@
       <li>Preparing text, layout ideas and colour choices</li>
       <li>Your design brief is ready</li>
     </ol>
+    <p class="creating-help">Once you’re in, please add any details that will help your developer. A developer will be in touch.</p>
     <div class="creating-progress" aria-hidden="true"><span id="creatingProgress"></span></div>
   </div>
 </div>

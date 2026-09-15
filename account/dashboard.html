@@ -258,6 +258,17 @@
           <button type="button" class="billing-btn" id="billingBtn">Manage billing</button>
         </div>
 
+        <div class="info-card">
+          <h2>Note for your developer</h2>
+          <p class="info-hint">Tell us anything useful about your business, website, or what you’d like us to focus on.</p>
+          <div class="acct-field" style="margin-top:12px">
+            <label for="developerNote">Your note</label>
+            <textarea id="developerNote" placeholder="For example: I’d like online bookings and a warm, premium look."></textarea>
+          </div>
+          <button type="button" class="upgrade-btn" id="developerNoteSave">Save note</button>
+          <div class="acct-status" id="developerNoteStatus" style="min-height:18px;margin-top:8px;font-size:12.5px"></div>
+        </div>
+
         <div class="req-btn-wrap">
           <button type="button" class="req-btn" id="requestBtn">Request an update</button>
         </div>
@@ -804,6 +815,7 @@
     document.getElementById('fPhone').value = raw.phone || '';
     document.getElementById('fEmail2').value = raw.email || session.email || '';
     document.getElementById('fAddress').value = raw.address || '';
+    document.getElementById('developerNote').value = raw.developerNote || '';
     hoursStructured = hoursFromRaw(raw);
 
     renderServices();
@@ -1052,6 +1064,7 @@
         heroImage: media.heroImage,
         gallery: media.gallery
       }, servicesToRaw(services));
+      raw.developerNote = document.getElementById('developerNote').value.trim();
       if (opts.publish) isLive = true;
       var record = { slug: slug, name: raw.name, raw: raw, planActive: isPaying, published: isLive, updatedAt: new Date().toISOString() };
       return fetch(SUPABASE_URL + '/rest/v1/businesses', {
@@ -1071,6 +1084,24 @@
       renderPlanUI();
     });
   }
+
+  document.getElementById('developerNoteSave').addEventListener('click', function () {
+    var button = this;
+    var statusEl = document.getElementById('developerNoteStatus');
+    if (!business) return;
+    button.disabled = true;
+    statusEl.textContent = 'Saving…';
+    statusEl.className = 'acct-status';
+    saveBusiness().then(function () {
+      button.disabled = false;
+      statusEl.textContent = 'Note saved — your developer can see it in BrightSite Studio.';
+      statusEl.className = 'acct-status ok';
+    }).catch(function () {
+      button.disabled = false;
+      statusEl.textContent = 'Couldn’t save your note. Please try again.';
+      statusEl.className = 'acct-status err';
+    });
+  });
 
   // ---------------- autosave ----------------
   var autoSaveTimer = null;

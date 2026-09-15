@@ -674,7 +674,8 @@
     ].filter(Boolean);
     setSection('#v2dInfo', `<h2>Details</h2><dl class="v2-dl">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`);
 
-    setSection('#v2dNotes', `<h2>Notes</h2><textarea class="v2-notes" data-f="notes" placeholder="Calls, what they said, what’s next…">${esc(p.notes || '')}</textarea>`);
+    const customerNote = p.raw?.developerNote || p.raw?.businessProfile?.developerNote || '';
+    setSection('#v2dNotes', `<h2>Notes</h2>${customerNote ? `<div class="v2-customer-note"><b>Customer note</b><p>${esc(customerNote)}</p></div>` : ''}<textarea class="v2-notes" data-f="notes" placeholder="Calls, what they said, what’s next…">${esc(p.notes || '')}</textarea>`);
 
     const tasks = P.sortTasks(tasksFor(p.slug));
     const today = P.todayKey(now);

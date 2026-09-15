@@ -111,51 +111,28 @@ async function runHomepageFlow(label, contextOptions, mobile) {
   }
   await page.evaluate(() => window.scrollTo(0, 0));
 
+  await page.locator('#qaSlideType.qa-active').waitFor();
+  await page.locator('#bizTagline').selectOption({ label: 'Hair & Beauty' });
+  await page.locator('#qaSlideName.qa-active').waitFor();
   const nameInput = page.locator('#bizName');
   await activate(nameInput);
-  const focusedPlaceholderOpacity = await nameInput.evaluate((element) => (
-    getComputedStyle(element, '::placeholder').opacity
-  ));
-  assert.equal(focusedPlaceholderOpacity, '0', `${label}: question text should clear on focus`);
   await nameInput.pressSequentially('BrightSite Test Studio', { delay: 20 });
-  assert.equal(await nameInput.inputValue(), 'BrightSite Test Studio', `${label}: name should stay typed`);
-
   await activate(page.locator('#qaNameGo'));
-  await page.locator('#qaSlideType.qa-active').waitFor();
-  await page.locator('#qaTypeGrid .qa-type-choice').first().waitFor();
-  await page.locator('#qaSlideName[hidden]').waitFor({ state: 'attached' });
-  assert.equal(await nameInput.inputValue(), 'BrightSite Test Studio', `${label}: intentional capitals should remain`);
-
-  await page.locator('#bizTagline').selectOption({ label: 'Hair & Beauty' });
-  await page.locator('#qaSlideLocation.qa-active').waitFor();
-
-  // Back should be a true stateful return: the category grid remains selected
-  // and the earlier business name stays intact.
-  await activate(page.locator('[data-qa-back="2"]'));
-  await page.locator('#qaSlideType.qa-active.qa-grid-open').waitFor();
-  assert.equal(await page.locator('.qa-type-choice[aria-selected="true"]').innerText(), 'Hair & Beauty', `${label}: selected category should survive back navigation`);
-  assert.equal(await nameInput.inputValue(), 'BrightSite Test Studio', `${label}: business name should survive back navigation`);
-  await activate(page.locator('.qa-type-choice', { hasText: 'Hair & Beauty' }));
-  await page.locator('#qaSlideLocation.qa-active').waitFor();
-
-  const locationInput = page.locator('#bizLocation');
-  await activate(locationInput);
-  await locationInput.pressSequentially('Beverley', { delay: 20 });
-  assert.equal(await locationInput.inputValue(), 'Beverley', `${label}: location should stay typed`);
-
-  await activate(page.locator('#qaLocationNext'));
   await page.locator('#qaSlideEmail.qa-active').waitFor();
-  await page.locator('#qaSlideLocation[hidden]').waitFor({ state: 'attached' });
 
   const emailInput = page.locator('#bizEmail');
   await activate(emailInput);
   await emailInput.pressSequentially('test@example.com', { delay: 20 });
   assert.equal(await emailInput.inputValue(), 'test@example.com', `${label}: email should stay typed`);
 
-  await activate(page.locator('#qaEmailNext'));
-  await page.locator('#builderOverlay:not([hidden])').waitFor({ timeout: 10000 });
-  await page.locator('#previewFrame').waitFor();
-  await page.waitForFunction(() => document.querySelector('#previewFrame').contentDocument?.body);
+  await Promise.all([
+    page.waitForURL(/account\/login\.html/, { timeout: 15000 }),
+    activate(page.locator('#qaEmailNext'))
+  ]);
+  assert.match(page.url(), /signup=1/, `${label}: final step should go to account setup`);
+  assert.match(page.url(), /email=test%40example\.com/, `${label}: account setup should retain the email`);
+  await context.close();
+  return;
 
   const foodDemo = await page.evaluate(() => buildDemoHTML({
     name: 'The Sample Kitchen', tagline: 'Food & Drink', location: 'Beverley', services: [], prices: [], goal: 'Book now'

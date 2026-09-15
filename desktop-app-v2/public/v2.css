@@ -294,6 +294,9 @@ button.v2-field-value { padding: 7px 9px; }
   width: 100%; min-height: 96px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 11px; background: #fafbfd;
   font: 13px/1.45 inherit; color: var(--ink); resize: vertical;
 }
+.v2-customer-note { margin: 0 0 10px; padding: 10px 11px; border: 1px solid #d4e3fb; border-radius: 11px; background: #f3f7ff; font-size: 12.5px; line-height: 1.45; }
+.v2-customer-note b { display: block; margin-bottom: 3px; color: var(--accent); }
+.v2-customer-note p { margin: 0; white-space: pre-wrap; }
 .v2-mini-add { display: grid; grid-template-columns: minmax(0, 1fr) 118px auto; gap: 6px; margin-top: 8px; }
 .v2-mini-add input { min-width: 0; padding: 7px 9px; border: 1px solid var(--line); border-radius: 9px; font: 12.5px inherit; background: #fff; }
 .v2-mini-add .v2-btn { padding: 7px 11px; font-size: 12.5px; }
