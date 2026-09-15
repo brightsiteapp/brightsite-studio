@@ -649,10 +649,8 @@
      which sits at a lower z-index. Only the actual visible pieces re-enable
      pointer events. */
   .builder-overlay{position:fixed;inset:0;z-index:60;pointer-events:none}
-  /* the device toggle, the Q&A pill and the fullscreen button beside it
-     all live in one row anchored to the bottom bar — see
-     .builder-bar-row-outer below — rather than a separate fixed strip
-     under the header, which used to eat extra height from the preview. */
+  /* The device toggle lives in the bottom control bar rather than a separate
+     fixed strip under the header, so it does not eat into the preview. */
   .builder-topbar-copy{min-width:0;display:flex;flex-direction:column;line-height:1.25}
   .builder-topbar-copy strong{font-family:var(--display);font-size:14px;font-weight:700;color:var(--ink);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -664,20 +662,8 @@
     letter-spacing:.04em;color:var(--muted);transition:background .15s,color .15s}
   .builder-device:hover{color:var(--ink)}
   .builder-device.is-on{background:var(--card);color:var(--accent);box-shadow:0 1px 4px rgba(36,27,46,.14)}
-  /* beside the Q&A pill rather than inside it, so the pill stays just the
-     question flow. Wrapped together with .builder-bar in
-     .builder-bar-and-fullscreen, which stays a row at every viewport width
-     (see below) so the button remains next to the input box on mobile too,
-     instead of stacking away from it. */
-  .builder-open-html{flex:none;width:34px;height:34px;border:none;border-radius:50%;cursor:pointer;
-    background:rgba(59,130,246,.08);color:var(--accent);display:flex;align-items:center;justify-content:center;
-    pointer-events:auto;transition:background .15s,color .15s}
-  .builder-open-html svg{width:17px;height:17px}
-  .builder-open-html:hover{background:rgba(59,130,246,.16);color:var(--ink)}
   .builder-controls{flex:none;display:flex;align-items:center;gap:8px;pointer-events:auto}
   .builder-bar-and-fullscreen{display:flex;align-items:center;gap:10px;flex:1 1 auto;min-width:0}
-  /* copy left, Q&A pill + fullscreen button centre, device toggle right —
-     all in one row anchored to the bottom bar */
   /* A 3-column grid, not flex: the Q&A pill needs to sit truly centred on
      the row regardless of the device toggle's width on the right, and a
      flex layout can only do that by balancing it against an equal-width
@@ -695,10 +681,10 @@
      be wider than the pane, so "Desktop" would render the mobile layout anyway
      — the control would do literally nothing. Hide the whole controls strip
      (just the device toggle now) rather than leave an empty row behind.
-     .builder-bar-and-fullscreen keeps its own internal row layout regardless
-     — only its position among these other stacked pieces changes. */
+     the control bar keeps its own internal row layout regardless — only its
+     position among these other stacked pieces changes. */
   @media(max-width:900px){
-    .builder-controls,.builder-open-html{display:none}
+    .builder-controls{display:none}
   }
   .builder-preview{position:fixed;top:var(--header-h, 75px);left:0;right:0;overflow:hidden;background:var(--bg);
     pointer-events:auto;transition:padding .3s var(--qa-ease),bottom .2s var(--qa-ease)}
