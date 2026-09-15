@@ -112,6 +112,11 @@ async function runHomepageFlow(label, contextOptions, mobile) {
   await page.evaluate(() => window.scrollTo(0, 0));
 
   const nameInput = page.locator('#bizName');
+  await page.locator('#qaSlideType.qa-active.qa-grid-open').waitFor();
+  await page.locator('#qaTypeGrid .qa-type-choice').first().waitFor();
+  await page.locator('#bizTagline').selectOption({ label: 'Hair & Beauty' });
+  await page.locator('#qaSlideName.qa-active').waitFor();
+
   await activate(nameInput);
   const focusedPlaceholderOpacity = await nameInput.evaluate((element) => (
     getComputedStyle(element, '::placeholder').opacity
@@ -121,23 +126,21 @@ async function runHomepageFlow(label, contextOptions, mobile) {
   assert.equal(await nameInput.inputValue(), 'BrightSite Test Studio', `${label}: name should stay typed`);
 
   await activate(page.locator('#qaNameGo'));
-  await page.locator('#qaSlideType.qa-active').waitFor();
-  await page.locator('#qaTypeGrid .qa-type-choice').first().waitFor();
+  await page.locator('#qaSlideLocation.qa-active').waitFor();
   await page.locator('#qaSlideName[hidden]').waitFor({ state: 'attached' });
   assert.equal(await nameInput.inputValue(), 'BrightSite Test Studio', `${label}: intentional capitals should remain`);
 
-  await page.locator('#bizTagline').selectOption({ label: 'Hair & Beauty' });
-  await page.locator('#qaSlideLocation.qa-active').waitFor();
-  await page.locator('#qaSlideType[hidden]').waitFor({ state: 'attached' });
-  await page.waitForTimeout(220);
-
-  // Back should be a true stateful return: the same expanding type surface
-  // remains selected, and choosing it again keeps the name intact.
+  // Back should be a true stateful return: the category grid remains selected
+  // and the later business name stays intact.
   await activate(page.locator('[data-qa-back="2"]'));
+  await page.locator('#qaSlideName.qa-active').waitFor();
+  await activate(page.locator('[data-qa-back="1"]'));
   await page.locator('#qaSlideType.qa-active.qa-grid-open').waitFor();
   assert.equal(await page.locator('.qa-type-choice[aria-selected="true"]').innerText(), 'Hair & Beauty', `${label}: selected category should survive back navigation`);
   assert.equal(await nameInput.inputValue(), 'BrightSite Test Studio', `${label}: business name should survive back navigation`);
   await activate(page.locator('.qa-type-choice', { hasText: 'Hair & Beauty' }));
+  await page.locator('#qaSlideName.qa-active').waitFor();
+  await activate(page.locator('#qaNameGo'));
   await page.locator('#qaSlideLocation.qa-active').waitFor();
 
   const locationInput = page.locator('#bizLocation');

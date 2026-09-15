@@ -326,8 +326,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // crossfades the box's content from whichever slide is active to `next`
   // — same box, same position, the question just dissolves into the next.
-  const qaSlides = [qaSlideName, qaSlideType, qaSlideLocation, qaSlideEmail];
-  let activeSlide = qaSlideName;
+  const qaSlides = [qaSlideType, qaSlideName, qaSlideLocation, qaSlideEmail];
+  let activeSlide = qaSlideType;
   let slideTransitionTimer = null;
 
   function goToSlide(next, focusTarget) {
@@ -383,18 +383,16 @@ document.addEventListener('DOMContentLoaded', () => {
   function removePillsFrom(step) {
     [1, 2, 3, 4].forEach((s) => { if (s >= step && pills[s]) { pills[s].remove(); delete pills[s]; } });
   }
-  function goBackToName() {
-    collapseGenerated();
-    removePillsFrom(1);
-    goToSlide(qaSlideName);
-    qaProgress.classList.remove('started');
-    setProgressStep(1);
-    setTimeout(() => { bizNameInput.focus(); bizNameInput.select(); }, 320);
-  }
   function goBackToType() {
     collapseGenerated();
-    removePillsFrom(2);
+    removePillsFrom(1);
     goToSlide(qaSlideType);
+    setProgressStep(1);
+  }
+  function goBackToName() {
+    collapseGenerated();
+    removePillsFrom(2);
+    goToSlide(qaSlideName, bizNameInput);
     setProgressStep(2);
   }
   function goBackToLocation() {
@@ -409,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
     goToSlide(qaSlideEmail, bizEmail);
     setProgressStep(4);
   }
-  const goBackByStep = { 1: goBackToName, 2: goBackToType, 3: goBackToLocation, 4: goBackToEmail };
+  const goBackByStep = { 1: goBackToType, 2: goBackToName, 3: goBackToLocation, 4: goBackToEmail };
 
   function addPill(step, text) {
     const pill = document.createElement('div');
@@ -427,10 +425,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!name) return;
     bizNameInput.value = name;
 
-    addPill(1, name);
-    qaProgress.classList.add('started');
-    setProgressStep(2);
-    goToSlide(qaSlideType);
+    addPill(2, name);
+    setProgressStep(3);
+    goToSlide(qaSlideLocation);
   });
 
   function finishType() {
@@ -446,9 +443,9 @@ document.addEventListener('DOMContentLoaded', () => {
     heroMatchedTones = null;
     hasManualPalette = false;
     uploadedHeroImage = null;
-    addPill(2, bizTagline.value);
-    setProgressStep(3);
-    goToSlide(qaSlideLocation);
+    addPill(1, bizTagline.value);
+    setProgressStep(2);
+    goToSlide(qaSlideName, bizNameInput);
   }
   BUSINESS_TYPES.forEach(t => {
     const button = document.createElement('button');
@@ -470,7 +467,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('[data-qa-back]').forEach(button => button.addEventListener('click', () => {
     if (qaIsAnimating) return;
     const previous = Number(button.dataset.qaBack);
-    [goBackToName, goBackToType, goBackToLocation][previous - 1]?.();
+    [goBackToType, goBackToName, goBackToLocation][previous - 1]?.();
   }));
 
   let isCreatingPreview = false;
