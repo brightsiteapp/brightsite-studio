@@ -58,10 +58,24 @@
   #sitePreview{width:100%;height:100%;max-width:1180px;border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:0 16px 34px rgba(23,32,31,.08);opacity:1;transition:opacity .16s ease}
   #sitePreview.refreshing{opacity:.55}
   #sitePreview.is-mobile-preview{width:auto;height:min(844px,calc(100vh - 150px));max-width:100%;aspect-ratio:390/844}
+  .blueprint-site{width:100%;height:100%;max-width:1180px;overflow:auto;border:1px solid #cfd4d8;border-radius:16px;background:#fff;box-shadow:0 16px 34px rgba(23,32,31,.08);color:#1d252b;font-family:Inter,sans-serif}
+  .blueprint-inner{min-height:100%;padding:clamp(22px,4vw,58px);background:linear-gradient(90deg,rgba(31,103,203,.025) 1px,transparent 1px),linear-gradient(rgba(31,103,203,.025) 1px,transparent 1px);background-size:26px 26px}
+  .blueprint-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:20px;border-bottom:1px solid #1d252b}
+  .blueprint-brand{font-size:15px;font-weight:800;letter-spacing:-.04em}.blueprint-brand i{display:inline-block;width:8px;height:8px;margin-right:6px;border-radius:50%;background:#2f7ded}.blueprint-tag{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#2f7ded}
+  .blueprint-hero{display:grid;grid-template-columns:1fr minmax(240px,.78fr);gap:clamp(24px,5vw,70px);align-items:center;padding:clamp(38px,8vw,92px) 0;border-bottom:1px solid #1d252b}
+  .blueprint-kicker{margin:0 0 10px;font-size:11px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:#2f7ded}.blueprint-title{margin:0;max-width:12ch;font-size:clamp(34px,5vw,72px);line-height:.95;letter-spacing:-.07em}.blueprint-copy{max-width:420px;margin:20px 0 0;font-size:14px;line-height:1.65;color:#59636a}.blueprint-details{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}.blueprint-details span{padding:7px 9px;border:1px solid #aeb6bb;font-size:11px;font-weight:700}
+  .blueprint-illustration{position:relative;min-height:240px;border:1.5px solid #1d252b;background:#f5f6f6;display:grid;place-items:center;overflow:hidden}.blueprint-illustration::after{content:'';position:absolute;inset:12px;border:1px dashed #9ca6ad}.blueprint-illustration svg{position:relative;z-index:1;width:74%;height:auto;fill:none;stroke:#1d252b;stroke-width:2}.blueprint-illustration text{fill:#2f7ded;stroke:none;font:700 13px Inter,sans-serif;letter-spacing:.04em}.blueprint-illustration .blue-fill{fill:#2f7ded;stroke:none}
+  .blueprint-section{padding:30px 0;border-bottom:1px solid #1d252b}.blueprint-section h3{margin:0 0 16px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#2f7ded}.blueprint-services{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.blueprint-service{min-height:94px;padding:14px;border:1px solid #1d252b;background:#fff}.blueprint-service b{display:block;margin-bottom:14px;font-size:14px}.blueprint-line{height:7px;width:72%;background:#e5e8e9}.blueprint-line.short{width:45%;margin-top:8px}.blueprint-footer{display:flex;justify-content:space-between;gap:12px;padding-top:20px;font-size:12px;color:#59636a}
+  .loading-screen{position:fixed;inset:0;z-index:100;background:#fff;overflow:auto;color:#1d252b}.loading-inner{width:min(1100px,calc(100% - 32px));margin:0 auto;padding:24px 0 42px}.loading-head{display:flex;align-items:center;justify-content:space-between;padding-bottom:18px;border-bottom:1px solid #d7dcdf}.loading-head img{height:22px}.loading-status{font-size:12px;font-weight:800;color:#2f7ded}.loading-grid{display:grid;grid-template-columns:1fr 280px;gap:28px;margin-top:28px}.loading-grid .blueprint-site{height:520px}.loading-steps{padding:20px;border:1px solid #d7dcdf;align-self:start}.loading-steps h1{margin:0 0 9px;font-size:22px;letter-spacing:-.05em}.loading-steps p{margin:0 0 20px;color:#69747b;font-size:13px;line-height:1.55}.loading-step{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-top:1px solid #e4e7e8;font-size:13px;font-weight:700}.loading-step i{width:18px;height:18px;border:1px solid #2f7ded;border-radius:50%;display:grid;place-items:center;color:#2f7ded;font-style:normal;font-size:11px;flex:none}.loading-step.is-current i{background:#2f7ded;color:#fff}
   .preview-device-toggle{display:flex;align-items:center;padding:3px;border:1px solid var(--line);border-radius:11px;background:#fff}
   .preview-device-toggle button{border:0;border-radius:8px;background:transparent;color:var(--muted);height:28px;padding:0 9px;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
   .preview-device-toggle button[aria-pressed="true"]{background:var(--ink);color:#fff}
-  .mobile-view-tabs{display:none}
+  .mobile-view-tabs{display:flex;gap:6px;padding:8px 14px;border-bottom:1px solid var(--line);background:var(--bg);flex:none}
+  .mobile-view-tabs button{flex:1;min-height:36px;border:0;border-radius:10px;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+  .mobile-view-tabs button[aria-selected="true"]{background:var(--ink);color:#fff}
+  .app-body.focus-site,.app-body.focus-edit,.app-body.focus-account{grid-template-columns:1fr}
+  .app-body.focus-site .left-panel,.app-body.focus-edit .right-panel,.app-body.focus-account .right-panel{display:none}
+  .app-body.focus-edit .left-inner{max-width:760px;width:100%;margin:0 auto;padding:28px}
 
   /* ---------------- account view cards ---------------- */
   .info-card{padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 8px 20px rgba(23,32,31,.04);margin-bottom:16px}
@@ -205,10 +219,7 @@
 
   /* ---------------- mobile ---------------- */
   @media(max-width:860px){
-    .mobile-view-tabs{display:flex;gap:6px;padding:8px 14px;border-bottom:1px solid var(--line);background:var(--bg);flex:none}
-    .mobile-view-tabs button{flex:1;min-height:36px;border:0;border-radius:10px;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
-    .mobile-view-tabs button[aria-selected="true"]{background:var(--ink);color:#fff}
-    .mobile-view-tabs .mobile-edit-menu-toggle{flex:0 0 40px;font-size:18px;line-height:1}
+    .mobile-view-tabs .mobile-edit-menu-toggle{font-size:18px;line-height:1}
     .mobile-edit-menu{position:fixed;z-index:60;width:min(280px,calc(100vw - 28px));padding:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 16px 36px rgba(23,32,31,.18)}
     .mobile-edit-menu h2{margin:6px 8px 8px;font-family:var(--display);font-size:14px}
     .mobile-edit-menu button{display:block;width:100%;padding:12px 10px;border:0;border-radius:9px;background:transparent;color:var(--ink);font:inherit;font-size:13px;font-weight:700;text-align:left;cursor:pointer}
@@ -227,10 +238,21 @@
     .preview-device-toggle{display:none}
     .app-header-right .who .name,.app-header-right .who .email{max-width:38vw}
     .toolbar-left .status-pill{display:none}
+    .app-body.focus-edit .left-inner{padding:18px}.blueprint-site{border-radius:12px}.blueprint-inner{padding:22px}.blueprint-hero{grid-template-columns:1fr;padding:32px 0}.blueprint-illustration{min-height:190px}.blueprint-services{grid-template-columns:1fr}.loading-grid{grid-template-columns:1fr}.loading-grid .blueprint-site{height:380px}.loading-steps{padding:16px}
   }
 </style>
 </head>
 <body class="mode-view">
+
+<div class="loading-screen" id="loadingScreen" aria-live="polite">
+  <div class="loading-inner">
+    <div class="loading-head"><img src="../img/brightsite-logo.png" alt="BrightSite"><span class="loading-status">PREPARING YOUR PREVIEW</span></div>
+    <div class="loading-grid">
+      <div class="blueprint-site" aria-label="Website blueprint preview"><div class="blueprint-inner" id="loadingBlueprint"></div></div>
+      <aside class="loading-steps"><h1>Your website is taking shape</h1><p>We’re setting up a private workspace where you can add the details that bring it to life.</p><div class="loading-step is-current"><i>1</i><span>Creating your website workspace</span></div><div class="loading-step"><i>2</i><span>Adding your business details</span></div><div class="loading-step"><i>3</i><span>Preparing your editable preview</span></div><div class="loading-step"><i>4</i><span>Ready for your photos and final design</span></div></aside>
+    </div>
+  </div>
+</div>
 
 <div class="app-header">
   <a href="/" class="brand-mini"><img src="../img/brightsite-logo.png" alt="BrightSite"></a>
@@ -246,7 +268,7 @@
 <nav class="mobile-view-tabs" id="mobileViewTabs" aria-label="Account sections" hidden>
   <button type="button" id="mobileAccountTab" aria-selected="true">Account</button>
   <button type="button" id="mobileWebsiteTab" aria-selected="false">Website</button>
-  <button type="button" class="mobile-edit-menu-toggle" id="mobileEditMenuToggle" aria-label="Edit website sections" aria-expanded="false">☰</button>
+  <button type="button" class="mobile-edit-menu-toggle" id="mobileEditMenuToggle" aria-label="Edit website" aria-selected="false">Edit</button>
 </nav>
 <nav class="mobile-edit-menu" id="mobileEditMenu" aria-label="Edit website" hidden>
   <h2>Edit website</h2>
@@ -410,6 +432,7 @@
       </div>
     </div>
     <div class="preview-frame-wrap">
+      <div class="blueprint-site" id="blueprintPreview" hidden aria-label="Your website blueprint"><div class="blueprint-inner" id="blueprintContent"></div></div>
       <iframe id="sitePreview" title="Your website" sandbox="allow-scripts allow-same-origin"></iframe>
     </div>
   </div>
@@ -488,6 +511,38 @@
     localStorage.removeItem('bs_session');
     location.href = 'login.html';
   });
+
+  function escapeHTML(value) {
+    return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function blueprintArt(category, name) {
+    var kind = String(category || '').toLowerCase();
+    var label = escapeHTML(name || 'YOUR BUSINESS').slice(0, 24).toUpperCase();
+    if (/cafe|coffee|restaurant|food|bakery/.test(kind)) return '<svg viewBox="0 0 300 190" aria-hidden="true"><path d="M35 150h230M55 150V65h190v85M38 65h224l-18-25H56zM80 88h44v62H80zM151 90h67v34h-67zM165 124v26M184 124v26M203 124v26"/><path class="blue-fill" d="M207 37h38v8h-38z"/><text x="150" y="59" text-anchor="middle">' + label + '</text></svg>';
+    if (/hair|beauty|salon|barber/.test(kind)) return '<svg viewBox="0 0 300 190" aria-hidden="true"><path d="M42 150h216M76 150V45h148v105M98 70h48v47H98zM162 70h38v52h-38zM174 82a20 20 0 1 0 0 40 20 20 0 1 0 0-40M153 150h44M103 125v25"/><path class="blue-fill" d="M104 87h36v6h-36z"/><text x="150" y="58" text-anchor="middle">' + label + '</text></svg>';
+    if (/garden|landscap|tree|outdoor/.test(kind)) return '<svg viewBox="0 0 300 190" aria-hidden="true"><path d="M36 150h228M150 150V43M150 68c-42 0-55 31-55 50 28 0 48-14 55-38M150 86c42 0 55 31 55 50-28 0-48-14-55-38M73 150V113h32v37M205 150V99h28v51"/><path class="blue-fill" d="M144 38h12v12h-12z"/><text x="150" y="174" text-anchor="middle">' + label + '</text></svg>';
+    if (/trade|builder|plumb|electric|roof|clean|repair|handyman|garage/.test(kind)) return '<svg viewBox="0 0 300 190" aria-hidden="true"><path d="M38 143h224M55 143V86h132l37 24h28v33M187 86v57M82 143a18 18 0 1 0 0 0M218 143a18 18 0 1 0 0 0M55 110h132"/><path class="blue-fill" d="M61 113h15v8H61z"/><text x="121" y="106" text-anchor="middle">' + label + '</text></svg>';
+    return '<svg viewBox="0 0 300 190" aria-hidden="true"><path d="M45 150h210M68 150V52h164v98M94 78h35v31H94zM152 78h54v31h-54zM94 126h112M116 52V34h68v18"/><path class="blue-fill" d="M140 84h12v12h-12z"/><text x="150" y="174" text-anchor="middle">' + label + '</text></svg>';
+  }
+  function blueprintMarkup(data) {
+    data = data || {};
+    var raw = data.raw || data;
+    var name = raw.name || data.name || params.get('name') || localStorage.getItem('bs_pending_business_name') || 'Your business';
+    var category = raw.tagline || raw.type || params.get('type') || localStorage.getItem('bs_pending_business_type') || 'Local business';
+    var phone = raw.phone || 'Your phone number';
+    var address = raw.address || 'Your location';
+    var items = (raw.services || []).filter(Boolean).slice(0, 3);
+    while (items.length < 3) items.push(['Your service', 'What you offer', 'Get in touch'][items.length]);
+    return '<div class="blueprint-top"><div class="blueprint-brand"><i></i>' + escapeHTML(name) + '</div><span class="blueprint-tag">Website blueprint</span></div>' +
+      '<section class="blueprint-hero"><div><p class="blueprint-kicker">' + escapeHTML(category) + '</p><h2 class="blueprint-title">' + escapeHTML(name) + '</h2><p class="blueprint-copy">A clear, thoughtful website for the people looking for your business.</p><div class="blueprint-details"><span>' + escapeHTML(phone) + '</span><span>' + escapeHTML(address) + '</span></div></div><div class="blueprint-illustration">' + blueprintArt(category, name) + '</div></section>' +
+      '<section class="blueprint-section"><h3>What we do</h3><div class="blueprint-services">' + items.map(function (item) { return '<div class="blueprint-service"><b>' + escapeHTML(item) + '</b><div class="blueprint-line"></div><div class="blueprint-line short"></div></div>'; }).join('') + '</div></section><div class="blueprint-footer"><span>' + escapeHTML(name) + '</span><span>Built with BrightSite</span></div>';
+  }
+  function renderBlueprint(data) {
+    var markup = blueprintMarkup(data || business || {});
+    document.getElementById('blueprintContent').innerHTML = markup;
+    document.getElementById('loadingBlueprint').innerHTML = markup;
+  }
+  renderBlueprint();
 
   // ---------------- change password ----------------
   (function () {
@@ -587,7 +642,7 @@
     document.getElementById('saveBar').hidden = !on;
     document.getElementById('editToggle').classList.toggle('active', on);
     document.getElementById('editToggle').innerHTML = on ? '&#10005; Close' : '&#9998; Edit';
-    setMobilePanel(on ? 'account' : 'website');
+    setWorkspacePanel(on ? 'edit' : 'account');
     if (on) {
       var statusEl = document.getElementById('saveStatus');
       statusEl.textContent = 'All changes saved'; statusEl.className = 'save-status ok';
@@ -604,35 +659,31 @@
   // On a phone, editing controls and the website preview share the screen.
   // Keep both available as tabs; switching never exits edit mode or loses a
   // field currently being changed.
-  function setMobilePanel(panel) {
+  function setWorkspacePanel(panel) {
     var website = panel === 'website';
+    var editing = panel === 'edit';
     document.body.classList.toggle('mobile-show-site', website);
-    document.getElementById('mobileAccountTab').setAttribute('aria-selected', String(!website));
+    appBody().classList.toggle('focus-site', website);
+    appBody().classList.toggle('focus-edit', editing);
+    appBody().classList.toggle('focus-account', panel === 'account');
+    document.getElementById('mobileAccountTab').setAttribute('aria-selected', String(panel === 'account'));
     document.getElementById('mobileWebsiteTab').setAttribute('aria-selected', String(website));
+    document.getElementById('mobileEditMenuToggle').setAttribute('aria-selected', String(editing));
   }
-  document.getElementById('mobileAccountTab').addEventListener('click', function () { setMobilePanel('account'); });
-  document.getElementById('mobileWebsiteTab').addEventListener('click', function () { setMobilePanel('website'); });
+  document.getElementById('mobileAccountTab').addEventListener('click', function () { if (isEditing) setEditing(false); else setWorkspacePanel('account'); });
+  document.getElementById('mobileWebsiteTab').addEventListener('click', function () { if (isEditing) setEditing(false); setWorkspacePanel('website'); });
   var mobileEditMenu = document.getElementById('mobileEditMenu');
   var mobileEditMenuToggle = document.getElementById('mobileEditMenuToggle');
   function closeMobileEditMenu() {
     mobileEditMenu.hidden = true;
     mobileEditMenuToggle.setAttribute('aria-expanded', 'false');
   }
-  mobileEditMenuToggle.addEventListener('click', function () {
-    var willOpen = mobileEditMenu.hidden;
-    closeMobileEditMenu();
-    if (!willOpen) return;
-    var box = mobileEditMenuToggle.getBoundingClientRect();
-    mobileEditMenu.style.top = (box.bottom + 8) + 'px';
-    mobileEditMenu.style.right = Math.max(14, window.innerWidth - box.right) + 'px';
-    mobileEditMenu.hidden = false;
-    mobileEditMenuToggle.setAttribute('aria-expanded', 'true');
-  });
+  mobileEditMenuToggle.addEventListener('click', function () { closeMobileEditMenu(); if (!isEditing) setEditing(true); else setWorkspacePanel('edit'); });
   mobileEditMenu.addEventListener('click', function (event) {
     var button = event.target.closest('[data-mobile-section]');
     if (!button) return;
     closeMobileEditMenu();
-    setMobilePanel('account');
+    setWorkspacePanel('edit');
     if (!isEditing) setEditing(true);
     openSection(button.dataset.mobileSection);
   });
@@ -692,7 +743,15 @@
   function renderPreview() {
     clearTimeout(previewTimer);
     var frame = document.getElementById('sitePreview');
+    var blueprint = document.getElementById('blueprintPreview');
     if (!business || typeof buildDemoHTML !== 'function') return;
+    // A Studio upload/deployment supplies a liveUrl; the explicit demo fields
+    // are supported too. Until then customers see a personalised blueprint.
+    var hasUploadedDemo = !!(business.data && (business.data.demoUploaded || business.data.demoUrl || business.data.liveUrl));
+    blueprint.hidden = hasUploadedDemo;
+    frame.hidden = !hasUploadedDemo;
+    renderBlueprint(business);
+    if (!hasUploadedDemo) return;
     try { if (frame.contentWindow) lastScrollY = frame.contentWindow.scrollY; } catch (e) {}
     frame.classList.add('refreshing');
     try { frame.srcdoc = buildDemoHTML(currentRaw()); } catch (e) { frame.classList.remove('refreshing'); }
@@ -923,6 +982,10 @@
   function renderDashboard() {
     document.getElementById('mobileViewTabs').hidden = false;
     appBody().hidden = false;
+    var loading = document.getElementById('loadingScreen');
+    loading.style.opacity = '0';
+    loading.style.transition = 'opacity .25s ease';
+    setTimeout(function () { loading.hidden = true; }, 260);
 
     var data = business.data = business.data || {};
     var raw = data.raw = data.raw || {};
