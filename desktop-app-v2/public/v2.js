@@ -24,7 +24,7 @@
   const project = slug => core.state.projects.find(p => p.slug === slug) || null;
   const current = () => core.state.current;
   const JSON_HEADERS = { 'Content-Type': 'application/json' };
-  const v2 = { view: 'pipeline', slug: null, query: '', archivedOpen: false, editing: false, localTasks: [], doneOpen: false, detailsFor: null, bannerFor: null, leadCategory: '' };
+  const v2 = { view: 'pipeline', slug: null, query: '', archivedOpen: false, editing: false, profileTab: 'website', localTasks: [], doneOpen: false, detailsFor: null, bannerFor: null, leadCategory: '' };
 
   // ---------------- V1, mounted into V2 ----------------
   async function mountV1() {
@@ -502,6 +502,7 @@
     renderAlert(p, stage);
     renderBuildBanner(p, stage);
     renderDetails(p, stage, now);
+    $('#v2ProfileView').dataset.tab = v2.profileTab;
     $('#v2EditTitle').textContent = nameOf(p);
     v2.detailsFor = p.slug;
   }
@@ -521,17 +522,17 @@
   }
 
   function renderProfileHead(p, stage, now) {
-    const c = P.card(p, now);
-    const where = P.placeAndCategory(p);
-    const status = P.statusLine(p, now);
-    const chip = stage === 'client' ? `Client · ${P.PAYMENT_LABELS[P.paymentState(p)]}` : P.STAGE_LABELS[stage];
     $('#v2ProfileHead').innerHTML = `
       <button type="button" class="v2-back" data-act="back" title="Back to the pipeline">‹ Pipeline</button>
-      <div class="v2-title">
-        <h1>${esc(nameOf(p) || 'Untitled business')}</h1>
-        <div class="v2-title-meta"><span class="v2-chip tone-${c.tone}">${esc(chip)}</span>${where ? `<span>${esc(where)}</span>` : ''}${status ? `<span>${esc(status)}</span>` : ''}</div>
+      <div class="v2-title"><h1>${esc(nameOf(p) || 'Untitled business')}</h1></div>
+      <div class="v2-profile-tabs" role="tablist" aria-label="Customer workspace">
+        <button type="button" role="tab" aria-selected="${v2.profileTab === 'account'}" class="${v2.profileTab === 'account' ? 'is-active' : ''}" data-act="profile-tab" data-tab="account">Account</button>
+        <button type="button" role="tab" aria-selected="${v2.profileTab === 'website'}" class="${v2.profileTab === 'website' ? 'is-active' : ''}" data-act="profile-tab" data-tab="website">Website</button>
       </div>
-      <div class="v2-head-actions">${stageActions(p, stage)}<button type="button" class="v2-btn ghost v2-move" data-act="move">Move ▾</button></div>`;
+      <div class="v2-head-actions">
+        ${v2.profileTab === 'website' ? '<button type="button" class="v2-btn primary" data-act="publish-customer">Publish to customer</button>' : ''}
+        <button type="button" class="v2-btn ghost v2-move" data-act="move">More ▾</button>
+      </div>`;
   }
 
   function renderAlert(p, stage) {
@@ -633,6 +634,7 @@
     const categoryOptions = `<option value="">Choose…</option>` + types.map(t => `<option ${t.label === category ? 'selected' : ''}>${esc(t.label)}</option>`).join('')
       + (category && !types.some(t => t.label === category) ? `<option selected>${esc(category)}</option>` : '');
     setSection('#v2dContact', `
+      <h2>${v2.profileTab === 'website' ? 'Website basics' : 'Account details'}</h2>
       <div class="v2-quick">
         <button type="button" data-act="whatsapp">${ICONS.whatsapp}<span>WhatsApp</span></button>
         <button type="button" data-act="email">${ICONS.email}<span>Email</span></button>
@@ -812,6 +814,10 @@
       case 'domain': return core.openDomainDialog(p.slug);
       case 'stripe': return core.openExternal(P.stripeUrl(p));
       case 'make-live': return $('#deployBtn').click();
+      case 'publish-customer': return $('#deployBtn').click();
+      case 'profile-tab':
+        v2.profileTab = btn.dataset.tab === 'account' ? 'account' : 'website';
+        return render();
       case 'mark-paid': await core.markPaid(p.slug, btn); return render();
       case 'whatsapp': case 'email': case 'call': return reachOut(btn.dataset.act, p);
       case 'copy': return copyText(P.contactCard(p), 'Contact details copied.');
@@ -838,6 +844,14 @@
   editBtn.dataset.act = 'edit';
   editBtn.innerHTML = `${ICONS.pencil}Edit website`;
   actions.insertBefore(editBtn, $('#deployBtn'));
+  // Publishing is the handoff: V1 deploys the finished site and its normal
+  // shared sync makes that finished preview available in the customer's
+  // BrightSite account.
+  const deployBtn = $('#deployBtn');
+  if (deployBtn) {
+    deployBtn.textContent = 'Publish & send';
+    deployBtn.title = 'Publish this website and send it to the customer account';
+  }
   const moreBtn = document.createElement('button');
   moreBtn.type = 'button';
   moreBtn.className = 'icon-only v2-site-more';

@@ -244,6 +244,16 @@ body.v2 {
 .v2-back:hover { background: #dbe6fc; }
 .v2-title { min-width: 0; }
 .v2-title h1 { margin: 0; font-size: 26px; font-weight: 750; letter-spacing: -0.025em; color: var(--v2-title); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.v2-profile-tabs {
+  display: flex; align-self: stretch; align-items: center; gap: 4px; margin-left: 10px; padding: 4px;
+  border: 1px solid var(--line); border-radius: 11px; background: #f7f8fa;
+}
+.v2-profile-tabs button {
+  height: 30px; padding: 0 14px; border: 0; border-radius: 7px; background: transparent; color: var(--muted);
+  font: 650 12.5px inherit; cursor: pointer;
+}
+.v2-profile-tabs button:hover { color: var(--ink); }
+.v2-profile-tabs button.is-active { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(16,24,40,.12); }
 .v2-title-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 5px; font-size: 13px; color: var(--muted); }
 .v2-chip {
   display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;
@@ -312,6 +322,19 @@ button.v2-field-value { padding: 7px 9px; }
 .v2-mini-add { display: grid; grid-template-columns: minmax(0, 1fr) 118px auto; gap: 6px; margin-top: 8px; }
 .v2-mini-add input { min-width: 0; padding: 7px 9px; border: 1px solid var(--line); border-radius: 9px; font: 12.5px inherit; background: #fff; }
 .v2-mini-add .v2-btn { padding: 7px 11px; font-size: 12.5px; }
+
+/* The customer workspace deliberately has only two calm destinations. Website
+   keeps the editable essentials beside the preview; Account keeps the admin
+   and relationship information out of the way. */
+#v2ProfileView[data-tab="website"] #v2dLinks,
+#v2ProfileView[data-tab="website"] #v2dInfo,
+#v2ProfileView[data-tab="website"] #v2dNotes,
+#v2ProfileView[data-tab="website"] #v2dTasks { display: none; }
+#v2ProfileView[data-tab="account"] .v2-site-col { display: none; }
+#v2ProfileView[data-tab="account"] .v2-profile-body { grid-template-columns: minmax(0, 680px); }
+#v2ProfileView[data-tab="account"] .v2-details { max-width: 680px; }
+#v2ProfileView[data-tab="account"] #v2dPrices { display: none; }
+#v2ProfileView[data-tab="account"] #v2BuildBanner { display: none; }
 
 /* The website side: V1's preview (and, while editing, its builder). */
 .v2-site-col { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
