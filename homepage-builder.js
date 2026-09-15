@@ -739,7 +739,9 @@ document.addEventListener('DOMContentLoaded', () => {
     status.textContent = '';
     status.className = 'quick-lead-status';
 
-    animateAdvance(() => finishEmailAfterTransition(loc, email));
+    // Final submission goes directly into the loading/account handoff.
+    // No blue field takeover after the email is entered.
+    finishEmailAfterTransition(loc, email);
   }
 
   async function finishEmailAfterTransition(loc, email) {

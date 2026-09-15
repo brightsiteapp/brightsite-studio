@@ -87,6 +87,13 @@
   .sec-btn{width:100%;border:1px solid var(--line);border-radius:14px;background:var(--card);margin-bottom:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;font:inherit;font-size:13.5px;font-weight:700;color:var(--ink);text-align:left}
   .sec-btn:hover{border-color:var(--accent)}
   .sec-btn .chev{font-size:13px;color:var(--muted)}
+  .sec-title{display:flex;align-items:center;gap:9px}
+  .section-tick{width:18px;height:18px;border:2px solid #d55b5b;border-radius:50%;display:grid;place-items:center;color:#d55b5b;font-size:11px;line-height:1;flex:none}
+  .section-tick::before{content:'!'}
+  .sec-btn.is-complete .section-tick{border-color:#249b58;background:#249b58;color:#fff}
+  .sec-btn.is-complete .section-tick::before{content:'✓'}
+  .builder-guidance{margin:14px 0 0;padding:12px 14px;border:1px solid #f0d5d5;border-radius:12px;background:#fff8f8;color:#8d4444;font-size:12.5px;line-height:1.45}
+  .builder-guidance[hidden]{display:none}
 
   .builder-section{animation:sectionIn .16s ease}
   @keyframes sectionIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
@@ -282,12 +289,13 @@
             <h2>Edit your website</h2>
             <button type="button" class="builder-back" id="builderBack">Done</button>
           </div>
-          <button type="button" class="sec-btn" data-section="name">Business name<span class="chev">&#8250;</span></button>
-          <button type="button" class="sec-btn" data-section="contact">Phone &amp; email<span class="chev">&#8250;</span></button>
-          <button type="button" class="sec-btn" data-section="hours">Opening hours<span class="chev">&#8250;</span></button>
-          <button type="button" class="sec-btn" data-section="address">Location / address<span class="chev">&#8250;</span></button>
-          <button type="button" class="sec-btn" data-section="prices">Prices &amp; timetable<span class="chev">&#8250;</span></button>
-          <button type="button" class="sec-btn" data-section="media">Media<span class="chev">&#8250;</span></button>
+          <button type="button" class="sec-btn" data-section="name"><span class="sec-title"><span class="section-tick"></span>Business name</span><span class="chev">&#8250;</span></button>
+          <button type="button" class="sec-btn" data-section="contact"><span class="sec-title"><span class="section-tick"></span>Phone &amp; email</span><span class="chev">&#8250;</span></button>
+          <button type="button" class="sec-btn" data-section="hours"><span class="sec-title"><span class="section-tick"></span>Opening hours</span><span class="chev">&#8250;</span></button>
+          <button type="button" class="sec-btn" data-section="address"><span class="sec-title"><span class="section-tick"></span>Location / address</span><span class="chev">&#8250;</span></button>
+          <button type="button" class="sec-btn" data-section="prices"><span class="sec-title"><span class="section-tick"></span>Prices &amp; timetable</span><span class="chev">&#8250;</span></button>
+          <button type="button" class="sec-btn" data-section="media"><span class="sec-title"><span class="section-tick"></span>Media</span><span class="chev">&#8250;</span></button>
+          <p class="builder-guidance" id="builderGuidance">Fill these in to help your designer create your preview.</p>
         </div>
 
         <div class="builder-section" data-section-panel="name" hidden>
@@ -508,6 +516,7 @@
   var isPaying = false;   // no billing check wired up yet — see Billing card
   var isLive = false;
   var isEditing = false;
+  var openEditorAfterSetup = false;
   var activeSection = null; // which builder section (if any) is drilled into
   var hoursStructured = defaultHours();
   var DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -737,6 +746,7 @@
     // repeat them on a second setup screen.
     setupPanel().hidden = true;
     appBody().hidden = true;
+    openEditorAfterSetup = true;
     var pendingName = params.get('name') || localStorage.getItem('bs_pending_business_name') || (session.email || '').split('@')[0];
     var pendingSlug = params.get('slug') || localStorage.getItem('bs_pending_slug') || '';
     document.getElementById('setupName').value = pendingName;
@@ -777,7 +787,7 @@
             return res.json();
           });
         }
-        var record = { slug: chosenSlug, name: name, raw: { name: name, services: [], gallery: [] }, updatedAt: new Date().toISOString() };
+        var record = { slug: chosenSlug, name: name, raw: { name: name, email: session.email || '', services: [], gallery: [] }, updatedAt: new Date().toISOString() };
         return fetch(SUPABASE_URL + '/rest/v1/businesses', {
           method: 'POST',
           headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation,resolution=merge-duplicates' }),
@@ -829,7 +839,24 @@
     renderGallery();
     renderPlanUI();
     renderPreview();
-    setEditing(false);
+    setEditing(openEditorAfterSetup);
+    openEditorAfterSetup = false;
+    updateSectionChecks();
+  }
+
+  function updateSectionChecks() {
+    var complete = {
+      name: !!document.getElementById('fName').value.trim(),
+      contact: !!document.getElementById('fPhone').value.trim() && !!document.getElementById('fEmail2').value.trim(),
+      hours: hoursStructured.some(function (day) { return day.open && day.from && day.to; }),
+      address: !!document.getElementById('fAddress').value.trim(),
+      prices: services.some(function (group) { return group.items.some(function (item) { return item.name && item.name.trim(); }); }),
+      media: !!media.logoImage || !!media.heroImage || media.gallery.length > 0 || !!pendingUploads.logo || !!pendingUploads.hero || pendingUploads.gallery.length > 0
+    };
+    Object.keys(complete).forEach(function (section) {
+      document.querySelector('[data-section="' + section + '"]')?.classList.toggle('is-complete', complete[section]);
+    });
+    document.getElementById('builderGuidance').hidden = Object.keys(complete).every(function (section) { return complete[section]; });
   }
 
   function renderPlanUI() {
@@ -1117,6 +1144,7 @@
   var MAX_AUTOSAVE_RETRIES = 4;
 
   function scheduleAutoSave() {
+    updateSectionChecks();
     if (!isEditing) return;
     hasPendingEdit = true;
     autoSaveRetries = 0;
