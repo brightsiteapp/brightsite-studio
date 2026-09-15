@@ -149,7 +149,9 @@
   // If already logged in, go straight to the dashboard.
   try {
     var existing = JSON.parse(localStorage.getItem('bs_session') || 'null');
-    if (existing && existing.access_token) {
+    // A builder handoff explicitly asks the customer to set a password. Do
+    // not let an old browser session bypass that screen.
+    if (existing && existing.access_token && !isSignup) {
       location.href = 'dashboard.html' + (slugParam ? ('?slug=' + encodeURIComponent(slugParam)) : '');
       return;
     }
