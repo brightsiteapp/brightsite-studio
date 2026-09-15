@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loggedIn = !!(session && session.access_token);
   } catch (e) {}
 
-  link.href = loggedIn ? '/account/dashboard.html' : '/account/login.html';
-  link.setAttribute('aria-label', loggedIn ? 'My account' : 'Log in');
-  link.title = loggedIn ? 'My account' : 'Log in';
+  link.href = loggedIn ? '/account/dashboard.html' : '/account/login.html?signup=1';
+  link.setAttribute('aria-label', loggedIn ? 'My account' : 'Create an account');
+  link.title = loggedIn ? 'My account' : 'Create an account';
 });
