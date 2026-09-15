@@ -959,10 +959,16 @@
         renderDashboard();
       })
       .catch(function (err) {
-        // Do not expose an unfinished setup page. The account can be retried
-        // from a fresh builder handoff after the database issue is resolved.
+        // Keep the customer in their Website details screen if provisioning
+        // is delayed; never dump them back on the marketing homepage after
+        // they have just set a password.
         console.error('Could not create customer workspace:', err);
-        location.replace('../');
+        var provisional = { slug: chosenSlug, name: name, raw: { name: name, email: session.email || '', tagline: pendingType, services: [], gallery: [] }, updatedAt: new Date().toISOString() };
+        business = { id: chosenSlug, name: name, user_id: session.user_id, data: provisional };
+        slug = chosenSlug;
+        localStorage.setItem('bs_pending_business_name', name);
+        localStorage.setItem('bs_pending_slug', chosenSlug);
+        renderDashboard();
       });
   }
 
