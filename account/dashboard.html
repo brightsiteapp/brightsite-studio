@@ -79,6 +79,7 @@
   .info-hint{font-size:12px;color:var(--muted);line-height:1.5;margin-top:2px}
   .plan-summary{margin:10px 0 8px;padding:12px 13px;border:1px solid #d7e4fb;border-radius:12px;background:#f5f8ff}
   .plan-summary strong{display:block;font-size:13px;color:var(--ink);margin-bottom:3px}
+  .plan-summary strong b{margin-left:6px;color:var(--accent);font-weight:800}
   .plan-summary span{display:block;font-size:12px;line-height:1.45;color:var(--muted)}
 
   .req-btn-wrap{margin-top:4px}
@@ -259,7 +260,7 @@
       <div id="viewPanel">
         <div class="info-card">
           <h2>Account</h2>
-          <div class="info-row"><span class="label">Plan</span><span class="value"><span class="plan-pill" id="planPill"><span class="plan-dot"></span><span id="planLabel">Essential selected</span></span></span></div>
+          <div class="info-row"><span class="label">Plan</span><span class="value"><span class="plan-pill" id="planPill"><span class="plan-dot"></span><span id="planLabel">Essential £0</span></span></span></div>
           <div class="info-row"><span class="label">Login email</span><span class="value" id="acctEmailRow"></span></div>
           <div class="info-row"><span class="label">Website status</span><span class="value" id="statusRow">Not live yet</span></div>
         </div>
@@ -284,7 +285,7 @@
         <div class="info-card">
           <h2>Your plan</h2>
           <div class="plan-summary">
-            <strong>Essential</strong>
+            <strong>Essential <b>£0</b></strong>
             <span>£19/month hosting — charged once your website is live.</span>
           </div>
           <p class="info-hint" id="billingHint">Your Essential plan is selected. Add features now; you’ll manage billing once your account is active.</p>
@@ -950,7 +951,7 @@
   function renderPlanUI() {
     var pill = document.getElementById('planPill');
     pill.classList.toggle('active', isPaying);
-    document.getElementById('planLabel').textContent = isPaying ? 'Essential active' : 'Essential selected';
+    document.getElementById('planLabel').textContent = isPaying ? 'Essential active' : 'Essential £0';
     document.getElementById('statusRow').textContent = isLive ? 'Live' : 'Not live yet';
     document.getElementById('billingHint').textContent = isPaying
       ? 'Your Essential plan is active. Manage payment details any time.'
