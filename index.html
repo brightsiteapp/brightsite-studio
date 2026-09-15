@@ -167,7 +167,7 @@
 
     <div class="wiz-grid" id="wizGrid">
       <div class="wiz-left">
-          <div class="qa-progress started" id="qaProgress">
+          <div class="qa-progress" id="qaProgress">
           <div class="qa-progress-bar">
             <span class="qa-progress-seg" data-seg="1"></span>
             <span class="qa-progress-seg" data-seg="2"></span>
@@ -180,18 +180,18 @@
         <div class="qa-pills" id="qaPills"></div>
 
         <form id="quickLead" novalidate>
-          <div class="glow-box qa-box qa-grid" id="qaBox">
+          <div class="glow-box qa-box" id="qaBox">
             <div class="glow-box-inner">
               <span class="qa-fill" aria-hidden="true"></span>
-              <div class="qa-slide" id="qaSlideName" data-step="2" hidden>
-                <button type="button" class="qa-back" data-qa-back="1" aria-label="Back to business type">←</button>
+              <div class="qa-slide qa-active" id="qaSlideName" data-step="1">
                 <div class="qa-field" id="qaFieldName">
                   <span class="qa-ph">What's your business called?</span>
                   <input type="text" id="bizName" name="business_name" required autocomplete="organization" autocapitalize="words" aria-label="Business name" placeholder="What's your business called?">
                 </div>
                 <button type="submit" class="qa-go" id="qaNameGo" aria-label="Continue with business name"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h13M12.5 6.2 18.8 12l-6.3 5.8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
               </div>
-              <div class="qa-slide qa-active qa-grid-open" id="qaSlideType" data-step="1">
+              <div class="qa-slide" id="qaSlideType" data-step="2" hidden>
+                <button type="button" class="qa-back" data-qa-back="1" aria-label="Back to business name">←</button>
                 <div class="qa-field" id="qaFieldType">
                   <span class="qa-ph">What type of business are you?</span>
                   <select id="bizTagline" required aria-label="Business type">
@@ -202,7 +202,7 @@
                 <div class="qa-type-grid" id="qaTypeGrid" role="listbox" aria-label="Business type"></div>
               </div>
               <div class="qa-slide" id="qaSlideLocation" data-step="3" hidden>
-                <button type="button" class="qa-back" data-qa-back="2" aria-label="Back to business name">←</button>
+                <button type="button" class="qa-back" data-qa-back="2" aria-label="Back to business type">←</button>
                 <div class="qa-field" id="qaFieldLocation">
                   <span class="qa-ph">Where are you based?</span>
                   <input type="text" id="bizLocation" required autocomplete="off" autocapitalize="words" aria-label="Business location" placeholder="Where are you based?">
