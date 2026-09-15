@@ -732,19 +732,23 @@
   }
 
   function showSetup() {
-    setupPanel().hidden = false;
+    // The builder already supplied these details before account creation.
+    // Create the starter record quietly rather than asking the customer to
+    // repeat them on a second setup screen.
+    setupPanel().hidden = true;
     appBody().hidden = true;
-    var pendingName = localStorage.getItem('bs_pending_business_name') || '';
+    var pendingName = params.get('name') || localStorage.getItem('bs_pending_business_name') || (session.email || '').split('@')[0];
     var pendingSlug = params.get('slug') || localStorage.getItem('bs_pending_slug') || '';
     document.getElementById('setupName').value = pendingName;
     document.getElementById('setupSlug').value = pendingSlug;
+    createSetupBusiness();
   }
 
   function slugify(s) {
     return (s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
   }
 
-  document.getElementById('setupBtn').addEventListener('click', function () {
+  function createSetupBusiness() {
     var name = document.getElementById('setupName').value.trim();
     var chosenSlug = slugify(document.getElementById('setupSlug').value || name);
     var statusEl = document.getElementById('setupStatus');
@@ -794,7 +798,8 @@
         statusEl.textContent = /duplicate|already exists|23505/i.test(err.message) ? 'That web address is already taken — choose another.' : (err.message || 'Something went wrong.');
         statusEl.style.color = '#b23b2c';
       });
-  });
+  }
+  document.getElementById('setupBtn').addEventListener('click', createSetupBusiness);
 
   // ---------------- render ----------------
   function renderDashboard() {
