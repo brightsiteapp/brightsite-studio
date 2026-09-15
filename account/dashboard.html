@@ -74,9 +74,6 @@
   .mobile-view-tabs button{flex:1;min-height:36px;border:0;border-radius:10px;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
   .mobile-view-tabs button[aria-selected="true"]{background:var(--ink);color:#fff}
   .mobile-view-tabs button:disabled{opacity:.42;cursor:not-allowed}
-  .app-body.focus-site,.app-body.focus-edit,.app-body.focus-account{grid-template-columns:1fr}
-  .app-body.focus-site .left-panel,.app-body.focus-edit .right-panel,.app-body.focus-account .right-panel{display:none}
-  .app-body.focus-edit .left-inner{max-width:760px;width:100%;margin:0 auto;padding:28px}
 
   /* ---------------- account view cards ---------------- */
   .info-card{padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 8px 20px rgba(23,32,31,.04);margin-bottom:16px}
@@ -240,7 +237,7 @@
     .preview-device-toggle{display:none}
     .app-header-right .who .name,.app-header-right .who .email{max-width:38vw}
     .toolbar-left .status-pill{display:none}
-    .app-body.focus-edit .left-inner{padding:18px}.blueprint-site{border-radius:12px}.blueprint-inner{padding:22px}.blueprint-hero{grid-template-columns:1fr;padding:32px 0}.blueprint-illustration{min-height:190px}.blueprint-services{grid-template-columns:1fr}.loading-grid{grid-template-columns:1fr}.loading-grid .blueprint-site{height:380px}.loading-steps{padding:16px}
+    .blueprint-site{border-radius:12px}.blueprint-inner{padding:22px}.blueprint-hero{grid-template-columns:1fr;padding:32px 0}.blueprint-illustration{min-height:190px}.blueprint-services{grid-template-columns:1fr}.loading-grid{grid-template-columns:1fr}.loading-grid .blueprint-site{height:380px}.loading-steps{padding:16px}
   }
 </style>
 </head>
@@ -270,17 +267,6 @@
 <nav class="mobile-view-tabs" id="mobileViewTabs" aria-label="Account sections" hidden>
   <button type="button" id="mobileAccountTab" aria-selected="true">Account</button>
   <button type="button" id="mobileWebsiteTab" aria-selected="false">Website</button>
-  <button type="button" class="mobile-edit-menu-toggle" id="mobileEditMenuToggle" aria-label="Edit website" aria-selected="false">Edit</button>
-</nav>
-<nav class="mobile-edit-menu" id="mobileEditMenu" aria-label="Edit website" hidden>
-  <h2>Edit website</h2>
-  <button type="button" data-mobile-section="name">Business name</button>
-  <button type="button" data-mobile-section="contact">Phone &amp; email</button>
-  <button type="button" data-mobile-section="hours">Opening hours</button>
-  <button type="button" data-mobile-section="address">Location / address</button>
-  <button type="button" data-mobile-section="prices">Prices &amp; services</button>
-  <button type="button" data-mobile-section="reviews">Reviews</button>
-  <button type="button" data-mobile-section="media">Photos &amp; logo</button>
 </nav>
 
 <div id="appBody" class="app-body" hidden>
@@ -332,7 +318,7 @@
 
       <!-- ---------------- edit mode ---------------- -->
       <div id="builderPanel" hidden>
-        <p class="developer-building-message" id="developerBuildingMessage"><b>Your developer is creating your website preview.</b><br>Add anything you know below — your details will be used to shape the finished website.</p>
+        <p class="developer-building-message" id="developerBuildingMessage"><b>Your developer is creating your website preview. It’ll be ready in 1–2 days.</b><br>Add your business details, services and photos now — they’ll help us make the first version feel like yours.</p>
 
         <div id="builderList">
           <div class="builder-head">
@@ -641,7 +627,6 @@
 
   // ---------------- edit / view toggle ----------------
   function setEditing(on) {
-    if (on && !hasUploadedDemo() && business) on = true;
     isEditing = on;
     document.body.classList.toggle('mode-edit', on);
     document.body.classList.toggle('mode-view', !on);
@@ -650,7 +635,8 @@
     document.getElementById('saveBar').hidden = !on;
     document.getElementById('editToggle').classList.toggle('active', on);
     document.getElementById('editToggle').innerHTML = on ? '&#10005; Close' : '&#9998; Edit';
-    setWorkspacePanel(on ? 'edit' : 'account');
+    document.getElementById('mobileAccountTab').setAttribute('aria-selected', String(!on));
+    document.getElementById('mobileWebsiteTab').setAttribute('aria-selected', String(on));
     if (on) {
       var statusEl = document.getElementById('saveStatus');
       statusEl.textContent = 'All changes saved'; statusEl.className = 'save-status ok';
@@ -664,37 +650,10 @@
   document.getElementById('editToggle').addEventListener('click', function () { if (hasUploadedDemo()) setEditing(!isEditing); });
   document.getElementById('builderBack').addEventListener('click', function () { setEditing(false); });
 
-  // On a phone, editing controls and the website preview share the screen.
-  // Keep both available as tabs; switching never exits edit mode or loses a
-  // field currently being changed.
-  function setWorkspacePanel(panel) {
-    var website = panel === 'website';
-    var editing = panel === 'edit';
-    document.body.classList.toggle('mobile-show-site', website);
-    appBody().classList.toggle('focus-site', website);
-    appBody().classList.toggle('focus-edit', editing);
-    appBody().classList.toggle('focus-account', panel === 'account');
-    document.getElementById('mobileAccountTab').setAttribute('aria-selected', String(panel === 'account'));
-    document.getElementById('mobileWebsiteTab').setAttribute('aria-selected', String(website));
-    document.getElementById('mobileEditMenuToggle').setAttribute('aria-selected', String(editing));
-  }
-  document.getElementById('mobileAccountTab').addEventListener('click', function () { if (isEditing) setEditing(false); else setWorkspacePanel('account'); });
-  document.getElementById('mobileWebsiteTab').addEventListener('click', function () { if (isEditing) setEditing(false); setWorkspacePanel('website'); });
-  var mobileEditMenu = document.getElementById('mobileEditMenu');
-  var mobileEditMenuToggle = document.getElementById('mobileEditMenuToggle');
-  function closeMobileEditMenu() {
-    mobileEditMenu.hidden = true;
-    mobileEditMenuToggle.setAttribute('aria-expanded', 'false');
-  }
-  mobileEditMenuToggle.addEventListener('click', function () { closeMobileEditMenu(); if (hasUploadedDemo() && !isEditing) setEditing(true); else if (hasUploadedDemo()) setWorkspacePanel('edit'); });
-  mobileEditMenu.addEventListener('click', function (event) {
-    var button = event.target.closest('[data-mobile-section]');
-    if (!button) return;
-    closeMobileEditMenu();
-    setWorkspacePanel('edit');
-    if (!isEditing) setEditing(true);
-    openSection(button.dataset.mobileSection);
-  });
+  // The two tabs only change the left-side panel; the preview remains in
+  // place, so customers never lose sight of the website they are shaping.
+  document.getElementById('mobileAccountTab').addEventListener('click', function () { setEditing(false); });
+  document.getElementById('mobileWebsiteTab').addEventListener('click', function () { setEditing(true); });
 
   // ---------------- drill-in section navigation ----------------
   var WIDE_SECTIONS = { prices: true, media: true };
@@ -1006,8 +965,6 @@
     isLive = !!data.published;
     var demoReady = hasUploadedDemo();
     document.getElementById('editToggle').hidden = !demoReady;
-    document.getElementById('mobileEditMenuToggle').disabled = !demoReady;
-    document.getElementById('mobileEditMenuToggle').title = demoReady ? '' : 'Available once your finished website is uploaded';
     document.getElementById('developerBuildingMessage').hidden = demoReady;
 
     document.getElementById('acctName').textContent = raw.name || business.name || '';
@@ -1029,8 +986,9 @@
     renderPlanUI();
     renderPreview();
     renderAccountHero();
-    setEditing(demoReady && openEditorAfterSetup);
-    if (!demoReady) setEditing(true);
+    // A new customer lands directly on the Website tab, with their basic
+    // details ready to fill in beside the live skeleton preview.
+    setEditing(!demoReady || openEditorAfterSetup);
     openEditorAfterSetup = false;
     updateSectionChecks();
   }
