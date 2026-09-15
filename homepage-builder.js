@@ -471,6 +471,32 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     qaTypeGrid.appendChild(button);
   });
+  // A small live example in the dropdown prompt makes the broad category
+  // question easier to answer. Its two-second rhythm matches the examples
+  // carousel below, and pauses whenever the visitor opens the control.
+  (function animateTypeExamples() {
+    const prompt = bizTagline.options[0];
+    const examples = ['Hair salon', 'Plumber', 'Café', 'Personal trainer', 'Electrician', 'Beauty clinic'];
+    const prefix = 'What type of website? ';
+    let exampleIndex = 0;
+    let count = 0;
+    let erasing = false;
+    let hold = 0;
+    const tick = () => {
+      if (bizTagline.value || document.activeElement === bizTagline) return;
+      const word = examples[exampleIndex];
+      if (hold > 0) hold -= 1;
+      else if (!erasing && count < word.length) count += 1;
+      else if (!erasing) { hold = 7; erasing = true; }
+      else if (count > 0) count -= 1;
+      else { erasing = false; exampleIndex = (exampleIndex + 1) % examples.length; hold = 3; }
+      prompt.textContent = prefix + word.slice(0, count);
+    };
+    const timer = window.setInterval(tick, 90);
+    bizTagline.addEventListener('focus', () => { prompt.textContent = prefix; });
+    bizTagline.addEventListener('blur', () => { if (!bizTagline.value) prompt.textContent = prefix; });
+    bizTagline.addEventListener('change', () => window.clearInterval(timer), { once: true });
+  })();
   bizTagline.addEventListener('change', () => { if (!qaIsAnimating) finishType(); });
   qaTypeGo.addEventListener('click', finishType);
   document.querySelectorAll('[data-qa-back]').forEach(button => button.addEventListener('click', () => {
