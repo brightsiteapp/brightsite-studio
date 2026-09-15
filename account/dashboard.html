@@ -73,6 +73,9 @@
   .billing-btn:disabled{cursor:not-allowed;opacity:.7}
   .upgrade-btn{width:100%;margin-top:6px;border:0;border-radius:999px;padding:11px 16px;font:inherit;font-size:12.5px;font-weight:700;color:#fff;background:var(--accent);cursor:pointer}
   .info-hint{font-size:12px;color:var(--muted);line-height:1.5;margin-top:2px}
+  .plan-summary{margin:10px 0 8px;padding:12px 13px;border:1px solid #d7e4fb;border-radius:12px;background:#f5f8ff}
+  .plan-summary strong{display:block;font-size:13px;color:var(--ink);margin-bottom:3px}
+  .plan-summary span{display:block;font-size:12px;line-height:1.45;color:var(--muted)}
 
   .req-btn-wrap{margin-top:4px}
   .req-btn{width:100%;min-height:44px;border:0;border-radius:999px;background:var(--ink);color:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
@@ -107,7 +110,7 @@
   .acct-status.err{color:#b23b2c}
   .acct-field{margin-bottom:12px}
   .acct-pwd-show{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:13px;color:var(--muted)}
-  .acct-pwd-show input{width:auto;margin:0;min-height:auto}
+  .acct-field .acct-pwd-show input{width:16px;height:16px;min-height:16px;padding:0;margin:0;border:0;border-radius:4px;box-shadow:none;accent-color:var(--accent);flex:none}
   .acct-pwd-show label{cursor:pointer}
   .acct-field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}
   .acct-field input,.acct-field textarea,.acct-field select{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--ink);font:inherit;font-size:14px;outline:none;transition:border-color .18s ease}
@@ -251,7 +254,7 @@
       <div id="viewPanel">
         <div class="info-card">
           <h2>Account</h2>
-          <div class="info-row"><span class="label">Plan</span><span class="value"><span class="plan-pill" id="planPill"><span class="plan-dot"></span><span id="planLabel">Payment required</span></span></span></div>
+          <div class="info-row"><span class="label">Plan</span><span class="value"><span class="plan-pill" id="planPill"><span class="plan-dot"></span><span id="planLabel">Essential selected</span></span></span></div>
           <div class="info-row"><span class="label">Login email</span><span class="value" id="acctEmailRow"></span></div>
           <div class="info-row"><span class="label">Website status</span><span class="value" id="statusRow">Not live yet</span></div>
         </div>
@@ -274,21 +277,14 @@
         </div>
 
         <div class="info-card">
-          <h2>Billing</h2>
-          <p class="info-hint" id="billingHint">Upgrade your plan to make your site live and take it beyond a draft.</p>
-          <button type="button" class="upgrade-btn" id="upgradeBtn" hidden>Upgrade plan</button>
-          <button type="button" class="billing-btn" id="billingBtn">Manage billing</button>
-        </div>
-
-        <div class="info-card">
-          <h2>Note for your developer</h2>
-          <p class="info-hint">Tell us anything useful about your business, website, or what you’d like us to focus on.</p>
-          <div class="acct-field" style="margin-top:12px">
-            <label for="developerNote">Your note</label>
-            <textarea id="developerNote" placeholder="For example: I’d like online bookings and a warm, premium look."></textarea>
+          <h2>Your plan</h2>
+          <div class="plan-summary">
+            <strong>Essential</strong>
+            <span>£19/month hosting — charged once your website is live.</span>
           </div>
-          <button type="button" class="upgrade-btn" id="developerNoteSave">Save note</button>
-          <div class="acct-status" id="developerNoteStatus" style="min-height:18px;margin-top:8px;font-size:12.5px"></div>
+          <p class="info-hint" id="billingHint">Your Essential plan is selected. Add features now; you’ll manage billing once your account is active.</p>
+          <button type="button" class="upgrade-btn" id="upgradeBtn">Add booking or ecommerce</button>
+          <button type="button" class="billing-btn" id="billingBtn" hidden>Manage billing</button>
         </div>
 
         <div class="req-btn-wrap">
@@ -312,6 +308,16 @@
           <button type="button" class="sec-btn" data-section="reviews"><span class="sec-title"><span class="section-tick"></span>Reviews</span><span class="chev">&#8250;</span></button>
           <button type="button" class="sec-btn" data-section="media"><span class="sec-title"><span class="section-tick"></span>Media</span><span class="chev">&#8250;</span></button>
           <p class="builder-guidance" id="builderGuidance">Fill these in to help your designer create your preview.</p>
+          <div class="info-card" style="margin-top:16px">
+            <h2>Note for your developer</h2>
+            <p class="info-hint">Tell us anything useful about your business, website, or what you’d like us to focus on.</p>
+            <div class="acct-field" style="margin-top:12px">
+              <label for="developerNote">Your note</label>
+              <textarea id="developerNote" placeholder="For example: I’d like online bookings and a warm, premium look."></textarea>
+            </div>
+            <button type="button" class="upgrade-btn" id="developerNoteSave">Save note</button>
+            <div class="acct-status" id="developerNoteStatus" style="min-height:18px;margin-top:8px;font-size:12.5px"></div>
+          </div>
         </div>
 
         <div class="builder-section" data-section-panel="name" hidden>
@@ -879,12 +885,13 @@
   function renderPlanUI() {
     var pill = document.getElementById('planPill');
     pill.classList.toggle('active', isPaying);
-    document.getElementById('planLabel').textContent = isPaying ? 'Active plan' : 'Payment required';
+    document.getElementById('planLabel').textContent = isPaying ? 'Essential active' : 'Essential selected';
     document.getElementById('statusRow').textContent = isLive ? 'Live' : 'Not live yet';
     document.getElementById('billingHint').textContent = isPaying
-      ? 'Your plan is active. Manage payment details any time.'
-      : 'Upgrade your plan to make your site live and take it beyond a draft.';
-    document.getElementById('upgradeBtn').hidden = isPaying;
+      ? 'Your Essential plan is active. Manage payment details any time.'
+      : 'Your Essential plan is selected. Add features now; you’ll manage billing once your account is active.';
+    document.getElementById('upgradeBtn').hidden = false;
+    document.getElementById('billingBtn').hidden = !isPaying;
 
     var toolbar = document.getElementById('toolbarStatus');
     toolbar.classList.toggle('live', isLive);
