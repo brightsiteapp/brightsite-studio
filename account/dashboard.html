@@ -74,6 +74,8 @@
   .mobile-view-tabs button{flex:1;min-height:36px;border:0;border-radius:10px;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
   .mobile-view-tabs button[aria-selected="true"]{background:var(--ink);color:#fff}
   .mobile-view-tabs button:disabled{opacity:.42;cursor:not-allowed}
+  .website-progress{margin:0 0 14px;font-size:12px;font-weight:700;color:var(--muted)}.website-progress b{color:var(--accent)}
+  .blueprint-nav{display:flex;gap:14px;flex-wrap:wrap;padding:13px 0;border-bottom:1px solid #1d252b}.blueprint-nav button{padding:0;border:0;background:transparent;color:#59636a;font:700 11px Inter,sans-serif;cursor:pointer}.blueprint-nav button[aria-current="page"]{color:#2f7ded}.blueprint-page{padding:30px 0;border-bottom:1px solid #1d252b}.blueprint-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.blueprint-photo{min-height:120px;border:1px dashed #9ca6ad;background:#f5f6f6;display:grid;place-items:center;color:#768188;font-size:11px;font-weight:700}.blueprint-review{padding:18px;border:1px solid #1d252b;font-size:14px;line-height:1.55}.blueprint-review + .blueprint-review{margin-top:10px}.preview-ready-toast{position:fixed;right:22px;bottom:22px;z-index:80;max-width:330px;padding:15px 17px;border:1px solid #b9d3fb;border-radius:14px;background:#fff;box-shadow:0 16px 38px rgba(23,32,31,.16);font-size:13px;line-height:1.45}.preview-ready-toast b{display:block;margin-bottom:3px;color:var(--ink)}
 
   /* ---------------- account view cards ---------------- */
   .info-card{padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 8px 20px rgba(23,32,31,.04);margin-bottom:16px}
@@ -320,6 +322,7 @@
       <!-- ---------------- edit mode ---------------- -->
       <div id="builderPanel" hidden>
         <p class="developer-building-message" id="developerBuildingMessage"><b>Your developer is creating your website preview. It’ll be ready in 1–2 days.</b><br>Add your business details, services and photos now — they’ll help us make the first version feel like yours.</p>
+        <p class="website-progress" id="websiteProgress">Your website details: <b>0 of 7 added</b></p>
 
         <div id="builderList">
           <div class="builder-head">
@@ -381,7 +384,7 @@
         <div class="builder-section" data-section-panel="media" hidden>
           <div class="section-head"><button type="button" class="section-back" data-back>&#8249; Edit your website</button></div>
           <h3>Media</h3>
-          <p class="media-intro">Add the images that make your website feel like your business.</p>
+          <p class="media-intro">Add the images that make your website feel like your business. We recommend 12 photos: your space, team, work, products and customers.</p>
           <div class="media-upload-grid">
             <label class="media-upload-card"><img id="logoThumb" class="media-thumb empty" alt=""><span><span class="media-upload-title">Logo</span><span class="media-upload-copy">A clear version of your logo</span></span><span class="media-upload-action">Upload logo</span><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="logoInput" hidden></label>
             <label class="media-upload-card"><img id="heroThumb" class="media-thumb empty" alt=""><span><span class="media-upload-title">Hero image</span><span class="media-upload-copy">The main image at the top of your site</span></span><span class="media-upload-action">Upload image</span><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="heroInput" hidden></label>
@@ -428,6 +431,8 @@
   </div>
 
 </div>
+
+<div class="preview-ready-toast" id="previewReadyToast" hidden><b>Your first website preview is ready.</b>Your developer has uploaded a finished version for you to explore.</div>
 
 <!-- Request an update modal -->
 <div class="modal-veil" id="reqVeil" hidden>
@@ -524,13 +529,27 @@
     var items = (raw.services || []).filter(Boolean).slice(0, 3);
     while (items.length < 3) items.push(['Your service', 'What you offer', 'Get in touch'][items.length]);
     return '<div class="blueprint-top"><div class="blueprint-brand"><i></i>' + escapeHTML(name) + '</div><span class="blueprint-tag">Website blueprint</span></div>' +
-      '<section class="blueprint-hero"><div><p class="blueprint-kicker">' + escapeHTML(category) + '</p><h2 class="blueprint-title">' + escapeHTML(name) + '</h2><p class="blueprint-copy">A clear, thoughtful website for the people looking for your business.</p><div class="blueprint-details"><span>' + escapeHTML(phone) + '</span><span>' + escapeHTML(address) + '</span></div></div><div class="blueprint-illustration">' + (outlineHeroImage ? '<img src="' + escapeHTML(outlineHeroImage) + '" alt="' + escapeHTML(name) + ' outline hero">' : blueprintArt(category, name)) + '</div></section>' +
-      '<section class="blueprint-section"><h3>What we do</h3><div class="blueprint-services">' + items.map(function (item) { return '<div class="blueprint-service"><b>' + escapeHTML(item) + '</b><div class="blueprint-line"></div><div class="blueprint-line short"></div></div>'; }).join('') + '</div></section><div class="blueprint-footer"><span>' + escapeHTML(name) + '</span><span>Built with BrightSite</span></div>';
+      '<nav class="blueprint-nav" aria-label="Preview pages"><button type="button" data-blueprint-page="home" aria-current="page">Home</button><button type="button" data-blueprint-page="services">Services</button><button type="button" data-blueprint-page="gallery">Gallery</button><button type="button" data-blueprint-page="reviews">Reviews</button><button type="button" data-blueprint-page="contact">Contact</button></nav>' +
+      '<div data-blueprint-panel="home"><section class="blueprint-hero"><div><p class="blueprint-kicker">' + escapeHTML(category) + '</p><h2 class="blueprint-title">' + escapeHTML(name) + '</h2><p class="blueprint-copy">A clear, thoughtful website for the people looking for your business.</p><div class="blueprint-details"><span>' + escapeHTML(phone) + '</span><span>' + escapeHTML(address) + '</span></div></div><div class="blueprint-illustration">' + (outlineHeroImage ? '<img src="' + escapeHTML(outlineHeroImage) + '" alt="' + escapeHTML(name) + ' outline hero">' : blueprintArt(category, name)) + '</div></section></div>' +
+      '<section class="blueprint-page" data-blueprint-panel="services" hidden><h3>Services</h3><div class="blueprint-services">' + items.map(function (item) { return '<div class="blueprint-service"><b>' + escapeHTML(item) + '</b><div class="blueprint-line"></div><div class="blueprint-line short"></div></div>'; }).join('') + '</div></section>' +
+      '<section class="blueprint-page" data-blueprint-panel="gallery" hidden><h3>Gallery</h3><div class="blueprint-gallery"><div class="blueprint-photo">YOUR PHOTO</div><div class="blueprint-photo">YOUR PHOTO</div><div class="blueprint-photo">YOUR PHOTO</div></div></section>' +
+      '<section class="blueprint-page" data-blueprint-panel="reviews" hidden><h3>Reviews</h3><div class="blueprint-review">“Your customer reviews will appear here.”</div><div class="blueprint-review">“Add a review or link to Google in the Website tab.”</div></section>' +
+      '<section class="blueprint-page" data-blueprint-panel="contact" hidden><h3>Contact</h3><div class="blueprint-details"><span>' + escapeHTML(phone) + '</span><span>' + escapeHTML(address) + '</span></div></section><div class="blueprint-footer"><span>' + escapeHTML(name) + '</span><span>Built with BrightSite</span></div>';
   }
   function renderBlueprint(data) {
     var markup = blueprintMarkup(data || business || {});
     document.getElementById('blueprintContent').innerHTML = markup;
     document.getElementById('loadingBlueprint').innerHTML = markup;
+    [document.getElementById('blueprintContent'), document.getElementById('loadingBlueprint')].forEach(function (mount) {
+      mount.querySelectorAll('[data-blueprint-page]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var page = button.dataset.blueprintPage;
+          mount.querySelectorAll('[data-blueprint-page]').forEach(function (item) { item.removeAttribute('aria-current'); });
+          button.setAttribute('aria-current', 'page');
+          mount.querySelectorAll('[data-blueprint-panel]').forEach(function (panel) { panel.hidden = panel.dataset.blueprintPanel !== page; });
+        });
+      });
+    });
   }
   renderBlueprint();
 
@@ -967,6 +986,13 @@
     var demoReady = hasUploadedDemo();
     document.getElementById('editToggle').hidden = !demoReady;
     document.getElementById('developerBuildingMessage').hidden = demoReady;
+    var revealKey = 'bs_preview_revealed_' + (business.id || slug || 'current');
+    if (demoReady && !sessionStorage.getItem(revealKey)) {
+      sessionStorage.setItem(revealKey, '1');
+      var readyToast = document.getElementById('previewReadyToast');
+      readyToast.hidden = false;
+      setTimeout(function () { readyToast.hidden = true; }, 6500);
+    }
 
     document.getElementById('acctName').textContent = raw.name || business.name || '';
     document.getElementById('fName').value = raw.name || business.name || '';
@@ -1007,6 +1033,8 @@
     Object.keys(complete).forEach(function (section) {
       document.querySelector('[data-section="' + section + '"]')?.classList.toggle('is-complete', complete[section]);
     });
+    var added = Object.keys(complete).filter(function (section) { return complete[section]; }).length;
+    document.getElementById('websiteProgress').innerHTML = 'Your website details: <b>' + added + ' of ' + Object.keys(complete).length + ' added</b>';
     document.getElementById('builderGuidance').hidden = true;
   }
 
@@ -1212,7 +1240,7 @@
     });
     var counter = document.getElementById('galleryCounter');
     var count = galleryCount();
-    counter.textContent = count + ' / ' + GALLERY_MAX + ' photos';
+    counter.textContent = count + ' / ' + GALLERY_MAX + ' photos · 12 recommended';
     counter.className = 'gallery-counter' + (count >= GALLERY_MAX ? ' full' : '');
     document.getElementById('galleryAddWrap').style.display = count >= GALLERY_MAX ? 'none' : '';
   }
