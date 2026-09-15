@@ -121,6 +121,7 @@
   .svc-row .svc-meta{display:flex;flex:1 1 100%;gap:6px;align-items:center;margin-left:34px}
   .svc-row .svc-meta input{flex:1;min-width:0}
   .svc-row input{min-height:38px;padding:0 10px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:13px}
+  .svc-row textarea{min-height:72px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:13px;resize:vertical}
   @media(min-width:760px){
     .svc-row{flex-wrap:nowrap}
     .svc-row .svc-name{flex:1 1 auto}
@@ -150,6 +151,20 @@
   .media-thumb.empty{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:9px;text-align:center}
   .media-btn{border:1px solid var(--line);border-radius:999px;padding:7px 14px;font:inherit;font-size:12px;font-weight:600;background:#fff;cursor:pointer}
   .media-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .media-intro{margin:-4px 0 14px;color:var(--muted);font-size:12.5px;line-height:1.5}
+  .media-upload-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:16px}
+  .media-upload-card{display:flex;flex-direction:column;gap:10px;min-height:166px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fcfbf9;cursor:pointer;transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+  .media-upload-card:hover{border-color:var(--accent);box-shadow:0 8px 18px rgba(23,32,31,.06);transform:translateY(-1px)}
+  .media-upload-card .media-thumb{width:100%;height:82px;border-radius:10px}
+  .media-upload-title{font-size:13px;font-weight:700;color:var(--ink)}
+  .media-upload-copy{display:block;margin-top:2px;font-size:11.5px;font-weight:400;line-height:1.35;color:var(--muted)}
+  .media-upload-action{margin-top:auto;align-self:flex-start;padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);font-size:11.5px;font-weight:700}
+  .media-gallery-card{padding:13px;border:1px solid var(--line);border-radius:14px;background:#fcfbf9}
+  .media-gallery-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
+  .media-gallery-head b{font-size:13px}
+  .media-gallery-card .gallery-counter{margin:0;font-size:11.5px}
+  .media-gallery-card .media-btn{display:inline-flex;margin-top:4px}
+  @media(max-width:360px){.media-upload-grid{grid-template-columns:1fr}.media-upload-card{min-height:0}.media-upload-card .media-thumb{height:96px}}
   .gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:7px;margin-bottom:10px}
   .gallery-item{position:relative;aspect-ratio:1;border-radius:9px;overflow:hidden;border:1px solid var(--line)}
   .gallery-item img{width:100%;height:100%;object-fit:cover;display:block}
@@ -334,31 +349,19 @@
         <div class="builder-section" data-section-panel="media" hidden>
           <div class="section-head"><button type="button" class="section-back" data-back>&#8249; Edit your website</button></div>
           <h3>Media</h3>
-          <div class="media-row">
-            <img id="logoThumb" class="media-thumb empty" alt="">
-            <div>
-              <div style="font-size:12.5px;font-weight:600;margin-bottom:6px">Logo</div>
-              <label class="media-btn">Choose file<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="logoInput" hidden></label>
-            </div>
+          <p class="media-intro">Add the images that make your website feel like your business.</p>
+          <div class="media-upload-grid">
+            <label class="media-upload-card"><img id="logoThumb" class="media-thumb empty" alt=""><span><span class="media-upload-title">Logo</span><span class="media-upload-copy">A clear version of your logo</span></span><span class="media-upload-action">Upload logo</span><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="logoInput" hidden></label>
+            <label class="media-upload-card"><img id="heroThumb" class="media-thumb empty" alt=""><span><span class="media-upload-title">Hero image</span><span class="media-upload-copy">The main image at the top of your site</span></span><span class="media-upload-action">Upload image</span><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="heroInput" hidden></label>
           </div>
-          <div class="media-row">
-            <img id="heroThumb" class="media-thumb empty" alt="">
-            <div>
-              <div style="font-size:12.5px;font-weight:600;margin-bottom:6px">Hero image</div>
-              <label class="media-btn">Choose file<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="heroInput" hidden></label>
-            </div>
-          </div>
-          <div style="font-size:12.5px;font-weight:600;margin-bottom:6px">Gallery</div>
-          <div class="gallery-counter" id="galleryCounter">0 / 20 photos</div>
-          <div class="gallery-grid" id="galleryGrid"></div>
-          <label class="media-btn" id="galleryAddWrap">Add photos<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="galleryInput" hidden multiple></label>
+          <div class="media-gallery-card"><div class="media-gallery-head"><b>Gallery</b><span class="gallery-counter" id="galleryCounter">0 / 20 photos</span></div><div class="gallery-grid" id="galleryGrid"></div><label class="media-btn" id="galleryAddWrap">+ Add photos<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="galleryInput" hidden multiple></label></div>
         </div>
 
         <div class="builder-section" data-section-panel="reviews" hidden>
           <div class="section-head"><button type="button" class="section-back" data-back>&#8249; Edit your website</button></div>
           <h3>Reviews</h3>
           <p class="info-hint" style="margin-bottom:14px">Add a few customer quotes yourself, or link us to your Google or Trustpilot reviews.</p>
-          <div class="acct-field"><label for="fReviews">Customer review quotes</label><textarea id="fReviews" placeholder="“Brilliant service — I’d highly recommend them.” — Sarah, Beverley&#10;&#10;Add one review per line or paste a few here."></textarea></div>
+          <div class="acct-field"><label>Customer review quotes</label><div id="reviewEntries"></div><button type="button" class="dash-add" id="reviewAdd">+ Add review</button></div>
           <div class="acct-field"><label for="fReviewLink">Google or Trustpilot review link</label><input type="url" id="fReviewLink" placeholder="https://www.google.com/... or trustpilot.com/review/..."></div>
         </div>
 
@@ -519,6 +522,7 @@
   var business = null;
   var slug = null;
   var services = [];
+  var reviewQuotes = [];
   var media = { logoImage: null, heroImage: null, gallery: [] };
   var pendingUploads = { logo: null, hero: null, gallery: [] };
   var galleryRemoved = [];
@@ -839,12 +843,13 @@
     document.getElementById('fPhone').value = raw.phone || '';
     document.getElementById('fEmail2').value = raw.email || session.email || '';
     document.getElementById('fAddress').value = raw.address || '';
-    document.getElementById('fReviews').value = raw.reviews || '';
+    reviewQuotes = Array.isArray(raw.reviewQuotes) ? raw.reviewQuotes.slice() : (raw.reviews ? [raw.reviews] : []);
     document.getElementById('fReviewLink').value = raw.reviewLink || '';
     document.getElementById('developerNote').value = raw.developerNote || '';
     hoursStructured = hoursFromRaw(raw);
 
     renderServices();
+    renderReviewEntries();
     renderHours();
     renderMediaThumbs();
     renderGallery();
@@ -862,7 +867,7 @@
       hours: hoursStructured.some(function (day) { return day.open && day.from && day.to; }),
       address: !!document.getElementById('fAddress').value.trim(),
       prices: services.some(function (group) { return group.items.some(function (item) { return item.name && item.name.trim(); }); }),
-      reviews: !!document.getElementById('fReviews').value.trim() || !!document.getElementById('fReviewLink').value.trim(),
+      reviews: reviewQuotes.some(function (quote) { return quote.trim(); }) || !!document.getElementById('fReviewLink').value.trim(),
       media: !!media.logoImage || !!media.heroImage || media.gallery.length > 0 || !!pendingUploads.logo || !!pendingUploads.hero || pendingUploads.gallery.length > 0
     };
     Object.keys(complete).forEach(function (section) {
@@ -975,9 +980,19 @@
   }
   document.getElementById('svcGroupAdd').addEventListener('click', function () { services.push({ name: '', items: [{ name: '', price: '', duration: '' }] }); renderServices(); scheduleRenderPreview(); scheduleAutoSave(); });
 
-  ['fName', 'fPhone', 'fEmail2', 'fAddress', 'fReviews', 'fReviewLink'].forEach(function (id) {
+  ['fName', 'fPhone', 'fEmail2', 'fAddress', 'fReviewLink'].forEach(function (id) {
     document.getElementById(id).addEventListener('input', function () { scheduleRenderPreview(); scheduleAutoSave(); });
   });
+
+  function renderReviewEntries() {
+    var mount = document.getElementById('reviewEntries');
+    mount.innerHTML = reviewQuotes.map(function (quote, index) {
+      return '<div class="svc-row"><textarea class="svc-name" data-review="' + index + '" placeholder="e.g. Brilliant service — I’d highly recommend them.">' + escapeAttr(quote) + '</textarea><button type="button" class="svc-remove" data-review-remove="' + index + '" aria-label="Remove review">&times;</button></div>';
+    }).join('');
+    mount.querySelectorAll('[data-review]').forEach(function (input) { input.addEventListener('input', function () { reviewQuotes[+input.dataset.review] = input.value; scheduleAutoSave(); }); });
+    mount.querySelectorAll('[data-review-remove]').forEach(function (button) { button.addEventListener('click', function () { reviewQuotes.splice(+button.dataset.reviewRemove, 1); renderReviewEntries(); scheduleAutoSave(); }); });
+  }
+  document.getElementById('reviewAdd').addEventListener('click', function () { reviewQuotes.push(''); renderReviewEntries(); document.querySelector('#reviewEntries textarea:last-child')?.focus(); });
 
   // ---------------- opening hours ----------------
   function renderHours() {
@@ -1102,7 +1117,8 @@
         phone: document.getElementById('fPhone').value.trim(),
         email: document.getElementById('fEmail2').value.trim(),
         address: document.getElementById('fAddress').value.trim(),
-        reviews: document.getElementById('fReviews').value.trim(),
+        reviews: reviewQuotes.filter(function (quote) { return quote.trim(); }).join('\n\n'),
+        reviewQuotes: reviewQuotes.filter(function (quote) { return quote.trim(); }),
         reviewLink: document.getElementById('fReviewLink').value.trim(),
         hours: hoursToRawLines(hoursStructured),
         hoursStructured: hoursStructured,
