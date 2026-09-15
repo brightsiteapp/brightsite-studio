@@ -73,6 +73,7 @@
   .mobile-view-tabs{display:flex;gap:6px;padding:8px 14px;border-bottom:1px solid var(--line);background:var(--bg);flex:none}
   .mobile-view-tabs button{flex:1;min-height:36px;border:0;border-radius:10px;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
   .mobile-view-tabs button[aria-selected="true"]{background:var(--ink);color:#fff}
+  .mobile-view-tabs button:disabled{opacity:.42;cursor:not-allowed}
   .app-body.focus-site,.app-body.focus-edit,.app-body.focus-account{grid-template-columns:1fr}
   .app-body.focus-site .left-panel,.app-body.focus-edit .right-panel,.app-body.focus-account .right-panel{display:none}
   .app-body.focus-edit .left-inner{max-width:760px;width:100%;margin:0 auto;padding:28px}
@@ -117,6 +118,7 @@
   .sec-btn.is-complete .section-tick::before{content:'✓'}
   .builder-guidance{margin:14px 0 0;padding:12px 14px;border:1px solid #f0d5d5;border-radius:12px;background:#fff8f8;color:#8d4444;font-size:12.5px;line-height:1.45}
   .builder-guidance[hidden]{display:none}
+  .developer-building-message{margin:0 0 16px;padding:13px 15px;border:1px solid #d7e4fb;border-radius:12px;background:#f5f8ff;color:#294b78;font-size:13px;line-height:1.5}.developer-building-message b{color:var(--ink)}
 
   .builder-section{animation:sectionIn .16s ease}
   @keyframes sectionIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
@@ -330,6 +332,7 @@
 
       <!-- ---------------- edit mode ---------------- -->
       <div id="builderPanel" hidden>
+        <p class="developer-building-message" id="developerBuildingMessage"><b>Your developer is creating your website preview.</b><br>Add anything you know below — your details will be used to shape the finished website.</p>
 
         <div id="builderList">
           <div class="builder-head">
@@ -632,9 +635,13 @@
   }
 
   function appBody() { return document.getElementById('appBody'); }
+  function hasUploadedDemo() {
+    return !!(business && business.data && (business.data.demoUploaded || business.data.demoUrl || business.data.liveUrl));
+  }
 
   // ---------------- edit / view toggle ----------------
   function setEditing(on) {
+    if (on && !hasUploadedDemo() && business) on = true;
     isEditing = on;
     document.body.classList.toggle('mode-edit', on);
     document.body.classList.toggle('mode-view', !on);
@@ -654,7 +661,7 @@
       openSection(null);
     }
   }
-  document.getElementById('editToggle').addEventListener('click', function () { setEditing(!isEditing); });
+  document.getElementById('editToggle').addEventListener('click', function () { if (hasUploadedDemo()) setEditing(!isEditing); });
   document.getElementById('builderBack').addEventListener('click', function () { setEditing(false); });
 
   // On a phone, editing controls and the website preview share the screen.
@@ -679,7 +686,7 @@
     mobileEditMenu.hidden = true;
     mobileEditMenuToggle.setAttribute('aria-expanded', 'false');
   }
-  mobileEditMenuToggle.addEventListener('click', function () { closeMobileEditMenu(); if (!isEditing) setEditing(true); else setWorkspacePanel('edit'); });
+  mobileEditMenuToggle.addEventListener('click', function () { closeMobileEditMenu(); if (hasUploadedDemo() && !isEditing) setEditing(true); else if (hasUploadedDemo()) setWorkspacePanel('edit'); });
   mobileEditMenu.addEventListener('click', function (event) {
     var button = event.target.closest('[data-mobile-section]');
     if (!button) return;
@@ -748,11 +755,11 @@
     if (!business || typeof buildDemoHTML !== 'function') return;
     // A Studio upload/deployment supplies a liveUrl; the explicit demo fields
     // are supported too. Until then customers see a personalised blueprint.
-    var hasUploadedDemo = !!(business.data && (business.data.demoUploaded || business.data.demoUrl || business.data.liveUrl));
-    blueprint.hidden = hasUploadedDemo;
-    frame.hidden = !hasUploadedDemo;
+    var demoReady = hasUploadedDemo();
+    blueprint.hidden = demoReady;
+    frame.hidden = !demoReady;
     renderBlueprint(business);
-    if (!hasUploadedDemo) return;
+    if (!demoReady) return;
     try { if (frame.contentWindow) lastScrollY = frame.contentWindow.scrollY; } catch (e) {}
     frame.classList.add('refreshing');
     try { frame.srcdoc = buildDemoHTML(currentRaw()); } catch (e) { frame.classList.remove('refreshing'); }
@@ -997,6 +1004,11 @@
     media.gallery = Array.isArray(raw.gallery) ? raw.gallery.slice() : [];
     isPaying = !!data.planActive;
     isLive = !!data.published;
+    var demoReady = hasUploadedDemo();
+    document.getElementById('editToggle').hidden = !demoReady;
+    document.getElementById('mobileEditMenuToggle').disabled = !demoReady;
+    document.getElementById('mobileEditMenuToggle').title = demoReady ? '' : 'Available once your finished website is uploaded';
+    document.getElementById('developerBuildingMessage').hidden = demoReady;
 
     document.getElementById('acctName').textContent = raw.name || business.name || '';
     document.getElementById('fName').value = raw.name || business.name || '';
@@ -1017,7 +1029,8 @@
     renderPlanUI();
     renderPreview();
     renderAccountHero();
-    setEditing(openEditorAfterSetup);
+    setEditing(demoReady && openEditorAfterSetup);
+    if (!demoReady) setEditing(true);
     openEditorAfterSetup = false;
     updateSectionChecks();
   }
