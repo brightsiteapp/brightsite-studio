@@ -104,6 +104,7 @@
   var isSignup = params.get('signup') === '1';
   var emailParam = params.get('email') || '';
   var nameParam = params.get('name') || '';
+  var typeParam = params.get('type') || '';
 
   var form = document.getElementById('acctForm');
   var title = document.getElementById('acctTitle');
@@ -312,8 +313,12 @@
           localStorage.setItem('bs_pending_business_name', nameParam);
         }
         if (slugParam) localStorage.setItem('bs_pending_slug', slugParam);
+        if (typeParam) localStorage.setItem('bs_pending_business_type', typeParam);
         showStatus('Success — redirecting…', 'ok');
-        location.href = 'dashboard.html' + (slugParam ? ('?slug=' + encodeURIComponent(slugParam)) : '');
+        // Preserve the builder handoff values until the dashboard has written
+        // its starter business record. Dropping name/type here could leave a
+        // new account with no record and an empty dashboard.
+        location.href = 'dashboard.html' + location.search;
       })
       .catch(function (err) {
         showStatus('Network error — please try again.', 'err');

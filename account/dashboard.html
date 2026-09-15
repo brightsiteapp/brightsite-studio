@@ -231,8 +231,8 @@
 
 <!-- Shown when the logged-in customer has no business row yet -->
 <div id="setupPanel" hidden>
-  <h1>Let's set up your website</h1>
-  <p class="sub">Tell us your business name and the web address you'd like. Your designer will take it from here.</p>
+  <h1 id="setupTitle">Let's set up your website</h1>
+  <p class="sub" id="setupSub">Tell us your business name and the web address you'd like. Your designer will take it from here.</p>
   <div class="acct-field">
     <label for="setupSlug">Web address</label>
     <input type="text" id="setupSlug" placeholder="e.g. willow-beauty-studio" autocomplete="off">
@@ -764,13 +764,18 @@
     // The builder already supplied these details before account creation.
     // Create the starter record quietly rather than asking the customer to
     // repeat them on a second setup screen.
-    setupPanel().hidden = true;
+    setupPanel().hidden = false;
     appBody().hidden = true;
     openEditorAfterSetup = true;
     var pendingName = params.get('name') || localStorage.getItem('bs_pending_business_name') || (session.email || '').split('@')[0];
     var pendingSlug = params.get('slug') || localStorage.getItem('bs_pending_slug') || '';
     document.getElementById('setupName').value = pendingName;
     document.getElementById('setupSlug').value = pendingSlug;
+    document.getElementById('setupTitle').textContent = 'Finishing your account';
+    document.getElementById('setupSub').textContent = 'Creating your website workspace…';
+    document.getElementById('setupName').closest('.acct-field').hidden = true;
+    document.getElementById('setupSlug').closest('.acct-field').hidden = true;
+    document.getElementById('setupBtn').hidden = true;
     createSetupBusiness();
   }
 
@@ -826,6 +831,14 @@
         renderDashboard();
       })
       .catch(function (err) {
+        // Never leave someone on a blank page if their handoff details are
+        // unavailable or the chosen address is already claimed.
+        setupPanel().hidden = false;
+        document.getElementById('setupTitle').textContent = 'We need one detail';
+        document.getElementById('setupSub').textContent = 'Check your business name and web address, then try again.';
+        document.getElementById('setupName').closest('.acct-field').hidden = false;
+        document.getElementById('setupSlug').closest('.acct-field').hidden = false;
+        document.getElementById('setupBtn').hidden = false;
         statusEl.textContent = /duplicate|already exists|23505/i.test(err.message) ? 'That web address is already taken — choose another.' : (err.message || 'Something went wrong.');
         statusEl.style.color = '#b23b2c';
       });

@@ -472,37 +472,46 @@ document.addEventListener('DOMContentLoaded', () => {
     qaTypeGrid.appendChild(button);
   });
   // A small live example in the dropdown prompt makes the broad category
-  // question easier to answer. Its two-second rhythm matches the examples
-  // carousel below, and pauses whenever the visitor opens the control.
+  // question easier to answer. Short examples and a paced type/hold/erase
+  // cycle keep it calm and readable, in time with the examples carousel.
   (function animateTypeExamples() {
     const prompt = bizTagline.options[0];
-    const examples = ['Hair salon', 'Plumber', 'Café', 'Personal trainer', 'Electrician', 'Beauty clinic'];
+    const examples = ['Hair salon', 'Plumber', 'Café', 'Trainer', 'Electrician', 'Beauty clinic'];
     const prefix = 'What type of website? ';
     let exampleIndex = 0;
     let count = 0;
     let erasing = false;
-    let hold = 0;
+    let timer = null;
     const tick = () => {
-      if (bizTagline.value || document.activeElement === bizTagline) return;
+      if (bizTagline.value) return;
       const word = examples[exampleIndex];
-      if (hold > 0) hold -= 1;
-      else if (!erasing && count < word.length) count += 1;
-      else if (!erasing) { hold = 7; erasing = true; }
-      else if (count > 0) count -= 1;
-      else { erasing = false; exampleIndex = (exampleIndex + 1) % examples.length; hold = 3; }
+      if (document.activeElement === bizTagline) {
+        timer = window.setTimeout(tick, 140);
+        return;
+      }
+      let delay = 66;
+      if (!erasing && count < word.length) count += 1;
+      else if (!erasing) { erasing = true; delay = 600; }
+      else if (count > 0) { count -= 1; delay = 43; }
+      else { erasing = false; exampleIndex = (exampleIndex + 1) % examples.length; delay = 180; }
       prompt.textContent = prefix + word.slice(0, count);
+      timer = window.setTimeout(tick, delay);
     };
-    const timer = window.setInterval(tick, 90);
+    tick();
     bizTagline.addEventListener('focus', () => { prompt.textContent = prefix; });
     bizTagline.addEventListener('blur', () => { if (!bizTagline.value) prompt.textContent = prefix; });
-    bizTagline.addEventListener('change', () => window.clearInterval(timer), { once: true });
+    bizTagline.addEventListener('change', () => window.clearTimeout(timer), { once: true });
   })();
   bizTagline.addEventListener('change', () => { if (!qaIsAnimating) finishType(); });
   qaTypeGo.addEventListener('click', finishType);
-  document.querySelectorAll('[data-qa-back]').forEach(button => button.addEventListener('click', () => {
+  const qaBackActions = { 1: goBackToType, 2: goBackToName };
+  document.querySelectorAll('[data-qa-back]').forEach(button => button.addEventListener('click', (event) => {
+    // The arrow is nested in the live input bar. Stopping the event here
+    // keeps the field wrapper from immediately reclaiming focus on touch.
+    event.preventDefault();
+    event.stopPropagation();
     if (qaIsAnimating) return;
-    const previous = Number(button.dataset.qaBack);
-    [goBackToType, goBackToName][previous - 1]?.();
+    qaBackActions[Number(button.dataset.qaBack)]?.();
   }));
 
   let isCreatingPreview = false;
