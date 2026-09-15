@@ -70,7 +70,7 @@
   .preview-device-toggle{display:flex;align-items:center;padding:3px;border:1px solid var(--line);border-radius:11px;background:#fff}
   .preview-device-toggle button{border:0;border-radius:8px;background:transparent;color:var(--muted);height:28px;padding:0 9px;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
   .preview-device-toggle button[aria-pressed="true"]{background:var(--ink);color:#fff}
-  .mobile-view-tabs{display:flex;gap:6px;padding:8px 14px;border-bottom:1px solid var(--line);background:var(--bg);flex:none}
+  .mobile-view-tabs{display:flex;width:380px;gap:6px;padding:8px 14px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--bg);flex:none}
   .mobile-view-tabs button{flex:1;min-height:36px;border:0;border-radius:10px;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
   .mobile-view-tabs button[aria-selected="true"]{background:var(--ink);color:#fff}
   .mobile-view-tabs button:disabled{opacity:.42;cursor:not-allowed}
@@ -218,6 +218,7 @@
 
   /* ---------------- mobile ---------------- */
   @media(max-width:860px){
+    .mobile-view-tabs{width:100%;border-right:0}
     .mobile-view-tabs .mobile-edit-menu-toggle{font-size:18px;line-height:1}
     .mobile-edit-menu{position:fixed;z-index:60;width:min(280px,calc(100vw - 28px));padding:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 16px 36px rgba(23,32,31,.18)}
     .mobile-edit-menu h2{margin:6px 8px 8px;font-family:var(--display);font-size:14px}
@@ -332,7 +333,7 @@
           <button type="button" class="sec-btn" data-section="prices"><span class="sec-title"><span class="section-tick"></span>Prices &amp; timetable</span><span class="chev">&#8250;</span></button>
           <button type="button" class="sec-btn" data-section="reviews"><span class="sec-title"><span class="section-tick"></span>Reviews</span><span class="chev">&#8250;</span></button>
           <button type="button" class="sec-btn" data-section="media"><span class="sec-title"><span class="section-tick"></span>Media</span><span class="chev">&#8250;</span></button>
-          <p class="builder-guidance" id="builderGuidance">Fill these in to help your designer create your preview.</p>
+          <p class="builder-guidance" id="builderGuidance" hidden></p>
           <div class="info-card" style="margin-top:16px">
             <h2>Note for your developer</h2>
             <p class="info-hint">Tell us anything useful about your business, website, or what you’d like us to focus on.</p>
@@ -1006,7 +1007,7 @@
     Object.keys(complete).forEach(function (section) {
       document.querySelector('[data-section="' + section + '"]')?.classList.toggle('is-complete', complete[section]);
     });
-    document.getElementById('builderGuidance').hidden = Object.keys(complete).every(function (section) { return complete[section]; });
+    document.getElementById('builderGuidance').hidden = true;
   }
 
   function renderPlanUI() {
