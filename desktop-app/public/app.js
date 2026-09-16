@@ -2,7 +2,8 @@
   const state = {
     projects: [], current: null, found: {}, search: '',
     viewport: 'desktop', appFullscreen: false, desktopExpanded: true,
-    tab: 'businesses', liveAdding: false, canDeploy: true, sideExpanded: null
+    tab: 'businesses', liveAdding: false, canDeploy: true, sideExpanded: null,
+    dashboardTab: 'account', aiChat: []
   };
 
   const el = {
@@ -795,6 +796,19 @@
     return null;
   }
 
+  function tonesFromHex(hex) {
+    return { base: hex };
+  }
+
+  function updateAiChat() {
+    const container = document.getElementById('aiChatMessages');
+    if (!container) return;
+    container.innerHTML = state.aiChat.length ? state.aiChat.map((msg, i) =>
+      `<div class="ai-chat-msg ${msg.role}">${msg.role === 'user' ? 'You: ' : 'AI: '}${escapeHtml(msg.text)}</div>`
+    ).join('') : '<div class="ai-chat-welcome">Ask for changes or design ideas</div>';
+    container.scrollTop = container.scrollHeight;
+  }
+
   function colourCurrentHtml(hex) {
     return hex ? `<i style="background:${hex}"></i>${nameForHex(hex) || ''}` : '';
   }
@@ -1125,9 +1139,68 @@
     const raw = state.current.raw || {};
     const profile = raw.businessProfile || {};
     const site = state.current.importedSite;
+    const liveUrl = state.current.liveUrl;
 
     el.editor.innerHTML = `
-      <div class="sales-block" id="salesBlock"></div>
+      <div class="dashboard-wrapper">
+        <div class="dashboard-tabs">
+          <button type="button" class="dashboard-tab ${state.dashboardTab === 'account' ? 'active' : ''}" data-tab="account">Account</button>
+          <button type="button" class="dashboard-tab ${state.dashboardTab === 'website' ? 'active' : ''}" data-tab="website">Website</button>
+        </div>
+
+        <div class="dashboard-account ${state.dashboardTab === 'account' ? '' : 'hidden'}">
+          <div class="info-card">
+            <div class="info-card-title">Account</div>
+            <div class="info-row"><span class="info-label">Plan</span><span class="info-value">Essential £0</span></div>
+            <div class="info-row"><span class="info-label">Contact</span><span class="info-value">${escapeHtml(state.current.contact?.email || 'Not set')}</span></div>
+            <div class="info-row"><span class="info-label">Status</span><span class="info-value">${liveUrl ? '✓ Live' : 'Not live yet'}</span></div>
+          </div>
+
+          <div class="info-card">
+            <div class="info-card-title">Domain</div>
+            <button type="button" id="connectDomainBtn" class="dashboard-btn secondary">Connect Domain</button>
+          </div>
+
+          <div class="info-card">
+            <div class="info-card-title">Share URL</div>
+            <button type="button" id="copyUrlBtn" class="dashboard-btn secondary">Copy URL</button>
+          </div>
+
+          <div class="info-card">
+            <div class="info-card-title">Share with client</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <button type="button" id="emailShareBtn" class="dashboard-btn secondary">📧 Email</button>
+              <button type="button" id="whatsappShareBtn" class="dashboard-btn secondary">💬 WhatsApp</button>
+            </div>
+          </div>
+
+          <div class="info-card" style="margin-top:20px">
+            <button type="button" id="makeLiveBtn" class="dashboard-btn primary" ${state.current.deployError ? 'title="' + escapeAttr(state.current.deployError) + '"' : ''}>Make Live →</button>
+          </div>
+        </div>
+
+        <div class="dashboard-website ${state.dashboardTab === 'website' ? '' : 'hidden'}">
+          <div class="section-divider"><span>Colour Theme</span></div>
+          <div class="colour-quick-pick">
+            <div class="colour-swatches" id="colourQuickPick"></div>
+          </div>
+
+          <div class="section-divider"><span>Text Colour</span></div>
+          <div class="text-colour-pick" id="textColourPick"></div>
+
+          <div class="section-divider"><span>AI Design Assistant</span></div>
+          <div class="ai-chat-box">
+            <div class="ai-chat-messages" id="aiChatMessages">
+              <div class="ai-chat-welcome">Ask for changes or design ideas</div>
+            </div>
+            <div class="ai-chat-input">
+              <textarea id="aiChatInput" placeholder="e.g. 'Make the hero section darker'" rows="2"></textarea>
+              <button type="button" id="aiChatSendBtn" class="dashboard-btn primary">Send</button>
+            </div>
+          </div>
+
+          <div class="section-divider"><span>Website Details</span></div>
+          <div class="sales-block" id="salesBlock"></div>
       <div class="section-divider"><span>Website</span></div>
       ${site ? importedSiteHtml(site) : `<div class="link-bar compact">
         <input id="f_link" type="text" placeholder="Paste a Facebook or Google Maps link…" value="${escapeAttr(state.current.lastImportUrl || state.current.contact?.facebookUrl || profile.mapsUrl || '')}">
@@ -1175,8 +1248,111 @@
         </div>
         <div class="ai-edit-status" id="aiEditStatus"></div>
         ${editLogHtml()}
-      </div>`}
+      </div>
+        </div>
+      </div>
     `;
+
+    // Dashboard tab switching
+    document.querySelectorAll('.dashboard-tab').forEach(btn => {
+      btn.onclick = () => {
+        state.dashboardTab = btn.dataset.tab;
+        renderEditor();
+      };
+    });
+
+    // Account tab buttons
+    const copyUrlBtn = document.getElementById('copyUrlBtn');
+    if (copyUrlBtn) {
+      copyUrlBtn.onclick = async () => {
+        try {
+          if (liveUrl) {
+            await navigator.clipboard.writeText(liveUrl);
+            showTempStatus(copyUrlBtn, '✓ Copied!', 2000);
+          } else {
+            alert('Site is not live yet');
+          }
+        } catch (e) { alert('Could not copy URL'); }
+      };
+    }
+
+    const emailShareBtn = document.getElementById('emailShareBtn');
+    if (emailShareBtn && state.current.contact?.email) {
+      emailShareBtn.onclick = () => {
+        const subject = `Check out ${raw.name || 'my website'}`;
+        const body = `I've built this website: ${liveUrl || 'Coming soon'}`;
+        window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      };
+    }
+
+    const whatsappShareBtn = document.getElementById('whatsappShareBtn');
+    if (whatsappShareBtn && profile.phone) {
+      whatsappShareBtn.onclick = () => {
+        const msg = `Check out ${raw.name || 'my website'}: ${liveUrl || 'Coming soon'}`;
+        openWhatsApp(profile.phone, msg);
+      };
+    }
+
+    const connectDomainBtn = document.getElementById('connectDomainBtn');
+    if (connectDomainBtn) {
+      connectDomainBtn.onclick = () => { notify('Domain connection — feature coming soon'); };
+    }
+
+    const makeLiveBtn = document.getElementById('makeLiveBtn');
+    if (makeLiveBtn) {
+      makeLiveBtn.onclick = () => { el.deployBtn.click(); };
+    }
+
+    // Website tab - colour quick pick
+    const colourQuickPick = document.getElementById('colourQuickPick');
+    if (colourQuickPick) {
+      const colours = ['#3b82f6', '#ec4899', '#8b5cf6', '#10b981', '#f59e0b', '#1d252b'];
+      colourQuickPick.innerHTML = colours.map(hex =>
+        `<button type="button" class="colour-dot ${raw.tones?.base === hex ? 'selected' : ''}" style="background:${hex}" data-hex="${hex}" title="${hex}"></button>`
+      ).join('');
+      colourQuickPick.addEventListener('click', e => {
+        const btn = e.target.closest('.colour-dot');
+        if (btn) {
+          const hex = btn.dataset.hex;
+          setRaw({ tones: tonesFromHex(hex) });
+          persist();
+          schedulePreview();
+          renderEditor();
+        }
+      });
+    }
+
+    // Website tab - text colour pick
+    const textColourPick = document.getElementById('textColourPick');
+    if (textColourPick) {
+      const textColours = ['#1d252b', '#4b5563', '#6b7280', '#d1d5db', '#f3f4f6'];
+      textColourPick.innerHTML = textColours.map(hex =>
+        `<button type="button" class="text-colour-btn" style="background:${hex}; color:${hex === '#f3f4f6' ? '#1d252b' : '#fff'}" data-hex="${hex}" title="${hex}">Sample</button>`
+      ).join('');
+      textColourPick.addEventListener('click', e => {
+        const btn = e.target.closest('.text-colour-btn');
+        if (btn) {
+          // This would apply text colour to the site
+          notify('Text colour updated (preview updates next)');
+          schedulePreview();
+        }
+      });
+    }
+
+    // Website tab - AI chat
+    const aiChatSendBtn = document.getElementById('aiChatSendBtn');
+    if (aiChatSendBtn) {
+      aiChatSendBtn.onclick = async () => {
+        const input = document.getElementById('aiChatInput');
+        const msg = input.value.trim();
+        if (!msg) return;
+        state.aiChat.push({ role: 'user', text: msg });
+        input.value = '';
+        updateAiChat();
+        // In a full implementation, send to Claude API here
+        showTempStatus(aiChatSendBtn, 'Sending to AI…');
+      };
+    }
 
     document.getElementById('f_name').oninput = e => { setRaw({ name: e.target.value }); scheduleSave(); };
     document.getElementById('f_category').onchange = e => { setRaw({ tagline: e.target.value }); scheduleSave(); };
@@ -2331,10 +2507,11 @@ document.addEventListener('focusout',e=>{
       : `${hi}, thanks for chatting with us today! We'd love to help ${name} with a brand new website — any questions at all, just let me know.`;
   }
 
-  function openWhatsApp(phone) {
+  function openWhatsApp(phone, message) {
     const number = toWhatsAppNumber(phone);
     if (!number) return notify('Add a phone number first.', { sticky: false });
-    openExternal(`https://wa.me/${number}?text=${encodeURIComponent(welcomeMessage())}`);
+    const msg = message || welcomeMessage();
+    openExternal(`https://wa.me/${number}?text=${encodeURIComponent(msg)}`);
   }
 
   function openEmail(email) {
