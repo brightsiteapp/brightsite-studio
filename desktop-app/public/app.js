@@ -1295,7 +1295,7 @@
 
     const connectDomainBtn = document.getElementById('connectDomainBtn');
     if (connectDomainBtn) {
-      connectDomainBtn.onclick = () => { notify('Domain connection — feature coming soon'); };
+      connectDomainBtn.onclick = () => { openDomainDialog(state.current.slug); };
     }
 
     const makeLiveBtn = document.getElementById('makeLiveBtn');
@@ -1340,18 +1340,56 @@
     }
 
     // Website tab - AI chat
+    const aiChatInput = document.getElementById('aiChatInput');
     const aiChatSendBtn = document.getElementById('aiChatSendBtn');
-    if (aiChatSendBtn) {
-      aiChatSendBtn.onclick = async () => {
-        const input = document.getElementById('aiChatInput');
-        const msg = input.value.trim();
-        if (!msg) return;
+
+    const sendAiChat = async () => {
+        const msg = aiChatInput.value.trim();
+        if (!msg || aiChatSendBtn.disabled) return;
+
+        // Add user message to chat
         state.aiChat.push({ role: 'user', text: msg });
-        input.value = '';
+        aiChatInput.value = '';
         updateAiChat();
-        // In a full implementation, send to Claude API here
-        showTempStatus(aiChatSendBtn, 'Sending to AI…');
+
+        // Send to Claude AI via backend
+        aiChatSendBtn.disabled = true;
+        aiChatInput.disabled = true;
+        try {
+          await flushSave();
+          const result = await api(`/api/projects/${state.current.slug}/ai-edit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ instruction: msg })
+          });
+
+          // Add AI response to chat
+          state.aiChat.push({ role: 'assistant', text: '✓ Design updated! Check the preview on the right.' });
+          updateAiChat();
+
+          // Update the current project with AI changes
+          replaceCurrent(result);
+          renderEditor();
+          renderPreview();
+          renderLiveActions();
+        } catch (err) {
+          state.aiChat.push({ role: 'assistant', text: '❌ ' + friendlyError(err.message) });
+          updateAiChat();
+        }
+        aiChatSendBtn.disabled = false;
+        aiChatInput.disabled = false;
       };
+
+    if (aiChatSendBtn) {
+      aiChatSendBtn.onclick = sendAiChat;
+    }
+    if (aiChatInput) {
+      aiChatInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendAiChat();
+        }
+      });
     }
 
     document.getElementById('f_name').oninput = e => { setRaw({ name: e.target.value }); scheduleSave(); };
