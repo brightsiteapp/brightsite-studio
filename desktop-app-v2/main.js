@@ -41,7 +41,7 @@ function createWindow() {
     height: 920,
     minWidth: 1120,
     minHeight: 700,
-    title: 'BrightSite Studio V2',
+    title: 'BrightSite Studio',
     icon: ICON_PATH,
     webPreferences: {
       contextIsolation: true,
@@ -53,7 +53,7 @@ function createWindow() {
 
   Menu.setApplicationMenu(Menu.buildFromTemplate([
     {
-      label: 'BrightSite Studio V2',
+      label: 'BrightSite Studio',
       submenu: [
         { label: 'Open in Browser (for colleagues)', click: () => shell.openExternal(`http://localhost:${PORT}`) },
         { type: 'separator' },
