@@ -114,8 +114,9 @@
   /* ---------------- builder accordion ---------------- */
   .builder-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
   .builder-head h2{font-family:var(--display);font-size:16px;font-weight:700}
-  .builder-back{background:none;border:0;color:var(--muted);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:4px 0}
-  .builder-back:hover{color:var(--ink)}
+  .builder-view-website{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:0 13px;border:1px solid rgba(59,130,246,.2);border-radius:999px;background:#edf5ff;color:var(--accent);font:700 12px/1 Inter,sans-serif;cursor:pointer;transition:background .16s ease,transform .16s ease}
+  .builder-view-website:hover{background:#dcecff;transform:translateY(-1px)}
+  .builder-view-website svg{width:15px;height:15px}
 
   .sec-btn{width:100%;border:1px solid var(--line);border-radius:14px;background:var(--card);margin-bottom:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;font:inherit;font-size:13.5px;font-weight:700;color:var(--ink);text-align:left}
   .sec-btn:hover{border-color:var(--accent)}
@@ -341,6 +342,7 @@
         <div id="builderList">
           <div class="builder-head">
             <h2>Edit your website</h2>
+            <button type="button" class="builder-view-website" id="viewWebsiteButton"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>View website</button>
           </div>
           <button type="button" class="sec-btn" data-section="name"><span class="sec-title"><span class="section-tick"></span>Business name</span><span class="chev">&#8250;</span></button>
           <button type="button" class="sec-btn" data-section="contact"><span class="sec-title"><span class="section-tick"></span>Phone &amp; email</span><span class="chev">&#8250;</span></button>
@@ -758,15 +760,19 @@
     document.getElementById('mobileAccountTab').setAttribute('aria-selected', 'false');
     document.getElementById('mobileWebsiteTab').setAttribute('aria-selected', 'true');
   }
+  function showWebsiteEditor() {
+    document.body.classList.remove('mobile-show-site');
+    setEditing(true);
+    openSection(null);
+  }
   document.getElementById('mobileAccountTab').addEventListener('click', function () {
     document.body.classList.remove('mobile-show-site');
     setEditing(false);
   });
-  document.getElementById('mobileWebsiteTab').addEventListener('click', showMobileWebsite);
-  document.getElementById('mobilePreviewEdit').addEventListener('click', function () {
-    document.body.classList.remove('mobile-show-site');
-    setEditing(true);
-    openSection(null);
+  document.getElementById('mobileWebsiteTab').addEventListener('click', showWebsiteEditor);
+  document.getElementById('mobilePreviewEdit').addEventListener('click', showWebsiteEditor);
+  document.getElementById('viewWebsiteButton').addEventListener('click', function () {
+    if (isMobileDashboard()) showMobileWebsite();
   });
 
   // ---------------- drill-in section navigation ----------------
