@@ -46,8 +46,8 @@
     $('#v2Site').append(take('#builderView'));
     $('#v2SettingsMount').append(take('#settingsDialog'));
     ['#planDialog', '#payDialog', '#domainDialog', '#confirmDialog'].forEach(sel => document.body.append(take(sel)));
-    await loadScript('/follow-ups.js');
-    await loadScript('/app.js');
+    await loadScript('/v1/follow-ups.js');
+    await loadScript('/v1/app.js');
   }
 
   function loadScript(src) {
