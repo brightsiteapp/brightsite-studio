@@ -1200,59 +1200,6 @@
           </div>
         </div>
       </div>
-
-      <div class="section-divider"><span>Website Details</span></div>
-      <div class="sales-block" id="salesBlock"></div>
-      <div class="section-divider"><span>Website</span></div>
-      ${site ? importedSiteHtml(site) : `<div class="link-bar compact">
-        <input id="f_link" type="text" placeholder="Paste a Facebook or Google Maps link…" value="${escapeAttr(state.current.lastImportUrl || state.current.contact?.facebookUrl || profile.mapsUrl || '')}">
-        <button id="importBtn">${state.current.lastImportUrl ? 'Re-fetch' : 'Fetch'}</button>
-      </div>`}
-      <div class="import-status" id="importStatus"></div>
-
-      <div class="section-divider"><span>Customer website details</span></div>
-      <p class="editor-hint">These are the same core details the customer sees in their Website tab. Keep them up to date here while you build their finished website.</p>
-      ${customerPreviewStatusHtml(state.current)}
-
-      <div class="customer-details-grid">
-        <section class="customer-detail-card"><span class="customer-detail-label">01 · Identity</span><div class="form-grid name-row"><div class="field"><label>Business name</label><input id="f_name" value="${escapeAttr(raw.name || '')}"></div><div class="field field-compact"><label>Category</label><select id="f_category">${categoryOptions(raw.tagline)}</select></div></div></section>
-        <section class="customer-detail-card"><span class="customer-detail-label">02 · Contact</span><div class="field"><label>Contact name</label><input id="f_contactName" placeholder="Contact’s name" value="${escapeAttr(state.current.contact?.name || '')}"></div><div class="phone-row"><div class="field"><label>Phone</label><input id="f_phone" value="${escapeAttr(profile.phone || '')}"></div><button id="whatsappBtn" class="contact-btn whatsapp-btn" title="WhatsApp a welcome message" aria-label="Open WhatsApp">W</button><div class="field"><label>Email</label><input id="f_email" type="email" value="${escapeAttr(state.current.contact?.email || '')}"></div><button id="emailBtn" class="contact-btn email-btn" title="Send email" aria-label="Send email">@</button></div><div class="field"><label>Location / address</label><input id="f_location" value="${escapeAttr(profile.address || raw.location || '')}"></div></section>
-      </div>
-      <div class="demo-views" id="demoViews" hidden></div>
-
-      ${site ? '' : `<div class="media-row-3">
-        ${mediaSlot('logo', 'Logo')}
-        ${mediaSlot('hero', 'Hero image')}
-        <div class="media-slot" data-slot="gallery">
-          <div class="media-head">
-            <label>Gallery</label>
-            <div class="media-head-actions"><button id="galleryUploadBtn">+ Add</button></div>
-          </div>
-          <div class="gallery-grid" id="galleryGrid">${galleryThumbs()}</div>
-          <input type="file" id="galleryUpload" accept="image/*" multiple hidden>
-        </div>
-      </div>`}
-
-      <div class="field"><label>Template</label>
-        <div class="template-grid-6" id="templateGrid">${templateOptions(effectiveLayout(raw))}</div></div>
-
-      <div class="field"><label>Home page sections</label>
-        <div id="sectionsField">${sectionsListHtml(raw)}</div></div>
-
-      <div class="field"><label>Colour <span class="colour-current" id="colourCurrent">${colourCurrentHtml(raw.tones?.base)}</span></label>
-        <div class="colour-picker" id="colourPicker">${colourPickerHtml(raw.tones?.base, null)}</div></div>
-
-      <div class="ai-edit-box">
-        <label>Edit with AI</label>
-        <div class="ai-edit-input">
-          <textarea id="aiInstruction" rows="2" placeholder="e.g. Make the about section warmer and mention it's family-run"></textarea>
-          <button id="aiEditBtn" title="Apply (Enter)" aria-label="Apply edit"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
-        </div>
-        <div class="ai-edit-status" id="aiEditStatus"></div>
-        ${editLogHtml()}
-      </div>
-        </div>
-      </div>
     `;
 
     // Dashboard tab switching
