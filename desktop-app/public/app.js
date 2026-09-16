@@ -1198,9 +1198,11 @@
               <button type="button" id="aiChatSendBtn" class="dashboard-btn primary">Send</button>
             </div>
           </div>
+        </div>
+      </div>
 
-          <div class="section-divider"><span>Website Details</span></div>
-          <div class="sales-block" id="salesBlock"></div>
+      <div class="section-divider"><span>Website Details</span></div>
+      <div class="sales-block" id="salesBlock"></div>
       <div class="section-divider"><span>Website</span></div>
       ${site ? importedSiteHtml(site) : `<div class="link-bar compact">
         <input id="f_link" type="text" placeholder="Paste a Facebook or Google Maps link…" value="${escapeAttr(state.current.lastImportUrl || state.current.contact?.facebookUrl || profile.mapsUrl || '')}">
