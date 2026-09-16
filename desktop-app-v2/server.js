@@ -7,10 +7,10 @@ const path = require('path');
 const express = require('express');
 
 // Next door in development; bundled into the packaged app as v1/ (see
-// package.json build.files).
-const V1_DIR = fs.existsSync(path.join(__dirname, 'v1', 'server.js'))
-  ? path.join(__dirname, 'v1')
-  : path.join(__dirname, '..', 'desktop-app');
+// package.json build.files). When running from ASAR, fs.existsSync doesn't work
+// on bundled paths, so check __dirname itself to detect packaged mode.
+const isPackaged = __dirname.includes('.asar');
+const V1_DIR = isPackaged ? path.join(__dirname, 'v1') : path.join(__dirname, '..', 'desktop-app');
 
 // Its own port, so V1 (4173) and V2 can run side by side.
 if (!process.env.PORT) process.env.PORT = '4174';
