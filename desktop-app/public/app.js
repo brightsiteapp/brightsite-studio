@@ -1229,7 +1229,7 @@
           <div class="gallery-grid" id="galleryGrid">${galleryThumbs()}</div>
           <input type="file" id="galleryUpload" accept="image/*" multiple hidden>
         </div>
-      </div>
+      </div>`}
 
       <div class="field"><label>Template</label>
         <div class="template-grid-6" id="templateGrid">${templateOptions(effectiveLayout(raw))}</div></div>
