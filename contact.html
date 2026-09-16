@@ -83,6 +83,12 @@
           <input id="contactBusiness" type="text" autocomplete="organization" placeholder="Business name" aria-label="Business name" required>
           <input id="contactEmail" type="email" autocomplete="email" placeholder="Email address" aria-label="Email address" required>
         </div>
+        <div style="margin:14px 0;padding:12px;border:1px solid #d7dcdf;border-radius:10px;font-size:13px;line-height:1.5">
+          <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+            <input type="checkbox" id="contactConsent" required style="width:16px;height:16px;min-width:16px;accent-color:#3b82f6;margin-top:2px">
+            <span>I agree that BrightSite may use my information to contact me about my preview and services, as described in the <a href="terms.html#privacy" target="_blank" rel="noopener" style="color:#3b82f6;text-decoration:underline">privacy notice</a>.</span>
+          </label>
+        </div>
         <button type="submit">Request my free preview</button>
         <p class="contact-form-status" id="contactLeadStatus" role="status" aria-live="polite"></p>
       </form>
@@ -133,7 +139,8 @@
     var name=document.getElementById('contactName').value.trim();
     var business=document.getElementById('contactBusiness').value.trim();
     var email=document.getElementById('contactEmail').value.trim();
-    if(!name||!business||!email){status.className='contact-form-status err';status.textContent='Please complete all three fields.';return;}
+    var consent=document.getElementById('contactConsent').checked;
+    if(!name||!business||!email||!consent){status.className='contact-form-status err';status.textContent='Please complete all fields and accept the privacy notice.';return;}
     var button=form.querySelector('button');button.disabled=true;button.textContent='Sending…';status.className='contact-form-status';status.textContent='';
     try{
       var response=await fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({business_name:business,details:'Contact request\\nName: '+name+'\\nEmail: '+email})});
