@@ -1377,6 +1377,21 @@ dialog .dns-table button { margin: 0; padding: 4px 10px; font-size: 12px; }
 .colour-dot.selected { border-color: #000; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
 .colour-dot:hover { transform: scale(1.1); }
 
+/* Hide old form elements when dashboard is present */
+.dashboard-wrapper ~ .section-divider,
+.dashboard-wrapper ~ .sales-block,
+.dashboard-wrapper ~ .link-bar,
+.dashboard-wrapper ~ .import-status,
+.dashboard-wrapper ~ .customer-preview-status,
+.dashboard-wrapper ~ .customer-details-grid,
+.dashboard-wrapper ~ .demo-views,
+.dashboard-wrapper ~ .media-row-3,
+.dashboard-wrapper ~ .field,
+.dashboard-wrapper ~ .ai-edit-box,
+.dashboard-wrapper ~ .editor-hint {
+  display: none !important;
+}
+
 .text-colour-pick { display: flex; gap: 8px; flex-wrap: wrap; }
 .text-colour-btn { padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .2s ease; min-width: 80px; }
 .text-colour-btn:hover { border-color: #999; }
