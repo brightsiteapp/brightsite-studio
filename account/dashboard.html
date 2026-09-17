@@ -333,6 +333,7 @@
             <span>Booking form <span class="addon-price-tag">+£19/mo</span></span>
           </label>
           <a href="https://buy.stripe.com/14A14n87jcE4dfJbxX3gk00" class="upgrade-btn" id="upgradeBtn" target="_blank" rel="noopener">Pay for your site</a>
+          <a href="https://buy.stripe.com/bJefZhfzL0Vm7VpdG53gk01" class="billing-btn" id="bookingAddonBtn" target="_blank" rel="noopener" hidden>Add booking form</a>
           <button type="button" class="billing-btn" id="billingBtn" hidden>Manage billing</button>
         </div>
 
@@ -1164,7 +1165,9 @@
       : 'Your Essential plan is selected. Add features now; you'll manage billing once your account is active.';
     document.getElementById('upgradeBtn').hidden = false;
     document.getElementById('billingBtn').hidden = !isPaying;
-    document.getElementById('bookingAddonCheck').checked = !!(business && business.data && business.data.raw && business.data.raw.bookingAddon);
+    var bookingChecked = !!(business && business.data && business.data.raw && business.data.raw.bookingAddon);
+    document.getElementById('bookingAddonCheck').checked = bookingChecked;
+    document.getElementById('bookingAddonBtn').hidden = !bookingChecked;
 
     var toolbar = document.getElementById('toolbarStatus');
     toolbar.classList.toggle('live', isLive);
@@ -1179,6 +1182,7 @@
 
   document.getElementById('bookingAddonCheck').addEventListener('change', function () {
     if (business && business.data && business.data.raw) business.data.raw.bookingAddon = this.checked;
+    document.getElementById('bookingAddonBtn').hidden = !this.checked;
     saveBusiness();
   });
 

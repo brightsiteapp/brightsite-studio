@@ -126,7 +126,7 @@
             <label><input type="checkbox" class="addon-booking"> Booking form <span class="addon-price">+£19/mo</span></label>
             <label><input type="checkbox" class="addon-store"> Online store <span class="addon-price">+£19/mo</span></label>
           </div>
-          <a href="#" class="go plan-enquire" data-plan="Essential" data-price="£0 setup + £19/mo" target="_blank" rel="noopener">Enquire</a>
+          <a href="/account/login.html?signup=1" class="go">Sign up</a>
         </div>
 
         <div class="plan feature" data-setup-monthly="99" data-setup-annual="49" data-annual-discount>
@@ -146,7 +146,7 @@
             <label><input type="checkbox" class="addon-booking"> Booking form <span class="addon-price">+£19/mo</span></label>
             <label><input type="checkbox" class="addon-store"> Online store <span class="addon-price">+£19/mo</span></label>
           </div>
-          <a href="#" class="go plan-enquire" data-plan="Pro" data-price="£49 setup + £19/mo hosting (billed annually)" target="_blank" rel="noopener">Enquire</a>
+          <a href="/account/login.html?signup=1" class="go">Sign up</a>
         </div>
 
         <div class="plan" data-setup-monthly="199" data-setup-annual="99" data-annual-discount>
@@ -166,7 +166,7 @@
             <label><input type="checkbox" class="addon-booking"> Booking form <span class="addon-price">+£19/mo</span></label>
             <label><input type="checkbox" class="addon-store"> Online store <span class="addon-price">+£19/mo</span></label>
           </div>
-          <a href="#" class="go plan-enquire" data-plan="Prestige" data-price="£99 setup + £19/mo hosting (billed annually)" target="_blank" rel="noopener">Enquire</a>
+          <a href="/account/login.html?signup=1" class="go">Sign up</a>
         </div>
       </div>
       <p class="pricing-note">See a free personalised preview before you commit. Hosting covers security, updates and ongoing management on every plan. A booking form or online store can be added to any plan for £19/mo each. Cancel any time.</p>
@@ -191,41 +191,13 @@
   u();
 })();
 
-// Pricing Toggle & WhatsApp Link Updater
+// Pricing Toggle
 (function(){
-  var WHATSAPP_NUMBER = '447535928879';
   var checkbox = document.getElementById('billing-checkbox');
   var labelMonthly = document.getElementById('label-monthly');
   var labelAnnual = document.getElementById('label-annual');
   var plans = document.querySelectorAll('.plan[data-annual-discount]');
   var essentialPlan = document.querySelector('.plan[data-essential]');
-  var allPlans = document.querySelectorAll('.plan');
-
-  function addonSummary(planEl) {
-    var names = [];
-    var total = 0;
-    if (planEl.querySelector('.addon-booking').checked) { names.push('Booking form'); total += 19; }
-    if (planEl.querySelector('.addon-store').checked) { names.push('Online store'); total += 19; }
-    return { names: names, total: total };
-  }
-
-  function updateWhatsAppLinks() {
-    allPlans.forEach(function(planEl){
-      var link = planEl.querySelector('.plan-enquire');
-      var plan = link.dataset.plan;
-      var price = link.dataset.price;
-      var billingSuffix = link.dataset.fixed !== undefined ? '' : (', paid ' + (checkbox.checked ? 'Annually' : 'Monthly'));
-      var addons = addonSummary(planEl);
-      var addonSuffix = addons.names.length ? (' with ' + addons.names.join(' and ') + ' (+£' + addons.total + '/mo)') : '';
-      var message = 'Hi, I\'d like to enquire about the ' + plan + ' plan (' + price + billingSuffix + ')' + addonSuffix + '.';
-      link.href = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(message);
-    });
-  }
-
-  allPlans.forEach(function(planEl){
-    planEl.querySelector('.addon-booking').addEventListener('change', updateWhatsAppLinks);
-    planEl.querySelector('.addon-store').addEventListener('change', updateWhatsAppLinks);
-  });
 
   function updatePricing() {
     var isAnnual = checkbox.checked;
@@ -235,39 +207,27 @@
     plans.forEach(function(plan) {
       var setupPrice = plan.querySelector('.setup-price');
       var hostingPrice = plan.querySelector('.hosting-price');
-      var btn = plan.querySelector('.plan-enquire');
-
       if (isAnnual) {
         setupPrice.innerHTML = '£' + plan.dataset.setupAnnual;
         hostingPrice.innerHTML = '+ £228/yr';
-        btn.dataset.price = '£' + plan.dataset.setupAnnual + ' setup + £228/yr hosting';
         plan.setAttribute('data-annual-active', '');
       } else {
         setupPrice.innerHTML = '£' + plan.dataset.setupMonthly;
         hostingPrice.innerHTML = '+ £19/mo';
-        btn.dataset.price = '£' + plan.dataset.setupMonthly + ' setup + £19/mo hosting';
         plan.removeAttribute('data-annual-active');
       }
     });
 
     if (essentialPlan) {
       var essentialHosting = essentialPlan.querySelector('.hosting-price');
-      var essentialBtn = essentialPlan.querySelector('.plan-enquire');
-      var essentialNote = document.getElementById('essential-price-note');
       if (isAnnual) {
         essentialHosting.innerHTML = '+ £190/yr';
-        essentialBtn.dataset.price = '£0 setup + £190/yr';
-        if (essentialNote) essentialNote.textContent = 'No setup fee — simple monthly management';
         essentialPlan.setAttribute('data-annual-active', '');
       } else {
         essentialHosting.innerHTML = '+ £19/mo';
-        essentialBtn.dataset.price = '£0 setup + £19/mo';
-        if (essentialNote) essentialNote.textContent = 'No setup fee — simple monthly management';
         essentialPlan.removeAttribute('data-annual-active');
       }
     }
-
-    updateWhatsAppLinks();
   }
 
   // Event Listeners
