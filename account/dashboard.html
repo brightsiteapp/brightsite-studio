@@ -103,7 +103,7 @@
   .billing-btn{width:100%;margin-top:6px;background:none;border:1px solid var(--line);border-radius:999px;padding:10px 16px;font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;transition:border-color .18s ease,color .18s ease}
   .billing-btn:hover{border-color:var(--accent);color:var(--ink)}
   .billing-btn:disabled{cursor:not-allowed;opacity:.7}
-  .upgrade-btn{display:block;width:100%;margin-top:6px;border:0;border-radius:999px;padding:11px 16px;font:inherit;font-size:12.5px;font-weight:700;color:#fff;background:var(--accent);cursor:pointer;text-align:center;text-decoration:none}
+  .upgrade-btn{display:block;width:100%;margin-top:10px;border:0;border-radius:999px;padding:11px 16px;font:inherit;font-size:12.5px;font-weight:700;color:#fff;background:var(--accent);cursor:pointer;text-align:center;text-decoration:none}
   .info-hint{font-size:12px;color:var(--muted);line-height:1.5;margin-top:2px}
   .addon-checkbox-label{display:flex;align-items:center;gap:8px;margin:10px 0 4px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer}
   .addon-checkbox-label input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
@@ -1212,6 +1212,10 @@
   document.getElementById('bookingAddonCheck').addEventListener('change', function () {
     if (business && business.data && business.data.raw) business.data.raw.bookingAddon = this.checked;
     document.getElementById('bookingAddonBtn').hidden = !this.checked;
+    var planSummaryStrong = document.querySelector('.plan-summary strong b');
+    if (planSummaryStrong) {
+      planSummaryStrong.textContent = this.checked ? '£19' : '£0';
+    }
     saveBusiness();
   });
 
