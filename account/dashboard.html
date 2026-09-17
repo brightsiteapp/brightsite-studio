@@ -1432,16 +1432,15 @@
       raw.bookingAddon = document.getElementById('bookingAddonCheck').checked;
       if (opts.publish) isLive = true;
       var record = { slug: slug, name: raw.name, raw: raw, planActive: isPaying, published: isLive, updatedAt: new Date().toISOString() };
-      return authenticatedFetch(SUPABASE_URL + '/rest/v1/businesses?on_conflict=id', {
+      return authenticatedFetch(SUPABASE_URL + '/rest/v1/rpc/upsert_business', {
         method: 'POST',
-        headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation,resolution=merge-duplicates' }),
-        body: JSON.stringify({ id: slug, name: raw.name, user_id: session.user_id, data: record, updated_at: record.updatedAt })
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ p_id: slug, p_name: raw.name, p_user_id: session.user_id, p_data: record, p_updated_at: record.updatedAt })
       }).then(function (res) {
         if (!res.ok) return res.json().then(function (d) { throw new Error(d.message || d.msg || ('Save failed (' + res.status + ')')); });
         return res.json();
-      }).then(function (rows) {
-        var updated = Array.isArray(rows) ? rows[0] : rows;
-        if (updated) business = updated;
+      }).then(function (row) {
+        if (row && row.id) business = row;
       });
     }).then(function () {
       pendingUploads = { logo: null, hero: null, gallery: [] };
