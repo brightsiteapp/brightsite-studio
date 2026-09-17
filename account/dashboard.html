@@ -1005,7 +1005,20 @@
           slug = business.id;
           renderDashboard();
         } else {
-          showSetup();
+          // Fall back to slug stored in localStorage (covers rows with null user_id)
+          var pendingSlug = localStorage.getItem('bs_pending_slug');
+          if (!pendingSlug) { showSetup(); return; }
+          return fetch(SUPABASE_URL + '/rest/v1/businesses?select=*&id=eq.' + encodeURIComponent(pendingSlug), { headers: authHeaders() })
+            .then(function (r) { return r.json(); })
+            .then(function (r2) {
+              if (r2 && r2.length) {
+                business = r2[0];
+                slug = business.id;
+                renderDashboard();
+              } else {
+                showSetup();
+              }
+            });
         }
       })
       .catch(function () { showSetup(); });
