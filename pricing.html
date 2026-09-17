@@ -38,6 +38,8 @@
   .price-was { font-size: 15px; color: #999; text-decoration: line-through; margin-right: 4px; display: none; }
   .price-save { font-size: 11px; font-weight: 700; color: #2563eb; background: #EAF0FE; padding: 2px 7px; border-radius: 20px; margin-left: 8px; vertical-align: middle; letter-spacing: -0.02em; display: none; }
   .plan[data-annual-active][data-annual-discount] .price-was, .plan[data-annual-active][data-annual-discount] .price-save { display: inline-block; }
+  .billed-annually { display: none; font-size: 11px; color: var(--muted, #888); margin-top: 2px; }
+  .plan[data-annual-active] .billed-annually { display: block; }
   .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
   .switch input { opacity: 0; width: 0; height: 0; }
   .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 24px; }
@@ -114,6 +116,7 @@
           <div class="price-row">
             <span class="price"><span class="setup-price">£0</span><small class="hosting-price">+ £19/mo</small></span>
           </div>
+          <div class="billed-annually">Billed annually — save £38</div>
           <div class="price-note" id="essential-price-note">No setup fee — simple monthly management</div>
           <ul>
             <li>1-3 pages</li>
@@ -133,8 +136,9 @@
           <h4>Pro</h4>
           <div class="desc"><b>Best for:</b> businesses that need a website with lots of info.</div>
           <div class="price-row">
-            <span class="price"><span class="price-was">£199</span><span class="setup-price">£99</span><small class="hosting-price">+ £228/yr</small><span class="price-save">Save 50%</span></span>
+            <span class="price"><span class="price-was">£199</span><span class="setup-price">£99</span><small class="hosting-price">+ £19/mo</small><span class="price-save">Save 50%</span></span>
           </div>
+          <div class="billed-annually">Billed annually</div>
           <div class="price-note">One-off build, then hosting &amp; management</div>
           <ul>
             <li>Everything in Essential</li>
@@ -153,8 +157,9 @@
           <h4>Prestige</h4>
           <div class="desc"><b>Best for:</b> corporate needs and multi-location brands.</div>
           <div class="price-row">
-            <span class="price"><span class="price-was">£299</span><span class="setup-price">£149</span><small class="hosting-price">+ £228/yr</small><span class="price-save">Save 50%</span></span>
+            <span class="price"><span class="price-was">£299</span><span class="setup-price">£149</span><small class="hosting-price">+ £19/mo</small><span class="price-save">Save 50%</span></span>
           </div>
+          <div class="billed-annually">Billed annually</div>
           <div class="price-note">One-off build, then hosting &amp; management</div>
           <ul>
             <li>Everything in Pro</li>
@@ -239,8 +244,8 @@
 
       if (isAnnual) {
         setupPrice.innerHTML = '£' + plan.dataset.setupAnnual;
-        hostingPrice.innerHTML = '+ £228/yr';
-        btn.dataset.price = '£' + plan.dataset.setupAnnual + ' setup + £228/yr hosting';
+        hostingPrice.innerHTML = '+ £19/mo';
+        btn.dataset.price = '£' + plan.dataset.setupAnnual + ' setup + £19/mo hosting (billed annually)';
         plan.setAttribute('data-annual-active', '');
       } else {
         setupPrice.innerHTML = '£' + plan.dataset.setupMonthly;
@@ -255,13 +260,15 @@
       var essentialBtn = essentialPlan.querySelector('.plan-enquire');
       var essentialNote = document.getElementById('essential-price-note');
       if (isAnnual) {
-        essentialHosting.innerHTML = '+ £190/yr';
-        essentialBtn.dataset.price = '£0 setup + £190/yr';
-        if (essentialNote) essentialNote.textContent = 'No setup fee — save £38 with annual billing';
+        essentialHosting.innerHTML = '+ £15.83/mo';
+        essentialBtn.dataset.price = '£0 setup + £15.83/mo (billed annually)';
+        if (essentialNote) essentialNote.textContent = 'No setup fee — simple monthly management';
+        essentialPlan.setAttribute('data-annual-active', '');
       } else {
         essentialHosting.innerHTML = '+ £19/mo';
         essentialBtn.dataset.price = '£0 setup + £19/mo';
         if (essentialNote) essentialNote.textContent = 'No setup fee — simple monthly management';
+        essentialPlan.removeAttribute('data-annual-active');
       }
     }
 
