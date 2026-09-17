@@ -218,24 +218,6 @@
 
 <div id="v1Hidden" hidden></div>
 <div id="settingsDialog" hidden></div>
-<script>
-  // Patch settingsDialog so V1's DOM calls target #v2SettingsMount instead.
-  // V1 uses settingsDialog.querySelectorAll, .querySelector, and
-  // .addEventListener for both status reads and click handling.
-  document.addEventListener("DOMContentLoaded", () => {
-    const dlg = document.getElementById("settingsDialog");
-    const mount = () => document.getElementById("v2SettingsMount");
-    dlg.querySelectorAll = (sel) => mount().querySelectorAll(sel);
-    dlg.querySelector = (sel) => mount().querySelector(sel);
-    const _origAdd = dlg.addEventListener.bind(dlg);
-    dlg.addEventListener = (type, handler, opts) => {
-      // Forward to the visible mount so clicks/etc. actually fire
-      mount().addEventListener(type, handler, opts);
-      // Also keep on dlg so 'close' events (fired manually) still work
-      _origAdd(type, handler, opts);
-    };
-  });
-</script>
 <div id="planDialog" hidden></div>
 <div id="payDialog" hidden></div>
 <div id="domainDialog" hidden></div>

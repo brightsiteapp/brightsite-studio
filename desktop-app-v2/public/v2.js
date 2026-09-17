@@ -154,13 +154,7 @@
       v2.bannerFor = null;
       requestAnimationFrame(() => core.fitPreviewFrame());
     }
-    if (view === "settings") {
-      settingsPanel.setAttribute("open", "");
-      // Trigger V1's settings refresh by clicking the hidden gear button,
-      // which calls refreshSignInStatus, refreshPlacesStatus, refreshServices.
-      const gear = document.getElementById("gearBtn");
-      if (gear) gear.click();
-    }
+    if (view === "settings") renderSettings();
     renderNow();
   }
 
@@ -312,19 +306,10 @@
     btn.onclick = () => navigate(btn.dataset.view);
   });
 
-  // V1's settings panel as a page instead of a pop-up: V1 "opening" it
-  // (its gear button, the setup strip's "Finish setup") shows the Settings
-  // view, and leaving the view closes it the way V1's Done button would,
-  // which also stops V1's sign-in polling.
+  // Settings panel: V1's gear/showModal redirects to the Settings view.
   const settingsPanel = $("#settingsDialog");
-  settingsPanel.showModal = () => {
-    settingsPanel.setAttribute("open", "");
-    if (v2.view !== "settings") navigate("settings");
-  };
-  function closeSettings() {
-    if (settingsPanel.open) settingsPanel.close();
-  }
-  settingsPanel.addEventListener("close", () => { if (v2.view === "settings") showView("pipeline"); });
+  settingsPanel.showModal = () => { if (v2.view !== "settings") navigate("settings"); };
+  function closeSettings() { stopSettingsPoll(); }
 
   // Shared sync status under the bell (V1's full status stays in Settings).
   const SYNC_TITLES = { synced: "Synced", syncing: "Syncing…", offline: "Offline — changes will sync later" };
@@ -349,6 +334,192 @@
     const showUpdate = s => { $("#v2UpdateDot").hidden = !s || !["ready", "available"].includes(s.status); };
     updates.getState().then(showUpdate).catch(() => {});
     updates.onState(showUpdate);
+  }
+
+  // ---------------- settings ----------------
+  let settingsPoll = null;
+  async function renderSettings() {
+    const mount = $("#v2SettingsMount");
+    if (!mount) return;
+
+    async function refreshAll() {
+      // Sign-in status (Google/Facebook)
+      try {
+        const s = await core.api("/api/sign-in-status");
+        mount.querySelectorAll("[data-account]").forEach(row => {
+          const acct = row.dataset.account;
+          const status = row.querySelector(".account-status");
+          const btn = row.querySelector("button");
+          const state = s[acct] || {};
+          if (status) status.textContent = state.signedIn ? (state.email || "Signed in") : "Not signed in";
+          if (status) status.className = "account-status" + (state.signedIn ? " is-signed-in" : "");
+          if (btn) btn.textContent = state.signedIn ? "Sign out" : "Sign in";
+        });
+      } catch { /* best-effort */ }
+
+      // Services (Claude, Vercel, Stripe, Sync, Accounts)
+      try {
+        const c = await core.api("/api/connections");
+        mount.querySelectorAll("[data-service]").forEach(row => {
+          const svc = row.dataset.service;
+          const status = row.querySelector(".account-status");
+          const btn = row.querySelector("button");
+          const state = c[svc] || {};
+          if (status) {
+            status.textContent = state.connected
+              ? (state.email || state.label || "Connected")
+              : (state.reason || "Not connected");
+            status.className = "account-status" + (state.connected ? " is-signed-in" : "");
+          }
+          if (btn) {
+            if (svc === "stripe" || svc === "accounts") btn.textContent = state.connected ? "Remove" : "Add key";
+            else btn.textContent = state.connected ? "Sign out" : "Sign in";
+          }
+        });
+      } catch { /* best-effort */ }
+
+      // Places key
+      try {
+        const pk = await core.api("/api/places-key");
+        const row = mount.querySelector("#placesRow");
+        if (row) {
+          const status = row.querySelector(".account-status");
+          const btn = row.querySelector("#placesBtn");
+          if (status) { status.textContent = pk.set ? "Key set" : "No key"; status.className = "account-status" + (pk.set ? " is-signed-in" : ""); }
+          if (btn) btn.textContent = pk.set ? "Change" : "Add key";
+        }
+      } catch { /* best-effort */ }
+    }
+
+    // Wire click handlers once
+    if (!mount.dataset.settingsWired) {
+      mount.dataset.settingsWired = "1";
+
+      mount.addEventListener("click", async e => {
+        const row = e.target.closest("[data-account]");
+        const svcRow = e.target.closest("[data-service]");
+        const btn = e.target.closest("button");
+        if (!btn) return;
+
+        // Account sign-in/out (Google, Facebook)
+        if (row) {
+          const acct = row.dataset.account;
+          const status = row.querySelector(".account-status");
+          const signedIn = status?.classList.contains("is-signed-in");
+          btn.disabled = true;
+          try {
+            if (signedIn) {
+              await core.api(`/api/sign-out`, { method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ account: acct }) });
+            } else {
+              await core.api(`/api/sign-in`, { method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ account: acct }) });
+            }
+            await refreshAll();
+          } catch (err) { toast(core.friendlyError(err.message)); }
+          finally { btn.disabled = false; }
+          return;
+        }
+
+        // Service connect/disconnect (Claude, Vercel, Stripe, Accounts)
+        if (svcRow) {
+          const svc = svcRow.dataset.service;
+          const status = svcRow.querySelector(".account-status");
+          const connected = status?.classList.contains("is-signed-in");
+
+          if (svc === "stripe") {
+            const form = $("#stripeForm");
+            if (!form) return;
+            form.hidden = !form.hidden;
+            return;
+          }
+          if (svc === "accounts") {
+            const form = $("#accountsForm");
+            if (!form) return;
+            form.hidden = !form.hidden;
+            return;
+          }
+          btn.disabled = true;
+          try {
+            if (connected) {
+              await core.api(`/api/connections/${svc}/sign-out`, { method: "POST" });
+            } else {
+              await core.api(`/api/connections/${svc}/sign-in`, { method: "POST" });
+              toast(`Opening ${svc} sign-in…`);
+            }
+            setTimeout(refreshAll, 2000);
+          } catch (err) { toast(core.friendlyError(err.message)); }
+          finally { btn.disabled = false; }
+          return;
+        }
+
+        // Places key save
+        if (btn.id === "placesSaveBtn") {
+          const input = $("#placesKeyInput");
+          if (!input?.value.trim()) return;
+          btn.disabled = true;
+          try {
+            await core.api("/api/places-key", { method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ key: input.value.trim() }) });
+            input.value = "";
+            $("#placesForm").hidden = true;
+            await refreshAll();
+          } catch (err) { toast(core.friendlyError(err.message)); }
+          finally { btn.disabled = false; }
+          return;
+        }
+        if (btn.id === "placesBtn") { const f = $("#placesForm"); if (f) f.hidden = !f.hidden; return; }
+
+        // Stripe key save
+        if (btn.id === "stripeSaveBtn") {
+          const input = $("#stripeKeyInput");
+          if (!input?.value.trim()) return;
+          btn.disabled = true;
+          try {
+            await core.api("/api/stripe-key", { method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ key: input.value.trim() }) });
+            input.value = "";
+            $("#stripeForm").hidden = true;
+            await refreshAll();
+          } catch (err) { toast(core.friendlyError(err.message)); }
+          finally { btn.disabled = false; }
+          return;
+        }
+
+        // Accounts (Supabase) key save
+        if (btn.id === "accountsSaveBtn") {
+          const input = $("#accountsKeyInput");
+          if (!input?.value.trim()) return;
+          btn.disabled = true;
+          try {
+            await core.api("/api/accounts-key", { method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ key: input.value.trim() }) });
+            input.value = "";
+            $("#accountsForm").hidden = true;
+            await refreshAll();
+          } catch (err) { toast(core.friendlyError(err.message)); }
+          finally { btn.disabled = false; }
+          return;
+        }
+
+        // Cancellation survey toggle
+        if (btn.id === "cancelSurveyBtn") {
+          btn.disabled = true;
+          try {
+            await core.api("/api/stripe/cancellation-survey", { method: "POST" });
+            await refreshAll();
+          } catch (err) { toast(core.friendlyError(err.message)); }
+          finally { btn.disabled = false; }
+          return;
+        }
+      });
+
+      // Poll service status while settings is open
+      settingsPoll = setInterval(refreshAll, 4000);
+    }
+
+    await refreshAll();
+  }
+
+  function stopSettingsPoll() {
+    if (settingsPoll) { clearInterval(settingsPoll); settingsPoll = null; }
+    const mount = $("#v2SettingsMount");
+    if (mount) delete mount.dataset.settingsWired;
   }
 
   // ---------------- pipeline board ----------------
