@@ -301,10 +301,8 @@
   }
 
   const navigate = view => (v2.view === 'profile' ? leaveProfile(view) : showView(view));
-  // Settings goes through V1's own gear button, so V1 refreshes every
-  // account and service status exactly as it does when its pop-up opens.
   $$('.v2-nav[data-view]').forEach(btn => {
-    btn.onclick = () => (btn.dataset.view === 'settings' ? $('#gearBtn').click() : navigate(btn.dataset.view));
+    btn.onclick = () => navigate(btn.dataset.view);
   });
 
   // V1's settings panel as a page instead of a pop-up: V1 "opening" it
