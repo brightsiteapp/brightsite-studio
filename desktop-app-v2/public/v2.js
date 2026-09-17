@@ -633,22 +633,9 @@
     const category = raw.tagline || '';
     const categoryOptions = `<option value="">Choose…</option>` + types.map(t => `<option ${t.label === category ? 'selected' : ''}>${esc(t.label)}</option>`).join('')
       + (category && !types.some(t => t.label === category) ? `<option selected>${esc(category)}</option>` : '');
-    setSection('#v2dContact', `
-      <h2>${v2.profileTab === 'website' ? 'Website basics' : 'Account details'}</h2>
-      <div class="v2-quick">
-        <button type="button" data-act="whatsapp">${ICONS.whatsapp}<span>WhatsApp</span></button>
-        <button type="button" data-act="email">${ICONS.email}<span>Email</span></button>
-        <button type="button" data-act="call">${ICONS.call}<span>Call</span></button>
-        <button type="button" data-act="copy">${ICONS.copy}<span>Copy</span></button>
-      </div>
-      ${field('name', 'Business', raw.name || '')}
-      ${field('contactName', 'Contact', p.contact?.name || '', { placeholder: 'Contact’s name' })}
-      ${field('phone', 'Phone', core.phoneOf(p), { type: 'tel' })}
-      ${field('email', 'Email', p.contact?.email || '', { type: 'email' })}
-      ${field('address', 'Address', profile.address || raw.location || '')}
-      <label class="v2-field"><span>Category</span><select data-f="category">${categoryOptions}</select></label>`);
-
-    setSection('#v2dPrices', pricePreviewHtml(p));
+    // Old form details removed - using new dashboard in editor instead
+    setSection(‘#v2dContact’, ‘’);
+    setSection(‘#v2dPrices’, ‘’);
 
     const site = P.siteUrl(p);
     const website = site || p.importedSite?.url || p.contact?.existingWebsite || '';
