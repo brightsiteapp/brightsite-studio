@@ -113,6 +113,67 @@
   .plan-summary strong b{margin-left:6px;color:var(--accent);font-weight:800}
   .plan-summary span{display:block;font-size:12px;line-height:1.45;color:var(--muted)}
 
+  /* ---------------- plan chooser modal ---------------- */
+  .plan-modal-veil{position:fixed;inset:0;background:rgba(23,20,15,.48);z-index:60;display:flex;align-items:flex-end;justify-content:center;padding:0}
+  @media(min-width:600px){.plan-modal-veil{align-items:center;padding:20px}}
+  .plan-modal-sheet{width:100%;max-width:760px;max-height:92dvh;overflow-y:auto;background:var(--card);border-radius:22px 22px 0 0;padding:24px 20px 32px;box-shadow:0 -8px 40px rgba(0,0,0,.18);animation:sheetUp .22s cubic-bezier(.32,.72,0,1)}
+  @media(min-width:600px){.plan-modal-sheet{border-radius:22px;animation:sheetFade .18s ease}}
+  @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  @keyframes sheetFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .plan-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .plan-modal-header h2{font-family:var(--display);font-size:17px;font-weight:700}
+  .plan-modal-header p{font-size:12.5px;color:var(--muted);margin:0 0 16px}
+  .plan-modal-close{background:none;border:0;font-size:20px;color:var(--muted);cursor:pointer;line-height:1;padding:4px}
+  .plan-modal-billing-toggle{display:flex;align-items:center;gap:0;padding:3px;border:1px solid var(--line);border-radius:10px;background:#fff;width:fit-content;margin:0 auto 18px}
+  .plan-modal-billing-toggle button{border:0;border-radius:7px;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:700;padding:7px 14px;cursor:pointer;transition:background .15s,color .15s}
+  .plan-modal-billing-toggle button[aria-pressed="true"]{background:var(--accent);color:#fff}
+  .plan-cards-grid{display:grid;grid-template-columns:1fr;gap:12px}
+  @media(min-width:520px){.plan-cards-grid{grid-template-columns:repeat(3,1fr)}}
+  .plan-choice-card{border:2px solid var(--line);border-radius:16px;padding:18px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .15s;position:relative;background:#fff}
+  .plan-choice-card:hover{border-color:var(--accent);box-shadow:0 6px 20px rgba(59,130,246,.12);transform:translateY(-2px)}
+  .plan-choice-card.selected{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.15);background:#f5f8ff}
+  .plan-choice-card.featured{border-color:#6366f1}
+  .plan-choice-card.featured:hover,.plan-choice-card.featured.selected{border-color:#4f46e5;box-shadow:0 6px 20px rgba(99,102,241,.16)}
+  .plan-featured-badge{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#6366f1;color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:3px 10px;border-radius:999px;white-space:nowrap}
+  .plan-choice-name{font-size:15px;font-weight:800;margin-bottom:2px}
+  .plan-choice-desc{font-size:11.5px;color:var(--muted);margin-bottom:10px;line-height:1.4}
+  .plan-choice-price-row{display:flex;align-items:baseline;gap:5px;margin-bottom:4px}
+  .plan-choice-setup{font-size:22px;font-weight:800;color:var(--ink)}
+  .plan-choice-was{font-size:13px;color:var(--muted);text-decoration:line-through}
+  .plan-choice-hosting{font-size:12px;color:var(--muted)}
+  .plan-choice-note{font-size:11px;color:var(--muted);margin-bottom:12px}
+  .plan-choice-features{list-style:none;padding:0;margin:0 0 14px;display:flex;flex-direction:column;gap:6px}
+  .plan-choice-features li{display:flex;align-items:flex-start;gap:7px;font-size:12.5px;color:var(--ink)}
+  .plan-choice-features li::before{content:'✓';font-size:10px;font-weight:800;color:#1f9d55;background:#e6f6ec;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+
+  /* sleek custom checkboxes in modal */
+  .plan-addon-row{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;margin-bottom:7px;cursor:pointer;transition:border-color .15s,background .15s}
+  .plan-addon-row:last-child{margin-bottom:0}
+  .plan-addon-row:hover{border-color:var(--accent);background:rgba(59,130,246,.04)}
+  .plan-addon-row input[type=checkbox]{display:none}
+  .plan-addon-box{width:18px;height:18px;border:2px solid #c9c6bd;border-radius:5px;flex-shrink:0;display:grid;place-items:center;transition:background .15s,border-color .15s;background:#fff}
+  .plan-addon-row input:checked ~ .plan-addon-box{background:var(--accent);border-color:var(--accent)}
+  .plan-addon-row input:checked ~ .plan-addon-box::after{content:'';display:block;width:5px;height:9px;border:2px solid #fff;border-top:0;border-left:0;transform:rotate(45deg) translate(-1px,-1px)}
+  .plan-addon-label{flex:1;font-size:13px;font-weight:600;color:var(--ink)}
+  .plan-addon-price{font-size:12px;font-weight:700;color:var(--accent);background:#eaf0fe;padding:2px 8px;border-radius:20px}
+  .plan-divider{margin:14px 0 10px;border:0;border-top:1px solid var(--line)}
+  .plan-select-btn{width:100%;min-height:40px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s,transform .12s}
+  .plan-select-btn:hover{transform:translateY(-1px)}
+  .plan-choice-card.featured .plan-select-btn{background:#6366f1}
+  .plan-choice-card.featured .plan-select-btn:hover{background:#4f46e5}
+  .plan-choice-card.selected .plan-select-btn{background:#1f9d55}
+  .plan-modal-note{font-size:11.5px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.5}
+
+  /* compact plan display card */
+  .plan-chosen-card{display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px solid #d7e4fb;border-radius:12px;background:#f5f8ff;margin:10px 0 8px}
+  .plan-chosen-icon{width:34px;height:34px;border-radius:10px;background:var(--accent);display:grid;place-items:center;flex-shrink:0}
+  .plan-chosen-icon svg{width:18px;height:18px;stroke:#fff;fill:none}
+  .plan-chosen-info{flex:1;min-width:0}
+  .plan-chosen-name{font-size:13px;font-weight:700;color:var(--ink)}
+  .plan-chosen-price{font-size:12px;color:var(--muted)}
+  .plan-chosen-change{border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);font:inherit;font-size:11.5px;font-weight:600;padding:5px 11px;cursor:pointer;flex-shrink:0;transition:border-color .15s}
+  .plan-chosen-change:hover{border-color:var(--accent);color:var(--accent)}
+
   .req-btn-wrap{margin-top:4px}
   .req-btn{width:100%;min-height:44px;border:0;border-radius:999px;background:var(--ink);color:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
   .req-btn:hover{opacity:.92}
@@ -331,17 +392,18 @@
 
         <div class="info-card">
           <h2>Your plan</h2>
-          <div class="plan-summary">
-            <strong>Essential <b>£0</b></strong>
-            <span>£19/month hosting — charged once your website is live.</span>
+          <div class="plan-chosen-card" id="planChosenCard">
+            <div class="plan-chosen-icon" id="planChosenIcon">
+              <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            </div>
+            <div class="plan-chosen-info">
+              <div class="plan-chosen-name" id="planChosenName">Essential</div>
+              <div class="plan-chosen-price" id="planChosenPrice">£0 setup · £19/mo hosting</div>
+            </div>
+            <button type="button" class="plan-chosen-change" id="choosePlanBtn">Change plan</button>
           </div>
           <p class="info-hint" id="billingHint">Your Essential plan is selected. Add features now; you'll manage billing once your account is active.</p>
-          <label class="addon-checkbox-label" id="bookingAddonLabel">
-            <input type="checkbox" id="bookingAddonCheck">
-            <span>Booking form <span class="addon-price-tag">+£19/mo</span></span>
-          </label>
           <a href="https://buy.stripe.com/14A14n87jcE4dfJbxX3gk00" class="upgrade-btn" id="upgradeBtn" target="_blank" rel="noopener">Pay for your site</a>
-          <a href="https://buy.stripe.com/bJefZhfzL0Vm7VpdG53gk01" class="billing-btn" id="bookingAddonBtn" target="_blank" rel="noopener" hidden>Add booking form</a>
           <button type="button" class="billing-btn" id="billingBtn" hidden>Manage billing</button>
         </div>
 
@@ -489,6 +551,127 @@
       <button type="button" class="modal-send" id="reqSend">Send</button>
     </div>
     <div class="save-status" id="reqStatus" style="text-align:center;margin-top:10px"></div>
+  </div>
+</div>
+
+<!-- Plan chooser modal -->
+<div class="plan-modal-veil" id="planModalVeil" hidden>
+  <div class="plan-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="planModalTitle">
+    <div class="plan-modal-header">
+      <div>
+        <h2 id="planModalTitle">Choose your plan</h2>
+        <p>Every plan includes a real custom website, SEO &amp; full management.</p>
+      </div>
+      <button type="button" class="plan-modal-close" id="planModalClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="plan-modal-billing-toggle" role="group" aria-label="Billing period">
+      <button type="button" id="billingMonthly" aria-pressed="false">Monthly</button>
+      <button type="button" id="billingAnnual" aria-pressed="true">Annual <span style="color:#fbbf24">– Save 50%</span></button>
+    </div>
+    <div class="plan-cards-grid" id="planCardsGrid">
+
+      <!-- Essential -->
+      <div class="plan-choice-card" data-plan="essential" id="planCardEssential">
+        <div class="plan-choice-name">Essential</div>
+        <div class="plan-choice-desc">Best for sole traders who need a sharp, professional home online.</div>
+        <div class="plan-choice-price-row">
+          <span class="plan-choice-setup" data-monthly="£0" data-annual="£0">£0</span>
+          <span class="plan-choice-hosting" data-monthly="+ £19/mo" data-annual="+ £228/yr">+ £228/yr</span>
+        </div>
+        <div class="plan-choice-note" data-monthly="No setup fee — simple monthly management" data-annual="No setup fee — simple annual management">No setup fee — simple annual management</div>
+        <ul class="plan-choice-features">
+          <li>1–3 pages</li>
+          <li>SEO &amp; SEO-focused content</li>
+          <li>Mobile optimisation</li>
+          <li>Hosting, security &amp; maintenance</li>
+          <li>Contact details &amp; enquiry forms</li>
+        </ul>
+        <hr class="plan-divider">
+        <label class="plan-addon-row" id="essBookingLabel">
+          <input type="checkbox" id="essBookingCheck">
+          <span class="plan-addon-box"></span>
+          <span class="plan-addon-label">Booking form</span>
+          <span class="plan-addon-price">+£19/mo</span>
+        </label>
+        <label class="plan-addon-row" id="essStoreLabel">
+          <input type="checkbox" id="essStoreCheck">
+          <span class="plan-addon-box"></span>
+          <span class="plan-addon-label">Online store</span>
+          <span class="plan-addon-price">+£19/mo</span>
+        </label>
+        <hr class="plan-divider">
+        <button type="button" class="plan-select-btn" data-select="essential">Select Essential</button>
+      </div>
+
+      <!-- Pro -->
+      <div class="plan-choice-card featured" data-plan="pro" id="planCardPro">
+        <span class="plan-featured-badge">MOST POPULAR</span>
+        <div class="plan-choice-name">Pro</div>
+        <div class="plan-choice-desc">Best for businesses that need a website with lots of info.</div>
+        <div class="plan-choice-price-row">
+          <span class="plan-choice-was" id="proWas">£99</span>
+          <span class="plan-choice-setup" data-monthly="£99" data-annual="£49">£49</span>
+          <span class="plan-choice-hosting" data-monthly="+ £19/mo" data-annual="+ £228/yr">+ £228/yr</span>
+        </div>
+        <div class="plan-choice-note" data-monthly="One-off build, then £19/mo" data-annual="One-off build, then £228/yr">One-off build, then £228/yr</div>
+        <ul class="plan-choice-features">
+          <li>Everything in Essential</li>
+          <li>Up to 5 custom-designed pages</li>
+          <li>Custom sections built for you</li>
+          <li>Interactions &amp; animations</li>
+        </ul>
+        <hr class="plan-divider">
+        <label class="plan-addon-row" id="proBookingLabel">
+          <input type="checkbox" id="proBookingCheck">
+          <span class="plan-addon-box"></span>
+          <span class="plan-addon-label">Booking form</span>
+          <span class="plan-addon-price">+£19/mo</span>
+        </label>
+        <label class="plan-addon-row" id="proStoreLabel">
+          <input type="checkbox" id="proStoreCheck">
+          <span class="plan-addon-box"></span>
+          <span class="plan-addon-label">Online store</span>
+          <span class="plan-addon-price">+£19/mo</span>
+        </label>
+        <hr class="plan-divider">
+        <button type="button" class="plan-select-btn" data-select="pro">Select Pro</button>
+      </div>
+
+      <!-- Prestige -->
+      <div class="plan-choice-card" data-plan="prestige" id="planCardPrestige">
+        <div class="plan-choice-name">Prestige</div>
+        <div class="plan-choice-desc">Best for corporate needs and multi-location brands.</div>
+        <div class="plan-choice-price-row">
+          <span class="plan-choice-was" id="prestigeWas">£199</span>
+          <span class="plan-choice-setup" data-monthly="£199" data-annual="£99">£99</span>
+          <span class="plan-choice-hosting" data-monthly="+ £19/mo" data-annual="+ £228/yr">+ £228/yr</span>
+        </div>
+        <div class="plan-choice-note" data-monthly="One-off build, then £19/mo" data-annual="One-off build, then £228/yr">One-off build, then £228/yr</div>
+        <ul class="plan-choice-features">
+          <li>Everything in Pro</li>
+          <li>Up to 7 custom-designed pages</li>
+          <li>Multi-location or multi-service structure</li>
+          <li>Priority same-day support</li>
+        </ul>
+        <hr class="plan-divider">
+        <label class="plan-addon-row" id="presBookingLabel">
+          <input type="checkbox" id="presBookingCheck">
+          <span class="plan-addon-box"></span>
+          <span class="plan-addon-label">Booking form</span>
+          <span class="plan-addon-price">+£19/mo</span>
+        </label>
+        <label class="plan-addon-row" id="presStoreLabel">
+          <input type="checkbox" id="presStoreCheck">
+          <span class="plan-addon-box"></span>
+          <span class="plan-addon-label">Online store</span>
+          <span class="plan-addon-price">+£19/mo</span>
+        </label>
+        <hr class="plan-divider">
+        <button type="button" class="plan-select-btn" data-select="prestige">Select Prestige</button>
+      </div>
+
+    </div>
+    <p class="plan-modal-note">See a free personalised preview before you commit. Hosting covers security, updates and ongoing management on every plan. Cancel any time.</p>
   </div>
 </div>
 
@@ -716,7 +899,10 @@
   var outlineHeroImage = null;
   var pendingUploads = { logo: null, hero: null, gallery: [] };
   var galleryRemoved = [];
-  var isPaying = false;   // no billing check wired up yet — see Billing card
+  var isPaying = false;
+  var selectedPlan = 'essential'; // essential | pro | prestige
+  var selectedAnnual = true;
+  var selectedAddons = { booking: false, store: false };
   var isLive = false;
   var isEditing = false;
   var openEditorAfterSetup = false;
@@ -1156,7 +1342,8 @@
     renderHours();
     renderMediaThumbs();
     renderGallery();
-    renderPlanUI();
+    if (typeof window._bsRestoreSavedPlan === 'function') window._bsRestoreSavedPlan();
+    else renderPlanUI();
     renderPreview();
     renderAccountHero();
     // A new customer lands directly on the Website tab, with their basic
@@ -1184,19 +1371,69 @@
     document.getElementById('builderGuidance').hidden = true;
   }
 
+  var PLAN_CONFIG = {
+    essential: {
+      label: 'Essential',
+      monthly: { setup: '£0', hosting: '£19/mo', note: 'No setup fee' },
+      annual:  { setup: '£0', hosting: '£228/yr', note: 'No setup fee' },
+      stripeMonthly: 'https://buy.stripe.com/14A14n87jcE4dfJbxX3gk00',
+      stripeAnnual:  'https://buy.stripe.com/14A14n87jcE4dfJbxX3gk00',
+      iconColor: '#2563eb'
+    },
+    pro: {
+      label: 'Pro',
+      monthly: { setup: '£99', hosting: '£19/mo', note: 'One-off build, then £19/mo' },
+      annual:  { setup: '£49', hosting: '£228/yr', note: 'One-off build, then £228/yr' },
+      stripeMonthly: 'https://buy.stripe.com/PLACEHOLDER_PRO_MONTHLY',
+      stripeAnnual:  'https://buy.stripe.com/PLACEHOLDER_PRO_ANNUAL',
+      iconColor: '#6366f1'
+    },
+    prestige: {
+      label: 'Prestige',
+      monthly: { setup: '£199', hosting: '£19/mo', note: 'One-off build, then £19/mo' },
+      annual:  { setup: '£99', hosting: '£228/yr', note: 'One-off build, then £228/yr' },
+      stripeMonthly: 'https://buy.stripe.com/PLACEHOLDER_PRESTIGE_MONTHLY',
+      stripeAnnual:  'https://buy.stripe.com/PLACEHOLDER_PRESTIGE_ANNUAL',
+      iconColor: '#0d9488'
+    }
+  };
+
+  function planPriceLabel() {
+    var cfg = PLAN_CONFIG[selectedPlan];
+    var tier = selectedAnnual ? cfg.annual : cfg.monthly;
+    var addonCount = (selectedAddons.booking ? 1 : 0) + (selectedAddons.store ? 1 : 0);
+    var addonText = addonCount ? (' + ' + addonCount + ' add-on' + (addonCount > 1 ? 's' : '')) : '';
+    return tier.setup + ' setup · ' + tier.hosting + addonText;
+  }
+
+  function buildStripeUrl() {
+    var cfg = PLAN_CONFIG[selectedPlan];
+    return selectedAnnual ? cfg.stripeAnnual : cfg.stripeMonthly;
+  }
+
   function renderPlanUI() {
     var pill = document.getElementById('planPill');
     pill.classList.toggle('active', isPaying);
-    document.getElementById('planLabel').textContent = isPaying ? 'Essential active' : 'Essential £0';
+    document.getElementById('planLabel').textContent = isPaying
+      ? (PLAN_CONFIG[selectedPlan].label + ' active')
+      : (PLAN_CONFIG[selectedPlan].label + ' selected');
     document.getElementById('statusRow').textContent = isLive ? 'Live' : 'Not live yet';
     document.getElementById('billingHint').textContent = isPaying
-      ? 'Your Essential plan is active. Manage payment details any time.'
-      : 'Your Essential plan is selected. Add features now; you\'ll manage billing once your account is active.';
-    document.getElementById('upgradeBtn').hidden = false;
+      ? 'Your plan is active. Manage payment details any time.'
+      : 'Your plan is selected. Add features now; you\'ll manage billing once your account is active.';
+
+    var upgradeBtn = document.getElementById('upgradeBtn');
+    upgradeBtn.hidden = false;
+    upgradeBtn.href = buildStripeUrl();
+
     document.getElementById('billingBtn').hidden = !isPaying;
-    var bookingChecked = !!(business && business.data && business.data.raw && business.data.raw.bookingAddon);
-    document.getElementById('bookingAddonCheck').checked = bookingChecked;
-    document.getElementById('bookingAddonBtn').hidden = !bookingChecked;
+
+    // update compact plan card
+    var cfg = PLAN_CONFIG[selectedPlan];
+    document.getElementById('planChosenName').textContent = cfg.label;
+    document.getElementById('planChosenPrice').textContent = planPriceLabel();
+    var iconEl = document.getElementById('planChosenIcon');
+    iconEl.style.background = cfg.iconColor;
 
     var toolbar = document.getElementById('toolbarStatus');
     toolbar.classList.toggle('live', isLive);
@@ -1209,15 +1446,153 @@
     liveBtn.title = isPaying ? '' : 'Upgrade your plan to go live';
   }
 
-  document.getElementById('bookingAddonCheck').addEventListener('change', function () {
-    if (business && business.data && business.data.raw) business.data.raw.bookingAddon = this.checked;
-    document.getElementById('bookingAddonBtn').hidden = !this.checked;
-    var planSummaryStrong = document.querySelector('.plan-summary strong b');
-    if (planSummaryStrong) {
-      planSummaryStrong.textContent = this.checked ? '£19' : '£0';
+  // ---------------- plan chooser modal ----------------
+  (function () {
+    var veil = document.getElementById('planModalVeil');
+    var closeBtn = document.getElementById('planModalClose');
+    var monthlyBtn = document.getElementById('billingMonthly');
+    var annualBtn = document.getElementById('billingAnnual');
+
+    function openPlanModal() {
+      // sync current selections into modal
+      syncModalState();
+      veil.hidden = false;
+      document.body.style.overflow = 'hidden';
     }
-    saveBusiness();
-  });
+    function closePlanModal() {
+      veil.hidden = true;
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('choosePlanBtn').addEventListener('click', openPlanModal);
+    closeBtn.addEventListener('click', closePlanModal);
+    veil.addEventListener('click', function (e) { if (e.target === veil) closePlanModal(); });
+    document.addEventListener('keydown', function (e) { if (!veil.hidden && e.key === 'Escape') closePlanModal(); });
+
+    function syncModalState() {
+      // billing toggle
+      monthlyBtn.setAttribute('aria-pressed', String(!selectedAnnual));
+      annualBtn.setAttribute('aria-pressed', String(selectedAnnual));
+      updatePriceDisplay();
+
+      // selected card highlight
+      ['essential', 'pro', 'prestige'].forEach(function (p) {
+        var card = document.getElementById('planCard' + p.charAt(0).toUpperCase() + p.slice(1));
+        card.classList.toggle('selected', p === selectedPlan);
+      });
+
+      // sync addon checkboxes per card
+      ['ess', 'pro', 'pres'].forEach(function (prefix) {
+        var bookingCb = document.getElementById(prefix + 'BookingCheck');
+        var storeCb = document.getElementById(prefix + 'StoreCheck');
+        if (bookingCb) bookingCb.checked = selectedAddons.booking;
+        if (storeCb) storeCb.checked = selectedAddons.store;
+      });
+
+      updateSelectLabels();
+    }
+
+    function updatePriceDisplay() {
+      var tier = selectedAnnual ? 'annual' : 'monthly';
+      document.querySelectorAll('.plan-choice-setup[data-' + tier + ']').forEach(function (el) {
+        el.textContent = el.dataset[tier];
+      });
+      document.querySelectorAll('.plan-choice-hosting[data-' + tier + ']').forEach(function (el) {
+        el.textContent = el.dataset[tier];
+      });
+      document.querySelectorAll('.plan-choice-note[data-' + tier + ']').forEach(function (el) {
+        el.textContent = el.dataset[tier];
+      });
+      // was-price and save badge only visible on annual for Pro/Prestige
+      var proWas = document.getElementById('proWas');
+      var presWas = document.getElementById('prestigeWas');
+      if (proWas) proWas.style.display = selectedAnnual ? '' : 'none';
+      if (presWas) presWas.style.display = selectedAnnual ? '' : 'none';
+    }
+
+    function updateSelectLabels() {
+      document.querySelectorAll('[data-select]').forEach(function (btn) {
+        var p = btn.dataset.select;
+        btn.textContent = (p === selectedPlan) ? ('✓ ' + PLAN_CONFIG[p].label + ' selected') : ('Select ' + PLAN_CONFIG[p].label);
+      });
+    }
+
+    // billing toggle
+    monthlyBtn.addEventListener('click', function () {
+      selectedAnnual = false;
+      monthlyBtn.setAttribute('aria-pressed', 'true');
+      annualBtn.setAttribute('aria-pressed', 'false');
+      updatePriceDisplay();
+    });
+    annualBtn.addEventListener('click', function () {
+      selectedAnnual = true;
+      monthlyBtn.setAttribute('aria-pressed', 'false');
+      annualBtn.setAttribute('aria-pressed', 'true');
+      updatePriceDisplay();
+    });
+
+    // card clicks select the plan (clicking the card background, not a button/label)
+    document.getElementById('planCardsGrid').addEventListener('click', function (e) {
+      var card = e.target.closest('.plan-choice-card');
+      if (!card) return;
+      // ignore clicks on checkboxes, labels, select button
+      if (e.target.closest('.plan-select-btn') || e.target.closest('.plan-addon-row')) return;
+      var plan = card.dataset.plan;
+      if (plan) { selectedPlan = plan; syncModalState(); }
+    });
+
+    // select buttons
+    document.querySelectorAll('[data-select]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        selectedPlan = btn.dataset.select;
+        // read addons from the card that was selected
+        var prefix = { essential: 'ess', pro: 'pro', prestige: 'pres' }[selectedPlan];
+        selectedAddons.booking = document.getElementById(prefix + 'BookingCheck').checked;
+        selectedAddons.store = document.getElementById(prefix + 'StoreCheck').checked;
+        // save to business data
+        if (business && business.data && business.data.raw) {
+          business.data.raw.bookingAddon = selectedAddons.booking;
+          business.data.raw.storeAddon = selectedAddons.store;
+          business.data.raw.chosenPlan = selectedPlan;
+          business.data.raw.chosenAnnual = selectedAnnual;
+          saveBusiness();
+        }
+        syncModalState();
+        renderPlanUI();
+        closePlanModal();
+      });
+    });
+
+    // keep addon selections in sync across cards (they share one selectedAddons state)
+    ['ess', 'pro', 'pres'].forEach(function (prefix) {
+      ['Booking', 'Store'].forEach(function (addon) {
+        var cb = document.getElementById(prefix + addon + 'Check');
+        if (!cb) return;
+        cb.addEventListener('change', function () {
+          selectedAddons[addon.toLowerCase()] = cb.checked;
+          // mirror to other cards
+          ['ess', 'pro', 'pres'].forEach(function (p) {
+            var other = document.getElementById(p + addon + 'Check');
+            if (other && other !== cb) other.checked = cb.checked;
+          });
+        });
+      });
+    });
+
+    // restore saved plan choice on load
+    function restoreSavedPlan() {
+      if (!business || !business.data || !business.data.raw) return;
+      var raw = business.data.raw;
+      if (raw.chosenPlan && PLAN_CONFIG[raw.chosenPlan]) selectedPlan = raw.chosenPlan;
+      if (typeof raw.chosenAnnual === 'boolean') selectedAnnual = raw.chosenAnnual;
+      selectedAddons.booking = !!raw.bookingAddon;
+      selectedAddons.store = !!raw.storeAddon;
+      renderPlanUI();
+    }
+
+    // expose for renderDashboard to call
+    window._bsRestoreSavedPlan = restoreSavedPlan;
+  })();
 
   // ---------------- services ----------------
   function servicesFromRaw(raw) {
@@ -1448,7 +1823,10 @@
         gallery: media.gallery
       }, servicesToRaw(services));
       raw.developerNote = document.getElementById('developerNote').value.trim();
-      raw.bookingAddon = document.getElementById('bookingAddonCheck').checked;
+      raw.bookingAddon = selectedAddons.booking;
+      raw.storeAddon = selectedAddons.store;
+      raw.chosenPlan = selectedPlan;
+      raw.chosenAnnual = selectedAnnual;
       if (opts.publish) isLive = true;
       var record = { slug: slug, name: raw.name, raw: raw, planActive: isPaying, published: isLive, updatedAt: new Date().toISOString() };
       return authenticatedFetch(SUPABASE_URL + '/rest/v1/rpc/upsert_business', {
