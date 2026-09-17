@@ -1138,66 +1138,76 @@
     if (!state.current) return renderStartScreen();
     const raw = state.current.raw || {};
     const profile = raw.businessProfile || {};
-    const site = state.current.importedSite;
     const liveUrl = state.current.liveUrl;
 
     el.editor.innerHTML = `
-      <div class="dashboard-wrapper">
-        <div class="dashboard-tabs">
-          <button type="button" class="dashboard-tab ${state.dashboardTab === 'account' ? 'active' : ''}" data-tab="account">Account</button>
-          <button type="button" class="dashboard-tab ${state.dashboardTab === 'website' ? 'active' : ''}" data-tab="website">Website</button>
+      <div style="display:flex;flex-direction:column;height:100%;background:#fff">
+        <div style="display:flex;gap:12px;padding:16px;border-bottom:1px solid #e5e7eb;flex:none">
+          <button type="button" class="db-tab ${state.dashboardTab === 'account' ? 'db-tab-active' : ''}" data-tab="account" style="padding:8px 16px;border:none;border-radius:6px;background:${state.dashboardTab === 'account' ? '#3B82F6' : 'transparent'};color:${state.dashboardTab === 'account' ? '#fff' : '#6b7280'};font:inherit;font-weight:600;cursor:pointer;transition:all .2s">Account</button>
+          <button type="button" class="db-tab ${state.dashboardTab === 'website' ? 'db-tab-active' : ''}" data-tab="website" style="padding:8px 16px;border:none;border-radius:6px;background:${state.dashboardTab === 'website' ? '#3B82F6' : 'transparent'};color:${state.dashboardTab === 'website' ? '#fff' : '#6b7280'};font:inherit;font-weight:600;cursor:pointer;transition:all .2s">Website</button>
         </div>
 
-        <div class="dashboard-account ${state.dashboardTab === 'account' ? '' : 'hidden'}">
-          <div class="info-card">
-            <div class="info-card-title">Account</div>
-            <div class="info-row"><span class="info-label">Plan</span><span class="info-value">Essential £0</span></div>
-            <div class="info-row"><span class="info-label">Contact</span><span class="info-value">${escapeHtml(state.current.contact?.email || 'Not set')}</span></div>
-            <div class="info-row"><span class="info-label">Status</span><span class="info-value">${liveUrl ? '✓ Live' : 'Not live yet'}</span></div>
-          </div>
+        <div style="flex:1;overflow-y:auto;padding:20px">
+          ${state.dashboardTab === 'account' ? `
+            <div style="max-width:600px">
+              <div style="padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:12px;background:#f9fafb">
+                <div style="font-weight:600;font-size:13px;margin-bottom:10px">Plan</div>
+                <div style="font-size:14px">Essential £0</div>
+              </div>
 
-          <div class="info-card">
-            <div class="info-card-title">Domain</div>
-            <button type="button" id="connectDomainBtn" class="dashboard-btn secondary">Connect Domain</button>
-          </div>
+              <div style="padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:12px;background:#f9fafb">
+                <div style="font-weight:600;font-size:13px;margin-bottom:10px">Contact</div>
+                <div style="font-size:14px">${escapeHtml(state.current.contact?.email || 'Not set')}</div>
+              </div>
 
-          <div class="info-card">
-            <div class="info-card-title">Share URL</div>
-            <button type="button" id="copyUrlBtn" class="dashboard-btn secondary">Copy URL</button>
-          </div>
+              <div style="padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:12px;background:#f9fafb">
+                <div style="font-weight:600;font-size:13px;margin-bottom:10px">Status</div>
+                <div style="font-size:14px">${liveUrl ? '✓ Live' : 'Not live yet'}</div>
+              </div>
 
-          <div class="info-card">
-            <div class="info-card-title">Share with client</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-              <button type="button" id="emailShareBtn" class="dashboard-btn secondary">📧 Email</button>
-              <button type="button" id="whatsappShareBtn" class="dashboard-btn secondary">💬 WhatsApp</button>
+              <div style="padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:12px">
+                <button type="button" id="connectDomainBtn" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;color:#17181a;font-weight:600;cursor:pointer">Connect Domain</button>
+              </div>
+
+              <div style="padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:12px">
+                <button type="button" id="copyUrlBtn" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;color:#17181a;font-weight:600;cursor:pointer">Copy URL</button>
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+                <button type="button" id="emailShareBtn" style="padding:10px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;color:#17181a;font-weight:600;cursor:pointer">📧 Email</button>
+                <button type="button" id="whatsappShareBtn" style="padding:10px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;color:#17181a;font-weight:600;cursor:pointer">💬 WhatsApp</button>
+              </div>
+
+              <div style="padding:16px;border:1px solid #e5e7eb;border-radius:8px">
+                <button type="button" id="makeLiveBtn" style="width:100%;padding:10px;border:none;border-radius:6px;background:#3B82F6;color:#fff;font-weight:600;cursor:pointer" ${state.current.deployError ? 'title="' + escapeAttr(state.current.deployError) + '"' : ''}>Make Live →</button>
+              </div>
             </div>
-          </div>
+          ` : `
+            <div style="max-width:600px">
+              <div style="margin-bottom:20px">
+                <div style="font-weight:600;font-size:14px;margin-bottom:10px">Colour Theme</div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap" id="colourQuickPick"></div>
+              </div>
 
-          <div class="info-card" style="margin-top:20px">
-            <button type="button" id="makeLiveBtn" class="dashboard-btn primary" ${state.current.deployError ? 'title="' + escapeAttr(state.current.deployError) + '"' : ''}>Make Live →</button>
-          </div>
-        </div>
+              <div style="margin-bottom:20px">
+                <div style="font-weight:600;font-size:14px;margin-bottom:10px">Text Colour</div>
+                <div style="display:flex;gap:8px" id="textColourPick"></div>
+              </div>
 
-        <div class="dashboard-website ${state.dashboardTab === 'website' ? '' : 'hidden'}">
-          <div class="section-divider"><span>Colour Theme</span></div>
-          <div class="colour-quick-pick">
-            <div class="colour-swatches" id="colourQuickPick"></div>
-          </div>
-
-          <div class="section-divider"><span>Text Colour</span></div>
-          <div class="text-colour-pick" id="textColourPick"></div>
-
-          <div class="section-divider"><span>AI Design Assistant</span></div>
-          <div class="ai-chat-box">
-            <div class="ai-chat-messages" id="aiChatMessages">
-              <div class="ai-chat-welcome">Ask for changes or design ideas</div>
+              <div>
+                <div style="font-weight:600;font-size:14px;margin-bottom:10px">AI Design Assistant</div>
+                <div style="border:1px solid #e5e7eb;border-radius:8px;display:flex;flex-direction:column;height:300px">
+                  <div style="flex:1;overflow-y:auto;padding:12px;border-bottom:1px solid #e5e7eb" id="aiChatMessages">
+                    <div style="color:#9ca3af;font-size:13px">Ask for changes or design ideas</div>
+                  </div>
+                  <div style="padding:12px;display:flex;gap:8px">
+                    <textarea id="aiChatInput" placeholder="e.g. 'Make the hero darker'" style="flex:1;border:1px solid #e5e7eb;border-radius:4px;padding:8px;font:inherit;resize:none" rows="2"></textarea>
+                    <button type="button" id="aiChatSendBtn" style="padding:8px 12px;border:none;border-radius:4px;background:#3B82F6;color:#fff;font-weight:600;cursor:pointer">Send</button>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="ai-chat-input">
-              <textarea id="aiChatInput" placeholder="e.g. 'Make the hero section darker'" rows="2"></textarea>
-              <button type="button" id="aiChatSendBtn" class="dashboard-btn primary">Send</button>
-            </div>
-          </div>
+          `}
         </div>
       </div>
     `;
