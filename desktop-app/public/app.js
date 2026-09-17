@@ -1341,31 +1341,6 @@
       });
     }
 
-    document.getElementById('f_name').oninput = e => { setRaw({ name: e.target.value }); scheduleSave(); };
-    document.getElementById('f_category').onchange = e => { setRaw({ tagline: e.target.value }); scheduleSave(); };
-    document.getElementById('f_contactName').oninput = e => {
-      state.current.contact = { ...(state.current.contact || {}), name: e.target.value };
-      scheduleSave();
-    };
-    document.getElementById('f_phone').oninput = e => { setRaw({ businessProfile: { ...profile, phone: e.target.value } }); scheduleSave(); };
-    document.getElementById('f_email').oninput = e => {
-      state.current.contact = { ...(state.current.contact || {}), email: e.target.value };
-      scheduleSave();
-    };
-    document.getElementById('whatsappBtn').onclick = () => openWhatsApp(document.getElementById('f_phone').value);
-    document.getElementById('emailBtn').onclick = () => openEmail(document.getElementById('f_email').value);
-    renderDemoViews();
-    document.getElementById('f_location').oninput = e => {
-      setRaw({ location: e.target.value, businessProfile: { ...profile, address: e.target.value } });
-      scheduleSave();
-    };
-    if (site) wireImportedSite(site);
-    else wireSiteBuilderControls(raw);
-    renderSales();
-    if (!site) {
-      wirePlacementSuggestion();
-      maybeSuggestPlacement();
-    }
   }
 
   // The template side of the editor — link fetch, template, colour, photos
