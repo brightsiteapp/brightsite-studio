@@ -100,8 +100,11 @@
   .billing-btn{width:100%;margin-top:6px;background:none;border:1px solid var(--line);border-radius:999px;padding:10px 16px;font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;transition:border-color .18s ease,color .18s ease}
   .billing-btn:hover{border-color:var(--accent);color:var(--ink)}
   .billing-btn:disabled{cursor:not-allowed;opacity:.7}
-  .upgrade-btn{width:100%;margin-top:6px;border:0;border-radius:999px;padding:11px 16px;font:inherit;font-size:12.5px;font-weight:700;color:#fff;background:var(--accent);cursor:pointer}
+  .upgrade-btn{display:block;width:100%;margin-top:6px;border:0;border-radius:999px;padding:11px 16px;font:inherit;font-size:12.5px;font-weight:700;color:#fff;background:var(--accent);cursor:pointer;text-align:center;text-decoration:none}
   .info-hint{font-size:12px;color:var(--muted);line-height:1.5;margin-top:2px}
+  .addon-checkbox-label{display:flex;align-items:center;gap:8px;margin:10px 0 4px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer}
+  .addon-checkbox-label input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+  .addon-price-tag{font-size:11.5px;font-weight:700;color:var(--accent);background:#eaf0fe;padding:2px 7px;border-radius:20px;margin-left:4px}
   .plan-summary{margin:10px 0 8px;padding:12px 13px;border:1px solid #d7e4fb;border-radius:12px;background:#f5f8ff}
   .plan-summary strong{display:block;font-size:13px;color:var(--ink);margin-bottom:3px}
   .plan-summary strong b{margin-left:6px;color:var(--accent);font-weight:800}
@@ -325,7 +328,11 @@
             <span>£19/month hosting — charged once your website is live.</span>
           </div>
           <p class="info-hint" id="billingHint">Your Essential plan is selected. Add features now; you’ll manage billing once your account is active.</p>
-          <button type="button" class="upgrade-btn" id="upgradeBtn">Add booking or ecommerce</button>
+          <label class="addon-checkbox-label" id="bookingAddonLabel">
+            <input type="checkbox" id="bookingAddonCheck">
+            <span>Booking form <span class="addon-price-tag">+£19/mo</span></span>
+          </label>
+          <a href="YOUR_STRIPE_PAYMENT_LINK" class="upgrade-btn" id="upgradeBtn" target="_blank" rel="noopener">Pay for your site</a>
           <button type="button" class="billing-btn" id="billingBtn" hidden>Manage billing</button>
         </div>
 
@@ -1157,6 +1164,7 @@
       : 'Your Essential plan is selected. Add features now; you’ll manage billing once your account is active.';
     document.getElementById('upgradeBtn').hidden = false;
     document.getElementById('billingBtn').hidden = !isPaying;
+    document.getElementById('bookingAddonCheck').checked = !!(business && business.data && business.data.raw && business.data.raw.bookingAddon);
 
     var toolbar = document.getElementById('toolbarStatus');
     toolbar.classList.toggle('live', isLive);
@@ -1169,8 +1177,9 @@
     liveBtn.title = isPaying ? '' : 'Upgrade your plan to go live';
   }
 
-  document.getElementById('upgradeBtn').addEventListener('click', function () {
-    document.getElementById('requestBtn').click();
+  document.getElementById('bookingAddonCheck').addEventListener('change', function () {
+    if (business && business.data && business.data.raw) business.data.raw.bookingAddon = this.checked;
+    saveBusiness();
   });
 
   // ---------------- services ----------------
@@ -1402,6 +1411,7 @@
         gallery: media.gallery
       }, servicesToRaw(services));
       raw.developerNote = document.getElementById('developerNote').value.trim();
+      raw.bookingAddon = document.getElementById('bookingAddonCheck').checked;
       if (opts.publish) isLive = true;
       var record = { slug: slug, name: raw.name, raw: raw, planActive: isPaying, published: isLive, updatedAt: new Date().toISOString() };
       return authenticatedFetch(SUPABASE_URL + '/rest/v1/businesses', {
