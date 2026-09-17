@@ -1162,7 +1162,7 @@
     document.getElementById('statusRow').textContent = isLive ? 'Live' : 'Not live yet';
     document.getElementById('billingHint').textContent = isPaying
       ? 'Your Essential plan is active. Manage payment details any time.'
-      : 'Your Essential plan is selected. Add features now; you'll manage billing once your account is active.';
+      : 'Your Essential plan is selected. Add features now; you\'ll manage billing once your account is active.';
     document.getElementById('upgradeBtn').hidden = false;
     document.getElementById('billingBtn').hidden = !isPaying;
     var bookingChecked = !!(business && business.data && business.data.raw && business.data.raw.bookingAddon);
@@ -1272,7 +1272,7 @@
   function renderReviewEntries() {
     var mount = document.getElementById('reviewEntries');
     mount.innerHTML = reviewQuotes.map(function (quote, index) {
-      return '<div class="svc-row"><textarea class="svc-name" data-review="' + index + '" placeholder="e.g. Brilliant service — I'd highly recommend them.">' + escapeAttr(quote) + '</textarea><button type="button" class="svc-remove" data-review-remove="' + index + '" aria-label="Remove review">&times;</button></div>';
+      return '<div class="svc-row"><textarea class="svc-name" data-review="' + index + '" placeholder="e.g. Brilliant service — I\'d highly recommend them.">' + escapeAttr(quote) + '</textarea><button type="button" class="svc-remove" data-review-remove="' + index + '" aria-label="Remove review">&times;</button></div>';
     }).join('');
     mount.querySelectorAll('[data-review]').forEach(function (input) { input.addEventListener('input', function () { reviewQuotes[+input.dataset.review] = input.value; scheduleAutoSave(); }); });
     mount.querySelectorAll('[data-review-remove]').forEach(function (button) { button.addEventListener('click', function () { reviewQuotes.splice(+button.dataset.reviewRemove, 1); renderReviewEntries(); scheduleAutoSave(); }); });
@@ -1449,7 +1449,7 @@
       statusEl.className = 'acct-status ok';
     }).catch(function () {
       button.disabled = false;
-      statusEl.textContent = 'Couldn't save your note. Please try again.';
+      statusEl.textContent = 'Couldn\'t save your note. Please try again.';
       statusEl.className = 'acct-status err';
     });
   });
@@ -1485,10 +1485,10 @@
     }).catch(function (err) {
       autoSaveRetries++;
       if (autoSaveRetries < MAX_AUTOSAVE_RETRIES) {
-        statusEl.textContent = err.message || 'Couldn't save — retrying…'; statusEl.className = 'save-status err';
+        statusEl.textContent = err.message || 'Couldn\'t save — retrying…'; statusEl.className = 'save-status err';
         autoSaveQueued = true;
       } else {
-        statusEl.textContent = 'Couldn't save — check your connection.'; statusEl.className = 'save-status err';
+        statusEl.textContent = 'Couldn\'t save — check your connection.'; statusEl.className = 'save-status err';
       }
     }).then(function () {
       autoSaveInFlight = false;
@@ -1553,7 +1553,7 @@
     var statusEl = document.getElementById('reqStatus');
     var message = reqMessage.value.trim();
     var isDomain = reqType.value === 'domain';
-    if (!message) { statusEl.textContent = isDomain ? 'Let us know the domain you'd like first.' : 'Let us know what you'd like changed first.'; statusEl.className = 'save-status err'; return; }
+    if (!message) { statusEl.textContent = isDomain ? 'Let us know the domain you\'d like first.' : 'Let us know what you\'d like changed first.'; statusEl.className = 'save-status err'; return; }
 
     var businessName = (business && business.data && business.data.raw && business.data.raw.name) || (business && business.name) || (session.email || '');
     btn.disabled = true;
@@ -1605,7 +1605,7 @@
       .catch(function (err) {
         btn.disabled = false;
         btn.textContent = originalText;
-        alert(err.message || 'Couldn't open billing — please try again.');
+        alert(err.message || 'Couldn\'t open billing — please try again.');
       });
   });
 
