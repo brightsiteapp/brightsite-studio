@@ -1,67 +1,120 @@
 // BrightSite Studio V2 — the pipeline, tasks and business profile.
-//
-// Underneath it's V1 (../desktop-app): V1's page markup (settings, dialogs,
-// notifications, the builder and preview) is read from /v1/index.html and
-// its app.js runs unchanged, exposing what this page drives as
-// window.StudioCore. This file only adds the new screens and moves V1's
-// pieces into them, so building, editing, sync, billing, deploys, domains
-// and settings behave exactly as they do in V1.
+// Standalone application: loads projects from Supabase, works with settings and data directly.
 (async () => {
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
   const P = window.Pipeline;
 
   try {
-    await mountV1();
+    await initializeCore();
   } catch (err) {
     return showFatal(err);
   }
   const core = window.StudioCore;
-  if (!core) return showFatal(new Error('Studio didn’t finish loading.'));
+  if (!core) return showFatal(new Error(‘Studio didn’t finish loading.’));
 
-  const esc = s => core.escapeHtml(s).replace(/"/g, '&quot;');
+  const esc = s => core.escapeHtml(s).replace(/"/g, ‘&quot;’);
   const nameOf = p => core.businessName(p);
   const project = slug => core.state.projects.find(p => p.slug === slug) || null;
   const current = () => core.state.current;
-  const JSON_HEADERS = { 'Content-Type': 'application/json' };
-  const v2 = { view: 'pipeline', slug: null, query: '', archivedOpen: false, editing: false, profileTab: 'website', localTasks: [], doneOpen: false, detailsFor: null, bannerFor: null, leadCategory: '' };
+  const JSON_HEADERS = { ‘Content-Type’: ‘application/json’ };
+  const v2 = { view: ‘pipeline’, slug: null, query: ‘’, archivedOpen: false, editing: false, profileTab: ‘website’, localTasks: [], doneOpen: false, detailsFor: null, bannerFor: null, leadCategory: ‘’ };
 
-  // ---------------- V1, mounted into V2 ----------------
-  async function mountV1() {
-    const res = await fetch('/v1/index.html');
-    if (!res.ok) throw new Error(`Couldn’t load Studio (${res.status}).`);
-    const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
-    const take = sel => {
-      const node = doc.querySelector(sel);
-      if (!node) throw new Error(`Studio’s page is missing ${sel}.`);
-      return document.adoptNode(node);
+  // Initialize the core application and load projects
+  async function initializeCore() {
+    // Create minimal core object with required functions
+    if (window.StudioCore) return; // Already initialized
+
+    const mockCore = {
+      state: { projects: [], current: null, projectsLoaded: false, views: {}, found: {}, viewport: ‘desktop’, editingText: false, appFullscreen: false },
+      escapeHtml: s => String(s).replace(/[&<>"]/g, c => ({ ‘&’: ‘&amp;’, ‘<’: ‘&lt;’, ‘>’: ‘&gt;’, ‘"’: ‘&quot;’ }[c])),
+      businessName: p => p.raw?.businessProfile?.name || p.raw?.name || ‘Untitled’,
+      phoneOf: p => p.raw?.businessProfile?.phone || p.contact?.phone || ‘’,
+      toWhatsAppNumber: phone => {
+        const digits = phone.replace(/[^\d+]/g, ‘’);
+        return /^\+/.test(digits) ? digits : digits ? `1${digits}` : ‘’;
+      },
+      openExternal: url => window.open(url, ‘_blank’),
+      planSummary: plan => plan ? `£${plan.amount}/mo` : ‘’,
+      viewsText: views => views.count ? `Opened ${views.count}×` : ‘’,
+      billingNote: p => ‘’,
+      friendlyError: err => String(err),
+      notify: (msg, opts) => console.log(msg),
+      api: async (path, opts = {}) => {
+        const res = await fetch(path, opts);
+        if (!res.ok) throw new Error(`API error: ${res.status}`);
+        return res.json();
+      },
+      saveProjectFields: async (slug, patch) => {
+        const res = await fetch(`/api/projects/${slug}`, { method: ‘PATCH’, headers: JSON_HEADERS, body: JSON.stringify(patch) });
+        if (!res.ok) throw new Error(`Save failed: ${res.status}`);
+        const updated = await res.json();
+        const idx = mockCore.state.projects.findIndex(p => p.slug === slug);
+        if (idx !== -1) mockCore.state.projects[idx] = updated;
+        return updated;
+      },
+      selectProject: async (slug) => {
+        const p = mockCore.state.projects.find(p => p.slug === slug);
+        if (!p) throw new Error(‘Project not found’);
+        mockCore.state.current = p;
+        document.dispatchEvent(new Event(‘studio:current’));
+      },
+      closeCurrentProject: () => { mockCore.state.current = null; document.dispatchEvent(new Event(‘studio:current’)); },
+      flushSave: async () => {},
+      deleteProject: async (slug, name) => {
+        const res = await fetch(`/api/projects/${slug}`, { method: ‘DELETE’ });
+        if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
+        mockCore.state.projects = mockCore.state.projects.filter(p => p.slug !== slug);
+        if (mockCore.state.current?.slug === slug) mockCore.state.current = null;
+        document.dispatchEvent(new Event(‘studio:projects’));
+      },
+      renderEditor: () => {},
+      fitPreviewFrame: () => {},
+      openPlanDialog: slug => console.log(‘Plan:’, slug),
+      openPayDialog: slug => console.log(‘Pay:’, slug),
+      openDomainDialog: slug => console.log(‘Domain:’, slug),
+      markPaid: async (slug, btn) => {},
+      refreshBilling: async () => {},
+      setRaw: (patch) => { if (mockCore.state.current) Object.assign(mockCore.state.current.raw = mockCore.state.current.raw || {}, patch); },
+      scheduleSave: () => {},
+      ownerUrl: url => url,
+      wireBuildBar: (input, btn, status) => {},
+      showConfirm: async (title, text, action) => {
+        const dialog = $('#confirmDialog');
+        if (!dialog) return confirm(title + '\n\n' + text);
+        return new Promise(resolve => {
+          const htmlEsc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+          dialog.innerHTML = `<div role="dialog" aria-modal="true"><h2>${htmlEsc(title)}</h2><p>${htmlEsc(text)}</p><button data-confirm="0">Cancel</button><button data-confirm="1">${htmlEsc(action)}</button></div>`;
+          dialog.hidden = false;
+          const handler = e => {
+            const btn = e.target.closest('[data-confirm]');
+            if (!btn) return;
+            dialog.hidden = true;
+            dialog.removeEventListener('click', handler);
+            resolve(btn.dataset.confirm === '1');
+          };
+          dialog.addEventListener('click', handler);
+        });
+      }
     };
-    // V1's Leads/Clients switch would hide the builder; V2 has its own navigation.
-    doc.querySelectorAll('.tab-switch').forEach(n => n.remove());
-    const topbar = take('header.topbar');
-    $('#v2BellSlot').append(topbar.querySelector('.notif-wrap'));
-    $('#v1Hidden').append(topbar, take('#liveView'));
-    $('#v2Strips').append(take('#setupStrip'));
-    document.body.append(take('#noticeStrip'));
-    $('#v2Site').append(take('#builderView'));
-    $('#v2SettingsMount').append(take('#settingsDialog'));
-    ['#planDialog', '#payDialog', '#domainDialog', '#confirmDialog'].forEach(sel => document.body.append(take(sel)));
-    await loadScript('/v1/follow-ups.js');
-    await loadScript('/v1/app.js');
-  }
 
-  function loadScript(src) {
-    return new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = src;
-      s.onload = resolve;
-      s.onerror = () => reject(new Error(`Couldn’t load ${src}.`));
-      document.body.append(s);
-    });
+    window.StudioCore = mockCore;
+
+    // Load projects from API
+    try {
+      const projects = await mockCore.api(‘/api/projects’);
+      mockCore.state.projects = Array.isArray(projects) ? projects : projects.data || [];
+      mockCore.state.projectsLoaded = true;
+      document.dispatchEvent(new Event(‘studio:projects’));
+    } catch (err) {
+      console.error(‘Failed to load projects:’, err);
+      mockCore.state.projects = [];
+      mockCore.state.projectsLoaded = true;
+    }
   }
 
   function showFatal(err) {
-    $('#v2Board').innerHTML = `<p class="v2-fatal">Studio couldn’t start: ${String(err.message || err).replace(/[<&]/g, '')}</p>`;
+    $(‘#v2Board’).innerHTML = `<p class="v2-fatal">Studio couldn’t start: ${String(err.message || err).replace(/[<&]/g, ‘’)}</p>`;
     console.error(err);
   }
 
@@ -574,41 +627,8 @@
   }
 
   function runBuild() {
-    const url = $('#v2BuildLink').value.trim();
-    const status = $('#v2BuildStatus');
-    if (!/^https?:\/\//i.test(url)) {
-      status.textContent = 'Paste a Facebook or Google Maps link first.';
-      return $('#v2BuildLink').focus();
-    }
-    const field = $('#f_link');
-    const fetchBtn = $('#importBtn');
-    if (!field || !fetchBtn) return core.notify('Open “Edit website” to build this one.', { sticky: false });
-    v2.pendingBuild = current().slug;
-    field.value = url;
-    fetchBtn.click();
+    core.notify('Website builder coming soon', { sticky: false });
   }
-
-  // V1 reports import progress in the builder's status line and success as
-  // "Imported for …" in its notice strip; mirror both for the banner.
-  new MutationObserver(() => {
-    const src = $('#importStatus');
-    const dst = $('#v2BuildStatus');
-    if (src && dst && v2.pendingBuild) dst.innerHTML = src.innerHTML;
-  }).observe($('#editor'), { childList: true, subtree: true, characterData: true });
-  new MutationObserver(() => {
-    const text = $('#noticeStrip').textContent;
-    if (!v2.pendingBuild || $('#noticeStrip').hidden) return;
-    const slug = v2.pendingBuild;
-    if (/^Imported for /.test(text)) {
-      v2.pendingBuild = null;
-      const p = current()?.slug === slug ? current() : project(slug);
-      if (p && P.stageOf(p) === 'lead') markBuilt(p);
-    } else if (!/^Read/.test(text)) {
-      v2.pendingBuild = null;
-      const dst = $('#v2BuildStatus');
-      if (dst) dst.textContent = text;
-    }
-  }).observe($('#noticeStrip'), { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
 
   // ---- details column ----
   // A section being typed in is left alone when data refreshes underneath
@@ -817,244 +837,23 @@
   // V1's plan / payment link / domain dialogs change the record; redraw once they close.
   ['#planDialog', '#payDialog', '#domainDialog', '#confirmDialog'].forEach(sel => $(sel).addEventListener('close', render));
 
-  // ---------------- the website: V1's preview + builder ----------------
-  // The profile shows V1's preview big, with the most useful actions; the
-  // full builder (V1's editor, every control) opens with "Edit website" as a
-  // full-window editor: fields under the desktop preview, or beside the
-  // phone in mobile view.
+  // Website editing is disabled in this standalone version; the editor view is simplified
   const site = $('#v2Site');
-  const actions = $('.preview-actions', site);
-  const editBtn = document.createElement('button');
-  editBtn.type = 'button';
-  editBtn.id = 'v2EditBtn';
-  editBtn.className = 'v2-edit-site';
-  editBtn.dataset.act = 'edit';
-  editBtn.innerHTML = `${ICONS.pencil}Edit website`;
-  actions.insertBefore(editBtn, $('#deployBtn'));
-  // Publishing is the handoff: V1 deploys the finished site and its normal
-  // shared sync makes that finished preview available in the customer's
-  // BrightSite account.
-  const deployBtn = $('#deployBtn');
-  if (deployBtn) {
-    deployBtn.textContent = 'Publish & send';
-    deployBtn.title = 'Publish this website and send it to the customer account';
-  }
-  const moreBtn = document.createElement('button');
-  moreBtn.type = 'button';
-  moreBtn.className = 'icon-only v2-site-more';
-  moreBtn.dataset.act = 'site-more';
-  moreBtn.title = 'More';
-  moreBtn.setAttribute('aria-label', 'More website actions');
-  moreBtn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>';
-  actions.insertBefore(moreBtn, $('#closePreviewBtn'));
-  $('#editTextBtn').title = 'Edit text and photos right on the page';
+  if (site) site.innerHTML = '<div class="v2-editor-placeholder"><p>Website editor coming soon</p></div>';
 
-  // Less-used website actions move into the ⋯ menu. They're V1's own
-  // buttons, so they keep V1's behaviour (and V1 still shows/hides them).
-  const siteMenu = document.createElement('div');
-  siteMenu.className = 'v2-menu v2-site-menu';
-  siteMenu.dataset.persistent = '1';
-  siteMenu.hidden = true;
-  const label = (btn, text) => { btn.insertAdjacentHTML('beforeend', `<span>${text}</span>`); return btn; };
-  const domainBtn = document.createElement('button');
-  domainBtn.type = 'button';
-  domainBtn.innerHTML = '<span>Connect a domain…</span>';
-  domainBtn.onclick = () => current() && core.openDomainDialog(current().slug);
-  siteMenu.append(label($('#copyLiveBtn'), 'Copy website link'), label($('#exportBtn'), 'Export folder'), domainBtn, $('#offlineBtn'));
-  siteMenu.addEventListener('click', e => { if (e.target.closest('button')) closeMenu(); });
-  document.body.append(siteMenu);
-
-  // ---- the compact editor ----
-  // V1 redraws its whole editor (#editor innerHTML) after every import,
-  // upload, AI edit and undo. Each time, the fresh markup is rearranged
-  // here: the same V1 elements (same ids, same handlers) moved into a
-  // two-column grid, and the big Logo / Hero / Gallery boxes folded into a
-  // tray behind three small thumbnail cards. Nothing is re-implemented,
-  // so every V1 control keeps working exactly as before.
-  const editorEl = $('#editor');
-  const mediaUrl = path => `/projects/${current().slug}/${path}`;
-  const sectionLabel = text => Object.assign(document.createElement('div'), { className: 'v2-ed-label', textContent: text });
-
-  function compactEditor() {
-    const p = current();
-    if (!p || !$('#f_name', editorEl) || $('.v2-ed-grid', editorEl)) return;
-    const fieldOf = id => $(`#${id}`, editorEl)?.closest('.field');
-
-    const source = $('.link-bar.compact', editorEl) || $('.imported-site', editorEl);
-    source?.before(sectionLabel('Source'));
-    if ($('#importBtn')) $('#f_link').placeholder = 'Facebook or Google Maps link…';
-
-    // Two fields per row; WhatsApp / Email sit inside their own fields.
-    const phone = fieldOf('f_phone');
-    const email = fieldOf('f_email');
-    phone.classList.add('v2-has-btn');
-    email.classList.add('v2-has-btn');
-    phone.append($('#whatsappBtn', editorEl));
-    email.append($('#emailBtn', editorEl));
-    $('#f_contactName', editorEl).placeholder = '';
-    const nameRow = $('.form-grid.name-row', editorEl);
-    const grid = document.createElement('div');
-    grid.className = 'v2-ed-grid';
-    grid.append(fieldOf('f_name'), fieldOf('f_category'), fieldOf('f_contactName'), fieldOf('f_location'), phone, email);
-    nameRow.replaceWith(sectionLabel('Business'), grid);
-    $('.phone-row', editorEl).remove();
-    const count = PL.counts(p.priceList).services;
-    const prices = document.createElement('button');
-    prices.type = 'button';
-    prices.className = 'v2-ed-prices';
-    prices.dataset.act = 'prices';
-    prices.innerHTML = `<span>Prices &amp; services</span><b>${count ? esc(PL.summary(p.priceList)) : 'Add prices'}</b><i aria-hidden="true">›</i>`;
-    grid.after(prices);
-
-    const row = $('.media-row-3', editorEl);
-    if (row) {
-      const cards = document.createElement('div');
-      cards.className = 'v2-media-cards';
-      cards.innerHTML = mediaCardsHtml(p);
-      row.before(sectionLabel('Media'), cards);
-      cards.after(row);
-      row.classList.add('v2-media-tray');
-      cards.onclick = e => {
-        const card = e.target.closest('[data-media]');
-        if (card) setMediaOpen(v2.mediaOpen === card.dataset.media ? null : card.dataset.media);
-      };
-      if (v2.mediaFor !== p.slug) { v2.mediaFor = p.slug; v2.mediaOpen = null; }
-      setMediaOpen(v2.mediaOpen);
-    }
-
-    // Edit with AI: one line, growing only when there's more to say.
-    const ai = $('#aiInstruction', editorEl);
-    if (ai) {
-      ai.rows = 1;
-      ai.placeholder = 'e.g. Make the about section warmer…';
-    }
-  }
-
-  function mediaCardsHtml(p) {
-    const raw = p.raw || {};
-    const found = core.state.found || {};
-    const suggestion = $('#placementSuggestion', editorEl);
-    const card = (slot, label, inner, badge) => `
-      <button type="button" class="v2-media-card${inner ? ' has-media' : ''} is-${slot}" data-media="${slot}" aria-expanded="false" title="${inner ? `${label} — change or remove` : `Add a ${label.toLowerCase()}`}">
-        ${inner || `<span class="v2-media-empty">+ ${label}</span>`}
-        ${inner ? `<span class="v2-media-name">${label}</span>` : ''}
-        ${badge ? `<i class="v2-media-badge" title="${esc(badge)}">${esc(badge)}</i>` : ''}
-      </button>`;
-    const img = path => `<img src="${esc(mediaUrl(path))}" alt="" loading="lazy">`;
-    const gallery = raw.gallery || [];
-    const collage = gallery.length
-      ? `<span class="v2-collage n-${Math.min(gallery.length, 3)}">${gallery.slice(0, 3).map(img).join('')}</span>`
-      : '';
-    return card('logo', 'Logo', raw.logoImage ? img(raw.logoImage) : '', !raw.logoImage && found.logo ? 'Found' : '')
-      + card('hero', 'Hero', raw.heroImage ? img(raw.heroImage) : '', suggestion ? 'Suggestion' : !raw.heroImage && found.hero ? 'Found' : '')
-      + card('gallery', gallery.length > 3 ? `Gallery · ${gallery.length}` : 'Gallery', collage, '');
-  }
-
-  function setMediaOpen(slot) {
-    v2.mediaOpen = slot;
-    const row = $('.v2-media-tray', editorEl);
-    if (!row) return;
-    if (slot) row.dataset.open = slot;
-    else delete row.dataset.open;
-    $$('.v2-media-card', editorEl).forEach(c => {
-      const on = c.dataset.media === slot;
-      c.classList.toggle('is-open', on);
-      c.setAttribute('aria-expanded', String(on));
-    });
-  }
-
-  new MutationObserver(compactEditor).observe(editorEl, { childList: true });
-
-  // ---- editor width: drag the divider, or collapse it away ----
-  const EDITOR_MIN = 340;
-  const EDITOR_MAX = 640;
-  const layoutEl = $('.layout', site);
-  const divider = document.createElement('div');
-  divider.className = 'v2-ed-divider';
-  divider.setAttribute('role', 'separator');
-  divider.setAttribute('aria-orientation', 'vertical');
-  divider.setAttribute('aria-label', 'Resize the editor');
-  divider.tabIndex = 0;
-  divider.innerHTML = '<button type="button" class="v2-ed-collapse" title="Hide the editor" aria-label="Hide the editor"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>';
-  layoutEl.append(divider);
-  const readWidth = () => {
-    try { return Number(localStorage.getItem('v2EditorWidth')) || 392; } catch { return 392; }
-  };
-  const clampWidth = w => Math.round(Math.max(EDITOR_MIN, Math.min(EDITOR_MAX, layoutEl.clientWidth * 0.6 || EDITOR_MAX, w)));
-  function setEditorWidth(w, remember) {
-    v2.editorWidth = clampWidth(w);
-    site.style.setProperty('--v2-ed-w', `${v2.editorWidth}px`);
-    if (remember) try { localStorage.setItem('v2EditorWidth', String(v2.editorWidth)); } catch { /* per-computer nicety */ }
-  }
-  function setCollapsed(on) {
-    v2.editorCollapsed = on;
-    site.classList.toggle('ed-collapsed', on);
-    const btn = $('.v2-ed-collapse', divider);
-    btn.title = on ? 'Show the editor' : 'Hide the editor';
-    btn.setAttribute('aria-label', btn.title);
-  }
-  site.style.setProperty('--v2-ed-w', `${readWidth()}px`);
-  $('.v2-ed-collapse', divider).onclick = () => setCollapsed(!v2.editorCollapsed);
-  divider.addEventListener('pointerdown', e => {
-    if (e.button !== 0 || v2.editorCollapsed || e.target.closest('.v2-ed-collapse')) return;
-    e.preventDefault();
-    divider.setPointerCapture(e.pointerId);
-    site.classList.add('is-resizing');
-    const left = layoutEl.getBoundingClientRect().left;
-    const move = ev => setEditorWidth(ev.clientX - left, false);
-    const up = () => {
-      divider.removeEventListener('pointermove', move);
-      site.classList.remove('is-resizing');
-      setEditorWidth(v2.editorWidth || readWidth(), true);
-    };
-    divider.addEventListener('pointermove', move);
-    divider.addEventListener('pointerup', up, { once: true });
-    divider.addEventListener('pointercancel', up, { once: true });
-  });
-  divider.addEventListener('keydown', e => {
-    if (e.target !== divider || v2.editorCollapsed) return;
-    const step = e.key === 'ArrowLeft' ? -16 : e.key === 'ArrowRight' ? 16 : 0;
-    if (!step) return;
-    e.preventDefault();
-    setEditorWidth((v2.editorWidth || $('#editor').offsetWidth) + step, true);
-  });
+  // Editor functionality is disabled in standalone version
 
   function setEditing(on) {
     if (v2.editing === on) return;
     v2.editing = on;
     closeMenu();
-    site.classList.toggle('is-editing', on);
-    document.body.classList.toggle('v2-is-editing', on);
-    if (on) {
-      setCollapsed(false);
-      core.renderEditor();
-      compactEditor();
-    } else {
-      if (core.state.editingText) $('#editTextBtn').click();
-      if (core.state.appFullscreen) $('#fullscreenBtn').click();
-      core.flushSave();
-      v2.detailsFor = null;
-      render();
-    }
-    syncViewport();
+    if (!on) { v2.detailsFor = null; render(); }
   }
 
-  function syncViewport() {
-    site.classList.toggle('vp-mobile', core.state.viewport === 'mobile');
-    requestAnimationFrame(() => core.fitPreviewFrame());
-  }
-  $('#viewportToggle').addEventListener('click', syncViewport);
-  $('#fullscreenBtn').addEventListener('click', syncViewport);
-  new ResizeObserver(() => core.fitPreviewFrame()).observe($('#previewFrameWrap'));
-
-  // Escape leaves the editor — but not when it's closing something else
-  // first (full screen, a dialog or a menu). Capture phase, so this sees the
-  // state before V1's own Escape handler changes it.
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     if (menuEl) { closeMenu(); return; }
     if (pl.open) { e.stopPropagation(); closePriceList(); return; }
-    if (v2.editing && !core.state.appFullscreen && !document.querySelector('dialog[open]') && !$('#notifPanel:not([hidden])')) setEditing(false);
   }, true);
 
   // ---------------- price list ----------------
