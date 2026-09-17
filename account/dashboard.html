@@ -269,7 +269,7 @@
     <div class="loading-head"><img src="../img/brightsite-logo.png" alt="BrightSite"><span class="loading-status">PREPARING YOUR PREVIEW</span></div>
     <div class="loading-grid">
       <div class="blueprint-site" aria-label="Website blueprint preview"><div class="blueprint-inner" id="loadingBlueprint"></div></div>
-      <aside class="loading-steps"><h1>Your website is taking shape</h1><p>We’re setting up a private workspace where you can add the details that bring it to life.</p><div class="loading-step is-current"><i>1</i><span>Creating your website workspace</span></div><div class="loading-step"><i>2</i><span>Adding your business details</span></div><div class="loading-step"><i>3</i><span>Preparing your editable preview</span></div><div class="loading-step"><i>4</i><span>Ready for your photos and final design</span></div></aside>
+      <aside class="loading-steps"><h1>Your website is taking shape</h1><p>We're setting up a private workspace where you can add the details that bring it to life.</p><div class="loading-step is-current"><i>1</i><span>Creating your website workspace</span></div><div class="loading-step"><i>2</i><span>Adding your business details</span></div><div class="loading-step"><i>3</i><span>Preparing your editable preview</span></div><div class="loading-step"><i>4</i><span>Ready for your photos and final design</span></div></aside>
     </div>
   </div>
 </div>
@@ -327,7 +327,7 @@
             <strong>Essential <b>£0</b></strong>
             <span>£19/month hosting — charged once your website is live.</span>
           </div>
-          <p class="info-hint" id="billingHint">Your Essential plan is selected. Add features now; you’ll manage billing once your account is active.</p>
+          <p class="info-hint" id="billingHint">Your Essential plan is selected. Add features now; you'll manage billing once your account is active.</p>
           <label class="addon-checkbox-label" id="bookingAddonLabel">
             <input type="checkbox" id="bookingAddonCheck">
             <span>Booking form <span class="addon-price-tag">+£19/mo</span></span>
@@ -343,7 +343,7 @@
 
       <!-- ---------------- edit mode ---------------- -->
       <div id="builderPanel" hidden>
-        <p class="developer-building-message" id="developerBuildingMessage"><b>Your developer is creating your website preview. It’ll be ready in 1–2 days.</b><br>Add your details, services and photos to help us build your website. We’ll call you to discuss it too.<br><a href="tel:07588404181">Call us on 07588 404181</a> with any questions, requests or information.</p>
+        <p class="developer-building-message" id="developerBuildingMessage"><b>Your developer is creating your website preview. It'll be ready in 1–2 days.</b><br>Add your details, services and photos to help us build your website. We'll call you to discuss it too.<br><a href="tel:07588404181">Call us on 07588 404181</a> with any questions, requests or information.</p>
         <p class="website-progress" id="websiteProgress">Your website details: <b>0 of 7 added</b></p>
 
         <div id="builderList">
@@ -361,10 +361,10 @@
           <p class="builder-guidance" id="builderGuidance" hidden></p>
           <div class="info-card" style="margin-top:16px">
             <h2>Note for your developer</h2>
-            <p class="info-hint">Tell us anything useful about your business, website, or what you’d like us to focus on.</p>
+            <p class="info-hint">Tell us anything useful about your business, website, or what you'd like us to focus on.</p>
             <div class="acct-field" style="margin-top:12px">
               <label for="developerNote">Your note</label>
-              <textarea id="developerNote" placeholder="For example: I’d like online bookings and a warm, premium look."></textarea>
+              <textarea id="developerNote" placeholder="For example: I'd like online bookings and a warm, premium look."></textarea>
             </div>
             <button type="button" class="upgrade-btn" id="developerNoteSave">Save note</button>
             <div class="acct-status" id="developerNoteStatus" style="min-height:18px;margin-top:8px;font-size:12.5px"></div>
@@ -462,7 +462,7 @@
   <div class="modal-card">
     <button type="button" class="modal-close" id="reqClose">&times;</button>
     <h2>Tell us what you'd like to change</h2>
-    <p class="hint">Write it however feels natural — “please add a new service”, “change my phone number”, “I want a darker look”, “I need online booking”.</p>
+    <p class="hint">Write it however feels natural — "please add a new service", "change my phone number", "I want a darker look", "I need online booking".</p>
     <div class="acct-field">
       <label for="reqType">What's this about?</label>
       <select id="reqType">
@@ -601,7 +601,7 @@
       return '<section class="blueprint-service-group"><h3>' + escapeHTML(group.name || servicesLabel) + '</h3><div class="blueprint-services blueprint-services-full">' + group.items.map(function (item) { return '<div class="blueprint-service"><b>' + escapeHTML(item.name) + '</b>' + (item.price ? '<span class="blueprint-service-price">' + escapeHTML(item.price) + '</span>' : '<div class="blueprint-line"></div>') + '</div>'; }).join('') + '</div></section>';
     }).join('');
     return '<div class="blueprint-top"><div class="blueprint-brand"><i></i>' + escapeHTML(name) + '</div><nav class="blueprint-nav" aria-label="Website pages"><button type="button" data-blueprint-page="home" aria-current="page">Home</button><button type="button" data-blueprint-page="services">' + servicesLabel + '</button><button type="button" data-blueprint-page="contact">Contact</button></nav></div>' +
-      '<main data-blueprint-panel="home"><section class="blueprint-hero" data-blueprint-focus="name"><div class="blueprint-hero-copy"><p class="blueprint-kicker">' + escapeHTML(category) + '</p><h2 class="blueprint-title">' + escapeHTML(name) + '</h2><p class="blueprint-copy">A clear, thoughtful website for the people looking for your business.</p><div class="blueprint-details"><span>' + escapeHTML(phone) + '</span><span>' + escapeHTML(address) + '</span></div></div><div class="blueprint-illustration">' + (outlineHeroImage ? '<img src="' + escapeHTML(outlineHeroImage) + '" alt="' + escapeHTML(name) + ' outline hero">' : blueprintArt(category, name)) + '</div></section><section class="blueprint-page"><h3>What to expect</h3><div class="blueprint-services"><div class="blueprint-service"><b>Personal service</b><div class="blueprint-line"></div><div class="blueprint-line short"></div></div><div class="blueprint-service"><b>Made for your area</b><div class="blueprint-line"></div><div class="blueprint-line short"></div></div><div class="blueprint-service"><b>Simple to get started</b><div class="blueprint-line"></div><div class="blueprint-line short"></div></div></div></section><section class="blueprint-page" data-blueprint-focus="reviews"><h3>In good company</h3><div class="blueprint-review">“Your customer reviews will appear here when your finished website is ready.”</div></section><section class="blueprint-page" data-blueprint-focus="media"><h3>A glimpse inside</h3><div class="blueprint-gallery"><div class="blueprint-photo">YOUR PHOTO</div><div class="blueprint-photo">YOUR PHOTO</div><div class="blueprint-photo">YOUR PHOTO</div></div></section><div class="blueprint-contact-bar"><b>Get in touch</b><span>CONTACT</span></div></main>' +
+      '<main data-blueprint-panel="home"><section class="blueprint-hero" data-blueprint-focus="name"><div class="blueprint-hero-copy"><p class="blueprint-kicker">' + escapeHTML(category) + '</p><h2 class="blueprint-title">' + escapeHTML(name) + '</h2><p class="blueprint-copy">A clear, thoughtful website for the people looking for your business.</p><div class="blueprint-details"><span>' + escapeHTML(phone) + '</span><span>' + escapeHTML(address) + '</span></div></div><div class="blueprint-illustration">' + (outlineHeroImage ? '<img src="' + escapeHTML(outlineHeroImage) + '" alt="' + escapeHTML(name) + ' outline hero">' : blueprintArt(category, name)) + '</div></section><section class="blueprint-page"><h3>What to expect</h3><div class="blueprint-services"><div class="blueprint-service"><b>Personal service</b><div class="blueprint-line"></div><div class="blueprint-line short"></div></div><div class="blueprint-service"><b>Made for your area</b><div class="blueprint-line"></div><div class="blueprint-line short"></div></div><div class="blueprint-service"><b>Simple to get started</b><div class="blueprint-line"></div><div class="blueprint-line short"></div></div></div></section><section class="blueprint-page" data-blueprint-focus="reviews"><h3>In good company</h3><div class="blueprint-review">"Your customer reviews will appear here when your finished website is ready."</div></section><section class="blueprint-page" data-blueprint-focus="media"><h3>A glimpse inside</h3><div class="blueprint-gallery"><div class="blueprint-photo">YOUR PHOTO</div><div class="blueprint-photo">YOUR PHOTO</div><div class="blueprint-photo">YOUR PHOTO</div></div></section><div class="blueprint-contact-bar"><b>Get in touch</b><span>CONTACT</span></div></main>' +
       '<main class="blueprint-page" data-blueprint-panel="services" data-blueprint-focus="prices" hidden><div class="blueprint-page-intro"><p class="blueprint-kicker">Welcome to ' + escapeHTML(name) + '</p><h2>' + welcome + '</h2></div><div class="blueprint-service-groups">' + servicesMarkup + '</div></main>' +
       '<main class="blueprint-page" data-blueprint-panel="contact" hidden><div class="blueprint-page-intro" data-blueprint-focus="contact"><p class="blueprint-kicker">Welcome to ' + escapeHTML(name) + '</p><h2>Come and say hello.</h2></div><div class="blueprint-contact-grid"><section class="blueprint-contact-card"><h3>Contact</h3><p>' + escapeHTML(phone) + '</p><p>' + escapeHTML(raw.email || 'Your email address') + '</p><span>' + escapeHTML(address) + '</span></section><section class="blueprint-hours" data-blueprint-focus="hours"><h3>Opening hours</h3>' + hoursRows + '</section></div><div class="blueprint-map" data-blueprint-focus="address"><span>MAP / ' + escapeHTML(address) + '</span></div></main><div class="blueprint-footer"><span>' + escapeHTML(name) + '</span><span>Built with BrightSite</span></div>';
   }
@@ -1161,7 +1161,7 @@
     document.getElementById('statusRow').textContent = isLive ? 'Live' : 'Not live yet';
     document.getElementById('billingHint').textContent = isPaying
       ? 'Your Essential plan is active. Manage payment details any time.'
-      : 'Your Essential plan is selected. Add features now; you’ll manage billing once your account is active.';
+      : 'Your Essential plan is selected. Add features now; you'll manage billing once your account is active.';
     document.getElementById('upgradeBtn').hidden = false;
     document.getElementById('billingBtn').hidden = !isPaying;
     document.getElementById('bookingAddonCheck').checked = !!(business && business.data && business.data.raw && business.data.raw.bookingAddon);
@@ -1268,7 +1268,7 @@
   function renderReviewEntries() {
     var mount = document.getElementById('reviewEntries');
     mount.innerHTML = reviewQuotes.map(function (quote, index) {
-      return '<div class="svc-row"><textarea class="svc-name" data-review="' + index + '" placeholder="e.g. Brilliant service — I’d highly recommend them.">' + escapeAttr(quote) + '</textarea><button type="button" class="svc-remove" data-review-remove="' + index + '" aria-label="Remove review">&times;</button></div>';
+      return '<div class="svc-row"><textarea class="svc-name" data-review="' + index + '" placeholder="e.g. Brilliant service — I'd highly recommend them.">' + escapeAttr(quote) + '</textarea><button type="button" class="svc-remove" data-review-remove="' + index + '" aria-label="Remove review">&times;</button></div>';
     }).join('');
     mount.querySelectorAll('[data-review]').forEach(function (input) { input.addEventListener('input', function () { reviewQuotes[+input.dataset.review] = input.value; scheduleAutoSave(); }); });
     mount.querySelectorAll('[data-review-remove]').forEach(function (button) { button.addEventListener('click', function () { reviewQuotes.splice(+button.dataset.reviewRemove, 1); renderReviewEntries(); scheduleAutoSave(); }); });
@@ -1445,7 +1445,7 @@
       statusEl.className = 'acct-status ok';
     }).catch(function () {
       button.disabled = false;
-      statusEl.textContent = 'Couldn’t save your note. Please try again.';
+      statusEl.textContent = 'Couldn't save your note. Please try again.';
       statusEl.className = 'acct-status err';
     });
   });
@@ -1481,10 +1481,10 @@
     }).catch(function (err) {
       autoSaveRetries++;
       if (autoSaveRetries < MAX_AUTOSAVE_RETRIES) {
-        statusEl.textContent = err.message || 'Couldn’t save — retrying…'; statusEl.className = 'save-status err';
+        statusEl.textContent = err.message || 'Couldn't save — retrying…'; statusEl.className = 'save-status err';
         autoSaveQueued = true;
       } else {
-        statusEl.textContent = 'Couldn’t save — check your connection.'; statusEl.className = 'save-status err';
+        statusEl.textContent = 'Couldn't save — check your connection.'; statusEl.className = 'save-status err';
       }
     }).then(function () {
       autoSaveInFlight = false;
@@ -1549,7 +1549,7 @@
     var statusEl = document.getElementById('reqStatus');
     var message = reqMessage.value.trim();
     var isDomain = reqType.value === 'domain';
-    if (!message) { statusEl.textContent = isDomain ? 'Let us know the domain you’d like first.' : 'Let us know what you’d like changed first.'; statusEl.className = 'save-status err'; return; }
+    if (!message) { statusEl.textContent = isDomain ? 'Let us know the domain you'd like first.' : 'Let us know what you'd like changed first.'; statusEl.className = 'save-status err'; return; }
 
     var businessName = (business && business.data && business.data.raw && business.data.raw.name) || (business && business.name) || (session.email || '');
     btn.disabled = true;
@@ -1601,7 +1601,7 @@
       .catch(function (err) {
         btn.disabled = false;
         btn.textContent = originalText;
-        alert(err.message || 'Couldn’t open billing — please try again.');
+        alert(err.message || 'Couldn't open billing — please try again.');
       });
   });
 
