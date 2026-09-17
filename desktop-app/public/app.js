@@ -1343,86 +1343,6 @@
 
   }
 
-  // The template side of the editor — link fetch, template, colour, photos
-  // and AI edits. An imported website has none of these.
-  function wireSiteBuilderControls(raw) {
-    document.getElementById('importBtn').onclick = runImport;
-    const linkInput = document.getElementById('f_link');
-    let linkTimer = null;
-    linkInput.addEventListener('input', () => {
-      clearTimeout(linkTimer);
-      linkTimer = setTimeout(() => {
-        const value = linkInput.value.trim();
-        if (/^https?:\/\//i.test(value) && value !== (state.current.lastImportUrl || '')) runImport();
-      }, 400);
-    });
-    document.getElementById('templateGrid').addEventListener('click', e => {
-      const tile = e.target.closest('.template-tile');
-      if (!tile) return;
-      setRaw({ layout: tile.dataset.layout });
-      document.querySelectorAll('.template-tile').forEach(t => t.classList.toggle('selected', t === tile));
-      document.getElementById('sectionsField').innerHTML = sectionsListHtml(state.current.raw);
-      persist();
-      schedulePreview();
-    });
-    document.getElementById('sectionsField').addEventListener('change', e => {
-      const cb = e.target.closest('[data-section-toggle]');
-      if (!cb) return;
-      const hidden = new Set(state.current.raw.hiddenSections || []);
-      if (cb.checked) hidden.delete(cb.dataset.sectionToggle); else hidden.add(cb.dataset.sectionToggle);
-      setRaw({ hiddenSections: [...hidden] });
-      persist();
-      schedulePreview();
-    });
-    document.getElementById('sectionsField').addEventListener('click', e => {
-      const btn = e.target.closest('[data-section-up],[data-section-down]');
-      if (!btn) return;
-      const id = btn.dataset.sectionUp || btn.dataset.sectionDown;
-      const ids = homeSectionOrder(state.current.raw);
-      const from = ids.indexOf(id);
-      const to = btn.dataset.sectionUp ? from - 1 : from + 1;
-      if (to < 0 || to >= ids.length) return;
-      [ids[from], ids[to]] = [ids[to], ids[from]];
-      setRaw({ sectionOrder: ids });
-      document.getElementById('sectionsField').innerHTML = sectionsListHtml(state.current.raw);
-      persist();
-      schedulePreview();
-    });
-    (() => {
-      const colourPicker = document.getElementById('colourPicker');
-      const colourCurrent = document.getElementById('colourCurrent');
-      let selectedColourHex = raw.tones?.base;
-      let openColourFamily = null;
-      const rerender = () => { colourPicker.innerHTML = colourPickerHtml(selectedColourHex, openColourFamily); };
-      colourPicker.addEventListener('click', e => {
-        const catBtn = e.target.closest('.colour-cat-btn');
-        if (catBtn) {
-          openColourFamily = openColourFamily === catBtn.dataset.family ? null : catBtn.dataset.family;
-          rerender();
-          return;
-        }
-        const swatch = e.target.closest('.colour-swatch');
-        if (!swatch) return;
-        selectedColourHex = swatch.dataset.hex;
-        openColourFamily = null;
-        setRaw({ tones: tonesFromHex(selectedColourHex) });
-        rerender();
-        colourCurrent.innerHTML = colourCurrentHtml(selectedColourHex);
-        persist();
-        schedulePreview();
-      });
-    })();
-    document.getElementById('galleryUploadBtn').onclick = () => document.getElementById('galleryUpload').click();
-    document.getElementById('galleryUpload').addEventListener('change', e => uploadGallery(e.target.files));
-    document.getElementById('aiEditBtn').onclick = runAiEdit;
-    document.getElementById('aiInstruction').addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runAiEdit(); }
-    });
-    document.querySelectorAll('.edit-log .undo').forEach(btn => (btn.onclick = () => undoEdit(Number(btn.dataset.i))));
-    document.querySelectorAll('.gallery-grid .thumb-remove').forEach(btn => (btn.onclick = () => removeGalleryItem(Number(btn.dataset.i))));
-    wireMediaSlot('logo');
-    wireMediaSlot('hero');
-  }
 
   // Imported website (no template): where it came from, what was copied,
   // and Re-import to fetch a fresh copy after the original changes.
@@ -1467,36 +1387,6 @@
     };
   }
 
-  // Cold-calling details for the open business, at the top of the form.
-  // Changing the stage moves it between the sidebar halves; setting it to
-  // Paid moves it onto the Live & Paying tab.
-  function renderSales() {
-    const box = document.getElementById('salesBlock');
-    if (!box || !state.current) return;
-    const p = state.current;
-    const options = (list, selected) => list.map(([id, label]) =>
-      `<option value="${id}" ${id === selected ? 'selected' : ''}>${label}</option>`).join('');
-    box.innerHTML = `
-      <div class="section-heading">Admin <span>Cold calling</span></div>
-      <div class="sales-row">
-        <div class="field"><label>Stage</label>
-          <select id="s_stage">${options(SALES_STAGES, stageOf(p))}</select></div>
-        <div class="field"><label>Monthly price</label>
-          <input id="s_price" value="${escapeAttr(p.price || '')}" placeholder="e.g. 45"></div>
-        <div class="field"><label>Paying?</label>
-          <select id="s_payment">${options(PAYMENT_STATUSES, p.paymentStatus || 'no')}</select></div>
-      </div>
-      <div class="field"><label>Call notes</label>
-        <textarea id="s_notes" placeholder="What happened on the call, what to do next…">${escapeHtml(p.notes || '')}</textarea></div>`;
-    document.getElementById('s_stage').onchange = e => { state.current.pipelineStage = e.target.value; persist(); };
-    document.getElementById('s_price').oninput = e => { state.current.price = e.target.value; scheduleSave(); };
-    document.getElementById('s_notes').oninput = e => { state.current.notes = e.target.value; scheduleSave(); };
-    document.getElementById('s_payment').onchange = async e => {
-      state.current.paymentStatus = e.target.value;
-      await persist();
-      if (e.target.value !== 'no') notify(`"${businessName(state.current)}" is now on the Clients tab${e.target.value === 'pending' ? ', under Pending' : ''}.`);
-    };
-  }
 
   function editLogHtml() {
     const log = state.current.editLog || [];
@@ -1507,31 +1397,6 @@
     }).join('')}</div>`;
   }
 
-  async function runAiEdit() {
-    const input = document.getElementById('aiInstruction');
-    const status = document.getElementById('aiEditStatus');
-    const btn = document.getElementById('aiEditBtn');
-    const instruction = input.value.trim();
-    if (!instruction || btn.disabled) return;
-    btn.disabled = true;
-    input.disabled = true;
-    setLoading(status, 'Asking Claude…');
-    try {
-      await flushSave();
-      const updated = await api(`/api/projects/${state.current.slug}/ai-edit`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ instruction })
-      });
-      replaceCurrent(updated);
-      renderEditor();
-      renderPreview();
-      renderLiveActions();
-      document.getElementById('aiEditStatus').textContent = 'Done — undo it below if it’s not right.';
-    } catch (err) {
-      btn.disabled = false;
-      input.disabled = false;
-      showTempStatus(status, friendlyError(err.message), 8000);
-    }
-  }
 
   async function undoEdit(index) {
     const log = state.current.editLog || [];
