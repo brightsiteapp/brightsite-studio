@@ -706,4 +706,3 @@ body.v2 .notice-strip {
 .v2-task.is-clickable:hover { background: #f8fafc; }
 .v2-mini-tasks .v2-task { gap: 9px; padding: 6px 2px; font-size: 12.5px; border-bottom: 0; }
 .v2-mini-tasks .v2-empty { margin: 2px 2px 4px; }
-#v2dContact, #v2dPrices { display: none !important; }
