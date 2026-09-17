@@ -1418,10 +1418,19 @@
       raw.bookingAddon = document.getElementById('bookingAddonCheck').checked;
       if (opts.publish) isLive = true;
       var record = { slug: slug, name: raw.name, raw: raw, planActive: isPaying, published: isLive, updatedAt: new Date().toISOString() };
-      return authenticatedFetch(SUPABASE_URL + '/rest/v1/businesses', {
-        method: 'POST',
-        headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation,resolution=merge-duplicates' }),
-        body: JSON.stringify({ id: slug, name: raw.name, user_id: session.user_id, data: record, updated_at: record.updatedAt })
+      var isExisting = !!(business && business.id);
+      var saveUrl = isExisting
+        ? SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(slug)
+        : SUPABASE_URL + '/rest/v1/businesses';
+      var saveMethod = isExisting ? 'PATCH' : 'POST';
+      var savePrefer = isExisting ? 'return=representation' : 'return=representation,resolution=merge-duplicates';
+      var saveBody = isExisting
+        ? JSON.stringify({ name: raw.name, user_id: session.user_id, data: record, updated_at: record.updatedAt })
+        : JSON.stringify({ id: slug, name: raw.name, user_id: session.user_id, data: record, updated_at: record.updatedAt });
+      return authenticatedFetch(saveUrl, {
+        method: saveMethod,
+        headers: authHeaders({ 'Content-Type': 'application/json', Prefer: savePrefer }),
+        body: saveBody
       }).then(function (res) {
         if (!res.ok) return res.json().then(function (d) { throw new Error(d.message || d.msg || ('Save failed (' + res.status + ')')); });
         return res.json();
