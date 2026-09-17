@@ -31,7 +31,18 @@
       "server.js",
       "package.json",
       "lib/**/*",
-      "public/**/*"
+      "public/**/*",
+      {
+        "from": "../desktop-app",
+        "to": "v1",
+        "filter": [
+          "server.js",
+          "preload.js",
+          "package.json",
+          "lib/**/*",
+          "public/**/*"
+        ]
+      }
     ],
     "extraResources": [
       {
