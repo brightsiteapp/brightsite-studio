@@ -270,8 +270,8 @@ dialog button.danger:hover { background: #c93a35; }
 .account-text b { font-size: 13px; }
 .account-status { font-size: 11.5px; color: var(--muted); }
 .account-status.is-signed-in { color: #1f9d55; font-weight: 600; }
-dialog .account-row button { flex: none; margin: 0; min-width: 78px; }
-dialog .account-row button:disabled { opacity: 0.6; cursor: default; }
+dialog .account-row button, .v2-settings .account-row button { flex: none; margin: 0; min-width: 78px; }
+dialog .account-row button:disabled, .v2-settings .account-row button:disabled { opacity: 0.6; cursor: default; }
 .account-icon.places { background: #fff; font-size: 15px; box-shadow: inset 0 0 0 1.5px var(--line); }
 .places-key-form { display: flex; gap: 8px; margin-top: 8px; }
 .places-key-form[hidden] { display: none; }

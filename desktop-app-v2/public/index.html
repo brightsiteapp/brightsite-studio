@@ -114,7 +114,79 @@
       <header class="v2-page-head">
         <div class="v2-page-title"><h1>Settings</h1><p class="v2-summary">Accounts, connected services, sync and updates.</p></div>
       </header>
-      <div class="v2-settings" id="v2SettingsMount"></div>
+      <div class="v2-settings" id="v2SettingsMount">
+        <div class="app-info-row">
+          <span class="app-version" id="appVersion" hidden></span>
+          <button type="button" class="update-btn" id="updateBtn" hidden>Check for updates</button>
+          <span class="sync-status" id="syncStatus" hidden>
+            <i></i><span id="syncStatusText"></span>
+            <div class="sync-tooltip" id="syncTooltip">
+              <span class="sync-tooltip-label">Connected to</span>
+              <span id="syncTooltipUrl"></span>
+            </div>
+          </span>
+        </div>
+        <p class="dim">Sign in so imports can see far more of a business page — photos, about text, reviews. A window opens, closes by itself once you're in, and stays signed in between imports.</p>
+        <div class="account-row" data-account="google">
+          <span class="account-icon google" aria-hidden="true">G</span>
+          <div class="account-text"><b>Google</b><span class="account-status">Checking…</span></div>
+          <button type="button" class="primary">Sign in</button>
+        </div>
+        <div class="account-row" data-account="facebook">
+          <span class="account-icon facebook" aria-hidden="true">f</span>
+          <div class="account-text"><b>Facebook</b><span class="account-status">Checking…</span></div>
+          <button type="button" class="primary">Sign in</button>
+        </div>
+        <div class="account-row" id="placesRow">
+          <span class="account-icon places" aria-hidden="true">📍</span>
+          <div class="account-text"><b>Google Places API</b><span class="account-status" id="placesStatus">Checking…</span></div>
+          <button type="button" class="primary" id="placesBtn">Add key</button>
+        </div>
+        <div class="places-key-form" id="placesForm" hidden>
+          <input type="text" id="placesKeyInput" placeholder="Paste your Places API key" autocomplete="off" spellcheck="false">
+          <button type="button" class="primary" id="placesSaveBtn">Save</button>
+        </div>
+        <p class="dim" style="margin-top:8px">Optional. With a key, business search uses Google's official Places API (billed to your Google Cloud account) and falls back to the Maps website if it fails.</p>
+        <h4 class="settings-group">Connected services</h4>
+        <div class="account-row" data-service="claude">
+          <span class="account-icon claude" aria-hidden="true">✳</span>
+          <div class="account-text"><b>Claude</b><span class="account-status">Checking…</span></div>
+          <button type="button" class="primary">Sign in</button>
+        </div>
+        <div class="account-row" data-service="vercel">
+          <span class="account-icon vercel" aria-hidden="true">▲</span>
+          <div class="account-text"><b>Vercel</b><span class="account-status">Checking…</span></div>
+          <button type="button" class="primary">Sign in</button>
+        </div>
+        <div class="account-row" data-service="stripe">
+          <span class="account-icon stripe" aria-hidden="true">S</span>
+          <div class="account-text"><b>Stripe</b><span class="account-status">Checking…</span></div>
+          <button type="button" class="primary">Add key</button>
+        </div>
+        <div class="places-key-form" id="stripeForm" hidden>
+          <input type="text" id="stripeKeyInput" placeholder="Paste your Stripe secret key (sk_live_… or rk_live_…)" autocomplete="off" spellcheck="false">
+          <button type="button" class="primary" id="stripeSaveBtn">Save</button>
+        </div>
+        <div class="account-row" id="cancelSurveyRow">
+          <span class="account-icon stripe" aria-hidden="true">?</span>
+          <div class="account-text"><b>Cancellation survey</b><span class="account-status" id="cancelSurveyStatus">Asks a customer why when they cancel, in the Billing Portal</span></div>
+          <button type="button" class="primary" id="cancelSurveyBtn">Turn on</button>
+        </div>
+        <div class="account-row" data-service="sync">
+          <span class="account-icon sync" aria-hidden="true">⟳</span>
+          <div class="account-text"><b>Shared sync (Supabase)</b><span class="account-status">Checking…</span></div>
+        </div>
+        <div class="account-row" data-service="accounts">
+          <span class="account-icon accounts" aria-hidden="true">👤</span>
+          <div class="account-text"><b>Customer logins</b><span class="account-status">Checking…</span></div>
+          <button type="button" class="primary">Add key</button>
+        </div>
+        <div class="places-key-form" id="accountsForm" hidden>
+          <input type="text" id="accountsKeyInput" placeholder="Paste your Supabase service role key" autocomplete="off" spellcheck="false">
+          <button type="button" class="primary" id="accountsSaveBtn">Save</button>
+        </div>
+        <p class="dim" style="margin-top:8px">Claude powers Edit with AI and imports; Vercel makes sites live and connects domains; Stripe creates payment links; the Supabase service role key lists customer logins in Accounts. Claude and Vercel sign in through a Terminal window — follow the prompts there and this updates once you're in.</p>
+      </div>
     </section>
 
     <section class="v2-view" id="v2ProfileView" hidden>

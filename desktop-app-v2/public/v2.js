@@ -154,6 +154,13 @@
       v2.bannerFor = null;
       requestAnimationFrame(() => core.fitPreviewFrame());
     }
+    if (view === "settings") {
+      settingsPanel.setAttribute("open", "");
+      // Trigger V1's settings refresh by clicking the hidden gear button,
+      // which calls refreshSignInStatus, refreshPlacesStatus, refreshServices.
+      const gear = document.getElementById("gearBtn");
+      if (gear) gear.click();
+    }
     renderNow();
   }
 
