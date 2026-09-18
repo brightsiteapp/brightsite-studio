@@ -1029,7 +1029,7 @@
       openSection(null);
     }
   }
-  document.getElementById('editToggle').addEventListener('click', function () { if (hasUploadedDemo()) setEditing(!isEditing); });
+  document.getElementById('editToggle').addEventListener('click', function () { setEditing(!isEditing); });
   // The two tabs only change the left-side panel; the preview remains in
   // place, so customers never lose sight of the website they are shaping.
   function isMobileDashboard() { return window.matchMedia('(max-width: 860px)').matches; }
@@ -1084,14 +1084,7 @@
   // ---------------- live preview (the same renderer Studio/deploy uses) ----------------
   function currentRaw() {
     var base = (business && business.data && business.data.raw) || {};
-    var heroImage = generatedHeroImage || (isEditing ? mediaUrl(media.heroImage) : mediaUrl(base.heroImage)) || undefined;
-    if (!isEditing) {
-      return Object.assign({}, base, {
-        logoImage: mediaUrl(base.logoImage) || undefined,
-        heroImage: heroImage,
-        gallery: Array.isArray(base.gallery) ? base.gallery.map(mediaUrl) : base.gallery
-      });
-    }
+    var heroImage = generatedHeroImage || mediaUrl(media.heroImage) || undefined;
     return Object.assign({}, base, {
       name: document.getElementById('fName').value.trim() || base.name,
       phone: document.getElementById('fPhone').value.trim(),
@@ -1395,9 +1388,9 @@
     media.gallery = Array.isArray(raw.gallery) ? raw.gallery.slice() : [];
     isPaying = !!data.planActive;
     isLive = !!data.published;
-    var demoReady = hasUploadedDemo();
-    document.getElementById('editToggle').hidden = !demoReady;
-    document.getElementById('developerBuildingMessage').hidden = demoReady;
+    var demoReady = true;
+    document.getElementById('editToggle').hidden = false;
+    document.getElementById('developerBuildingMessage').hidden = true;
     var revealKey = 'bs_preview_revealed_' + (business.id || slug || 'current');
     if (demoReady && !sessionStorage.getItem(revealKey)) {
       sessionStorage.setItem(revealKey, '1');
@@ -1431,7 +1424,7 @@
     renderAccountHero();
     // A new customer lands directly on the Website tab, with their basic
     // details ready to fill in beside the live skeleton preview.
-    setEditing(!demoReady || openEditorAfterSetup);
+    setEditing(true);
     openEditorAfterSetup = false;
     updateSectionChecks();
   }
@@ -1963,7 +1956,6 @@
 
   function scheduleAutoSave() {
     updateSectionChecks();
-    if (!isEditing) return;
     hasPendingEdit = true;
     autoSaveRetries = 0;
     var statusEl = document.getElementById('saveStatus');
