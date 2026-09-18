@@ -424,7 +424,7 @@
             <button type="button" class="builder-done" id="builderDoneButton" hidden>Done</button>
           </div>
           <button type="button" class="sec-btn" data-section="name"><span class="sec-title"><span class="section-tick"></span>Business name</span><span class="chev">&#8250;</span></button>
-          <button type="button" class="sec-btn" data-section="contact"><span class="sec-title"><span class="section-tick"></span>Phone &amp; email</span><span class="chev">&#8250;</span></button>
+          <button type="button" class="sec-btn" data-section="contact"><span class="sec-title"><span class="section-tick"></span>Contact info</span><span class="chev">&#8250;</span></button>
           <button type="button" class="sec-btn" data-section="hours"><span class="sec-title"><span class="section-tick"></span>Opening hours</span><span class="chev">&#8250;</span></button>
           <button type="button" class="sec-btn" data-section="address"><span class="sec-title"><span class="section-tick"></span>Location / address</span><span class="chev">&#8250;</span></button>
           <button type="button" class="sec-btn" data-section="prices"><span class="sec-title"><span class="section-tick"></span>Prices &amp; timetable</span><span class="chev">&#8250;</span></button>
@@ -451,9 +451,12 @@
 
         <div class="builder-section" data-section-panel="contact" hidden>
           <div class="section-head"><button type="button" class="section-back" data-back>&#8249; Edit your website</button></div>
-          <h3>Phone &amp; email</h3>
+          <h3>Contact info</h3>
           <div class="acct-field"><label for="fPhone">Phone number</label><input type="text" id="fPhone" placeholder="e.g. 020 7946 0958"></div>
           <div class="acct-field"><label for="fEmail2">Email</label><input type="email" id="fEmail2" placeholder="you@example.com"></div>
+          <div class="acct-field"><label for="fWebsite">Existing website</label><input type="url" id="fWebsite" placeholder="e.g. https://yoursite.com"></div>
+          <div class="acct-field"><label for="fInstagram">Instagram</label><input type="text" id="fInstagram" placeholder="e.g. @yourbusiness"></div>
+          <div class="acct-field"><label for="fFacebook">Facebook</label><input type="text" id="fFacebook" placeholder="e.g. facebook.com/yourbusiness"></div>
         </div>
 
         <div class="builder-section" data-section-panel="hours" hidden>
@@ -1022,6 +1025,9 @@
       name: document.getElementById('fName').value.trim() || base.name,
       phone: document.getElementById('fPhone').value.trim(),
       email: document.getElementById('fEmail2').value.trim(),
+      website: document.getElementById('fWebsite').value.trim(),
+      instagram: document.getElementById('fInstagram').value.trim(),
+      facebook: document.getElementById('fFacebook').value.trim(),
       address: document.getElementById('fAddress').value.trim(),
       hours: hoursToRawLines(hoursStructured),
       logoImage: mediaUrl(media.logoImage) || undefined,
@@ -1333,6 +1339,9 @@
     document.getElementById('fName').value = raw.name || business.name || '';
     document.getElementById('fPhone').value = raw.phone || '';
     document.getElementById('fEmail2').value = raw.email || session.email || '';
+    document.getElementById('fWebsite').value = raw.website || '';
+    document.getElementById('fInstagram').value = raw.instagram || '';
+    document.getElementById('fFacebook').value = raw.facebook || '';
     document.getElementById('fAddress').value = raw.address || '';
     reviewQuotes = Array.isArray(raw.reviewQuotes) ? raw.reviewQuotes.slice() : (raw.reviews ? [raw.reviews] : []);
     document.getElementById('fReviewLink').value = raw.reviewLink || '';
@@ -1676,7 +1685,7 @@
   }
   document.getElementById('svcGroupAdd').addEventListener('click', function () { services.push({ name: '', items: [{ name: '', price: '', duration: '' }] }); renderServices(); scheduleRenderPreview(); scheduleAutoSave(); });
 
-  ['fName', 'fPhone', 'fEmail2', 'fAddress', 'fReviewLink'].forEach(function (id) {
+  ['fName', 'fPhone', 'fEmail2', 'fAddress', 'fReviewLink', 'fWebsite', 'fInstagram', 'fFacebook'].forEach(function (id) {
     document.getElementById(id).addEventListener('input', function () { scheduleRenderPreview(); scheduleAutoSave(); });
   });
 
@@ -1814,6 +1823,9 @@
         name: document.getElementById('fName').value.trim(),
         phone: document.getElementById('fPhone').value.trim(),
         email: document.getElementById('fEmail2').value.trim(),
+        website: document.getElementById('fWebsite').value.trim(),
+        instagram: document.getElementById('fInstagram').value.trim(),
+        facebook: document.getElementById('fFacebook').value.trim(),
         address: document.getElementById('fAddress').value.trim(),
         reviews: reviewQuotes.filter(function (quote) { return quote.trim(); }).join('\n\n'),
         reviewQuotes: reviewQuotes.filter(function (quote) { return quote.trim(); }),
