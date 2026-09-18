@@ -273,40 +273,22 @@ function clearStoredSession() {
 
 // ---- Google OAuth login ----
 document.getElementById('googleBtn').addEventListener('click', function() {
-  var redirectTo = location.origin + location.pathname + '?oauth_callback=1';
+  // Flag so callback.html knows to return here instead of dashboard
+  try { sessionStorage.setItem('bs_admin_auth', '1'); } catch(e) {}
+  var redirectTo = location.origin + '/account/callback.html';
   location.href = SUPABASE_URL + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(redirectTo);
 });
 
-// Handle OAuth callback — Supabase redirects back with access_token in hash
-function handleOAuthCallback() {
-  var hash = location.hash.slice(1);
-  if (!hash) return false;
-  var params = {};
-  hash.split('&').forEach(function(p) { var kv = p.split('='); params[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || ''); });
-  if (!params.access_token) return false;
-
-  // Verify it's the admin Google account by fetching user info
-  fetch(SUPABASE_URL + '/auth/v1/user', {
-    headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + params.access_token }
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(user) {
-    var email = (user.email || '').toLowerCase();
-    if (email !== ADMIN_EMAIL) {
-      document.getElementById('loginErr').textContent = 'Access denied. Sign in with the BrightSite admin account.';
-      history.replaceState(null, '', location.pathname);
-      return;
-    }
-    adminSession = { admin: true, access_token: params.access_token, email: email };
-    setStoredSession(adminSession);
-    history.replaceState(null, '', location.pathname);
-    showApp();
-  })
-  .catch(function() {
-    document.getElementById('loginErr').textContent = 'Login failed. Try again.';
-    history.replaceState(null, '', location.pathname);
-  });
-  return true;
+// Called by callback.html after successful Google auth — checks email and logs in
+function handleAdminCallback(accessToken, email) {
+  email = (email || '').toLowerCase();
+  if (email !== ADMIN_EMAIL) {
+    document.getElementById('loginErr').textContent = 'Access denied — sign in with the BrightSite admin account.';
+    return;
+  }
+  adminSession = { admin: true, access_token: accessToken, email: email };
+  setStoredSession(adminSession);
+  showApp();
 }
 
 document.getElementById('logoutBtn').addEventListener('click', function() {
@@ -658,13 +640,19 @@ var stored = checkStoredSession();
 if (stored && stored.admin) {
   adminSession = stored;
   showApp();
-} else if (location.hash.includes('access_token') || new URLSearchParams(location.search).get('oauth_callback')) {
-  // Supabase may put the token in hash after redirect
-  if (!handleOAuthCallback()) {
+} else {
+  // Check if callback.html just redirected here after Google auth
+  try {
+    var cb = JSON.parse(sessionStorage.getItem('bs_admin_callback') || 'null');
+    if (cb && cb.access_token) {
+      sessionStorage.removeItem('bs_admin_callback');
+      handleAdminCallback(cb.access_token, cb.email);
+    } else {
+      document.getElementById('loginWrap').style.display = '';
+    }
+  } catch(e) {
     document.getElementById('loginWrap').style.display = '';
   }
-} else {
-  document.getElementById('loginWrap').style.display = '';
 }
 </script>
 </body>
