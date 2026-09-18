@@ -707,6 +707,14 @@
     return;
   }
 
+  // Admin account should never be on the customer dashboard
+  if ((session.email || '').toLowerCase() === 'brightsiteapp@gmail.com') {
+    try { localStorage.removeItem('bs_session'); } catch(e) {}
+    try { localStorage.setItem('bs_admin', JSON.stringify({ admin: true, access_token: session.access_token, email: session.email })); } catch(e) {}
+    location.replace('admin.html');
+    return;
+  }
+
   var params = new URLSearchParams(location.search);
 
   function authHeaders(extra) {
