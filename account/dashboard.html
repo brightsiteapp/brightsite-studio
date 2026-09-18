@@ -700,27 +700,46 @@
   var SUPABASE_ANON_KEY = 'sb_publishable_MfwWqSIcsfVE6d5Q7jIxJA_V3Pyf2oP';
   var GALLERY_MAX = 20;
 
+  var params = new URLSearchParams(location.search);
+
+  // Admin viewing a client's dashboard — use anon key, no customer session needed
+  var adminSession = null;
+  try { adminSession = JSON.parse(localStorage.getItem('bs_admin') || 'null'); } catch(e) {}
+  var isAdminView = !!(adminSession && adminSession.admin && params.get('bs_admin_slug'));
+  if (isAdminView) {
+    // Show a banner so admin knows they're viewing a client account
+    document.addEventListener('DOMContentLoaded', function() {
+      var b = document.createElement('div');
+      b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999;background:#1d4ed8;color:#fff;text-align:center;padding:7px 16px;font-size:12px;font-weight:700;letter-spacing:.02em';
+      b.innerHTML = 'ADMIN VIEW &nbsp;·&nbsp; ' + decodeURIComponent(params.get('bs_admin_slug')) + ' &nbsp;<a href="admin.html" style="color:#93c5fd;margin-left:8px">← Back to admin</a>';
+      document.body.prepend(b);
+    });
+  }
+
   var session = null;
   try { session = JSON.parse(localStorage.getItem('bs_session') || 'null'); } catch (e) {}
-  if (!session || !session.access_token) {
+  if (!isAdminView && (!session || !session.access_token)) {
     location.href = 'login.html' + location.search;
     return;
   }
 
   // Admin account should never be on the customer dashboard
-  if ((session.email || '').toLowerCase() === 'brightsiteapp@gmail.com') {
+  if (!isAdminView && session && (session.email || '').toLowerCase() === 'brightsiteapp@gmail.com') {
     try { localStorage.removeItem('bs_session'); } catch(e) {}
     try { localStorage.setItem('bs_admin', JSON.stringify({ admin: true, access_token: session.access_token, email: session.email })); } catch(e) {}
     location.replace('admin.html');
     return;
   }
 
-  var params = new URLSearchParams(location.search);
+  // For admin view, create a fake session using the anon key so all fetches work
+  if (isAdminView && !session) {
+    session = { access_token: SUPABASE_ANON_KEY, user_id: null, email: '' };
+  }
 
   function authHeaders(extra) {
     return Object.assign({
       apikey: SUPABASE_ANON_KEY,
-      Authorization: 'Bearer ' + session.access_token
+      Authorization: 'Bearer ' + (isAdminView ? SUPABASE_ANON_KEY : session.access_token)
     }, extra || {});
   }
   var sessionRefreshPromise = null;
@@ -1279,6 +1298,16 @@
 
   // ---------------- load existing business row ----------------
   function loadBusiness() {
+    // Admin view: load directly by slug
+    if (isAdminView) {
+      var adminSlug = params.get('bs_admin_slug');
+      return fetch(SUPABASE_URL + '/rest/v1/businesses?select=*&id=eq.' + encodeURIComponent(adminSlug), { headers: authHeaders() })
+        .then(function(res) { return res.json(); })
+        .then(function(rows) {
+          if (rows && rows.length) { business = rows[0]; slug = business.id; renderDashboard(); }
+          else { showLoadError('Client account not found.'); }
+        });
+    }
     var url = SUPABASE_URL + '/rest/v1/businesses?select=*&user_id=eq.' + encodeURIComponent(session.user_id);
     return fetch(url, { headers: authHeaders() })
       .then(function (res) { return res.json(); })
