@@ -33,17 +33,17 @@
 
   /* Billing Toggle Styles */
   .billing-toggle { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 0 auto 20px; font-size: 15px; font-weight: 500; }
-  .billing-toggle .badge { background: #2563eb; color: #fff; font-size: 12px; padding: 4px 9px; border-radius: 20px; margin-left: 6px; font-weight: 700; vertical-align: middle; letter-spacing: -0.02em; box-shadow: 0 2px 6px rgba(37,99,235,.35); animation: badge-pop .4s ease; }
+  .billing-toggle .badge { background: var(--accent); color: #fff; font-size: 12px; padding: 4px 9px; border-radius: 20px; margin-left: 6px; font-weight: 700; vertical-align: middle; letter-spacing: -0.02em; box-shadow: 0 2px 6px rgba(59,130,246,.3); animation: badge-pop .4s ease; }
   @keyframes badge-pop { from { transform: scale(.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   .price-was { font-size: 15px; color: #999; text-decoration: line-through; margin-right: 4px; display: none; }
-  .price-save { font-size: 11px; font-weight: 700; color: #2563eb; background: #EAF0FE; padding: 2px 7px; border-radius: 20px; margin-left: 8px; vertical-align: middle; letter-spacing: -0.02em; display: none; }
+  .price-save { font-size: 11px; font-weight: 700; color: var(--accent); background: #EAF0FE; padding: 2px 7px; border-radius: 20px; margin-left: 8px; vertical-align: middle; letter-spacing: -0.02em; display: none; }
   .plan[data-annual-active][data-annual-discount] .price-was, .plan[data-annual-active][data-annual-discount] .price-save { display: inline-block; }
   .plan[data-annual-active][data-essential] .essential-was { display: inline; }
   .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
   .switch input { opacity: 0; width: 0; height: 0; }
   .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 24px; }
   .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-  input:checked + .slider { background-color: #2563eb; }
+  input:checked + .slider { background-color: var(--accent); }
   input:checked + .slider:before { transform: translateX(20px); }
   .toggle-label.active { color: #111; font-weight: 700; }
   .toggle-label { color: #666; cursor: pointer; transition: color 0.2s; user-select: none; }
@@ -59,8 +59,8 @@
   #pricing .pricing-note{margin-top:20px}
   .plan-addons{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;padding:12px 0;border-top:1px solid #eee;border-bottom:1px solid #eee}
   .plan-addons label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:#333;cursor:pointer}
-  .plan-addons input[type="checkbox"]{width:15px;height:15px;accent-color:#2563eb;cursor:pointer}
-  .plan-addons .addon-price{color:#2563eb;font-weight:700;margin-left:auto}
+  .plan-addons input[type="checkbox"]{width:15px;height:15px;accent-color:var(--accent);cursor:pointer}
+  .plan-addons .addon-price{color:var(--accent);font-weight:700;margin-left:auto}
 </style>
 <script src="reveal.js?v=20260902-3" defer></script>
 <script src="nav.js?v=20260902-3" defer></script>
