@@ -257,18 +257,18 @@ var adminSession = null;
 // ---- auth ----
 function checkStoredSession() {
   try {
-    var s = JSON.parse(sessionStorage.getItem('bs_admin') || 'null');
+    var s = JSON.parse(localStorage.getItem('bs_admin') || 'null');
     if (s && s.admin) return s;
   } catch(e) {}
   return null;
 }
 
 function setStoredSession(s) {
-  try { sessionStorage.setItem('bs_admin', JSON.stringify(s)); } catch(e) {}
+  try { localStorage.setItem('bs_admin', JSON.stringify(s)); } catch(e) {}
 }
 
 function clearStoredSession() {
-  try { sessionStorage.removeItem('bs_admin'); } catch(e) {}
+  try { localStorage.removeItem('bs_admin'); } catch(e) {}
 }
 
 // ---- Google OAuth login ----

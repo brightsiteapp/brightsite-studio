@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let loggedIn = false;
 
   try {
-    const adminSession = JSON.parse(sessionStorage.getItem('bs_admin') || 'null');
+    const adminSession = JSON.parse(localStorage.getItem('bs_admin') || 'null');
     isAdmin = !!(adminSession && adminSession.admin);
   } catch (e) {}
 
