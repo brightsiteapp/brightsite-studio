@@ -274,7 +274,7 @@ function clearStoredSession() {
 // ---- Google OAuth login ----
 document.getElementById('googleBtn').addEventListener('click', function() {
   // Flag so callback.html knows to return here instead of dashboard
-  try { sessionStorage.setItem('bs_admin_auth', '1'); } catch(e) {}
+  try { localStorage.setItem('bs_admin_auth', '1'); } catch(e) {}
   var redirectTo = location.origin + '/account/callback.html';
   location.href = SUPABASE_URL + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(redirectTo);
 });
@@ -643,9 +643,9 @@ if (stored && stored.admin) {
 } else {
   // Check if callback.html just redirected here after Google auth
   try {
-    var cb = JSON.parse(sessionStorage.getItem('bs_admin_callback') || 'null');
+    var cb = JSON.parse(localStorage.getItem('bs_admin_callback') || 'null');
     if (cb && cb.access_token) {
-      sessionStorage.removeItem('bs_admin_callback');
+      localStorage.removeItem('bs_admin_callback');
       handleAdminCallback(cb.access_token, cb.email);
     } else {
       document.getElementById('loginWrap').style.display = '';
