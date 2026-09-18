@@ -273,23 +273,9 @@ function clearStoredSession() {
 
 // ---- Google OAuth login ----
 document.getElementById('googleBtn').addEventListener('click', function() {
-  // Flag so callback.html knows to return here instead of dashboard
-  try { localStorage.setItem('bs_admin_auth', '1'); } catch(e) {}
   var redirectTo = location.origin + '/account/callback.html';
   location.href = SUPABASE_URL + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(redirectTo);
 });
-
-// Called by callback.html after successful Google auth — checks email and logs in
-function handleAdminCallback(accessToken, email) {
-  email = (email || '').toLowerCase();
-  if (email !== ADMIN_EMAIL) {
-    document.getElementById('loginErr').textContent = 'Access denied — sign in with the BrightSite admin account.';
-    return;
-  }
-  adminSession = { admin: true, access_token: accessToken, email: email };
-  setStoredSession(adminSession);
-  showApp();
-}
 
 document.getElementById('logoutBtn').addEventListener('click', function() {
   clearStoredSession();
@@ -641,18 +627,7 @@ if (stored && stored.admin) {
   adminSession = stored;
   showApp();
 } else {
-  // Check if callback.html just redirected here after Google auth
-  try {
-    var cb = JSON.parse(localStorage.getItem('bs_admin_callback') || 'null');
-    if (cb && cb.access_token) {
-      localStorage.removeItem('bs_admin_callback');
-      handleAdminCallback(cb.access_token, cb.email);
-    } else {
-      document.getElementById('loginWrap').style.display = '';
-    }
-  } catch(e) {
-    document.getElementById('loginWrap').style.display = '';
-  }
+  document.getElementById('loginWrap').style.display = '';
 }
 </script>
 </body>

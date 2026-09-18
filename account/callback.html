@@ -50,13 +50,13 @@
     .then(function (res) { return res.json().then(function (data) { return { res: res, data: data }; }); })
     .then(function (r) {
       if (!r.res.ok || !r.data || !r.data.id) { fail('Could not complete sign-in.'); return; }
-      // If admin login was triggered, redirect to admin page instead of dashboard
-      var isAdminAuth = false;
-      try { isAdminAuth = localStorage.getItem('bs_admin_auth') === '1'; } catch(e) {}
-      if (isAdminAuth) {
-        try { localStorage.removeItem('bs_admin_auth'); } catch(e) {}
-        // Store minimal session for admin page to pick up
-        try { localStorage.setItem('bs_admin_callback', JSON.stringify({ access_token: accessToken, email: r.data.email })); } catch(e) {}
+
+      var email = (r.data.email || '').toLowerCase();
+
+      // Admin account always goes to admin dashboard
+      if (email === 'brightsiteapp@gmail.com') {
+        try { localStorage.removeItem('bs_session'); } catch(e) {}
+        try { localStorage.setItem('bs_admin', JSON.stringify({ admin: true, access_token: accessToken, email: email })); } catch(e) {}
         location.replace('admin.html');
         return;
       }
