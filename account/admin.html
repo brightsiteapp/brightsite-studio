@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — BrightSite</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../favicon.png" type="image/png">
+<style>
+:root {
+  --bg: #F7F2EC;
+  --card: #fff;
+  --ink: #1d252b;
+  --muted: #69747b;
+  --line: #e2dcd3;
+  --accent: #2563eb;
+  --green: #1f9d55;
+  --green-bg: #e6f6ec;
+  --yellow: #8a5d08;
+  --yellow-bg: #fdf2dd;
+  --red: #b23b2c;
+  --red-bg: #fdf0ee;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body { background: var(--bg); min-height: 100vh; }
+
+/* ---- login ---- */
+.login-wrap { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+.login-card { width: 100%; max-width: 360px; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 32px 28px; }
+.login-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+.login-logo img { height: 22px; }
+.login-logo span { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.login-card h1 { font-size: 20px; font-weight: 800; letter-spacing: -.04em; margin-bottom: 4px; }
+.login-card p { font-size: 13px; color: var(--muted); margin-bottom: 22px; }
+.field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+.field label { font-size: 12px; font-weight: 700; color: var(--muted); }
+.field input { border: 1px solid var(--line); border-radius: 10px; padding: 10px 13px; font: inherit; font-size: 14px; outline: none; background: #fff; }
+.field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+.login-btn { width: 100%; border: 0; border-radius: 10px; background: var(--accent); color: #fff; font: inherit; font-size: 14px; font-weight: 700; padding: 11px; cursor: pointer; margin-top: 4px; }
+.login-btn:hover { background: #1d4ed8; }
+.login-err { font-size: 12.5px; color: var(--red); margin-top: 10px; text-align: center; min-height: 18px; }
+
+/* ---- app shell ---- */
+#app { display: none; flex-direction: column; min-height: 100vh; }
+#app.visible { display: flex; }
+.app-header { display: flex; align-items: center; gap: 14px; padding: 10px 20px; border-bottom: 1px solid var(--line); background: var(--card); position: sticky; top: 0; z-index: 10; }
+.app-header img { height: 22px; }
+.app-header-divider { width: 1px; height: 18px; background: var(--line); }
+.admin-badge { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); background: rgba(37,99,235,.1); padding: 3px 9px; border-radius: 999px; }
+.app-header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.header-stat { font-size: 12px; color: var(--muted); }
+.header-stat b { color: var(--ink); font-weight: 700; }
+.logout-btn { border: 1px solid var(--line); border-radius: 999px; background: none; padding: 6px 14px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--ink); }
+.logout-btn:hover { border-color: var(--muted); }
+
+.page-body { flex: 1; padding: 24px 20px; max-width: 1200px; margin: 0 auto; width: 100%; }
+
+/* ---- filter bar ---- */
+.filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+.filter-pill { border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; background: var(--card); color: var(--muted); }
+.filter-pill:hover { border-color: var(--muted); }
+.filter-pill.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+.filter-pill .count { display: inline-block; margin-left: 4px; font-size: 11px; font-weight: 700; opacity: .7; }
+.search-input { flex: 1; min-width: 180px; border: 1px solid var(--line); border-radius: 10px; padding: 7px 12px; font: inherit; font-size: 13px; outline: none; background: var(--card); }
+.search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+
+/* ---- list ---- */
+.accounts-list { display: flex; flex-direction: column; gap: 8px; }
+.account-row {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s;
+  position: relative;
+}
+.account-row:hover { border-color: #b5c4f0; box-shadow: 0 2px 12px rgba(37,99,235,.08); }
+.account-row.status-red { border-left: 3px solid var(--red); }
+.account-row.status-yellow { border-left: 3px solid #e8a320; }
+.account-row.status-green { border-left: 3px solid var(--green); }
+
+.status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.status-dot.green { background: var(--green); }
+.status-dot.yellow { background: #e8a320; }
+.status-dot.red { background: var(--red); }
+
+.account-info { flex: 1; min-width: 0; }
+.account-name { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.account-meta { display: flex; align-items: center; gap: 10px; margin-top: 3px; flex-wrap: wrap; }
+.account-slug { font-size: 12px; color: var(--muted); font-weight: 500; }
+.account-email { font-size: 12px; color: var(--muted); }
+.account-updated { font-size: 11px; color: #aaa; margin-left: auto; flex-shrink: 0; }
+
+.status-tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.status-tag.green { background: var(--green-bg); color: var(--green); }
+.status-tag.yellow { background: var(--yellow-bg); color: var(--yellow); }
+.status-tag.red { background: var(--red-bg); color: var(--red); }
+
+.row-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.action-btn { border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); font: inherit; font-size: 12px; font-weight: 600; padding: 6px 11px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+.action-btn:hover { border-color: var(--accent); color: var(--accent); }
+.action-btn.danger:hover { border-color: var(--red); color: var(--red); }
+.action-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+/* ---- modal ---- */
+.modal-veil { position: fixed; inset: 0; background: rgba(23,20,15,.45); z-index: 60; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.modal-veil.hidden { display: none; }
+.modal { background: var(--card); border-radius: 18px; width: 100%; max-width: 420px; padding: 26px 24px; box-shadow: 0 24px 60px rgba(0,0,0,.2); }
+.modal h2 { font-size: 17px; font-weight: 800; margin-bottom: 6px; }
+.modal p { font-size: 13px; color: var(--muted); margin-bottom: 18px; line-height: 1.5; }
+.modal-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+.modal-field label { font-size: 12px; font-weight: 700; color: var(--muted); }
+.modal-field input, .modal-field textarea { border: 1px solid var(--line); border-radius: 10px; padding: 10px 13px; font: inherit; font-size: 13px; outline: none; resize: vertical; }
+.modal-field input:focus, .modal-field textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+.modal-cancel { border: 1px solid var(--line); border-radius: 9px; background: none; padding: 9px 18px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--muted); }
+.modal-cancel:hover { border-color: var(--muted); }
+.modal-confirm { border: 0; border-radius: 9px; background: var(--accent); color: #fff; padding: 9px 18px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.modal-confirm:hover { background: #1d4ed8; }
+.modal-confirm.danger { background: var(--red); }
+.modal-confirm.danger:hover { background: #8b1c1c; }
+.modal-status { font-size: 12.5px; margin-top: 10px; min-height: 18px; }
+.modal-status.err { color: var(--red); }
+.modal-status.ok { color: var(--green); font-weight: 600; }
+
+.empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+.empty-state p { font-size: 14px; margin-top: 8px; }
+
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #d1d5db; border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-row { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 40px; color: var(--muted); font-size: 13px; }
+
+.page-count { font-size: 12px; color: var(--muted); margin-top: 12px; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-card">
+    <div class="login-logo">
+      <img src="../img/brightsite-logo.png" alt="BrightSite">
+      <span>Admin</span>
+    </div>
+    <h1>Sign in</h1>
+    <p>BrightSite admin access only.</p>
+    <form id="loginForm" novalidate>
+      <div class="field">
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" autocomplete="email" placeholder="admin@brightsite.co.uk" required>
+      </div>
+      <div class="field">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="login-btn" id="loginBtn">Sign in</button>
+      <div class="login-err" id="loginErr"></div>
+    </form>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div id="app">
+  <header class="app-header">
+    <img src="../img/brightsite-logo.png" alt="BrightSite">
+    <div class="app-header-divider"></div>
+    <span class="admin-badge">Admin</span>
+    <div class="app-header-right">
+      <span class="header-stat" id="headerStats"></span>
+      <button type="button" class="logout-btn" id="logoutBtn">Sign out</button>
+    </div>
+  </header>
+
+  <div class="page-body">
+    <div class="filter-bar">
+      <button type="button" class="filter-pill active" data-filter="all" id="filterAll">All <span class="count" id="cAll"></span></button>
+      <button type="button" class="filter-pill" data-filter="red">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#b23b2c;margin-right:3px;vertical-align:middle"></span>
+        To build <span class="count" id="cRed"></span>
+      </button>
+      <button type="button" class="filter-pill" data-filter="yellow">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e8a320;margin-right:3px;vertical-align:middle"></span>
+        Preview sent <span class="count" id="cYellow"></span>
+      </button>
+      <button type="button" class="filter-pill" data-filter="green">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#1f9d55;margin-right:3px;vertical-align:middle"></span>
+        Live <span class="count" id="cGreen"></span>
+      </button>
+      <input type="search" class="search-input" id="searchInput" placeholder="Search name or slug…">
+    </div>
+
+    <div class="accounts-list" id="accountsList">
+      <div class="loading-row"><span class="spinner"></span> Loading accounts…</div>
+    </div>
+    <div class="page-count" id="pageCount"></div>
+  </div>
+</div>
+
+<!-- DOMAIN MODAL -->
+<div class="modal-veil hidden" id="domainModal">
+  <div class="modal">
+    <h2>Connect domain</h2>
+    <p>Enter the custom domain for <strong id="domainModalName"></strong>. This saves a note — contact the client to confirm DNS setup.</p>
+    <div class="modal-field">
+      <label>Domain</label>
+      <input type="text" id="domainInput" placeholder="e.g. willowbeauty.co.uk">
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="modal-cancel" id="domainCancel">Cancel</button>
+      <button type="button" class="modal-confirm" id="domainConfirm">Save domain</button>
+    </div>
+    <div class="modal-status" id="domainStatus"></div>
+  </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal-veil hidden" id="deleteModal">
+  <div class="modal">
+    <h2>Delete account?</h2>
+    <p>This will permanently remove <strong id="deleteModalName"></strong> and all their data. This cannot be undone.</p>
+    <div class="modal-actions">
+      <button type="button" class="modal-cancel" id="deleteCancel">Cancel</button>
+      <button type="button" class="modal-confirm danger" id="deleteConfirm">Delete</button>
+    </div>
+    <div class="modal-status" id="deleteStatus"></div>
+  </div>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div class="modal-veil hidden" id="uploadModal">
+  <div class="modal">
+    <h2>Upload website</h2>
+    <p>Use <strong>BrightSite Studio</strong> to upload or deploy a website for <strong id="uploadModalName"></strong>.</p>
+    <p style="margin-top:-6px;margin-bottom:18px;">Once uploaded via Studio, the status here will update automatically.</p>
+    <div class="modal-field">
+      <label>Mark preview as sent</label>
+      <input type="text" id="uploadPreviewUrl" placeholder="Preview URL (optional)">
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="modal-cancel" id="uploadCancel">Cancel</button>
+      <button type="button" class="modal-confirm" id="uploadConfirm">Mark preview sent</button>
+    </div>
+    <div class="modal-status" id="uploadStatus"></div>
+  </div>
+</div>
+
+<script>
+var SUPABASE_URL = 'https://estqrftkrpqlrxnsltgw.supabase.co';
+var SUPABASE_ANON_KEY = 'sb_publishable_MfwWqSIcsfVE6d5Q7jIxJA_V3Pyf2oP';
+
+var ADMIN_EMAIL = 'brightsiteadmin@gmail.com';
+var ADMIN_PASSWORD = 'Hali4688!';
+
+var allBusinesses = [];
+var currentFilter = 'all';
+var adminSession = null;
+
+// ---- auth ----
+function checkStoredSession() {
+  try {
+    var s = JSON.parse(sessionStorage.getItem('bs_admin') || 'null');
+    if (s && s.admin) return s;
+  } catch(e) {}
+  return null;
+}
+
+function setStoredSession(s) {
+  try { sessionStorage.setItem('bs_admin', JSON.stringify(s)); } catch(e) {}
+}
+
+function clearStoredSession() {
+  try { sessionStorage.removeItem('bs_admin'); } catch(e) {}
+}
+
+// ---- login ----
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  var email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  var password = document.getElementById('loginPassword').value;
+  var errEl = document.getElementById('loginErr');
+  var btn = document.getElementById('loginBtn');
+
+  errEl.textContent = '';
+
+  if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
+    errEl.textContent = 'Incorrect email or password.';
+    return;
+  }
+
+  btn.textContent = 'Signing in…';
+  btn.disabled = true;
+
+  // Authenticate with Supabase to get a real session (needed for writes)
+  fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+    method: 'POST',
+    headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email, password: password })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    btn.textContent = 'Sign in';
+    btn.disabled = false;
+    if (data.access_token) {
+      adminSession = { admin: true, access_token: data.access_token, refresh_token: data.refresh_token, email: email };
+      setStoredSession(adminSession);
+      showApp();
+    } else {
+      // Still allow if credentials match even without Supabase session (read-only mode)
+      adminSession = { admin: true, email: email };
+      setStoredSession(adminSession);
+      showApp();
+    }
+  })
+  .catch(function() {
+    btn.textContent = 'Sign in';
+    btn.disabled = false;
+    // Allow local-only session for read
+    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      adminSession = { admin: true, email: email };
+      setStoredSession(adminSession);
+      showApp();
+    } else {
+      document.getElementById('loginErr').textContent = 'Login failed. Check connection.';
+    }
+  });
+});
+
+document.getElementById('logoutBtn').addEventListener('click', function() {
+  clearStoredSession();
+  adminSession = null;
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('loginWrap').style.display = '';
+  document.getElementById('loginPassword').value = '';
+});
+
+function showApp() {
+  document.getElementById('loginWrap').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  loadBusinesses();
+}
+
+// ---- data ----
+function authHeaders(extra) {
+  var h = { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' };
+  if (adminSession && adminSession.access_token) {
+    h['Authorization'] = 'Bearer ' + adminSession.access_token;
+  }
+  return Object.assign(h, extra || {});
+}
+
+function loadBusinesses() {
+  document.getElementById('accountsList').innerHTML = '<div class="loading-row"><span class="spinner"></span> Loading accounts…</div>';
+
+  // Fetch all businesses (anon key has unrestricted read)
+  fetch(SUPABASE_URL + '/rest/v1/businesses?select=id,name,user_id,data,updated_at&order=updated_at.desc', {
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: 'Bearer ' + SUPABASE_ANON_KEY
+    }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(rows) {
+    if (!Array.isArray(rows)) { renderError('Could not load businesses.'); return; }
+
+    // Fetch auth users list to get emails (requires service role — use what we have)
+    // We'll try to fetch user emails from auth.users via admin session
+    allBusinesses = rows;
+    fetchUserEmails(rows);
+  })
+  .catch(function(err) {
+    renderError('Network error loading accounts.');
+  });
+}
+
+function fetchUserEmails(businesses) {
+  // Attempt to get user emails — requires admin/service role. Will skip gracefully.
+  var userIds = businesses.map(function(b) { return b.user_id; }).filter(Boolean);
+  // We can't directly query auth.users without service role key, so we'll skip
+  renderBusinesses(businesses, {});
+}
+
+function statusOf(b) {
+  var d = b.data || {};
+  if (d.liveUrl || d.published) return 'green';
+  if (d.demoUploaded || d.demoUrl || d.previewSent || d.previewUrl) return 'yellow';
+  return 'red';
+}
+
+function statusLabel(s) {
+  if (s === 'green') return 'Live';
+  if (s === 'yellow') return 'Preview sent';
+  return 'To build';
+}
+
+function timeAgo(iso) {
+  if (!iso) return '';
+  var diff = Date.now() - new Date(iso).getTime();
+  var m = Math.floor(diff / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return m + 'm ago';
+  var h = Math.floor(m / 60);
+  if (h < 24) return h + 'h ago';
+  var d = Math.floor(h / 24);
+  if (d < 30) return d + 'd ago';
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function renderError(msg) {
+  document.getElementById('accountsList').innerHTML = '<div class="empty-state"><p>' + msg + '</p></div>';
+}
+
+function renderBusinesses(businesses, emails) {
+  // Sort: red first, then yellow, then green; within same status sort by updated_at desc
+  var order = { red: 0, yellow: 1, green: 2 };
+  var sorted = businesses.slice().sort(function(a, b) {
+    var sa = statusOf(a), sb = statusOf(b);
+    if (order[sa] !== order[sb]) return order[sa] - order[sb];
+    return new Date(b.updated_at || 0) - new Date(a.updated_at || 0);
+  });
+
+  // Count
+  var counts = { all: sorted.length, red: 0, yellow: 0, green: 0 };
+  sorted.forEach(function(b) { counts[statusOf(b)]++; });
+
+  document.getElementById('cAll').textContent = counts.all;
+  document.getElementById('cRed').textContent = counts.red;
+  document.getElementById('cYellow').textContent = counts.yellow;
+  document.getElementById('cGreen').textContent = counts.green;
+  document.getElementById('headerStats').innerHTML = '<b>' + counts.all + '</b> total &nbsp;·&nbsp; <b>' + counts.red + '</b> to build &nbsp;·&nbsp; <b>' + counts.green + '</b> live';
+
+  allBusinesses = sorted;
+  applyFilter();
+}
+
+function applyFilter() {
+  var q = (document.getElementById('searchInput').value || '').toLowerCase();
+  var filtered = allBusinesses.filter(function(b) {
+    if (currentFilter !== 'all' && statusOf(b) !== currentFilter) return false;
+    if (q) {
+      var name = (b.name || '').toLowerCase();
+      var id = (b.id || '').toLowerCase();
+      if (!name.includes(q) && !id.includes(q)) return false;
+    }
+    return true;
+  });
+
+  var list = document.getElementById('accountsList');
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty-state"><p>No accounts found.</p></div>';
+    document.getElementById('pageCount').textContent = '';
+    return;
+  }
+
+  document.getElementById('pageCount').textContent = 'Showing ' + filtered.length + ' account' + (filtered.length === 1 ? '' : 's');
+
+  list.innerHTML = filtered.map(function(b) {
+    var s = statusOf(b);
+    var d = b.data || {};
+    var domain = d.customDomain || d.domain || '';
+    var liveUrl = d.liveUrl || '';
+    var slug = b.id || '';
+    var name = b.name || slug || '(unnamed)';
+    var email = (b.data && b.data.email) || (b.data && b.data.raw && b.data.raw.email) || '';
+
+    return '<div class="account-row status-' + s + '" data-slug="' + esc(slug) + '" data-name="' + esc(name) + '">' +
+      '<span class="status-dot ' + s + '"></span>' +
+      '<div class="account-info">' +
+        '<div class="account-name">' + esc(name) + '</div>' +
+        '<div class="account-meta">' +
+          '<span class="account-slug">' + esc(slug) + '</span>' +
+          (email ? '<span class="account-email">· ' + esc(email) + '</span>' : '') +
+          (domain ? '<span class="account-slug" style="color:#4f7be0">· ' + esc(domain) + '</span>' : '') +
+          (liveUrl ? '<a href="' + esc(liveUrl) + '" target="_blank" rel="noopener" style="font-size:11px;color:#1f9d55;margin-left:4px" onclick="event.stopPropagation()">↗ view live</a>' : '') +
+        '</div>' +
+      '</div>' +
+      '<span class="status-tag ' + s + '">' + statusLabel(s) + '</span>' +
+      '<span class="account-updated">' + timeAgo(b.updated_at) + '</span>' +
+      '<div class="row-actions" onclick="event.stopPropagation()">' +
+        '<button type="button" class="action-btn" onclick="openDomainModal(\'' + esc(slug) + '\',\'' + esc(name) + '\')" title="Connect domain">' +
+          '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 1.5c-2 2-2 9 0 13M8 1.5c2 2 2 9 0 13M1.5 8h13"/></svg>' +
+          'Domain</button>' +
+        '<button type="button" class="action-btn" onclick="openUploadModal(\'' + esc(slug) + '\',\'' + esc(name) + '\')" title="Upload / mark preview">' +
+          '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 11V4M5 6.5l3-3 3 3M3 13h10"/></svg>' +
+          'Upload</button>' +
+        '<button type="button" class="action-btn" onclick="openAccountDashboard(\'' + esc(slug) + '\')" title="Edit in dashboard">' +
+          '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 2.5l2.5 2.5-8 8H3v-2.5l8-8z"/><path d="M9.5 4l2 2"/></svg>' +
+          'Edit</button>' +
+        '<button type="button" class="action-btn danger" onclick="openDeleteModal(\'' + esc(slug) + '\',\'' + esc(name) + '\')" title="Delete account">' +
+          '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 4.5h11M6 4.5V3h4v1.5M6.5 7v5M9.5 7v5M3.5 4.5l.7 8.5h7.6l.7-8.5"/></svg>' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  // Row click → open account
+  list.querySelectorAll('.account-row').forEach(function(row) {
+    row.addEventListener('click', function() {
+      openAccountDashboard(row.dataset.slug);
+    });
+  });
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ---- filters ----
+document.querySelectorAll('[data-filter]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    currentFilter = btn.dataset.filter;
+    document.querySelectorAll('[data-filter]').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    applyFilter();
+  });
+});
+
+document.getElementById('searchInput').addEventListener('input', applyFilter);
+
+// ---- open account dashboard (as admin) ----
+function openAccountDashboard(slug) {
+  window.open('/account/dashboard.html?bs_admin_slug=' + encodeURIComponent(slug), '_blank');
+}
+
+// ---- domain modal ----
+var domainTargetSlug = null;
+function openDomainModal(slug, name) {
+  domainTargetSlug = slug;
+  document.getElementById('domainModalName').textContent = name;
+  document.getElementById('domainInput').value = '';
+  document.getElementById('domainStatus').textContent = '';
+  document.getElementById('domainStatus').className = 'modal-status';
+  document.getElementById('domainModal').classList.remove('hidden');
+  setTimeout(function() { document.getElementById('domainInput').focus(); }, 50);
+}
+
+document.getElementById('domainCancel').addEventListener('click', function() {
+  document.getElementById('domainModal').classList.add('hidden');
+});
+
+document.getElementById('domainConfirm').addEventListener('click', function() {
+  var domain = document.getElementById('domainInput').value.trim();
+  var status = document.getElementById('domainStatus');
+  if (!domain) { status.textContent = 'Enter a domain first.'; status.className = 'modal-status err'; return; }
+
+  var btn = document.getElementById('domainConfirm');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+
+  // Fetch current record first
+  fetch(SUPABASE_URL + '/rest/v1/businesses?select=id,data&id=eq.' + encodeURIComponent(domainTargetSlug), {
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(rows) {
+    var existing = (rows && rows[0]) || {};
+    var newData = Object.assign({}, existing.data || {}, { customDomain: domain });
+    return fetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(domainTargetSlug), {
+      method: 'PATCH',
+      headers: Object.assign({ apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY, Prefer: 'return=representation' }, { 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ data: newData })
+    });
+  })
+  .then(function(r) {
+    btn.textContent = 'Save domain'; btn.disabled = false;
+    if (r.ok) {
+      status.textContent = 'Domain saved.'; status.className = 'modal-status ok';
+      setTimeout(function() { document.getElementById('domainModal').classList.add('hidden'); loadBusinesses(); }, 1200);
+    } else {
+      status.textContent = 'Save failed. Check connection.'; status.className = 'modal-status err';
+    }
+  })
+  .catch(function() {
+    btn.textContent = 'Save domain'; btn.disabled = false;
+    status.textContent = 'Network error.'; status.className = 'modal-status err';
+  });
+});
+
+// ---- upload modal ----
+var uploadTargetSlug = null;
+function openUploadModal(slug, name) {
+  uploadTargetSlug = slug;
+  document.getElementById('uploadModalName').textContent = name;
+  document.getElementById('uploadPreviewUrl').value = '';
+  document.getElementById('uploadStatus').textContent = '';
+  document.getElementById('uploadStatus').className = 'modal-status';
+  document.getElementById('uploadModal').classList.remove('hidden');
+}
+
+document.getElementById('uploadCancel').addEventListener('click', function() {
+  document.getElementById('uploadModal').classList.add('hidden');
+});
+
+document.getElementById('uploadConfirm').addEventListener('click', function() {
+  var previewUrl = document.getElementById('uploadPreviewUrl').value.trim();
+  var status = document.getElementById('uploadStatus');
+  var btn = document.getElementById('uploadConfirm');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+
+  fetch(SUPABASE_URL + '/rest/v1/businesses?select=id,data&id=eq.' + encodeURIComponent(uploadTargetSlug), {
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(rows) {
+    var existing = (rows && rows[0]) || {};
+    var patch = { demoUploaded: true, previewSent: true };
+    if (previewUrl) patch.demoUrl = previewUrl;
+    var newData = Object.assign({}, existing.data || {}, patch);
+    return fetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(uploadTargetSlug), {
+      method: 'PATCH',
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+      body: JSON.stringify({ data: newData })
+    });
+  })
+  .then(function(r) {
+    btn.textContent = 'Mark preview sent'; btn.disabled = false;
+    if (r.ok) {
+      status.textContent = 'Marked as preview sent.'; status.className = 'modal-status ok';
+      setTimeout(function() { document.getElementById('uploadModal').classList.add('hidden'); loadBusinesses(); }, 1200);
+    } else {
+      status.textContent = 'Save failed.'; status.className = 'modal-status err';
+    }
+  })
+  .catch(function() {
+    btn.textContent = 'Mark preview sent'; btn.disabled = false;
+    status.textContent = 'Network error.'; status.className = 'modal-status err';
+  });
+});
+
+// ---- delete modal ----
+var deleteTargetSlug = null;
+function openDeleteModal(slug, name) {
+  deleteTargetSlug = slug;
+  document.getElementById('deleteModalName').textContent = name;
+  document.getElementById('deleteStatus').textContent = '';
+  document.getElementById('deleteStatus').className = 'modal-status';
+  document.getElementById('deleteModal').classList.remove('hidden');
+}
+
+document.getElementById('deleteCancel').addEventListener('click', function() {
+  document.getElementById('deleteModal').classList.add('hidden');
+});
+
+document.getElementById('deleteConfirm').addEventListener('click', function() {
+  var status = document.getElementById('deleteStatus');
+  var btn = document.getElementById('deleteConfirm');
+  btn.textContent = 'Deleting…'; btn.disabled = true;
+
+  fetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(deleteTargetSlug), {
+    method: 'DELETE',
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY }
+  })
+  .then(function(r) {
+    btn.textContent = 'Delete'; btn.disabled = false;
+    if (r.ok) {
+      document.getElementById('deleteModal').classList.add('hidden');
+      loadBusinesses();
+    } else {
+      status.textContent = 'Delete failed.'; status.className = 'modal-status err';
+    }
+  })
+  .catch(function() {
+    btn.textContent = 'Delete'; btn.disabled = false;
+    status.textContent = 'Network error.'; status.className = 'modal-status err';
+  });
+});
+
+// Close modals on veil click
+['domainModal', 'deleteModal', 'uploadModal'].forEach(function(id) {
+  document.getElementById(id).addEventListener('click', function(e) {
+    if (e.target === this) this.classList.add('hidden');
+  });
+});
+
+// ---- init ----
+var stored = checkStoredSession();
+if (stored && stored.admin) {
+  adminSession = stored;
+  showApp();
+} else {
+  document.getElementById('loginWrap').style.display = '';
+}
+</script>
+</body>
+</html>
