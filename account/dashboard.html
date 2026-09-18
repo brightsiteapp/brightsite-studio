@@ -129,8 +129,6 @@
   @media(min-width:600px){.plan-modal-sheet{border-radius:22px;animation:sheetFade .18s ease}}
   @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
   @keyframes sheetFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-  .stripe-modal-spinner{width:24px;height:24px;border:3px solid #e5e7eb;border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
   .plan-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
   .plan-modal-header h2{font-family:var(--display);font-size:17px;font-weight:700}
   .plan-modal-header p{font-size:12.5px;color:var(--muted);margin:0 0 16px}
@@ -414,16 +412,8 @@
             <button type="button" class="plan-chosen-change" id="choosePlanBtn">Change plan</button>
           </div>
           <p class="info-hint" id="billingHint">Your Essential plan is selected. Add features now; you'll manage billing once your account is active.</p>
-          <button type="button" class="upgrade-btn" id="upgradeBtn">Pay for your site</button>
+          <a class="upgrade-btn" id="upgradeBtn" target="_blank" rel="noopener">Pay for your site</a>
           <button type="button" class="billing-btn" id="billingBtn" hidden>Manage billing</button>
-          <div id="stripeInline" hidden style="margin-top:12px;border:1px solid var(--line);border-radius:14px;overflow:hidden;position:relative">
-            <div id="stripeInlineLoading" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#fafafa;font-size:12px;color:#888">
-              <div class="stripe-modal-spinner"></div>
-              <span>Loading secure checkout…</span>
-            </div>
-            <iframe id="stripeInlineIframe" src="" title="Stripe checkout" allow="payment" style="width:100%;height:640px;border:0;display:block" onload="document.getElementById('stripeInlineLoading').style.display='none'"></iframe>
-            <button type="button" id="stripeInlineClose" style="position:absolute;top:8px;right:8px;background:rgba(255,255,255,.9);border:1px solid #e5e7eb;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;color:#555">✕ Close</button>
-          </div>
         </div>
 
         <div class="req-btn-wrap">
@@ -1574,7 +1564,7 @@
 
     var upgradeBtn = document.getElementById('upgradeBtn');
     upgradeBtn.hidden = false;
-    upgradeBtn.dataset.stripeUrl = buildStripeUrl();
+    upgradeBtn.href = buildStripeUrl();
 
     document.getElementById('billingBtn').hidden = !isPaying;
 
@@ -2232,32 +2222,5 @@
 })();
 </script>
 
-<script>
-(function(){
-  var upgradeBtn = document.getElementById('upgradeBtn');
-  var inlineBox = document.getElementById('stripeInline');
-  var iframe = document.getElementById('stripeInlineIframe');
-  var closeBtn = document.getElementById('stripeInlineClose');
-
-  if (upgradeBtn) {
-    upgradeBtn.addEventListener('click', function() {
-      var url = upgradeBtn.dataset.stripeUrl;
-      if (!url) return;
-      document.getElementById('stripeInlineLoading').style.display = '';
-      iframe.src = url;
-      inlineBox.hidden = false;
-      upgradeBtn.hidden = true;
-      inlineBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    });
-  }
-  if (closeBtn) {
-    closeBtn.addEventListener('click', function() {
-      inlineBox.hidden = true;
-      iframe.src = '';
-      upgradeBtn.hidden = false;
-    });
-  }
-})();
-</script>
 </body>
 </html>
