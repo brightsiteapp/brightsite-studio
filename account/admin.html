@@ -138,6 +138,28 @@ body { background: var(--bg); min-height: 100vh; }
 .loading-row { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 40px; color: var(--muted); font-size: 13px; }
 
 .page-count { font-size: 12px; color: var(--muted); margin-top: 12px; }
+
+/* ---- upload drop zone ---- */
+.modal.wide { max-width: 520px; }
+.drop-zone { border: 2px dashed var(--line); border-radius: 12px; padding: 28px 20px; text-align: center; cursor: pointer; transition: border-color .15s, background .15s; background: var(--bg); margin-bottom: 14px; }
+.drop-zone.drag-over { border-color: var(--accent); background: rgba(37,99,235,.05); }
+.drop-zone input[type=file] { display: none; }
+.drop-zone p { font-size: 13px; color: var(--muted); margin: 0; line-height: 1.5; }
+.drop-zone p b { color: var(--accent); cursor: pointer; }
+.file-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; max-height: 160px; overflow-y: auto; }
+.file-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 12px; }
+.file-item .fname { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.file-item .fsize { color: var(--muted); flex-shrink: 0; }
+.file-item .fremove { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 15px; line-height: 1; padding: 0 2px; flex-shrink: 0; }
+.upload-progress { height: 4px; border-radius: 2px; background: var(--line); margin-bottom: 14px; overflow: hidden; }
+.upload-progress-bar { height: 100%; border-radius: 2px; background: var(--accent); width: 0; transition: width .2s; }
+/* ---- go-live btn ---- */
+.action-btn.live { border-color: var(--green); color: var(--green); }
+.action-btn.live:hover { background: var(--green-bg); }
+.approved-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 999px; font-size: 10px; font-weight: 800; background: #e6f6ec; color: #1f9d55; margin-left: 4px; }
+/* ---- settings btn ---- */
+.settings-btn { border: 1px solid var(--line); border-radius: 999px; background: none; padding: 6px 14px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--muted); }
+.settings-btn:hover { border-color: var(--muted); }
 </style>
 </head>
 <body>
@@ -167,6 +189,7 @@ body { background: var(--bg); min-height: 100vh; }
     <span class="admin-badge">Admin</span>
     <div class="app-header-right">
       <span class="header-stat" id="headerStats"></span>
+      <button type="button" class="settings-btn" id="settingsBtn">⚙ Settings</button>
       <button type="button" class="logout-btn" id="logoutBtn">Sign out</button>
     </div>
   </header>
@@ -228,19 +251,58 @@ body { background: var(--bg); min-height: 100vh; }
 
 <!-- UPLOAD MODAL -->
 <div class="modal-veil hidden" id="uploadModal">
-  <div class="modal">
-    <h2>Upload website</h2>
-    <p>Use <strong>BrightSite Studio</strong> to upload or deploy a website for <strong id="uploadModalName"></strong>.</p>
-    <p style="margin-top:-6px;margin-bottom:18px;">Once uploaded via Studio, the status here will update automatically.</p>
-    <div class="modal-field">
-      <label>Mark preview as sent</label>
-      <input type="text" id="uploadPreviewUrl" placeholder="Preview URL (optional)">
+  <div class="modal wide">
+    <h2>Upload website for <span id="uploadModalName"></span></h2>
+    <p>Drag in the HTML, CSS, JS and image files. The <code>index.html</code> will be the homepage. Files are hosted on Supabase and the client's status will update to Preview Sent.</p>
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" multiple accept=".html,.htm,.css,.js,.json,.svg,.png,.jpg,.jpeg,.gif,.webp,.ico,.woff,.woff2,.ttf">
+      <p>Drop files here or <b id="browseLink">browse</b></p>
     </div>
+    <div class="file-list" id="fileList"></div>
+    <div class="upload-progress" id="uploadProgressWrap" style="display:none"><div class="upload-progress-bar" id="uploadProgressBar"></div></div>
     <div class="modal-actions">
       <button type="button" class="modal-cancel" id="uploadCancel">Cancel</button>
-      <button type="button" class="modal-confirm" id="uploadConfirm">Mark preview sent</button>
+      <button type="button" class="modal-confirm" id="uploadConfirm" disabled>Upload files</button>
     </div>
     <div class="modal-status" id="uploadStatus"></div>
+  </div>
+</div>
+
+<!-- GO LIVE MODAL -->
+<div class="modal-veil hidden" id="goLiveModal">
+  <div class="modal">
+    <h2>Make live — <span id="goLiveModalName"></span></h2>
+    <p>This marks the site as live. If you've connected a domain, enter it below so the client can see it on their dashboard.</p>
+    <div class="modal-field">
+      <label>Live URL (optional)</label>
+      <input type="text" id="goLiveUrl" placeholder="https://theirbusiness.co.uk">
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="modal-cancel" id="goLiveCancel">Cancel</button>
+      <button type="button" class="modal-confirm" id="goLiveConfirm">Mark as live ✓</button>
+    </div>
+    <div class="modal-status" id="goLiveStatus"></div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-veil hidden" id="settingsModal">
+  <div class="modal">
+    <h2>Admin settings</h2>
+    <p>Vercel API credentials — used to connect custom domains to your project.</p>
+    <div class="modal-field">
+      <label>Vercel API token</label>
+      <input type="password" id="vercelToken" placeholder="Paste your Vercel token">
+    </div>
+    <div class="modal-field">
+      <label>Vercel project name or ID</label>
+      <input type="text" id="vercelProjectId" placeholder="e.g. brightsite-marketing-site">
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="modal-cancel" id="settingsCancel">Cancel</button>
+      <button type="button" class="modal-confirm" id="settingsSave">Save</button>
+    </div>
+    <div class="modal-status" id="settingsStatus"></div>
   </div>
 </div>
 
@@ -416,7 +478,7 @@ function applyFilter() {
     return '<div class="account-row status-' + s + '" data-slug="' + esc(slug) + '" data-name="' + esc(name) + '">' +
       '<span class="status-dot ' + s + '"></span>' +
       '<div class="account-info">' +
-        '<div class="account-name">' + esc(name) + '</div>' +
+        '<div class="account-name">' + esc(name) + (d.demoApproved ? '<span class="approved-tag">✓ Approved</span>' : '') + '</div>' +
         '<div class="account-meta">' +
           '<span class="account-slug">' + esc(slug) + '</span>' +
           (email ? '<span class="account-email">· ' + esc(email) + '</span>' : '') +
@@ -427,15 +489,16 @@ function applyFilter() {
       '<span class="status-tag ' + s + '">' + statusLabel(s) + '</span>' +
       '<span class="account-updated">' + timeAgo(b.updated_at) + '</span>' +
       '<div class="row-actions" onclick="event.stopPropagation()">' +
+        (d.demoApproved && s !== 'green' ? '<button type="button" class="action-btn live" onclick="openGoLiveModal(\'' + esc(slug) + '\',\'' + esc(name) + '\')" title="Go live">✓ Go live</button>' : '') +
         '<button type="button" class="action-btn" onclick="openDomainModal(\'' + esc(slug) + '\',\'' + esc(name) + '\')" title="Connect domain">' +
           '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 1.5c-2 2-2 9 0 13M8 1.5c2 2 2 9 0 13M1.5 8h13"/></svg>' +
           'Domain</button>' +
-        '<button type="button" class="action-btn" onclick="openUploadModal(\'' + esc(slug) + '\',\'' + esc(name) + '\')" title="Upload / mark preview">' +
+        '<button type="button" class="action-btn" onclick="openUploadModal(\'' + esc(slug) + '\',\'' + esc(name) + '\')" title="Upload site files">' +
           '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 11V4M5 6.5l3-3 3 3M3 13h10"/></svg>' +
           'Upload</button>' +
-        '<button type="button" class="action-btn" onclick="openAccountDashboard(\'' + esc(slug) + '\')" title="Edit in dashboard">' +
+        '<button type="button" class="action-btn" onclick="openAccountDashboard(\'' + esc(slug) + '\')" title="View dashboard">' +
           '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 2.5l2.5 2.5-8 8H3v-2.5l8-8z"/><path d="M9.5 4l2 2"/></svg>' +
-          'Edit</button>' +
+          'View</button>' +
         '<button type="button" class="action-btn danger" onclick="openDeleteModal(\'' + esc(slug) + '\',\'' + esc(name) + '\')" title="Delete account">' +
           '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 4.5h11M6 4.5V3h4v1.5M6.5 7v5M9.5 7v5M3.5 4.5l.7 8.5h7.6l.7-8.5"/></svg>' +
         '</button>' +
@@ -488,6 +551,225 @@ document.getElementById('domainCancel').addEventListener('click', function() {
   document.getElementById('domainModal').classList.add('hidden');
 });
 
+// ---- upload modal (real file uploader) ----
+var uploadTargetSlug = null;
+var pendingFiles = [];
+
+function openUploadModal(slug, name) {
+  uploadTargetSlug = slug;
+  document.getElementById('uploadModalName').textContent = name;
+  pendingFiles = [];
+  renderFileList();
+  document.getElementById('uploadStatus').textContent = '';
+  document.getElementById('uploadStatus').className = 'modal-status';
+  document.getElementById('uploadProgressWrap').style.display = 'none';
+  document.getElementById('uploadProgressBar').style.width = '0';
+  document.getElementById('uploadConfirm').disabled = true;
+  document.getElementById('uploadModal').classList.remove('hidden');
+}
+
+function renderFileList() {
+  var list = document.getElementById('fileList');
+  list.innerHTML = '';
+  pendingFiles.forEach(function(f, i) {
+    var item = document.createElement('div');
+    item.className = 'file-item';
+    var fname = document.createElement('span'); fname.className = 'fname'; fname.textContent = f.name;
+    var fsize = document.createElement('span'); fsize.className = 'fsize'; fsize.textContent = (f.size / 1024).toFixed(0) + ' KB';
+    var fremove = document.createElement('button'); fremove.className = 'fremove'; fremove.textContent = '×'; fremove.title = 'Remove';
+    fremove.onclick = function() { pendingFiles.splice(i, 1); renderFileList(); updateUploadBtn(); };
+    item.appendChild(fname); item.appendChild(fsize); item.appendChild(fremove);
+    list.appendChild(item);
+  });
+  updateUploadBtn();
+}
+
+function updateUploadBtn() {
+  document.getElementById('uploadConfirm').disabled = pendingFiles.length === 0;
+}
+
+function addFiles(files) {
+  Array.from(files).forEach(function(f) {
+    if (!pendingFiles.find(function(x) { return x.name === f.name; })) pendingFiles.push(f);
+  });
+  renderFileList();
+}
+
+var dz = document.getElementById('dropZone');
+dz.addEventListener('click', function() { document.getElementById('fileInput').click(); });
+document.getElementById('browseLink').addEventListener('click', function(e) { e.stopPropagation(); document.getElementById('fileInput').click(); });
+document.getElementById('fileInput').addEventListener('change', function() { addFiles(this.files); this.value = ''; });
+dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', function() { dz.classList.remove('drag-over'); });
+dz.addEventListener('drop', function(e) { e.preventDefault(); dz.classList.remove('drag-over'); addFiles(e.dataTransfer.files); });
+
+document.getElementById('uploadCancel').addEventListener('click', function() {
+  document.getElementById('uploadModal').classList.add('hidden');
+});
+
+document.getElementById('uploadConfirm').addEventListener('click', function() {
+  if (!pendingFiles.length) return;
+  var status = document.getElementById('uploadStatus');
+  var btn = document.getElementById('uploadConfirm');
+  var progressWrap = document.getElementById('uploadProgressWrap');
+  var progressBar = document.getElementById('uploadProgressBar');
+  btn.textContent = 'Uploading…'; btn.disabled = true;
+  progressWrap.style.display = 'block';
+  status.textContent = ''; status.className = 'modal-status';
+
+  var total = pendingFiles.length, done = 0, failed = [];
+  var demoUrl = '';
+
+  function uploadNext(i) {
+    if (i >= pendingFiles.length) {
+      // All done — update business record
+      patchBusinessAfterUpload(demoUrl, failed, btn, status, progressWrap);
+      return;
+    }
+    var file = pendingFiles[i];
+    var path = 'business-media/' + uploadTargetSlug + '/site/' + file.name;
+    if (file.name === 'index.html' || file.name === 'index.htm') {
+      demoUrl = SUPABASE_URL + '/storage/v1/object/public/' + path;
+    }
+    fetch(SUPABASE_URL + '/storage/v1/object/' + path, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': file.type || 'application/octet-stream', 'x-upsert': 'true' },
+      body: file
+    }).then(function(r) {
+      if (!r.ok) failed.push(file.name);
+      done++;
+      progressBar.style.width = Math.round(done / total * 100) + '%';
+      uploadNext(i + 1);
+    }).catch(function() {
+      failed.push(file.name);
+      done++;
+      progressBar.style.width = Math.round(done / total * 100) + '%';
+      uploadNext(i + 1);
+    });
+  }
+  uploadNext(0);
+});
+
+function patchBusinessAfterUpload(demoUrl, failed, btn, status, progressWrap) {
+  fetch(SUPABASE_URL + '/rest/v1/businesses?select=id,data&id=eq.' + encodeURIComponent(uploadTargetSlug), {
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(rows) {
+    var existing = (rows && rows[0]) || {};
+    var patch = { demoUploaded: true, previewSent: true };
+    if (demoUrl) patch.demoUrl = demoUrl;
+    var newData = Object.assign({}, existing.data || {}, patch);
+    return fetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(uploadTargetSlug), {
+      method: 'PATCH',
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+      body: JSON.stringify({ data: newData })
+    });
+  })
+  .then(function(r) {
+    btn.textContent = 'Upload files'; progressWrap.style.display = 'none';
+    if (r.ok) {
+      var msg = failed.length ? 'Uploaded — ' + failed.length + ' file(s) failed: ' + failed.join(', ') : 'Uploaded successfully!';
+      status.textContent = msg; status.className = failed.length ? 'modal-status err' : 'modal-status ok';
+      setTimeout(function() { document.getElementById('uploadModal').classList.add('hidden'); loadBusinesses(); }, 1800);
+    } else {
+      status.textContent = 'Files uploaded but record update failed.'; status.className = 'modal-status err';
+    }
+  })
+  .catch(function() {
+    btn.textContent = 'Upload files'; btn.disabled = false; progressWrap.style.display = 'none';
+    status.textContent = 'Network error.'; status.className = 'modal-status err';
+  });
+}
+
+// ---- go live modal ----
+var goLiveTargetSlug = null;
+function openGoLiveModal(slug, name) {
+  goLiveTargetSlug = slug;
+  document.getElementById('goLiveModalName').textContent = name;
+  document.getElementById('goLiveUrl').value = '';
+  document.getElementById('goLiveStatus').textContent = '';
+  document.getElementById('goLiveStatus').className = 'modal-status';
+  document.getElementById('goLiveModal').classList.remove('hidden');
+  setTimeout(function() { document.getElementById('goLiveUrl').focus(); }, 50);
+}
+
+document.getElementById('goLiveCancel').addEventListener('click', function() {
+  document.getElementById('goLiveModal').classList.add('hidden');
+});
+
+document.getElementById('goLiveConfirm').addEventListener('click', function() {
+  var liveUrl = document.getElementById('goLiveUrl').value.trim();
+  var status = document.getElementById('goLiveStatus');
+  var btn = document.getElementById('goLiveConfirm');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+
+  fetch(SUPABASE_URL + '/rest/v1/businesses?select=id,data&id=eq.' + encodeURIComponent(goLiveTargetSlug), {
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(rows) {
+    var existing = (rows && rows[0]) || {};
+    var patch = { published: true };
+    if (liveUrl) patch.liveUrl = liveUrl;
+    var newData = Object.assign({}, existing.data || {}, patch);
+    return fetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(goLiveTargetSlug), {
+      method: 'PATCH',
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+      body: JSON.stringify({ data: newData, updated_at: new Date().toISOString() })
+    });
+  })
+  .then(function(r) {
+    btn.textContent = 'Mark as live ✓'; btn.disabled = false;
+    if (r.ok) {
+      status.textContent = 'Site marked as live!'; status.className = 'modal-status ok';
+      // Also add Vercel domain if token is set
+      if (liveUrl) tryAddVercelDomain(liveUrl, status);
+      setTimeout(function() { document.getElementById('goLiveModal').classList.add('hidden'); loadBusinesses(); }, 2000);
+    } else {
+      status.textContent = 'Save failed.'; status.className = 'modal-status err';
+    }
+  })
+  .catch(function() {
+    btn.textContent = 'Mark as live ✓'; btn.disabled = false;
+    status.textContent = 'Network error.'; status.className = 'modal-status err';
+  });
+});
+
+// ---- vercel domain ----
+function tryAddVercelDomain(liveUrl, statusEl) {
+  var token, projectId;
+  try { token = localStorage.getItem('bs_vercel_token'); projectId = localStorage.getItem('bs_vercel_project'); } catch(e) {}
+  if (!token || !projectId) return;
+  // Extract domain from URL
+  var domain = liveUrl.replace(/^https?:\/\//, '').replace(/\/.*$/, '').trim();
+  if (!domain) return;
+
+  fetch('https://api.vercel.com/v9/projects/' + encodeURIComponent(projectId) + '/domains', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: domain })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.error) {
+      if (statusEl) { statusEl.textContent += ' · Vercel: ' + data.error.message; }
+      return;
+    }
+    // Fetch DNS config
+    return fetch('https://api.vercel.com/v6/domains/' + encodeURIComponent(domain) + '/config', {
+      headers: { Authorization: 'Bearer ' + token }
+    }).then(function(r) { return r.json(); }).then(function(cfg) {
+      var records = [];
+      if (cfg.cnames && cfg.cnames.length) records.push('CNAME → ' + cfg.cnames[0]);
+      if (cfg.aValues && cfg.aValues.length) records.push('A → ' + cfg.aValues[0]);
+      if (statusEl && records.length) statusEl.textContent += ' · DNS: ' + records.join(', ');
+    });
+  })
+  .catch(function() {});
+}
+
+// domain modal — also tries Vercel
 document.getElementById('domainConfirm').addEventListener('click', function() {
   var domain = document.getElementById('domainInput').value.trim();
   var status = document.getElementById('domainStatus');
@@ -496,7 +778,6 @@ document.getElementById('domainConfirm').addEventListener('click', function() {
   var btn = document.getElementById('domainConfirm');
   btn.textContent = 'Saving…'; btn.disabled = true;
 
-  // Fetch current record first
   fetch(SUPABASE_URL + '/rest/v1/businesses?select=id,data&id=eq.' + encodeURIComponent(domainTargetSlug), {
     headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY }
   })
@@ -514,7 +795,9 @@ document.getElementById('domainConfirm').addEventListener('click', function() {
     btn.textContent = 'Save domain'; btn.disabled = false;
     if (r.ok) {
       status.textContent = 'Domain saved.'; status.className = 'modal-status ok';
-      setTimeout(function() { document.getElementById('domainModal').classList.add('hidden'); loadBusinesses(); }, 1200);
+      // Try Vercel
+      tryAddVercelDomain(domain.startsWith('http') ? domain : 'https://' + domain, status);
+      setTimeout(function() { document.getElementById('domainModal').classList.add('hidden'); loadBusinesses(); }, 2000);
     } else {
       status.textContent = 'Save failed. Check connection.'; status.className = 'modal-status err';
     }
@@ -525,55 +808,30 @@ document.getElementById('domainConfirm').addEventListener('click', function() {
   });
 });
 
-// ---- upload modal ----
-var uploadTargetSlug = null;
-function openUploadModal(slug, name) {
-  uploadTargetSlug = slug;
-  document.getElementById('uploadModalName').textContent = name;
-  document.getElementById('uploadPreviewUrl').value = '';
-  document.getElementById('uploadStatus').textContent = '';
-  document.getElementById('uploadStatus').className = 'modal-status';
-  document.getElementById('uploadModal').classList.remove('hidden');
-}
-
-document.getElementById('uploadCancel').addEventListener('click', function() {
-  document.getElementById('uploadModal').classList.add('hidden');
+// ---- settings modal ----
+document.getElementById('settingsBtn').addEventListener('click', function() {
+  try {
+    document.getElementById('vercelToken').value = localStorage.getItem('bs_vercel_token') || '';
+    document.getElementById('vercelProjectId').value = localStorage.getItem('bs_vercel_project') || '';
+  } catch(e) {}
+  document.getElementById('settingsStatus').textContent = '';
+  document.getElementById('settingsModal').classList.remove('hidden');
 });
 
-document.getElementById('uploadConfirm').addEventListener('click', function() {
-  var previewUrl = document.getElementById('uploadPreviewUrl').value.trim();
-  var status = document.getElementById('uploadStatus');
-  var btn = document.getElementById('uploadConfirm');
-  btn.textContent = 'Saving…'; btn.disabled = true;
+document.getElementById('settingsCancel').addEventListener('click', function() {
+  document.getElementById('settingsModal').classList.add('hidden');
+});
 
-  fetch(SUPABASE_URL + '/rest/v1/businesses?select=id,data&id=eq.' + encodeURIComponent(uploadTargetSlug), {
-    headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY }
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(rows) {
-    var existing = (rows && rows[0]) || {};
-    var patch = { demoUploaded: true, previewSent: true };
-    if (previewUrl) patch.demoUrl = previewUrl;
-    var newData = Object.assign({}, existing.data || {}, patch);
-    return fetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(uploadTargetSlug), {
-      method: 'PATCH',
-      headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json', Prefer: 'return=representation' },
-      body: JSON.stringify({ data: newData })
-    });
-  })
-  .then(function(r) {
-    btn.textContent = 'Mark preview sent'; btn.disabled = false;
-    if (r.ok) {
-      status.textContent = 'Marked as preview sent.'; status.className = 'modal-status ok';
-      setTimeout(function() { document.getElementById('uploadModal').classList.add('hidden'); loadBusinesses(); }, 1200);
-    } else {
-      status.textContent = 'Save failed.'; status.className = 'modal-status err';
-    }
-  })
-  .catch(function() {
-    btn.textContent = 'Mark preview sent'; btn.disabled = false;
-    status.textContent = 'Network error.'; status.className = 'modal-status err';
-  });
+document.getElementById('settingsSave').addEventListener('click', function() {
+  var token = document.getElementById('vercelToken').value.trim();
+  var project = document.getElementById('vercelProjectId').value.trim();
+  try {
+    if (token) localStorage.setItem('bs_vercel_token', token); else localStorage.removeItem('bs_vercel_token');
+    if (project) localStorage.setItem('bs_vercel_project', project); else localStorage.removeItem('bs_vercel_project');
+  } catch(e) {}
+  var s = document.getElementById('settingsStatus');
+  s.textContent = 'Saved.'; s.className = 'modal-status ok';
+  setTimeout(function() { document.getElementById('settingsModal').classList.add('hidden'); }, 900);
 });
 
 // ---- delete modal ----
@@ -615,7 +873,7 @@ document.getElementById('deleteConfirm').addEventListener('click', function() {
 });
 
 // Close modals on veil click
-['domainModal', 'deleteModal', 'uploadModal'].forEach(function(id) {
+['domainModal', 'deleteModal', 'uploadModal', 'goLiveModal', 'settingsModal'].forEach(function(id) {
   document.getElementById(id).addEventListener('click', function(e) {
     if (e.target === this) this.classList.add('hidden');
   });
