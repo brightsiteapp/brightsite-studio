@@ -625,6 +625,7 @@ document.getElementById('deleteConfirm').addEventListener('click', function() {
 var stored = checkStoredSession();
 if (stored && stored.admin) {
   adminSession = stored;
+  setStoredSession(adminSession); // ensure always written to localStorage
   showApp();
 } else {
   document.getElementById('loginWrap').style.display = '';

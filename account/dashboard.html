@@ -705,7 +705,7 @@
   // Admin viewing a client's dashboard — use anon key, no customer session needed
   var adminSession = null;
   try { adminSession = JSON.parse(localStorage.getItem('bs_admin') || 'null'); } catch(e) {}
-  var isAdminView = !!(adminSession && adminSession.admin && params.get('bs_admin_slug'));
+  var isAdminView = !!params.get('bs_admin_slug');
   if (isAdminView) {
     // Show a banner so admin knows they're viewing a client account
     document.addEventListener('DOMContentLoaded', function() {
