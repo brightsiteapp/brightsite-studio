@@ -469,7 +469,7 @@ document.getElementById('searchInput').addEventListener('input', applyFilter);
 
 // ---- open account dashboard (as admin) ----
 function openAccountDashboard(slug) {
-  window.open('/account/dashboard.html?bs_admin_slug=' + encodeURIComponent(slug), '_blank');
+  location.href = '/account/dashboard.html?bs_admin_slug=' + encodeURIComponent(slug);
 }
 
 // ---- domain modal ----

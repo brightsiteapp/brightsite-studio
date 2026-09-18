@@ -705,13 +705,22 @@
   // Admin viewing a client's dashboard — use anon key, no customer session needed
   var adminSession = null;
   try { adminSession = JSON.parse(localStorage.getItem('bs_admin') || 'null'); } catch(e) {}
-  var isAdminView = !!params.get('bs_admin_slug');
+  // Admin view: only allowed if a valid bs_admin session exists in localStorage
+  var adminSession = null;
+  try { adminSession = JSON.parse(localStorage.getItem('bs_admin') || 'null'); } catch(e) {}
+  var isAdminView = !!(params.get('bs_admin_slug') && adminSession && adminSession.admin);
   if (isAdminView) {
-    // Show a banner so admin knows they're viewing a client account
     document.addEventListener('DOMContentLoaded', function() {
       var b = document.createElement('div');
       b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999;background:#1d4ed8;color:#fff;text-align:center;padding:7px 16px;font-size:12px;font-weight:700;letter-spacing:.02em';
-      b.innerHTML = 'ADMIN VIEW &nbsp;·&nbsp; ' + decodeURIComponent(params.get('bs_admin_slug')) + ' &nbsp;<a href="admin.html" style="color:#93c5fd;margin-left:8px">← Back to admin</a>';
+      var slugText = document.createTextNode(params.get('bs_admin_slug'));
+      b.appendChild(document.createTextNode('ADMIN VIEW · '));
+      b.appendChild(slugText);
+      var link = document.createElement('a');
+      link.href = 'admin.html';
+      link.style.cssText = 'color:#93c5fd;margin-left:8px';
+      link.textContent = '← Back to admin';
+      b.appendChild(link);
       document.body.prepend(b);
     });
   }
