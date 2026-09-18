@@ -128,8 +128,8 @@
   .plan-modal-billing-toggle button{border:0;border-radius:7px;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:700;padding:7px 14px;cursor:pointer;transition:background .15s,color .15s}
   .plan-modal-billing-toggle button[aria-pressed="true"]{background:var(--accent);color:#fff}
   .plan-cards-grid{display:grid;grid-template-columns:1fr;gap:12px}
-  @media(min-width:520px){.plan-cards-grid{grid-template-columns:repeat(3,1fr)}}
-  .plan-choice-card{border:2px solid var(--line);border-radius:16px;padding:18px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .15s;position:relative;background:#fff}
+  @media(min-width:520px){.plan-cards-grid{grid-template-columns:repeat(3,1fr);align-items:stretch}}
+  .plan-choice-card{border:2px solid var(--line);border-radius:16px;padding:18px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .15s;position:relative;background:#fff;display:flex;flex-direction:column}
   .plan-choice-card:hover{border-color:var(--accent);box-shadow:0 6px 20px rgba(59,130,246,.12);transform:translateY(-2px)}
   .plan-choice-card.selected{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.15);background:#f5f8ff}
   .plan-choice-card.featured{border-color:#6366f1}
@@ -142,7 +142,7 @@
   .plan-choice-was{font-size:13px;color:var(--muted);text-decoration:line-through}
   .plan-choice-hosting{font-size:12px;color:var(--muted)}
   .plan-choice-note{font-size:11px;color:var(--muted);margin-bottom:12px}
-  .plan-choice-features{list-style:none;padding:0;margin:0 0 14px;display:flex;flex-direction:column;gap:6px}
+  .plan-choice-features{list-style:none;padding:0;margin:0 0 14px;display:flex;flex-direction:column;gap:6px;flex:1}
   .plan-choice-features li{display:flex;align-items:flex-start;gap:7px;font-size:12.5px;color:var(--ink)}
   .plan-choice-features li::before{content:'✓';font-size:10px;font-weight:800;color:#1f9d55;background:#e6f6ec;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
 
@@ -574,14 +574,14 @@
       <div class="plan-choice-card" data-plan="essential" id="planCardEssential">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px">
           <div class="plan-choice-name">Essential</div>
-          <span style="font-size:10px;font-weight:800;letter-spacing:.06em;color:#1f9d55;background:#e6f6ec;padding:3px 8px;border-radius:999px;white-space:nowrap">FREE TO START</span>
+          <span style="font-size:10px;font-weight:800;letter-spacing:.06em;color:#1f9d55;background:#e6f6ec;padding:3px 8px;border-radius:999px;white-space:nowrap">No setup fee</span>
         </div>
         <div class="plan-choice-desc">Your website live in days — no upfront cost, no commitment.</div>
         <div class="plan-choice-price-row">
           <span class="plan-choice-setup" data-monthly="£0" data-annual="£0">£0</span>
-          <span class="plan-choice-hosting" data-monthly="+ £19/mo" data-annual="+ £228/yr">+ £228/yr</span>
+          <span class="plan-choice-hosting" data-monthly="+ £19/mo" data-annual="+ £17/mo">+ £17/mo</span>
         </div>
-        <div class="plan-choice-note" data-monthly="No setup fee — cancel any time" data-annual="No setup fee — cancel any time">No setup fee — cancel any time</div>
+        <div class="plan-choice-note" data-monthly="No setup fee — cancel any time" data-annual="Billed £204/yr — cancel any time">Billed £204/yr — cancel any time</div>
         <ul class="plan-choice-features">
           <li>No setup fee, ever</li>
           <li>Hosting, security &amp; maintenance</li>
@@ -1378,7 +1378,7 @@
     essential: {
       label: 'Essential',
       monthly: { setup: '£0', hosting: '£19/mo', note: 'No setup fee' },
-      annual:  { setup: '£0', hosting: '£228/yr', note: 'No setup fee' },
+      annual:  { setup: '£0', hosting: '£17/mo', note: 'No setup fee' },
       stripeMonthly: 'https://buy.stripe.com/14A14n87jcE4dfJbxX3gk00',
       stripeAnnual:  'https://buy.stripe.com/14A14n87jcE4dfJbxX3gk00',
       iconColor: '#2563eb'

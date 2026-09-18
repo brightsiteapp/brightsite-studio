@@ -109,10 +109,10 @@
 
       <div class="plans" style="max-width:1180px;margin:0 auto">
         <div class="plan" data-setup-monthly="0" data-setup-annual="0" data-essential>
-          <h4>Essential <span style="display:inline-block;font-size:10px;font-weight:800;letter-spacing:.06em;color:#1f9d55;background:#e6f6ec;padding:2px 8px;border-radius:999px;vertical-align:middle;margin-left:4px">FREE TO START</span></h4>
+          <h4>Essential <span style="display:inline-block;font-size:10px;font-weight:800;letter-spacing:.06em;color:#1f9d55;background:#e6f6ec;padding:2px 8px;border-radius:999px;vertical-align:middle;margin-left:4px">No setup fee</span></h4>
           <div class="desc">Your website live in days — no upfront cost, no commitment.</div>
           <div class="price-row">
-            <span class="price"><span class="setup-price">£0</span><small class="hosting-price">+ £19/mo</small></span>
+            <span class="price"><span class="setup-price">£0</span><small class="hosting-price">+ £17/mo</small></span>
           </div>
           <div class="price-note" id="essential-price-note">No setup fee — cancel any time</div>
           <ul>
@@ -221,7 +221,7 @@
     if (essentialPlan) {
       var essentialHosting = essentialPlan.querySelector('.hosting-price');
       if (isAnnual) {
-        essentialHosting.innerHTML = '+ £190/yr';
+        essentialHosting.innerHTML = '+ £17/mo';
         essentialPlan.setAttribute('data-annual-active', '');
       } else {
         essentialHosting.innerHTML = '+ £19/mo';
