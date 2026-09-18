@@ -93,8 +93,10 @@
   .bp-placeholder-glow{position:absolute;width:320px;height:320px;border-radius:50%;background:rgba(59,130,246,.13);filter:blur(60px);animation:bp-pulse 3.5s ease-in-out infinite}
   @keyframes bp-pulse{0%,100%{opacity:.5;transform:scale(.92)}50%{opacity:1;transform:scale(1.06)}}
   .bp-placeholder-inner{position:relative;z-index:1;text-align:center;padding:36px 40px;border:1px solid rgba(255,255,255,.1);border-radius:16px;background:rgba(255,255,255,.05);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 8px 40px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.1)}
-  .bp-placeholder-name{margin:0 0 12px;font-size:clamp(22px,3vw,36px);font-weight:800;letter-spacing:-.04em;color:#fff;line-height:1.1}
-  .bp-placeholder-label{margin:0;font-size:13px;font-weight:600;color:rgba(255,255,255,.45);letter-spacing:.01em}
+  .bp-placeholder-name{margin:0 0 20px;font-size:clamp(13px,1.4vw,16px);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4)}
+  .bp-placeholder-heading{margin:0 0 10px;font-size:clamp(24px,3.2vw,42px);font-weight:800;letter-spacing:-.04em;color:#fff;line-height:1.1;text-shadow:0 0 24px rgba(59,130,246,.9),0 0 60px rgba(59,130,246,.5);animation:bp-text-glow 3.5s ease-in-out infinite}
+  @keyframes bp-text-glow{0%,100%{text-shadow:0 0 18px rgba(59,130,246,.7),0 0 48px rgba(59,130,246,.35)}50%{text-shadow:0 0 32px rgba(59,130,246,1),0 0 80px rgba(59,130,246,.6),0 0 120px rgba(99,102,241,.3)}}
+  .bp-placeholder-label{margin:0;font-size:13px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:.02em}
 
   /* ---------------- account view cards ---------------- */
   .info-card{padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 8px 20px rgba(23,32,31,.04);margin-bottom:16px}
@@ -870,7 +872,7 @@
     data = data || {};
     var raw = data.raw || data;
     var name = raw.name || data.name || params.get('name') || localStorage.getItem('bs_pending_business_name') || 'Your business';
-    return '<div class="bp-placeholder"><div class="bp-placeholder-glow"></div><div class="bp-placeholder-inner"><p class="bp-placeholder-name">' + escapeHTML(name) + '</p><p class="bp-placeholder-label">Designing your preview — 1–2 days</p></div></div>';
+    return '<div class="bp-placeholder"><div class="bp-placeholder-glow"></div><div class="bp-placeholder-inner"><p class="bp-placeholder-name">' + escapeHTML(name) + '</p><p class="bp-placeholder-heading">Designing your preview</p><p class="bp-placeholder-label">Ready in 1–2 days</p></div></div>';
   }
   function renderBlueprint(data) {
     var markup = blueprintMarkup(data || business || {});
