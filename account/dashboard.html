@@ -746,15 +746,16 @@
   }
 
   // ---------------- image upload validation ----------------
-  var MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2MB
+  var MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10MB
   var ALLOWED_IMAGE_TYPES = { 'image/jpeg': true, 'image/png': true, 'image/webp': true, 'image/gif': true };
 
   function validateImageFile(file) {
     if (!ALLOWED_IMAGE_TYPES[file.type]) return 'Please choose a JPEG, PNG, WEBP or GIF image.';
-    if (file.size > MAX_IMAGE_BYTES) return 'That image is too large — please choose one under 2MB.';
+    if (file.size > MAX_IMAGE_BYTES) return 'That image is too large — please choose one under 10MB.';
     return null;
   }
   function showUploadError(msg) {
+    alert(msg);
     var statusEl = document.getElementById('saveStatus');
     statusEl.textContent = msg; statusEl.className = 'save-status err';
   }
