@@ -37,14 +37,11 @@ body { background: var(--bg); min-height: 100vh; }
 .login-logo img { height: 22px; }
 .login-logo span { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .login-card h1 { font-size: 20px; font-weight: 800; letter-spacing: -.04em; margin-bottom: 4px; }
-.login-card p { font-size: 13px; color: var(--muted); margin-bottom: 22px; }
-.field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
-.field label { font-size: 12px; font-weight: 700; color: var(--muted); }
-.field input { border: 1px solid var(--line); border-radius: 10px; padding: 10px 13px; font: inherit; font-size: 14px; outline: none; background: #fff; }
-.field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
-.login-btn { width: 100%; border: 0; border-radius: 10px; background: var(--accent); color: #fff; font: inherit; font-size: 14px; font-weight: 700; padding: 11px; cursor: pointer; margin-top: 4px; }
-.login-btn:hover { background: #1d4ed8; }
-.login-err { font-size: 12.5px; color: var(--red); margin-top: 10px; text-align: center; min-height: 18px; }
+.login-card p { font-size: 13px; color: var(--muted); margin-bottom: 22px; line-height: 1.5; }
+.google-btn { width: 100%; min-height: 46px; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; transition: border-color .15s, box-shadow .15s; }
+.google-btn:hover { border-color: var(--accent); box-shadow: 0 4px 14px rgba(37,99,235,.1); }
+.google-btn svg { width: 18px; height: 18px; flex: none; }
+.login-err { font-size: 12.5px; color: var(--red); margin-top: 12px; text-align: center; min-height: 18px; }
 
 /* ---- app shell ---- */
 #app { display: none; flex-direction: column; min-height: 100vh; }
@@ -153,19 +150,12 @@ body { background: var(--bg); min-height: 100vh; }
       <span>Admin</span>
     </div>
     <h1>Sign in</h1>
-    <p>BrightSite admin access only.</p>
-    <form id="loginForm" novalidate>
-      <div class="field">
-        <label for="loginEmail">Email</label>
-        <input type="email" id="loginEmail" autocomplete="email" placeholder="admin@brightsite.co.uk" required>
-      </div>
-      <div class="field">
-        <label for="loginPassword">Password</label>
-        <input type="password" id="loginPassword" autocomplete="current-password" required>
-      </div>
-      <button type="submit" class="login-btn" id="loginBtn">Sign in</button>
-      <div class="login-err" id="loginErr"></div>
-    </form>
+    <p>Admin access only. Sign in with the BrightSite Google account.</p>
+    <button type="button" class="google-btn" id="googleBtn">
+      <svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.706A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.038l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.962L3.964 6.294C4.672 4.169 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
+      Continue with Google
+    </button>
+    <div class="login-err" id="loginErr"></div>
   </div>
 </div>
 
@@ -258,8 +248,7 @@ body { background: var(--bg); min-height: 100vh; }
 var SUPABASE_URL = 'https://estqrftkrpqlrxnsltgw.supabase.co';
 var SUPABASE_ANON_KEY = 'sb_publishable_MfwWqSIcsfVE6d5Q7jIxJA_V3Pyf2oP';
 
-var ADMIN_EMAIL = 'brightsiteadmin@gmail.com';
-var ADMIN_PASSWORD = 'Hali4688!';
+var ADMIN_EMAIL = 'brightsiteapp@gmail.com';
 
 var allBusinesses = [];
 var currentFilter = 'all';
@@ -282,65 +271,49 @@ function clearStoredSession() {
   try { sessionStorage.removeItem('bs_admin'); } catch(e) {}
 }
 
-// ---- login ----
-document.getElementById('loginForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  var email = document.getElementById('loginEmail').value.trim().toLowerCase();
-  var password = document.getElementById('loginPassword').value;
-  var errEl = document.getElementById('loginErr');
-  var btn = document.getElementById('loginBtn');
+// ---- Google OAuth login ----
+document.getElementById('googleBtn').addEventListener('click', function() {
+  var redirectTo = location.origin + location.pathname + '?oauth_callback=1';
+  location.href = SUPABASE_URL + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(redirectTo);
+});
 
-  errEl.textContent = '';
+// Handle OAuth callback — Supabase redirects back with access_token in hash
+function handleOAuthCallback() {
+  var hash = location.hash.slice(1);
+  if (!hash) return false;
+  var params = {};
+  hash.split('&').forEach(function(p) { var kv = p.split('='); params[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || ''); });
+  if (!params.access_token) return false;
 
-  if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
-    errEl.textContent = 'Incorrect email or password.';
-    return;
-  }
-
-  btn.textContent = 'Signing in…';
-  btn.disabled = true;
-
-  // Authenticate with Supabase to get a real session (needed for writes)
-  fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
-    method: 'POST',
-    headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: email, password: password })
+  // Verify it's the admin Google account by fetching user info
+  fetch(SUPABASE_URL + '/auth/v1/user', {
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + params.access_token }
   })
   .then(function(r) { return r.json(); })
-  .then(function(data) {
-    btn.textContent = 'Sign in';
-    btn.disabled = false;
-    if (data.access_token) {
-      adminSession = { admin: true, access_token: data.access_token, refresh_token: data.refresh_token, email: email };
-      setStoredSession(adminSession);
-      showApp();
-    } else {
-      // Still allow if credentials match even without Supabase session (read-only mode)
-      adminSession = { admin: true, email: email };
-      setStoredSession(adminSession);
-      showApp();
+  .then(function(user) {
+    var email = (user.email || '').toLowerCase();
+    if (email !== ADMIN_EMAIL) {
+      document.getElementById('loginErr').textContent = 'Access denied. Sign in with the BrightSite admin account.';
+      history.replaceState(null, '', location.pathname);
+      return;
     }
+    adminSession = { admin: true, access_token: params.access_token, email: email };
+    setStoredSession(adminSession);
+    history.replaceState(null, '', location.pathname);
+    showApp();
   })
   .catch(function() {
-    btn.textContent = 'Sign in';
-    btn.disabled = false;
-    // Allow local-only session for read
-    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-      adminSession = { admin: true, email: email };
-      setStoredSession(adminSession);
-      showApp();
-    } else {
-      document.getElementById('loginErr').textContent = 'Login failed. Check connection.';
-    }
+    document.getElementById('loginErr').textContent = 'Login failed. Try again.';
+    history.replaceState(null, '', location.pathname);
   });
-});
+  return true;
+}
 
 document.getElementById('logoutBtn').addEventListener('click', function() {
   clearStoredSession();
   adminSession = null;
   document.getElementById('app').classList.remove('visible');
   document.getElementById('loginWrap').style.display = '';
-  document.getElementById('loginPassword').value = '';
 });
 
 function showApp() {
@@ -685,6 +658,11 @@ var stored = checkStoredSession();
 if (stored && stored.admin) {
   adminSession = stored;
   showApp();
+} else if (location.hash.includes('access_token') || new URLSearchParams(location.search).get('oauth_callback')) {
+  // Supabase may put the token in hash after redirect
+  if (!handleOAuthCallback()) {
+    document.getElementById('loginWrap').style.display = '';
+  }
 } else {
   document.getElementById('loginWrap').style.display = '';
 }
