@@ -1924,6 +1924,20 @@
     });
   }
 
+  // Flush any pending save when the tab loses focus or is closed
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden' && hasPendingEdit && !autoSaveInFlight) {
+      clearTimeout(autoSaveTimer);
+      runAutoSave();
+    }
+  });
+  window.addEventListener('beforeunload', function (e) {
+    if (hasPendingEdit || autoSaveInFlight) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
   // ---------------- make live / publish ----------------
   document.getElementById('liveBtn').addEventListener('click', function () {
     if (!isPaying) return;
