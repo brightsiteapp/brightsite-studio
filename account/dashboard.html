@@ -129,15 +129,7 @@
   @media(min-width:600px){.plan-modal-sheet{border-radius:22px;animation:sheetFade .18s ease}}
   @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
   @keyframes sheetFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-  .stripe-modal-veil{position:fixed;inset:0;background:rgba(10,10,12,.6);z-index:90;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:sheetFade .18s ease}
-  .stripe-modal-box{position:relative;width:100%;max-width:520px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.3);display:flex;flex-direction:column}
-  .stripe-modal-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 12px;border-bottom:1px solid #f0f0f0;background:#fff;flex:none}
-  .stripe-modal-topbar span{font-size:13px;font-weight:700;color:#111}
-  .stripe-modal-close{background:none;border:0;font-size:20px;color:#888;cursor:pointer;line-height:1;padding:4px 6px;border-radius:6px}
-  .stripe-modal-close:hover{background:#f4f4f4;color:#333}
-  .stripe-modal-iframe{width:100%;height:min(82dvh,680px);border:0;flex:1;display:block}
-  .stripe-modal-loading{position:absolute;inset:48px 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#888;font-size:13px;pointer-events:none}
-  .stripe-modal-spinner{width:28px;height:28px;border:3px solid #e5e7eb;border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+  .stripe-modal-spinner{width:24px;height:24px;border:3px solid #e5e7eb;border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   .plan-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
   .plan-modal-header h2{font-family:var(--display);font-size:17px;font-weight:700}
@@ -424,6 +416,14 @@
           <p class="info-hint" id="billingHint">Your Essential plan is selected. Add features now; you'll manage billing once your account is active.</p>
           <button type="button" class="upgrade-btn" id="upgradeBtn">Pay for your site</button>
           <button type="button" class="billing-btn" id="billingBtn" hidden>Manage billing</button>
+          <div id="stripeInline" hidden style="margin-top:12px;border:1px solid var(--line);border-radius:14px;overflow:hidden;position:relative">
+            <div id="stripeInlineLoading" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#fafafa;font-size:12px;color:#888">
+              <div class="stripe-modal-spinner"></div>
+              <span>Loading secure checkout…</span>
+            </div>
+            <iframe id="stripeInlineIframe" src="" title="Stripe checkout" allow="payment" style="width:100%;height:640px;border:0;display:block" onload="document.getElementById('stripeInlineLoading').style.display='none'"></iframe>
+            <button type="button" id="stripeInlineClose" style="position:absolute;top:8px;right:8px;background:rgba(255,255,255,.9);border:1px solid #e5e7eb;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;color:#555">✕ Close</button>
+          </div>
         </div>
 
         <div class="req-btn-wrap">
@@ -2232,51 +2232,31 @@
 })();
 </script>
 
-<!-- Stripe checkout modal -->
-<div class="stripe-modal-veil" id="stripeModalVeil" hidden aria-modal="true" role="dialog" aria-label="Payment">
-  <div class="stripe-modal-box">
-    <div class="stripe-modal-topbar">
-      <span>Complete your payment</span>
-      <button type="button" class="stripe-modal-close" id="stripeModalClose" aria-label="Close">&times;</button>
-    </div>
-    <div style="position:relative;flex:1">
-      <div class="stripe-modal-loading" id="stripeModalLoading">
-        <div class="stripe-modal-spinner"></div>
-        <span>Loading secure checkout…</span>
-      </div>
-      <iframe id="stripeModalIframe" class="stripe-modal-iframe" src="" title="Stripe checkout" allow="payment" onload="document.getElementById('stripeModalLoading').style.display='none'"></iframe>
-    </div>
-  </div>
-</div>
 <script>
 (function(){
-  var veil = document.getElementById('stripeModalVeil');
-  var iframe = document.getElementById('stripeModalIframe');
-  var closeBtn = document.getElementById('stripeModalClose');
   var upgradeBtn = document.getElementById('upgradeBtn');
-
-  function openStripeModal(url) {
-    document.getElementById('stripeModalLoading').style.display = '';
-    iframe.src = url;
-    veil.hidden = false;
-    document.body.style.overflow = 'hidden';
-  }
-  function closeStripeModal() {
-    veil.hidden = true;
-    iframe.src = '';
-    document.body.style.overflow = '';
-  }
+  var inlineBox = document.getElementById('stripeInline');
+  var iframe = document.getElementById('stripeInlineIframe');
+  var closeBtn = document.getElementById('stripeInlineClose');
 
   if (upgradeBtn) {
     upgradeBtn.addEventListener('click', function() {
       var url = upgradeBtn.dataset.stripeUrl;
       if (!url) return;
-      openStripeModal(url);
+      document.getElementById('stripeInlineLoading').style.display = '';
+      iframe.src = url;
+      inlineBox.hidden = false;
+      upgradeBtn.hidden = true;
+      inlineBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
   }
-  closeBtn.addEventListener('click', closeStripeModal);
-  veil.addEventListener('click', function(e){ if(e.target===veil) closeStripeModal(); });
-  document.addEventListener('keydown', function(e){ if(!veil.hidden && e.key==='Escape') closeStripeModal(); });
+  if (closeBtn) {
+    closeBtn.addEventListener('click', function() {
+      inlineBox.hidden = true;
+      iframe.src = '';
+      upgradeBtn.hidden = false;
+    });
+  }
 })();
 </script>
 </body>
