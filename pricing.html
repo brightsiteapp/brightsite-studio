@@ -38,6 +38,7 @@
   .price-was { font-size: 15px; color: #999; text-decoration: line-through; margin-right: 4px; display: none; }
   .price-save { font-size: 11px; font-weight: 700; color: #2563eb; background: #EAF0FE; padding: 2px 7px; border-radius: 20px; margin-left: 8px; vertical-align: middle; letter-spacing: -0.02em; display: none; }
   .plan[data-annual-active][data-annual-discount] .price-was, .plan[data-annual-active][data-annual-discount] .price-save { display: inline-block; }
+  .plan[data-annual-active][data-essential] .essential-was { display: inline; }
   .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
   .switch input { opacity: 0; width: 0; height: 0; }
   .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 24px; }
@@ -112,9 +113,9 @@
           <h4>Essential <span style="display:inline-block;font-size:10px;font-weight:800;letter-spacing:.06em;color:#1f9d55;background:#e6f6ec;padding:2px 8px;border-radius:999px;vertical-align:middle;margin-left:4px">No setup fee</span></h4>
           <div class="desc">Your website live in days — no upfront cost, no commitment.</div>
           <div class="price-row">
-            <span class="price"><span class="setup-price">£0</span><small class="hosting-price">+ £17/mo</small></span>
+            <span class="price"><span class="essential-was" style="font-size:15px;color:#999;text-decoration:line-through;margin-right:4px;display:none">£19</span><span class="setup-price">£0</span><small class="hosting-price">+ £17/mo</small><span class="price-save" style="display:none" id="essential-price-save">Save £2/mo</span></span>
           </div>
-          <div class="price-note" id="essential-price-note">No setup fee — cancel any time</div>
+          <div class="price-note" id="essential-price-note">Billed £204/yr — cancel any time</div>
           <ul>
             <li>No setup fee, ever</li>
             <li>Hosting, security &amp; maintenance</li>
@@ -206,25 +207,36 @@
 
     plans.forEach(function(plan) {
       var setupPrice = plan.querySelector('.setup-price');
+      var priceWas = plan.querySelector('.price-was');
       var hostingPrice = plan.querySelector('.hosting-price');
       if (isAnnual) {
-        setupPrice.innerHTML = '£' + plan.dataset.setupAnnual;
-        hostingPrice.innerHTML = '+ £228/yr';
+        setupPrice.textContent = '£' + plan.dataset.setupAnnual;
+        if (priceWas) priceWas.textContent = '£' + plan.dataset.setupMonthly;
+        hostingPrice.textContent = '+ £228/yr';
         plan.setAttribute('data-annual-active', '');
       } else {
-        setupPrice.innerHTML = '£' + plan.dataset.setupMonthly;
-        hostingPrice.innerHTML = '+ £19/mo';
+        setupPrice.textContent = '£' + plan.dataset.setupMonthly;
+        hostingPrice.textContent = '+ £19/mo';
         plan.removeAttribute('data-annual-active');
       }
     });
 
     if (essentialPlan) {
       var essentialHosting = essentialPlan.querySelector('.hosting-price');
+      var essentialWas = essentialPlan.querySelector('.essential-was');
+      var essentialSave = document.getElementById('essential-price-save');
+      var essentialNote = document.getElementById('essential-price-note');
       if (isAnnual) {
-        essentialHosting.innerHTML = '+ £17/mo';
+        essentialHosting.textContent = '+ £17/mo';
+        if (essentialWas) essentialWas.style.display = 'inline';
+        if (essentialSave) essentialSave.style.display = 'inline-block';
+        if (essentialNote) essentialNote.textContent = 'Billed £204/yr — cancel any time';
         essentialPlan.setAttribute('data-annual-active', '');
       } else {
-        essentialHosting.innerHTML = '+ £19/mo';
+        essentialHosting.textContent = '+ £19/mo';
+        if (essentialWas) essentialWas.style.display = 'none';
+        if (essentialSave) essentialSave.style.display = 'none';
+        if (essentialNote) essentialNote.textContent = 'No setup fee — cancel any time';
         essentialPlan.removeAttribute('data-annual-active');
       }
     }
