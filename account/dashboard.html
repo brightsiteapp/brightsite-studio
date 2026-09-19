@@ -945,13 +945,18 @@
     data = data || {};
     var raw = data.raw || data;
     var name = raw.name || data.name || params.get('name') || localStorage.getItem('bs_pending_business_name') || 'Your business';
+    var fName = document.getElementById('fName');
+    var fPhone = document.getElementById('fPhone');
+    var fEmail2 = document.getElementById('fEmail2');
+    var fAddress = document.getElementById('fAddress');
+    var fReviewLink = document.getElementById('fReviewLink');
     var added = [
-      !!document.getElementById('fName').value.trim(),
-      !!(document.getElementById('fPhone').value.trim() && document.getElementById('fEmail2').value.trim()),
+      !!(fName && fName.value.trim()),
+      !!(fPhone && fPhone.value.trim() && fEmail2 && fEmail2.value.trim()),
       hoursEdited,
-      !!document.getElementById('fAddress').value.trim(),
+      !!(fAddress && fAddress.value.trim()),
       services.some(function(g){return g.items.some(function(i){return i.name && i.name.trim()});}),
-      reviewQuotes.some(function(q){return q.trim();}) || !!document.getElementById('fReviewLink').value.trim(),
+      reviewQuotes.some(function(q){return q.trim();}) || !!(fReviewLink && fReviewLink.value.trim()),
       !!(media.logoImage || media.heroImage || media.gallery.length > 0 || pendingUploads.logo || pendingUploads.hero || pendingUploads.gallery.length > 0)
     ].filter(Boolean).length;
     var demoReady = hasUploadedDemo();
