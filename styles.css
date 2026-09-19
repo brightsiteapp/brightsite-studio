@@ -942,6 +942,8 @@
      frame around them. */
   .ex-view{position:relative;overflow:hidden;background:#F4EFE8;border-radius:0 0 16px 16px}
   .ex-view iframe,.ex-view img{position:absolute;top:0;left:0;border:0;transform-origin:top left;pointer-events:none}
+  .ex-scaler{position:absolute;top:0;left:0;transform-origin:top left}
+  .ex-scaler iframe{position:static;pointer-events:none;border:0;display:block}
   /* iOS Safari can still let touch-scroll gestures reach an iframe's own
      content even with pointer-events:none on it, so a real transparent
      layer on top is needed to actually swallow the touch and stop the

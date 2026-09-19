@@ -44,10 +44,15 @@
     const contentH = intrinsicH - cropTop;
     const scale = Math.max(view.clientWidth / intrinsicW, view.clientHeight / contentH);
     const scaledW = intrinsicW * scale;
+    const offsetX = Math.max(0, (scaledW - view.clientWidth) / 2) / scale;
+    // Apply transform to the wrapper div, not the iframe directly — avoids
+    // Safari freezing CSS animations inside a transformed iframe element.
+    const scaler = iframe.closest('.ex-scaler') || iframe;
+    scaler.style.width = `${intrinsicW}px`;
+    scaler.style.height = `${intrinsicH}px`;
+    scaler.style.transform = `scale(${scale}) translate(-${offsetX}px, -${cropTop}px)`;
     iframe.style.width = `${intrinsicW}px`;
     iframe.style.height = `${intrinsicH}px`;
-    const offsetX = Math.max(0, (scaledW - view.clientWidth) / 2) / scale;
-    iframe.style.transform = `scale(${scale}) translate(-${offsetX}px, -${cropTop}px)`;
   }
 
   examples.forEach((ex) => {
