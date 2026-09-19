@@ -1455,7 +1455,7 @@ html,body{max-width:100%}
 #compare .opt-mini li{padding-left:27px;font-size:13px;line-height:1.5;color:#566172}
 #compare .opt-mini li::before{top:1px;left:0;display:grid;place-items:center;width:18px;height:18px;background:#f0f2f5;border-radius:50%;font-size:11px;opacity:1;color:#9099a6}
 #compare .opt-mini-pos li{color:#17243d;font-weight:600}
-#compare .opt-mini-pos li::before{background:#0877f9;color:#fff}
+#compare .opt-mini-pos li::before{background:#22c55e;color:#fff}
 #compare .opt-card:hover{transform:translateY(-3px);box-shadow:0 16px 40px rgba(23,32,31,.09)}
 .page #realperson{padding:0 0 36px}
 .page #realperson .founder{max-width:1040px;margin-bottom:0}
