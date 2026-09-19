@@ -20,12 +20,12 @@
   // so nothing interactive was ever reachable inside them — a screenshot
   // looks identical here and costs one image decode instead of a full page.
   const examples = [
-    { url: 'https://sisko-hairdressing.vercel.app', image: 'img/work-previews/sisko.webp' },
-    { url: 'https://kings-valeting-hull.vercel.app', live: true },
-    { url: 'https://de-lacy.vercel.app', image: 'img/work-previews/de-lacy.webp' },
-    { url: 'https://muse-hull-deploy.vercel.app', image: 'img/work-previews/muse.webp' },
-    { url: 'https://mgs-beverley.vercel.app', image: 'img/work-previews/mgs-beverley.webp?v=20260907' },
-    { url: 'https://brian-griffin-electrical.vercel.app', live: true },
+    { url: 'https://sisko-hairdressing.brightsite.app', image: 'img/work-previews/sisko.webp' },
+    { url: 'https://kings-valeting-hull.brightsite.app', live: true },
+    { url: 'https://de-lacy.brightsite.app', image: 'img/work-previews/de-lacy.webp' },
+    { url: 'https://muse-hull.brightsite.app', image: 'img/work-previews/muse.webp' },
+    { url: 'https://mgs-beverley.brightsite.app', image: 'img/work-previews/mgs-beverley.webp?v=20260907' },
+    { url: 'https://brian-griffin.brightsite.app', live: true },
   ];
 
   function scaleFrame(view, iframe, intrinsicW, intrinsicH, cropTop) {
@@ -58,7 +58,7 @@
   examples.forEach((ex) => {
     const card = document.createElement('article');
     card.className = 'ex-card';
-    const siteName = ex.url.replace(/^https:\/\/|\.vercel\.app$/g, '');
+    const siteName = ex.url.replace(/^https:\/\/|\.(?:vercel|brightsite)\.app$/g, '');
     if (ex.live) {
       card.innerHTML = `
         <div class="ex-frame ex-frame-desktop is-active">
