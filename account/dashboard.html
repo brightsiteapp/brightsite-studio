@@ -740,9 +740,6 @@
   // Admin viewing a client's dashboard — use anon key, no customer session needed
   var adminSession = null;
   try { adminSession = JSON.parse(localStorage.getItem('bs_admin') || 'null'); } catch(e) {}
-  // Admin view: only allowed if a valid bs_admin session exists in localStorage
-  var adminSession = null;
-  try { adminSession = JSON.parse(localStorage.getItem('bs_admin') || 'null'); } catch(e) {}
   var isAdminView = !!(params.get('bs_admin_slug') && adminSession && adminSession.admin);
   if (isAdminView) {
     document.addEventListener('DOMContentLoaded', function() {
@@ -775,15 +772,16 @@
     return;
   }
 
-  // For admin view, create a fake session using the anon key so all fetches work
+  // For admin view, use the admin's real JWT for writes; fall back to anon for reads
   if (isAdminView && !session) {
-    session = { access_token: SUPABASE_ANON_KEY, user_id: null, email: '' };
+    var adminToken = (adminSession && adminSession.access_token) ? adminSession.access_token : SUPABASE_ANON_KEY;
+    session = { access_token: adminToken, user_id: null, email: '' };
   }
 
   function authHeaders(extra) {
     return Object.assign({
       apikey: SUPABASE_ANON_KEY,
-      Authorization: 'Bearer ' + (isAdminView ? SUPABASE_ANON_KEY : session.access_token)
+      Authorization: 'Bearer ' + session.access_token
     }, extra || {});
   }
   var sessionRefreshPromise = null;
@@ -808,6 +806,10 @@
   function authenticatedFetch(url, options, retried) {
     return fetch(url, options).then(function (res) {
       if (retried || (res.status !== 401 && res.status !== 403)) return res;
+      if (isAdminView) {
+        location.href = 'admin.html';
+        return res;
+      }
       return refreshSession().then(function () {
         var headers = Object.assign({}, options.headers || {});
         delete headers.Authorization;
@@ -1634,18 +1636,19 @@
         });
     }
     var url = SUPABASE_URL + '/rest/v1/businesses?select=*&user_id=eq.' + encodeURIComponent(session.user_id);
-    return fetch(url, { headers: authHeaders() })
+    return authenticatedFetch(url, { headers: authHeaders() })
       .then(function (res) { return res.json(); })
       .then(function (rows) {
-        if (rows && rows.length) {
-          business = rows[0];
+        var realRow = rows && Array.isArray(rows) && rows.find(function(r) { return !(r.data && r.data.stub); });
+        if (realRow) {
+          business = realRow;
           slug = business.id;
           renderDashboard();
         } else {
           // Fall back to slug stored in localStorage (covers rows with null user_id)
           var pendingSlug = localStorage.getItem('bs_pending_slug');
           if (!pendingSlug) { showSetup(); return; }
-          return fetch(SUPABASE_URL + '/rest/v1/businesses?select=*&id=eq.' + encodeURIComponent(pendingSlug), { headers: authHeaders() })
+          return authenticatedFetch(SUPABASE_URL + '/rest/v1/businesses?select=*&id=eq.' + encodeURIComponent(pendingSlug), { headers: authHeaders() })
             .then(function (r) { return r.json(); })
             .then(function (r2) {
               if (r2 && r2.length) {
@@ -2446,9 +2449,9 @@
     statusEl.textContent = 'Sending…'; statusEl.className = 'save-status';
 
     var details = JSON.stringify({ type: isDomain ? 'domain_change_request' : 'account_update_request', slug: slug, email: session.email || '', message: message });
-    var databaseRequest = fetch(SUPABASE_URL + '/rest/v1/leads', {
+    var databaseRequest = authenticatedFetch(SUPABASE_URL + '/rest/v1/leads', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY, Prefer: 'return=minimal' },
+      headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
       body: JSON.stringify({ business_name: businessName, details: details, created_at: new Date().toISOString() })
     });
     var formData = new FormData();
@@ -2499,7 +2502,7 @@
   function patchBusinessData(patch) {
     var d = (business && business.data) || {};
     var newData = Object.assign({}, d, patch);
-    return fetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(slug), {
+    return authenticatedFetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(slug), {
       method: 'PATCH',
       headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
       body: JSON.stringify({ data: newData, updated_at: new Date().toISOString() })

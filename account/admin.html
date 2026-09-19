@@ -370,8 +370,18 @@ function loadBusinesses() {
   fetch(SUPABASE_URL + '/rest/v1/businesses?select=id,name,user_id,data,updated_at&order=updated_at.desc', {
     headers: authHeaders()
   })
-  .then(function(r) { return r.json(); })
+  .then(function(r) {
+    if (r.status === 401 || r.status === 403) {
+      clearStoredSession();
+      adminSession = null;
+      document.getElementById('app').classList.remove('visible');
+      document.getElementById('loginWrap').style.display = '';
+      return null;
+    }
+    return r.json();
+  })
   .then(function(rows) {
+    if (!rows) return;
     if (!Array.isArray(rows)) { renderError('Could not load businesses.'); return; }
 
     // Fetch auth users list to get emails (requires service role — use what we have)
