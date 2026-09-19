@@ -1047,22 +1047,91 @@
     placeholder.querySelector('.bp-placeholder-inner').addEventListener('click', fire);
   }
 
+  function bindBlueprintMount(mount) {
+    mount.querySelectorAll('[data-blueprint-page]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        var page = button.dataset.blueprintPage;
+        mount.querySelectorAll('[data-blueprint-page]').forEach(function (item) { item.removeAttribute('aria-current'); });
+        button.setAttribute('aria-current', 'page');
+        mount.querySelectorAll('[data-blueprint-panel]').forEach(function (panel) { panel.hidden = panel.dataset.blueprintPanel !== page; });
+        mount.closest('.blueprint-site').scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
+    bindParticleReveal(mount);
+  }
+
+  function triggerFillToDesigningTransition(placeholder, onComplete) {
+    if (!placeholder) { onComplete(); return; }
+    var canvas = document.createElement('canvas');
+    canvas.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:10';
+    placeholder.appendChild(canvas);
+    var w = placeholder.offsetWidth, h = placeholder.offsetHeight;
+    canvas.width = w; canvas.height = h;
+    var ctx = canvas.getContext('2d');
+    var cx = w / 2, cy = h / 2;
+    var particles = [];
+    for (var i = 0; i < 100; i++) {
+      var angle = Math.random() * Math.PI * 2;
+      var speed = 1.5 + Math.random() * 7;
+      particles.push({ x: cx, y: cy, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 2.5, r: 2 + Math.random() * 5, alpha: 1, hue: 35 + Math.random() * 25 });
+    }
+    // Also dissolve heading letters
+    var heading = placeholder.querySelector('.bp-placeholder-heading');
+    var inner = placeholder.querySelector('.bp-placeholder-inner');
+    var letterParticles = [];
+    if (heading) {
+      var hr = heading.getBoundingClientRect(), pr = placeholder.getBoundingClientRect();
+      var letters = (heading.textContent || '').split('');
+      letters.forEach(function(ch, idx) {
+        if (ch === ' ') return;
+        letterParticles.push({ ch: ch, x: hr.left - pr.left + (idx / letters.length) * hr.width, y: hr.top - pr.top + hr.height / 2, vx: (Math.random() - 0.5) * 9, vy: -3 - Math.random() * 7, alpha: 1, scale: 1, rot: (Math.random() - 0.5) * 0.4 });
+      });
+      heading.style.opacity = '0';
+    }
+    if (inner) inner.style.opacity = '0';
+    var start = null, duration = 900;
+    function animate(ts) {
+      if (!start) start = ts;
+      var t = Math.min(1, (ts - start) / duration);
+      ctx.clearRect(0, 0, w, h);
+      particles.forEach(function(p) {
+        p.x += p.vx; p.y += p.vy; p.vy += 0.09; p.alpha = Math.max(0, 1 - t * 1.5);
+        ctx.save(); ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = 'hsl(' + p.hue + ',92%,65%)';
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (1 - t * 0.4), 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      });
+      letterParticles.forEach(function(lp) {
+        lp.x += lp.vx; lp.y += lp.vy; lp.vy += 0.13; lp.alpha = Math.max(0, 1 - t * 1.7); lp.rot += 0.06;
+        ctx.save(); ctx.globalAlpha = lp.alpha; ctx.translate(lp.x, lp.y); ctx.rotate(lp.rot);
+        ctx.fillStyle = '#fca5a5'; ctx.font = 'bold 20px Inter,sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(lp.ch, 0, 0); ctx.restore();
+      });
+      if (t < 1) { requestAnimationFrame(animate); return; }
+      placeholder.style.transition = 'opacity 0.35s ease';
+      placeholder.style.opacity = '0';
+      setTimeout(onComplete, 350);
+    }
+    requestAnimationFrame(animate);
+  }
+
   function renderBlueprint(data) {
     var markup = blueprintMarkup(data || business || {});
-    document.getElementById('blueprintContent').innerHTML = markup;
-    document.getElementById('loadingBlueprint').innerHTML = markup;
-    [document.getElementById('blueprintContent'), document.getElementById('loadingBlueprint')].forEach(function (mount) {
-      mount.querySelectorAll('[data-blueprint-page]').forEach(function (button) {
-        button.addEventListener('click', function () {
-          var page = button.dataset.blueprintPage;
-          mount.querySelectorAll('[data-blueprint-page]').forEach(function (item) { item.removeAttribute('aria-current'); });
-          button.setAttribute('aria-current', 'page');
-          mount.querySelectorAll('[data-blueprint-panel]').forEach(function (panel) { panel.hidden = panel.dataset.blueprintPanel !== page; });
-          mount.closest('.blueprint-site').scrollTo({ top: 0, behavior: 'smooth' });
-        });
-      });
-      bindParticleReveal(mount);
-    });
+    var bpContent = document.getElementById('blueprintContent');
+    var oldPlaceholder = bpContent && bpContent.querySelector('.bp-placeholder.state-fill');
+    var goingDesigning = markup.indexOf('state-designing') !== -1;
+
+    function applyMarkup() {
+      bpContent.innerHTML = markup;
+      document.getElementById('loadingBlueprint').innerHTML = markup;
+      [bpContent, document.getElementById('loadingBlueprint')].forEach(bindBlueprintMount);
+    }
+
+    if (oldPlaceholder && goingDesigning) {
+      triggerFillToDesigningTransition(oldPlaceholder, applyMarkup);
+    } else {
+      applyMarkup();
+    }
   }
   function showBlueprintSection(section) {
     var page = SECTION_PAGE[section] || 'home';
