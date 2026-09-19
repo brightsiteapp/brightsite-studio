@@ -162,9 +162,9 @@
   .plan-choice-card{border:2px solid var(--line);border-radius:16px;padding:18px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .15s;position:relative;background:#fff;display:flex;flex-direction:column}
   .plan-choice-card:hover{border-color:var(--accent);box-shadow:0 6px 20px rgba(59,130,246,.12);transform:translateY(-2px)}
   .plan-choice-card.selected{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.15);background:#f5f8ff}
-  .plan-choice-card.featured{border-color:#6366f1}
-  .plan-choice-card.featured:hover,.plan-choice-card.featured.selected{border-color:#4f46e5;box-shadow:0 6px 20px rgba(99,102,241,.16)}
-  .plan-featured-badge{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#6366f1;color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:3px 10px;border-radius:999px;white-space:nowrap}
+  .plan-choice-card.featured{border-color:var(--accent)}
+  .plan-choice-card.featured:hover,.plan-choice-card.featured.selected{border-color:var(--accent);box-shadow:0 6px 20px rgba(59,130,246,.16)}
+  .plan-featured-badge{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:3px 10px;border-radius:999px;white-space:nowrap}
   .plan-choice-name{font-size:15px;font-weight:800;margin-bottom:2px}
   .plan-choice-desc{font-size:11.5px;color:var(--muted);margin-bottom:10px;line-height:1.4}
   .plan-choice-price-row{display:flex;align-items:baseline;gap:5px;margin-bottom:4px}
@@ -189,8 +189,8 @@
   .plan-divider{margin:14px 0 10px;border:0;border-top:1px solid var(--line)}
   .plan-select-btn{width:100%;min-height:40px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s,transform .12s}
   .plan-select-btn:hover{transform:translateY(-1px)}
-  .plan-choice-card.featured .plan-select-btn{background:#6366f1}
-  .plan-choice-card.featured .plan-select-btn:hover{background:#4f46e5}
+  .plan-choice-card.featured .plan-select-btn{background:var(--accent)}
+  .plan-choice-card.featured .plan-select-btn:hover{background:#2563eb}
   .plan-choice-card.selected .plan-select-btn{background:#1f9d55}
   .plan-modal-note{font-size:11.5px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.5}
 
@@ -613,7 +613,7 @@
     </div>
     <div class="plan-modal-billing-toggle" role="group" aria-label="Billing period">
       <button type="button" id="billingMonthly" aria-pressed="false">Monthly</button>
-      <button type="button" id="billingAnnual" aria-pressed="true">Annual <span style="color:#fbbf24">– Save 50%</span></button>
+      <button type="button" id="billingAnnual" aria-pressed="true">Annual <span style="font-size:11px;font-weight:700;background:#eaf0fe;color:var(--accent);padding:2px 7px;border-radius:20px;margin-left:4px;letter-spacing:-.02em">Save 50%</span></button>
     </div>
     <div class="plan-cards-grid" id="planCardsGrid">
 
