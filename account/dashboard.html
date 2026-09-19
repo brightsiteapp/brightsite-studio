@@ -96,6 +96,27 @@
   .bp-placeholder-inner{position:relative;z-index:1;text-align:center;padding:36px 40px;border:1px solid rgba(255,255,255,.1);border-radius:16px;background:rgba(255,255,255,.05);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 8px 40px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.1)}
   .bp-placeholder-name{margin:0 0 20px;font-size:clamp(13px,1.4vw,16px);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4)}
   .bp-placeholder-heading{margin:0 0 10px;font-size:clamp(24px,3.2vw,42px);font-weight:800;letter-spacing:-.04em;color:#fff;line-height:1.1;text-shadow:0 0 24px rgba(59,130,246,.9),0 0 60px rgba(59,130,246,.5);animation:bp-text-glow 3.5s ease-in-out infinite}
+  /* State: fill in forms (red) */
+  .bp-placeholder.state-fill .bp-placeholder-glow{background:rgba(239,68,68,.15)}
+  .bp-placeholder.state-fill .bp-placeholder-heading{color:#fca5a5;text-shadow:0 0 24px rgba(239,68,68,.7),0 0 60px rgba(239,68,68,.35);animation:bp-text-glow-red 3.5s ease-in-out infinite}
+  @keyframes bp-text-glow-red{0%,100%{text-shadow:0 0 18px rgba(239,68,68,.6),0 0 50px rgba(239,68,68,.3)}50%{text-shadow:0 0 30px rgba(239,68,68,.9),0 0 80px rgba(239,68,68,.5)}}
+  .bp-placeholder.state-fill .bp-placeholder-label{color:rgba(252,165,165,.5)}
+  /* State: designing (yellow) */
+  .bp-placeholder.state-designing .bp-placeholder-glow{background:rgba(234,179,8,.13)}
+  .bp-placeholder.state-designing .bp-placeholder-heading{color:#fde68a;text-shadow:0 0 24px rgba(234,179,8,.7),0 0 60px rgba(234,179,8,.35);animation:bp-text-glow-yellow 3.5s ease-in-out infinite}
+  @keyframes bp-text-glow-yellow{0%,100%{text-shadow:0 0 18px rgba(234,179,8,.6),0 0 50px rgba(234,179,8,.3)}50%{text-shadow:0 0 30px rgba(234,179,8,.9),0 0 80px rgba(234,179,8,.5)}}
+  .bp-placeholder.state-designing .bp-placeholder-label{color:rgba(253,230,138,.5)}
+  /* State: preview ready (green) */
+  .bp-placeholder.state-ready .bp-placeholder-glow{background:rgba(34,197,94,.15);animation:bp-pulse 2s ease-in-out infinite}
+  .bp-placeholder.state-ready .bp-placeholder-heading{color:#86efac;text-shadow:0 0 24px rgba(34,197,94,.8),0 0 60px rgba(34,197,94,.4);animation:bp-text-glow-green 2s ease-in-out infinite;cursor:pointer}
+  @keyframes bp-text-glow-green{0%,100%{text-shadow:0 0 18px rgba(34,197,94,.7),0 0 50px rgba(34,197,94,.35)}50%{text-shadow:0 0 34px rgba(34,197,94,1),0 0 90px rgba(34,197,94,.6)}}
+  .bp-placeholder.state-ready .bp-placeholder-label{color:rgba(134,239,172,.6)}
+  .bp-placeholder.state-ready .bp-placeholder-inner{border-color:rgba(34,197,94,.25);cursor:pointer}
+  /* Particle canvas overlay for reveal */
+  #bpParticleCanvas{position:absolute;inset:0;pointer-events:none;z-index:10}
+  /* Website reveal fade-in */
+  .bp-reveal-overlay{position:absolute;inset:0;z-index:9;background:inherit;opacity:1;transition:opacity 1.2s ease}
+  .bp-reveal-overlay.faded{opacity:0;pointer-events:none}
   @keyframes bp-text-glow{0%,100%{text-shadow:0 0 18px rgba(59,130,246,.7),0 0 48px rgba(59,130,246,.35)}50%{text-shadow:0 0 32px rgba(59,130,246,1),0 0 80px rgba(59,130,246,.6),0 0 120px rgba(99,102,241,.3)}}
   .bp-placeholder-label{margin:0;font-size:13px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:.02em}
 
@@ -926,8 +947,101 @@
     data = data || {};
     var raw = data.raw || data;
     var name = raw.name || data.name || params.get('name') || localStorage.getItem('bs_pending_business_name') || 'Your business';
-    return '<div class="bp-placeholder"><div class="bp-placeholder-glow"></div><div class="bp-placeholder-inner"><p class="bp-placeholder-name">' + escapeHTML(name) + '</p><p class="bp-placeholder-heading">Designing your preview</p><p class="bp-placeholder-label">Ready in 1–2 days</p></div></div>';
+    var added = Object.keys({ name:1,contact:1,hours:1,address:1,prices:1,reviews:1,media:1 }).filter(function(k){
+      var el = document.getElementById('fName');
+      if (k === 'name') return !!(el && el.value.trim());
+      if (k === 'contact') return !!(document.getElementById('fPhone') && document.getElementById('fPhone').value.trim() && document.getElementById('fEmail2') && document.getElementById('fEmail2').value.trim());
+      if (k === 'address') return !!(document.getElementById('fAddress') && document.getElementById('fAddress').value.trim());
+      if (k === 'prices') return !!(window._services && window._services.some(function(g){return g.items.some(function(i){return i.name && i.name.trim()});}));
+      return false;
+    }).length;
+    var demoReady = hasUploadedDemo();
+    var stateClass = demoReady ? 'state-ready' : (added >= 2 ? 'state-designing' : 'state-fill');
+    var heading = demoReady ? 'Preview ready' : (added >= 2 ? 'Designing your preview' : 'Fill in your details');
+    var label = demoReady ? 'Click to reveal your website' : (added >= 2 ? 'Ready in 1–2 days' : 'Add your info so we can get started');
+    var readyAttr = demoReady ? ' id="bpReadyHeading" role="button" tabindex="0"' : '';
+    return '<div class="bp-placeholder ' + stateClass + '"><canvas id="bpParticleCanvas"></canvas><div class="bp-placeholder-glow"></div><div class="bp-placeholder-inner"><p class="bp-placeholder-name">' + escapeHTML(name) + '</p><p class="bp-placeholder-heading"' + readyAttr + '>' + heading + '</p><p class="bp-placeholder-label">' + label + '</p></div></div>';
   }
+  function triggerParticleReveal(placeholder) {
+    var canvas = placeholder.querySelector('#bpParticleCanvas');
+    if (!canvas) return;
+    var heading = placeholder.querySelector('.bp-placeholder-heading');
+    var inner = placeholder.querySelector('.bp-placeholder-inner');
+    if (!canvas || !heading) return;
+    var rect = placeholder.getBoundingClientRect();
+    canvas.width = rect.width; canvas.height = rect.height;
+    var ctx = canvas.getContext('2d');
+    // Spawn particles from the heading's position
+    var hr = heading.getBoundingClientRect();
+    var pr = placeholder.getBoundingClientRect();
+    var cx = hr.left - pr.left + hr.width / 2;
+    var cy = hr.top - pr.top + hr.height / 2;
+    var particles = [];
+    var count = 120;
+    for (var i = 0; i < count; i++) {
+      var angle = Math.random() * Math.PI * 2;
+      var speed = 1.5 + Math.random() * 5;
+      var size = 2 + Math.random() * 5;
+      var hue = 120 + Math.random() * 60; // green family
+      particles.push({ x: cx, y: cy, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 2, size: size, alpha: 1, hue: hue, scale: 1 + Math.random() * 3 });
+    }
+    // Also scatter letters as particle-text
+    var letters = (heading.textContent || '').split('');
+    var letterParticles = [];
+    var totalW = hr.width;
+    letters.forEach(function(ch, idx) {
+      if (ch === ' ') return;
+      letterParticles.push({ ch: ch, x: hr.left - pr.left + (idx / letters.length) * totalW, y: cy, vx: (Math.random() - 0.5) * 8, vy: -3 - Math.random() * 6, alpha: 1, scale: 1, rot: (Math.random() - 0.5) * 0.3 });
+    });
+    heading.style.opacity = '0';
+    if (inner) inner.style.opacity = '0';
+    var start = null;
+    var duration = 1400;
+    function animate(ts) {
+      if (!start) start = ts;
+      var t = Math.min(1, (ts - start) / duration);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(function(p) {
+        p.x += p.vx; p.y += p.vy; p.vy += 0.08; p.alpha = Math.max(0, 1 - t * 1.4); p.scale += 0.04;
+        ctx.save(); ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = 'hsl(' + p.hue + ',90%,70%)';
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size * p.scale * 0.5, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      });
+      letterParticles.forEach(function(lp) {
+        lp.x += lp.vx; lp.y += lp.vy; lp.vy += 0.12; lp.alpha = Math.max(0, 1 - t * 1.6); lp.scale += 0.06; lp.rot += 0.05;
+        ctx.save(); ctx.globalAlpha = lp.alpha;
+        ctx.translate(lp.x, lp.y); ctx.rotate(lp.rot); ctx.scale(lp.scale, lp.scale);
+        ctx.fillStyle = '#86efac'; ctx.font = 'bold 22px Inter,sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(lp.ch, 0, 0); ctx.restore();
+      });
+      if (t < 1) { requestAnimationFrame(animate); return; }
+      // Particle done — fade out the whole placeholder, show website
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      placeholder.style.transition = 'opacity 1s ease';
+      placeholder.style.opacity = '0';
+      setTimeout(function() {
+        placeholder.hidden = true;
+        var frame = document.getElementById('sitePreview');
+        if (frame) { frame.style.opacity = '0'; frame.hidden = false; frame.style.transition = 'opacity 1s ease'; requestAnimationFrame(function(){ frame.style.opacity = '1'; }); }
+        var blueprint = document.getElementById('blueprintPreview');
+        if (blueprint) blueprint.hidden = true;
+      }, 300);
+    }
+    requestAnimationFrame(animate);
+  }
+
+  function bindParticleReveal(mount) {
+    var heading = mount.querySelector('#bpReadyHeading');
+    var placeholder = mount.querySelector('.bp-placeholder.state-ready');
+    if (!heading || !placeholder) return;
+    var fired = false;
+    function fire() { if (fired) return; fired = true; triggerParticleReveal(placeholder); }
+    heading.addEventListener('click', fire);
+    heading.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') fire(); });
+    placeholder.querySelector('.bp-placeholder-inner').addEventListener('click', fire);
+  }
+
   function renderBlueprint(data) {
     var markup = blueprintMarkup(data || business || {});
     document.getElementById('blueprintContent').innerHTML = markup;
@@ -942,6 +1056,7 @@
           mount.closest('.blueprint-site').scrollTo({ top: 0, behavior: 'smooth' });
         });
       });
+      bindParticleReveal(mount);
     });
   }
   function showBlueprintSection(section) {
@@ -1022,7 +1137,7 @@
   // ---------------- state ----------------
   var business = null;
   var slug = null;
-  var services = [];
+  var services = []; window._services = services;
   var reviewQuotes = [];
   var media = { logoImage: null, heroImage: null, gallery: [] };
   var generatedHeroImage = null;
