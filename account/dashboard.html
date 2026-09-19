@@ -1060,66 +1060,87 @@
     bindParticleReveal(mount);
   }
 
-  function triggerFillToDesigningTransition(placeholder, onComplete) {
+  // Sleek morph: particles orbit and shift colour through intermediate hues,
+  // giving a "rearranging" feel rather than an explosion.
+  // colorStops: [[h,s,l], [h,s,l], [h,s,l]]  (from → mid → to)
+  function triggerPlaceholderMorph(placeholder, colorStops, onComplete) {
     if (!placeholder) { onComplete(); return; }
+    var inner = placeholder.querySelector('.bp-placeholder-inner');
+    var glow  = placeholder.querySelector('.bp-placeholder-glow');
+    if (inner) { inner.style.transition = 'opacity 0.2s'; inner.style.opacity = '0'; }
+    if (glow)  { glow.style.transition  = 'opacity 0.2s'; glow.style.opacity  = '0'; }
+
     var canvas = document.createElement('canvas');
     canvas.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:10';
     placeholder.appendChild(canvas);
-    var w = placeholder.offsetWidth, h = placeholder.offsetHeight;
+    var w = placeholder.offsetWidth || 600;
+    var h = placeholder.offsetHeight || 300;
     canvas.width = w; canvas.height = h;
     var ctx = canvas.getContext('2d');
-    var cx = w / 2, cy = h / 2;
-    var particles = [];
-    for (var i = 0; i < 100; i++) {
-      var angle = Math.random() * Math.PI * 2;
-      var speed = 1.5 + Math.random() * 7;
-      particles.push({ x: cx, y: cy, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 2.5, r: 2 + Math.random() * 5, alpha: 1, hue: 35 + Math.random() * 25 });
+    var cx = w * 0.5, cy = h * 0.5;
+
+    function lerpHSL(t) {
+      var i = t < 0.5 ? 0 : 1;
+      var u = i === 0 ? t * 2 : (t - 0.5) * 2;
+      var a = colorStops[i], b = colorStops[i + 1];
+      return [a[0]+(b[0]-a[0])*u, a[1]+(b[1]-a[1])*u, a[2]+(b[2]-a[2])*u];
     }
-    // Also dissolve heading letters
-    var heading = placeholder.querySelector('.bp-placeholder-heading');
-    var inner = placeholder.querySelector('.bp-placeholder-inner');
-    var letterParticles = [];
-    if (heading) {
-      var hr = heading.getBoundingClientRect(), pr = placeholder.getBoundingClientRect();
-      var letters = (heading.textContent || '').split('');
-      letters.forEach(function(ch, idx) {
-        if (ch === ' ') return;
-        letterParticles.push({ ch: ch, x: hr.left - pr.left + (idx / letters.length) * hr.width, y: hr.top - pr.top + hr.height / 2, vx: (Math.random() - 0.5) * 9, vy: -3 - Math.random() * 7, alpha: 1, scale: 1, rot: (Math.random() - 0.5) * 0.4 });
-      });
-      heading.style.opacity = '0';
+
+    // Particles on elliptical orbits at varying radii
+    var N = 180;
+    var parts = [];
+    for (var i = 0; i < N; i++) {
+      var r  = 12 + Math.random() * Math.min(w, h) * 0.46;
+      var a  = Math.random() * Math.PI * 2;
+      var spd = (0.006 + Math.random() * 0.012) * (Math.random() < 0.5 ? 1 : -1);
+      parts.push({ r: r, a: a, spd: spd, rx: r, ry: r * (0.38 + Math.random() * 0.28), sz: 0.8 + Math.random() * 1.8, phase: Math.random() });
     }
-    if (inner) inner.style.opacity = '0';
-    var start = null, duration = 900;
-    function animate(ts) {
+
+    var start = null, DUR = 2000;
+    function frame(ts) {
       if (!start) start = ts;
-      var t = Math.min(1, (ts - start) / duration);
+      var t = Math.min(1, (ts - start) / DUR);
+
+      // Alpha envelope: ease in 10%, hold, ease out last 18%
+      var alpha = t < 0.1 ? t / 0.1 : t > 0.82 ? 1 - (t - 0.82) / 0.18 : 1;
+
+      var hsl = lerpHSL(t);
+      var col = 'hsl(' + hsl[0].toFixed(1) + ',' + hsl[1].toFixed(1) + '%,' + hsl[2].toFixed(1) + '%)';
+
       ctx.clearRect(0, 0, w, h);
-      particles.forEach(function(p) {
-        p.x += p.vx; p.y += p.vy; p.vy += 0.09; p.alpha = Math.max(0, 1 - t * 1.5);
-        ctx.save(); ctx.globalAlpha = p.alpha;
-        ctx.fillStyle = 'hsl(' + p.hue + ',92%,65%)';
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (1 - t * 0.4), 0, Math.PI * 2); ctx.fill();
-        ctx.restore();
+      ctx.shadowColor = col;
+      ctx.shadowBlur  = 6;
+      ctx.fillStyle   = col;
+
+      parts.forEach(function(p) {
+        p.a += p.spd;
+        // Slightly contract orbit radius over time (converging feel)
+        var rf = p.r * (1 - t * 0.12);
+        var px = cx + Math.cos(p.a) * rf;
+        var py = cy + Math.sin(p.a) * p.ry * (1 - t * 0.12);
+        // Per-particle alpha shimmer (no random in loop — use sine of phase+t)
+        var pa = alpha * (0.5 + 0.5 * Math.sin(p.phase * Math.PI * 2 + t * Math.PI * 4));
+        ctx.globalAlpha = Math.max(0, Math.min(1, pa));
+        ctx.beginPath();
+        ctx.arc(px, py, p.sz, 0, Math.PI * 2);
+        ctx.fill();
       });
-      letterParticles.forEach(function(lp) {
-        lp.x += lp.vx; lp.y += lp.vy; lp.vy += 0.13; lp.alpha = Math.max(0, 1 - t * 1.7); lp.rot += 0.06;
-        ctx.save(); ctx.globalAlpha = lp.alpha; ctx.translate(lp.x, lp.y); ctx.rotate(lp.rot);
-        ctx.fillStyle = '#fca5a5'; ctx.font = 'bold 20px Inter,sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText(lp.ch, 0, 0); ctx.restore();
-      });
-      if (t < 1) { requestAnimationFrame(animate); return; }
-      placeholder.style.transition = 'opacity 0.35s ease';
+
+      if (t < 1) { requestAnimationFrame(frame); return; }
+      placeholder.style.transition = 'opacity 0.3s ease';
       placeholder.style.opacity = '0';
-      setTimeout(onComplete, 350);
+      setTimeout(onComplete, 300);
     }
-    requestAnimationFrame(animate);
+    requestAnimationFrame(frame);
   }
 
   function renderBlueprint(data) {
     var markup = blueprintMarkup(data || business || {});
     var bpContent = document.getElementById('blueprintContent');
-    var oldPlaceholder = bpContent && bpContent.querySelector('.bp-placeholder.state-fill');
-    var goingDesigning = markup.indexOf('state-designing') !== -1;
+    var oldFill      = bpContent && bpContent.querySelector('.bp-placeholder.state-fill');
+    var oldDesigning = bpContent && bpContent.querySelector('.bp-placeholder.state-designing');
+    var goDesigning  = markup.indexOf('state-designing') !== -1;
+    var goReady      = markup.indexOf('state-ready')     !== -1;
 
     function applyMarkup() {
       bpContent.innerHTML = markup;
@@ -1127,8 +1148,12 @@
       [bpContent, document.getElementById('loadingBlueprint')].forEach(bindBlueprintMount);
     }
 
-    if (oldPlaceholder && goingDesigning) {
-      triggerFillToDesigningTransition(oldPlaceholder, applyMarkup);
+    // red → amber → yellow
+    if (oldFill && goDesigning) {
+      triggerPlaceholderMorph(oldFill, [[0,72,72],[30,88,65],[48,90,72]], applyMarkup);
+    // yellow → lime → green
+    } else if (oldDesigning && goReady) {
+      triggerPlaceholderMorph(oldDesigning, [[48,90,72],[80,82,68],[130,72,72]], applyMarkup);
     } else {
       applyMarkup();
     }
