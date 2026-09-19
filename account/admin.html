@@ -367,12 +367,8 @@ function authHeaders(extra) {
 function loadBusinesses() {
   document.getElementById('accountsList').innerHTML = '<div class="loading-row"><span class="spinner"></span> Loading accounts…</div>';
 
-  // Fetch all businesses (anon key has unrestricted read)
   fetch(SUPABASE_URL + '/rest/v1/businesses?select=id,name,user_id,data,updated_at&order=updated_at.desc', {
-    headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: 'Bearer ' + SUPABASE_ANON_KEY
-    }
+    headers: authHeaders()
   })
   .then(function(r) { return r.json(); })
   .then(function(rows) {
@@ -638,7 +634,7 @@ document.getElementById('uploadConfirm').addEventListener('click', function() {
     }
     fetch(SUPABASE_URL + '/storage/v1/object/' + path, {
       method: 'POST',
-      headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': file.type || 'application/octet-stream', 'x-upsert': 'true' },
+      headers: authHeaders({ 'Content-Type': file.type || 'application/octet-stream', 'x-upsert': 'true' }),
       body: file
     }).then(function(r) {
       if (!r.ok) failed.push(file.name);
@@ -657,7 +653,7 @@ document.getElementById('uploadConfirm').addEventListener('click', function() {
 
 function patchBusinessAfterUpload(demoUrl, failed, btn, status, progressWrap) {
   fetch(SUPABASE_URL + '/rest/v1/businesses?select=id,data&id=eq.' + encodeURIComponent(uploadTargetSlug), {
-    headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY }
+    headers: authHeaders()
   })
   .then(function(r) { return r.json(); })
   .then(function(rows) {
@@ -667,7 +663,7 @@ function patchBusinessAfterUpload(demoUrl, failed, btn, status, progressWrap) {
     var newData = Object.assign({}, existing.data || {}, patch);
     return fetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(uploadTargetSlug), {
       method: 'PATCH',
-      headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+      headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
       body: JSON.stringify({ data: newData })
     });
   })
@@ -710,7 +706,7 @@ document.getElementById('goLiveConfirm').addEventListener('click', function() {
   btn.textContent = 'Saving…'; btn.disabled = true;
 
   fetch(SUPABASE_URL + '/rest/v1/businesses?select=id,data&id=eq.' + encodeURIComponent(goLiveTargetSlug), {
-    headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY }
+    headers: authHeaders()
   })
   .then(function(r) { return r.json(); })
   .then(function(rows) {
@@ -720,7 +716,7 @@ document.getElementById('goLiveConfirm').addEventListener('click', function() {
     var newData = Object.assign({}, existing.data || {}, patch);
     return fetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(goLiveTargetSlug), {
       method: 'PATCH',
-      headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+      headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
       body: JSON.stringify({ data: newData, updated_at: new Date().toISOString() })
     });
   })
@@ -784,7 +780,7 @@ document.getElementById('domainConfirm').addEventListener('click', function() {
   btn.textContent = 'Saving…'; btn.disabled = true;
 
   fetch(SUPABASE_URL + '/rest/v1/businesses?select=id,data&id=eq.' + encodeURIComponent(domainTargetSlug), {
-    headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY }
+    headers: authHeaders()
   })
   .then(function(r) { return r.json(); })
   .then(function(rows) {
@@ -792,7 +788,7 @@ document.getElementById('domainConfirm').addEventListener('click', function() {
     var newData = Object.assign({}, existing.data || {}, { customDomain: domain });
     return fetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(domainTargetSlug), {
       method: 'PATCH',
-      headers: Object.assign({ apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY, Prefer: 'return=representation' }, { 'Content-Type': 'application/json' }),
+      headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
       body: JSON.stringify({ data: newData })
     });
   })
@@ -860,7 +856,7 @@ document.getElementById('deleteConfirm').addEventListener('click', function() {
 
   fetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(deleteTargetSlug), {
     method: 'DELETE',
-    headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY }
+    headers: authHeaders()
   })
   .then(function(r) {
     btn.textContent = 'Delete'; btn.disabled = false;
