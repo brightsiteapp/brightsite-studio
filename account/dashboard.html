@@ -93,7 +93,7 @@
   .bp-placeholder{position:relative;display:flex;align-items:center;justify-content:center;width:100%;min-height:100%;flex:1;overflow:hidden;background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(59,130,246,.18) 0%,transparent 60%),linear-gradient(160deg,#0c0f1a 0%,#111627 60%,#0e1420 100%)}
   .bp-placeholder-glow{position:absolute;width:320px;height:320px;border-radius:50%;background:rgba(59,130,246,.13);filter:blur(60px);animation:bp-pulse 3.5s ease-in-out infinite}
   @keyframes bp-pulse{0%,100%{opacity:.5;transform:scale(.92)}50%{opacity:1;transform:scale(1.06)}}
-  .bp-placeholder-inner{position:relative;z-index:1;text-align:center;padding:36px 40px;border:1px solid rgba(255,255,255,.1);border-radius:16px;background:rgba(255,255,255,.05);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 8px 40px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.1)}
+  .bp-placeholder-inner{position:relative;z-index:1;box-sizing:border-box;width:min(540px,calc(100% - 48px));text-align:center;padding:36px 40px;border:1px solid rgba(255,255,255,.1);border-radius:16px;background:rgba(255,255,255,.05);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 8px 40px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.1)}
   .bp-placeholder-name{margin:0 0 20px;font-size:clamp(13px,1.4vw,16px);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4)}
   .bp-placeholder-heading{margin:0 0 10px;font-size:clamp(24px,3.2vw,42px);font-weight:800;letter-spacing:-.04em;color:#fff;line-height:1.1;text-shadow:0 0 24px rgba(59,130,246,.9),0 0 60px rgba(59,130,246,.5);animation:bp-text-glow 3.5s ease-in-out infinite}
   /* State: fill in forms (red) */
@@ -1212,6 +1212,8 @@
       visiblePlaceholder.classList.remove('state-fill', 'state-designing', 'state-ready');
       visiblePlaceholder.classList.add(goReady ? 'state-ready' : 'state-designing');
       visibleHeading.textContent = goReady ? 'Preview ready' : 'Designing your preview';
+      var visibleLabel = visiblePlaceholder.querySelector('.bp-placeholder-label');
+      if (visibleLabel) visibleLabel.textContent = goReady ? 'Click to reveal your website' : 'Ready in 1–2 days';
       if (goReady) {
         visibleHeading.id = 'bpReadyHeading';
         visibleHeading.setAttribute('role', 'button');
