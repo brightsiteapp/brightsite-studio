@@ -21,7 +21,7 @@
   // looks identical here and costs one image decode instead of a full page.
   const examples = [
     { url: 'https://sisko-hairdressing.vercel.app', image: 'img/work-previews/sisko.webp' },
-    { url: 'https://kings-valeting-hull.vercel.app', image: 'img/work-previews/kings-valeting.webp' },
+    { url: 'https://kings-valeting-hull.vercel.app', live: true },
     { url: 'https://de-lacy.vercel.app', image: 'img/work-previews/de-lacy.webp' },
     { url: 'https://muse-hull-deploy.vercel.app', image: 'img/work-previews/muse.webp' },
     { url: 'https://mgs-beverley.vercel.app', image: 'img/work-previews/mgs-beverley.webp?v=20260907' },
@@ -58,18 +58,41 @@
   examples.forEach((ex) => {
     const card = document.createElement('article');
     card.className = 'ex-card';
-    card.innerHTML = `
-      <div class="ex-frame ex-frame-desktop is-active">
-        <div class="ex-bar" aria-hidden="true"><i></i><i></i><i></i></div>
-        <div class="ex-view"><img alt="Screenshot of ${ex.url.replace(/^https:\/\/|\.vercel\.app$/g, '')}'s live homepage" loading="lazy" src="${ex.image}"></div>
-      </div>`;
+    const siteName = ex.url.replace(/^https:\/\/|\.vercel\.app$/g, '');
+    if (ex.live) {
+      card.innerHTML = `
+        <div class="ex-frame ex-frame-desktop is-active">
+          <div class="ex-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="ex-view"><div class="ex-scaler"><iframe title="${siteName} live homepage" src="${ex.url}" tabindex="-1"></iframe></div><span class="ex-view-lock" aria-hidden="true"></span></div>
+        </div>`;
+    } else {
+      card.innerHTML = `
+        <div class="ex-frame ex-frame-desktop is-active">
+          <div class="ex-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="ex-view"><img alt="Screenshot of ${siteName}'s live homepage" loading="lazy" src="${ex.image}"></div>
+        </div>`;
+    }
     grid.appendChild(card);
 
     const desktopFrame = card.querySelector('.ex-frame-desktop');
-    const desktopIframe = desktopFrame.querySelector('img');
+    const view = desktopFrame.querySelector('.ex-view');
 
-    function layout() {
-      scaleFrame(desktopFrame.querySelector('.ex-view'), desktopIframe, DESKTOP_W, DESKTOP_H, HEADER_CROP);
+    let layout;
+    if (ex.live) {
+      const scaler = view.querySelector('.ex-scaler');
+      const iframe = view.querySelector('iframe');
+      layout = () => {
+        const scale = view.clientWidth / DESKTOP_W;
+        scaler.style.width = `${DESKTOP_W}px`;
+        scaler.style.height = `${DESKTOP_H}px`;
+        scaler.style.transform = `scale(${scale}) translateY(-${HEADER_CROP}px)`;
+        iframe.style.width = `${DESKTOP_W}px`;
+        iframe.style.height = `${DESKTOP_H}px`;
+        view.style.height = `${Math.round((DESKTOP_H - HEADER_CROP) * scale)}px`;
+      };
+    } else {
+      const img = view.querySelector('img');
+      layout = () => scaleFrame(view, img, DESKTOP_W, DESKTOP_H, HEADER_CROP);
     }
 
     if ('ResizeObserver' in window) new ResizeObserver(layout).observe(card);
