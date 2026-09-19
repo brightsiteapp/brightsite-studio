@@ -484,8 +484,6 @@
               <label for="developerNote">Your note</label>
               <textarea id="developerNote" placeholder="For example: I'd like online bookings and a warm, premium look."></textarea>
             </div>
-            <button type="button" class="upgrade-btn" id="developerNoteSave">Save note</button>
-            <div class="acct-status" id="developerNoteStatus" style="min-height:18px;margin-top:8px;font-size:12.5px"></div>
           </div>
         </div>
 
@@ -1525,6 +1523,9 @@
           body: JSON.stringify({ id: chosenSlug, name: name, user_id: session.user_id, data: record, updated_at: record.updatedAt })
         }).then(function (res) {
           if (!res.ok) return res.json().then(function (d) { throw new Error(d.message || d.msg || ('Failed (' + res.status + ')')); });
+          // New account — notify team
+          var fd = new FormData(); fd.append('Stage', 'new_signup'); fd.append('Business', name); fd.append('Email', session.email || ''); fd.append('Slug', chosenSlug); fd.append('Type', pendingType);
+          fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/', { method: 'POST', body: fd, keepalive: true }).catch(function(){});
           return res.json();
         });
       })
@@ -1575,9 +1576,9 @@
     if (data.demoApproved) {
       document.getElementById('approveDesc').textContent = '';
     }
-    var demoReady = true;
+    var demoReady = hasPreview;
     document.getElementById('editToggle').hidden = false;
-    document.getElementById('developerBuildingMessage').hidden = true;
+    document.getElementById('developerBuildingMessage').hidden = demoReady;
     var revealKey = 'bs_preview_revealed_' + (business.id || slug || 'current');
     if (demoReady && !sessionStorage.getItem(revealKey)) {
       sessionStorage.setItem(revealKey, '1');
@@ -1632,6 +1633,11 @@
     var added = Object.keys(complete).filter(function (section) { return complete[section]; }).length;
     document.getElementById('websiteProgress').innerHTML = 'Your website details: <b>' + added + ' of ' + Object.keys(complete).length + ' added</b>';
     document.getElementById('builderGuidance').hidden = true;
+    var allDoneNow = added >= Object.keys(complete).length;
+    if (allDoneNow && !_prevAllDone) {
+      sendStageEmail('all_details_complete');
+    }
+    _prevAllDone = allDoneNow;
   }
 
   var PLAN_CONFIG = {
@@ -2116,23 +2122,7 @@
     });
   }
 
-  document.getElementById('developerNoteSave').addEventListener('click', function () {
-    var button = this;
-    var statusEl = document.getElementById('developerNoteStatus');
-    if (!business) return;
-    button.disabled = true;
-    statusEl.textContent = 'Saving…';
-    statusEl.className = 'acct-status';
-    saveBusiness().then(function () {
-      button.disabled = false;
-      statusEl.textContent = 'Note saved — your developer can see it in BrightSite Studio.';
-      statusEl.className = 'acct-status ok';
-    }).catch(function () {
-      button.disabled = false;
-      statusEl.textContent = 'Couldn\'t save your note. Please try again.';
-      statusEl.className = 'acct-status err';
-    });
-  });
+  document.getElementById('developerNote').addEventListener('input', function () { scheduleAutoSave(); });
 
   // ---------------- autosave ----------------
   var autoSaveTimer = null;
@@ -2141,6 +2131,23 @@
   var hasPendingEdit = false;
   var autoSaveRetries = 0;
   var MAX_AUTOSAVE_RETRIES = 4;
+
+  // ---------------- stage email notifications ----------------
+  function sendStageEmail(stage, extra) {
+    var raw = (business && business.data && business.data.raw) || {};
+    var name = raw.name || (business && business.name) || '';
+    var email = session.email || '';
+    if (!email) return;
+    var formData = new FormData();
+    formData.append('Stage', stage);
+    formData.append('Business', name);
+    formData.append('Email', email);
+    formData.append('Slug', slug || '');
+    if (extra) formData.append('Extra', extra);
+    fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/', { method: 'POST', body: formData, keepalive: true }).catch(function(){});
+  }
+
+  var _prevAllDone = false;
 
   function scheduleAutoSave() {
     updateSectionChecks();
@@ -2322,6 +2329,7 @@
       if (r.ok) {
         s.textContent = 'Approved! Your developer will be in touch to go live.';
         document.getElementById('approveSection').hidden = true;
+        sendStageEmail('design_approved');
       } else {
         btn.disabled = false; s.textContent = 'Something went wrong. Try again.';
         s.style.color = '#b23b2c';
@@ -2337,6 +2345,7 @@
       btn.disabled = false; btn.textContent = 'Request changes';
       if (r.ok) {
         s.textContent = 'Request sent! Use the note below to describe what you\'d like changed.';
+        sendStageEmail('changes_requested');
         s.style.color = '#69747b';
       }
     }).catch(function() { btn.disabled = false; btn.textContent = 'Request changes'; });
