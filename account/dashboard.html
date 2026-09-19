@@ -1070,12 +1070,14 @@
   // colorStops: [[h,s,l], [h,s,l], [h,s,l]]  (from → mid → to)
   function triggerPlaceholderMorph(placeholder, nextText, colorStops, onComplete) {
     if (!placeholder) { onComplete(); return; }
-    var inner = placeholder.querySelector('.bp-placeholder-inner');
     var glow  = placeholder.querySelector('.bp-placeholder-glow');
     var heading = placeholder.querySelector('.bp-placeholder-heading');
     if (!heading || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { onComplete(true); return; }
-    if (inner) { inner.style.transition = 'opacity .42s ease'; inner.style.opacity = '0'; }
-    if (glow)  { glow.style.transition  = 'opacity .42s ease'; glow.style.opacity  = '.15'; }
+    // Leave the glass card, business name and supporting copy in place. The
+    // canvas takes over only where the heading was, so there is no card flash.
+    heading.style.transition = 'opacity .28s ease';
+    heading.style.opacity = '0';
+    if (glow) glow.style.transition = 'background .8s ease';
 
     var canvas = document.createElement('canvas');
     canvas.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:10';
@@ -1192,22 +1194,40 @@
     var goDesigning  = markup.indexOf('state-designing') !== -1;
     var goReady      = markup.indexOf('state-ready')     !== -1;
 
-    function applyMarkup(reveal) {
-      bpContent.innerHTML = markup;
-      document.getElementById('loadingBlueprint').innerHTML = markup;
-      [bpContent, document.getElementById('loadingBlueprint')].forEach(bindBlueprintMount);
-      if (reveal) {
-        [bpContent, document.getElementById('loadingBlueprint')].forEach(function(mount) {
-          var nextInner = mount.querySelector('.bp-placeholder-inner');
-          var nextGlow = mount.querySelector('.bp-placeholder-glow');
-          if (nextInner) { nextInner.style.opacity = '0'; nextInner.style.transition = 'opacity .8s ease'; }
-          if (nextGlow) { nextGlow.style.opacity = '0'; nextGlow.style.transition = 'opacity .9s ease'; }
-          requestAnimationFrame(function() {
-            if (nextInner) nextInner.style.opacity = '1';
-            if (nextGlow) nextGlow.style.opacity = '1';
-          });
-        });
+    function applyMarkup(morphed) {
+      var loadingBlueprint = document.getElementById('loadingBlueprint');
+      if (!morphed) {
+        bpContent.innerHTML = markup;
+        loadingBlueprint.innerHTML = markup;
+        [bpContent, loadingBlueprint].forEach(bindBlueprintMount);
+        return;
       }
+
+      // Preserve the visible placeholder DOM during a morph. Replacing its
+      // markup recreated the card and caused the visible flashing reported in
+      // the dashboard. Only its primary heading and state styling are changed.
+      var visiblePlaceholder = bpContent.querySelector('.bp-placeholder');
+      var visibleHeading = visiblePlaceholder && visiblePlaceholder.querySelector('.bp-placeholder-heading');
+      if (!visiblePlaceholder || !visibleHeading) { applyMarkup(false); return; }
+      visiblePlaceholder.classList.remove('state-fill', 'state-designing', 'state-ready');
+      visiblePlaceholder.classList.add(goReady ? 'state-ready' : 'state-designing');
+      visibleHeading.textContent = goReady ? 'Preview ready' : 'Designing your preview';
+      if (goReady) {
+        visibleHeading.id = 'bpReadyHeading';
+        visibleHeading.setAttribute('role', 'button');
+        visibleHeading.setAttribute('tabindex', '0');
+      } else {
+        visibleHeading.removeAttribute('id');
+        visibleHeading.removeAttribute('role');
+        visibleHeading.removeAttribute('tabindex');
+      }
+      requestAnimationFrame(function() { visibleHeading.style.opacity = '1'; });
+
+      // The inactive loading preview can be refreshed normally; it is never
+      // seen during the particle transition.
+      loadingBlueprint.innerHTML = markup;
+      bindBlueprintMount(bpContent);
+      bindBlueprintMount(loadingBlueprint);
     }
 
     // red → amber → yellow
