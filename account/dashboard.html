@@ -945,14 +945,15 @@
     data = data || {};
     var raw = data.raw || data;
     var name = raw.name || data.name || params.get('name') || localStorage.getItem('bs_pending_business_name') || 'Your business';
-    var added = Object.keys({ name:1,contact:1,hours:1,address:1,prices:1,reviews:1,media:1 }).filter(function(k){
-      var el = document.getElementById('fName');
-      if (k === 'name') return !!(el && el.value.trim());
-      if (k === 'contact') return !!(document.getElementById('fPhone') && document.getElementById('fPhone').value.trim() && document.getElementById('fEmail2') && document.getElementById('fEmail2').value.trim());
-      if (k === 'address') return !!(document.getElementById('fAddress') && document.getElementById('fAddress').value.trim());
-      if (k === 'prices') return !!(window._services && window._services.some(function(g){return g.items.some(function(i){return i.name && i.name.trim()});}));
-      return false;
-    }).length;
+    var added = [
+      !!document.getElementById('fName').value.trim(),
+      !!(document.getElementById('fPhone').value.trim() && document.getElementById('fEmail2').value.trim()),
+      hoursEdited,
+      !!document.getElementById('fAddress').value.trim(),
+      services.some(function(g){return g.items.some(function(i){return i.name && i.name.trim()});}),
+      reviewQuotes.some(function(q){return q.trim();}) || !!document.getElementById('fReviewLink').value.trim(),
+      !!(media.logoImage || media.heroImage || media.gallery.length > 0 || pendingUploads.logo || pendingUploads.hero || pendingUploads.gallery.length > 0)
+    ].filter(Boolean).length;
     var demoReady = hasUploadedDemo();
     var allDone = added >= 7;
     var stateClass = demoReady ? 'state-ready' : (allDone ? 'state-designing' : 'state-fill');
