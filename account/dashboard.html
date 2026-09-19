@@ -1041,7 +1041,11 @@
     var placeholder = mount.querySelector('.bp-placeholder.state-ready');
     if (!heading || !placeholder) return;
     var fired = false;
-    function fire() { if (fired) return; fired = true; triggerParticleReveal(placeholder); }
+    function fire() {
+      if (fired) return; fired = true;
+      localStorage.setItem('bs_revealed_' + (business && business.id || slug || 'x'), '1');
+      triggerParticleReveal(placeholder);
+    }
     heading.addEventListener('click', fire);
     heading.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') fire(); });
     placeholder.querySelector('.bp-placeholder-inner').addEventListener('click', fire);
@@ -1384,11 +1388,13 @@
     // A Studio upload/deployment supplies a liveUrl; the explicit demo fields
     // are supported too. Until then customers see a personalised blueprint.
     var demoReady = hasUploadedDemo();
-    blueprint.hidden = demoReady;
-    frame.hidden = !demoReady;
+    var rvKey = 'bs_revealed_' + (business && business.id || slug || 'x');
+    var hasRevealed = !!localStorage.getItem(rvKey);
+    blueprint.hidden = demoReady && hasRevealed;
+    frame.hidden = !(demoReady && hasRevealed);
     renderBlueprint(currentRaw());
     showBlueprintSection(activeSection);
-    if (!demoReady) return;
+    if (!(demoReady && hasRevealed)) return;
     try { if (frame.contentWindow) lastScrollY = frame.contentWindow.scrollY; } catch (e) {}
     frame.classList.add('refreshing');
     try { frame.srcdoc = buildDemoHTML(currentRaw()); } catch (e) { frame.classList.remove('refreshing'); }
