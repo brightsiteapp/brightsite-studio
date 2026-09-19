@@ -955,9 +955,9 @@
       !!(fPhone && fPhone.value.trim() && fEmail2 && fEmail2.value.trim()),
       hoursEdited,
       !!(fAddress && fAddress.value.trim()),
-      services.some(function(g){return g.items.some(function(i){return i.name && i.name.trim()});}),
-      reviewQuotes.some(function(q){return q.trim();}) || !!(fReviewLink && fReviewLink.value.trim()),
-      !!(media.logoImage || media.heroImage || media.gallery.length > 0 || pendingUploads.logo || pendingUploads.hero || pendingUploads.gallery.length > 0)
+      !!(services && services.some(function(g){return g.items.some(function(i){return i.name && i.name.trim()});})),
+      !!(reviewQuotes && reviewQuotes.some(function(q){return q.trim();})) || !!(fReviewLink && fReviewLink.value.trim()),
+      !!(media && (media.logoImage || media.heroImage || (media.gallery && media.gallery.length > 0))) || !!(pendingUploads && (pendingUploads.logo || pendingUploads.hero || (pendingUploads.gallery && pendingUploads.gallery.length > 0)))
     ].filter(Boolean).length;
     var demoReady = hasUploadedDemo();
     var allDone = added >= 7;
