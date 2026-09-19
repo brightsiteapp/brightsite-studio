@@ -85,11 +85,13 @@ body { background: var(--bg); min-height: 100vh; }
 .account-row.status-red { border-left: 3px solid var(--red); }
 .account-row.status-yellow { border-left: 3px solid #e8a320; }
 .account-row.status-green { border-left: 3px solid var(--green); }
+.account-row.status-stub { border-left: 3px solid #aaa; }
 
 .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .status-dot.green { background: var(--green); }
 .status-dot.yellow { background: #e8a320; }
 .status-dot.red { background: var(--red); }
+.status-dot.stub { background: #aaa; }
 
 .account-info { flex: 1; min-width: 0; }
 .account-name { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -102,6 +104,7 @@ body { background: var(--bg); min-height: 100vh; }
 .status-tag.green { background: var(--green-bg); color: var(--green); }
 .status-tag.yellow { background: var(--yellow-bg); color: var(--yellow); }
 .status-tag.red { background: var(--red-bg); color: var(--red); }
+.status-tag.stub { background: #f0f0f0; color: #777; }
 
 .row-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .action-btn { border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); font: inherit; font-size: 12px; font-weight: 600; padding: 6px 11px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
@@ -394,6 +397,7 @@ function fetchUserEmails(businesses) {
 
 function statusOf(b) {
   var d = b.data || {};
+  if (d.stub) return 'stub';
   if (d.liveUrl || d.published) return 'green';
   if (d.demoUploaded || d.demoUrl || d.previewSent || d.previewUrl) return 'yellow';
   return 'red';
@@ -402,6 +406,7 @@ function statusOf(b) {
 function statusLabel(s) {
   if (s === 'green') return 'Live';
   if (s === 'yellow') return 'Preview sent';
+  if (s === 'stub') return 'Setup pending';
   return 'To build';
 }
 
@@ -424,7 +429,7 @@ function renderError(msg) {
 
 function renderBusinesses(businesses, emails) {
   // Sort: red first, then yellow, then green; within same status sort by updated_at desc
-  var order = { red: 0, yellow: 1, green: 2 };
+  var order = { stub: 0, red: 1, yellow: 2, green: 3 };
   var sorted = businesses.slice().sort(function(a, b) {
     var sa = statusOf(a), sb = statusOf(b);
     if (order[sa] !== order[sb]) return order[sa] - order[sb];
@@ -432,7 +437,7 @@ function renderBusinesses(businesses, emails) {
   });
 
   // Count
-  var counts = { all: sorted.length, red: 0, yellow: 0, green: 0 };
+  var counts = { all: sorted.length, stub: 0, red: 0, yellow: 0, green: 0 };
   sorted.forEach(function(b) { counts[statusOf(b)]++; });
 
   document.getElementById('cAll').textContent = counts.all;

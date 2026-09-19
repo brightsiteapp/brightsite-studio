@@ -68,6 +68,29 @@
         email: r.data.email
       };
       localStorage.setItem('bs_session', JSON.stringify(session));
+
+      // Create a stub businesses row so this user appears in admin immediately,
+      // even before they complete onboarding. Uses ignore-duplicates so it's a no-op
+      // for existing users that already have a row.
+      var userId = r.data.id;
+      var userEmail = r.data.email || '';
+      fetch(SUPABASE_URL + '/rest/v1/businesses', {
+        method: 'POST',
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: 'Bearer ' + accessToken,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=ignore-duplicates'
+        },
+        body: JSON.stringify({
+          id: 'pending-' + userId.replace(/-/g, '').slice(0, 16),
+          name: userEmail || 'New Account',
+          user_id: userId,
+          data: { email: userEmail, stub: true },
+          updated_at: new Date().toISOString()
+        })
+      }).catch(function(){});
+
       var slug = localStorage.getItem('bs_pending_slug') || '';
       location.replace('dashboard.html' + (slug ? ('?slug=' + encodeURIComponent(slug)) : ''));
     })
