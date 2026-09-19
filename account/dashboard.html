@@ -956,9 +956,10 @@
       return false;
     }).length;
     var demoReady = hasUploadedDemo();
-    var stateClass = demoReady ? 'state-ready' : (added >= 2 ? 'state-designing' : 'state-fill');
-    var heading = demoReady ? 'Preview ready' : (added >= 2 ? 'Designing your preview' : 'Fill in your details');
-    var label = demoReady ? 'Click to reveal your website' : (added >= 2 ? 'Ready in 1–2 days' : 'Add your info so we can get started');
+    var allDone = added >= 7;
+    var stateClass = demoReady ? 'state-ready' : (allDone ? 'state-designing' : 'state-fill');
+    var heading = demoReady ? 'Preview ready' : (allDone ? 'Designing your preview' : 'Fill in your details');
+    var label = demoReady ? 'Click to reveal your website' : (allDone ? 'Ready in 1–2 days' : 'Add your info so we can get started');
     var readyAttr = demoReady ? ' id="bpReadyHeading" role="button" tabindex="0"' : '';
     return '<div class="bp-placeholder ' + stateClass + '"><canvas id="bpParticleCanvas"></canvas><div class="bp-placeholder-glow"></div><div class="bp-placeholder-inner"><p class="bp-placeholder-name">' + escapeHTML(name) + '</p><p class="bp-placeholder-heading"' + readyAttr + '>' + heading + '</p><p class="bp-placeholder-label">' + label + '</p></div></div>';
   }
