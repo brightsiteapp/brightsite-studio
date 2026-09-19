@@ -412,8 +412,15 @@
             <button type="button" class="plan-chosen-change" id="choosePlanBtn">Change plan</button>
           </div>
           <p class="info-hint" id="billingHint">Your Essential plan is selected. Add features now; you'll manage billing once your account is active.</p>
-          <a class="upgrade-btn" id="upgradeBtn" target="_blank" rel="noopener">Pay for your site</a>
+          <button type="button" class="upgrade-btn" id="upgradeBtn">Pay for your site</button>
           <button type="button" class="billing-btn" id="billingBtn" hidden>Manage billing</button>
+          <div id="stripeEmbedWrap" hidden style="margin-top:14px;border:1px solid var(--line);border-radius:14px;overflow:hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);background:#fafafa">
+              <span style="font-size:12px;font-weight:700;color:var(--ink)">Secure checkout</span>
+              <button type="button" id="stripeEmbedClose" style="background:none;border:0;font-size:18px;color:var(--muted);cursor:pointer;line-height:1;padding:2px 6px">&times;</button>
+            </div>
+            <div id="stripeEmbedMount" style="padding:12px"></div>
+          </div>
         </div>
 
         <div class="req-btn-wrap">
@@ -1564,7 +1571,8 @@
 
     var upgradeBtn = document.getElementById('upgradeBtn');
     upgradeBtn.hidden = false;
-    upgradeBtn.href = buildStripeUrl();
+    upgradeBtn.dataset.plan = selectedPlan;
+    upgradeBtn.dataset.billing = selectedAnnual ? 'annual' : 'monthly';
 
     document.getElementById('billingBtn').hidden = !isPaying;
 
@@ -2219,6 +2227,74 @@
   });
 
   loadBusiness();
+})();
+</script>
+
+<!-- Stripe Embedded Checkout -->
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+(function () {
+  var PUBLISHABLE_KEY = 'pk_live_51UFf7iGqCP7G2YApFHjoKMHkxsEIrf0SJiBpxeTR2MRZ4zs26OQ5jjBClWu8OvZXGXAZvMectFW0zLEuGFFKC7CA008zYaYMzc';
+  var upgradeBtn = document.getElementById('upgradeBtn');
+  var embedWrap = document.getElementById('stripeEmbedWrap');
+  var embedMount = document.getElementById('stripeEmbedMount');
+  var embedClose = document.getElementById('stripeEmbedClose');
+  var checkout = null;
+
+  function getSessionEmail() {
+    try { return (JSON.parse(localStorage.getItem('bs_session') || '{}')).email || ''; } catch(e) { return ''; }
+  }
+  function getSlug() {
+    return new URLSearchParams(location.search).get('slug') || '';
+  }
+
+  if (upgradeBtn) {
+    upgradeBtn.addEventListener('click', function () {
+      var plan = upgradeBtn.dataset.plan;
+      var billing = upgradeBtn.dataset.billing;
+      if (!plan || !billing) return;
+
+      upgradeBtn.disabled = true;
+      upgradeBtn.textContent = 'Loading…';
+
+      fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: plan, billing: billing, email: getSessionEmail(), slug: getSlug() })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.clientSecret) throw new Error(data.error || 'No client secret');
+          var stripe = Stripe(PUBLISHABLE_KEY);
+          return stripe.initEmbeddedCheckout({ clientSecret: data.clientSecret });
+        })
+        .then(function (co) {
+          checkout = co;
+          embedMount.innerHTML = '';
+          co.mount(embedMount);
+          embedWrap.hidden = false;
+          embedWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          upgradeBtn.hidden = true;
+          upgradeBtn.disabled = false;
+          upgradeBtn.textContent = 'Pay for your site';
+        })
+        .catch(function (err) {
+          console.error(err);
+          upgradeBtn.disabled = false;
+          upgradeBtn.textContent = 'Pay for your site';
+          alert('Could not load checkout. Please try again.');
+        });
+    });
+  }
+
+  if (embedClose) {
+    embedClose.addEventListener('click', function () {
+      if (checkout) { checkout.destroy(); checkout = null; }
+      embedMount.innerHTML = '';
+      embedWrap.hidden = true;
+      upgradeBtn.hidden = false;
+    });
+  }
 })();
 </script>
 

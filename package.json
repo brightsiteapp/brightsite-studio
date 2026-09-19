@@ -7,6 +7,9 @@
     "test:builder": "node tests/builder-controls-smoke.mjs",
     "test:templates": "node tests/template-matrix.mjs"
   },
+  "dependencies": {
+    "stripe": "^16.0.0"
+  },
   "devDependencies": {
     "playwright": "1.62.1"
   }
