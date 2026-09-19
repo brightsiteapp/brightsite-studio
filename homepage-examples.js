@@ -25,7 +25,7 @@
     { url: 'https://de-lacy.vercel.app', image: 'img/work-previews/de-lacy.webp' },
     { url: 'https://muse-hull-deploy.vercel.app', image: 'img/work-previews/muse.webp' },
     { url: 'https://mgs-beverley.vercel.app', image: 'img/work-previews/mgs-beverley.webp?v=20260907' },
-    { url: 'https://brian-griffin-electrical.vercel.app', image: 'img/work-previews/brian-griffin.webp' },
+    { url: 'https://brian-griffin-electrical.vercel.app', live: true },
   ];
 
   function scaleFrame(view, iframe, intrinsicW, intrinsicH, cropTop) {
@@ -63,7 +63,7 @@
       card.innerHTML = `
         <div class="ex-frame ex-frame-desktop is-active">
           <div class="ex-bar" aria-hidden="true"><i></i><i></i><i></i></div>
-          <div class="ex-view"><div class="ex-scaler"><iframe title="${siteName} live homepage" src="${ex.url}" tabindex="-1"></iframe></div><span class="ex-view-lock" aria-hidden="true"></span></div>
+          <div class="ex-view"><div class="ex-scaler"><iframe title="${siteName} live homepage" data-src="${ex.url}" tabindex="-1"></iframe></div><span class="ex-view-lock" aria-hidden="true"></span></div>
         </div>`;
     } else {
       card.innerHTML = `
@@ -137,7 +137,14 @@
   function render() {
     slides.forEach((slide, i) => {
       const distance = signedDistance(i);
-      slide.dataset.pos = VISIBLE_POSITIONS.has(distance) ? String(distance) : 'hidden';
+      const pos = VISIBLE_POSITIONS.has(distance) ? String(distance) : 'hidden';
+      slide.dataset.pos = pos;
+      // Reload live iframes when they become the active (centre) card so
+      // load-triggered animations (e.g. van drive-in) replay each time.
+      if (pos === '0') {
+        const iframe = slide.querySelector('iframe[data-src]');
+        if (iframe) iframe.src = iframe.dataset.src;
+      }
     });
     // the stage is a position:relative box sized to the active card, since
     // its absolutely-positioned neighbours can't otherwise give it a height
