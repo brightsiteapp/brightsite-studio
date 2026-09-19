@@ -521,7 +521,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let googleProfile = null;
   let facebookProfile = null;
   let personalisingTimer = null;
-  const enrichmentApiBase = 'https://wellnessweb-coral.vercel.app';
+  const enrichmentApiBase = 'https://brightsite.app';
 
   // Autocomplete lets the user pick the exact Google listing instead of us
   // guessing from free-text name+location. Picking a suggestion means the

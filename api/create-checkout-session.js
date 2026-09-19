@@ -27,7 +27,7 @@ const PLAN_PRICES = {
   },
 };
 
-const ALLOWED_ORIGINS = ['https://brightsite.app', 'https://wellnessweb.co.uk'];
+const ALLOWED_ORIGINS = ['https://brightsite.app'];
 
 export default async function handler(req, res) {
   const origin = req.headers.origin || '';
