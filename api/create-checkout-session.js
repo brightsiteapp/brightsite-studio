@@ -1,4 +1,4 @@
-const Stripe = require('stripe');
+import Stripe from 'stripe';
 
 // Stripe Price IDs for each plan+billing combination.
 // Recurring prices are for hosting; one-time prices are setup fees added to the first invoice.
@@ -29,7 +29,7 @@ const PLAN_PRICES = {
 
 const ALLOWED_ORIGINS = ['https://brightsite.app', 'https://wellnessweb.co.uk'];
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   const origin = req.headers.origin || '';
   const allowOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   res.setHeader('Access-Control-Allow-Origin', allowOrigin);
@@ -70,4 +70,4 @@ module.exports = async function handler(req, res) {
     console.error('Stripe error:', err.message);
     res.status(500).json({ error: err.message });
   }
-};
+}
