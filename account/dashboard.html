@@ -1920,6 +1920,28 @@
     toolbar.classList.toggle('draft', !isLive);
     document.getElementById('toolbarStatusLabel').textContent = isLive ? 'Live' : 'Not live';
 
+    var liveUrl = business && business.data && business.data.liveUrl;
+    if (isLive && liveUrl) {
+      toolbar.style.cursor = 'pointer';
+      toolbar.title = 'Open live website';
+      toolbar.onclick = function() {
+        try {
+          var parsed = new URL(liveUrl);
+          if (parsed.origin === location.origin) {
+            window.open(liveUrl, '_blank');
+          } else {
+            window.open(liveUrl, '_blank');
+          }
+        } catch(e) {
+          window.open(liveUrl, '_blank');
+        }
+      };
+    } else {
+      toolbar.style.cursor = 'default';
+      toolbar.title = '';
+      toolbar.onclick = null;
+    }
+
     var liveBtn = document.getElementById('liveBtn');
     var domainValue = (business && business.data && (business.data.customDomain || business.data.domain)) || '';
     var hasDomain = !!domainValue;
@@ -2349,7 +2371,10 @@
         if (!res.ok) return res.json().then(function (d) { throw new Error(d.message || d.msg || ('Save failed (' + res.status + ')')); });
         return res.json();
       }).then(function (row) {
-        if (row && row.id) business = row;
+        if (row && row.id) {
+          business = row;
+          isLive = !!(row.data && row.data.published);
+        }
       });
     }).then(function () {
       pendingUploads = { logo: null, hero: null, gallery: [] };
