@@ -566,7 +566,7 @@
     </div>
     <div class="preview-frame-wrap">
       <div class="blueprint-site" id="blueprintPreview" hidden aria-label="Your website blueprint"><div class="blueprint-inner" id="blueprintContent"></div></div>
-      <iframe id="sitePreview" title="Your website" sandbox="allow-scripts allow-same-origin"></iframe>
+      <iframe id="sitePreview" title="Your website"></iframe>
     </div>
     <button type="button" class="mobile-preview-edit" id="mobilePreviewEdit" aria-label="Done viewing website"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Done</button>
   </div>
@@ -724,10 +724,6 @@
   </div>
 </div>
 
-<script src="../template-designs.js"></script>
-<script src="../fresh-templates.js"></script>
-<script src="../demo-generator.js"></script>
-<script src="../hero-brand-compositor.js?v=20260915-1"></script>
 <script>
 (function(){
   console.log('[dashboard] IIFE starting');
@@ -1471,13 +1467,13 @@
     clearTimeout(previewTimer);
     var frame = document.getElementById('sitePreview');
     var blueprint = document.getElementById('blueprintPreview');
-    if (!business || typeof buildDemoHTML !== 'function') return;
-    // A Studio upload/deployment supplies a liveUrl; the explicit demo fields
-    // are supported too. Until then customers see a personalised blueprint.
+    if (!business) return;
+    var data = (business && business.data) || {};
+    var previewUrl = data.liveUrl || data.demoUrl || null;
     var demoReady = hasUploadedDemo();
     var rvKey = 'bs_revealed_' + (business && business.id || slug || 'x');
     var hasRevealed = !!localStorage.getItem(rvKey);
-    console.log('[renderPreview]', { demoReady, hasRevealed, blueprintHidden: demoReady && hasRevealed });
+    console.log('[renderPreview]', { demoReady, hasRevealed, previewUrl });
     blueprint.hidden = demoReady && hasRevealed;
     frame.hidden = !(demoReady && hasRevealed);
     renderBlueprint(currentRaw());
@@ -1485,33 +1481,11 @@
     if (!(demoReady && hasRevealed)) return;
     try { if (frame.contentWindow) lastScrollY = frame.contentWindow.scrollY; } catch (e) {}
     frame.classList.add('refreshing');
-    try { frame.srcdoc = buildDemoHTML(currentRaw()); } catch (e) { frame.classList.remove('refreshing'); }
-  }
-
-  // Older accounts can have a saved stock hero. Replace it in the editor
-  // with the matching 3D category scene, carrying either the uploaded logo
-  // or the business-name lockup onto the scene (including the trades van).
-  function renderAccountHero() {
-    var raw = (business && business.data && business.data.raw) || {};
-    var category = raw.tagline || raw.type || params.get('type') || localStorage.getItem('bs_pending_business_type') || '';
-    if (!window.HeroBrandCompositor || !category) return;
-    var name = document.getElementById('fName').value.trim() || raw.name || business.name || '';
-    var location = document.getElementById('fAddress').value.trim() || raw.location || '';
-    var logo = media.logoImage || raw.logoImage;
-    HeroBrandCompositor.render({
-      category: category,
-      businessName: name,
-      location: location,
-      logo: logo ? mediaUrl(logo) : null,
-      outline: true,
-      output: 'dataURL'
-    }).then(function (image) {
-      outlineHeroImage = image;
-      renderBlueprint(business);
-      showBlueprintSection(activeSection);
-    }).catch(function (error) {
-      console.error('Could not render branded account hero:', error);
-    });
+    if (previewUrl && frame.src !== previewUrl) {
+      frame.src = previewUrl;
+    } else if (!previewUrl) {
+      frame.classList.remove('refreshing');
+    }
   }
 
   document.getElementById('sitePreview').addEventListener('load', function () {
@@ -1610,10 +1584,9 @@
   }
 
   document.getElementById('fullscreenBtn').addEventListener('click', function () {
-    if (!business || typeof buildDemoHTML !== 'function') return;
-    var html = buildDemoHTML(currentRaw());
-    var blob = new Blob([html], { type: 'text/html' });
-    window.open(URL.createObjectURL(blob), '_blank');
+    var data = (business && business.data) || {};
+    var previewUrl = data.liveUrl || data.demoUrl || null;
+    if (previewUrl) window.open(previewUrl, '_blank');
   });
 
   // This is a preview-only viewport switch: it never changes the customer's
@@ -1820,7 +1793,6 @@
     if (typeof window._bsRestoreSavedPlan === 'function') window._bsRestoreSavedPlan();
     else renderPlanUI();
     renderPreview();
-    renderAccountHero();
     // A new customer lands directly on the Website tab, with their basic
     // details ready to fill in beside the live skeleton preview.
     setEditing(true);
