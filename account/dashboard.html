@@ -1920,22 +1920,12 @@
     toolbar.classList.toggle('draft', !isLive);
     document.getElementById('toolbarStatusLabel').textContent = isLive ? 'Live' : 'Not live';
 
-    var liveUrl = business && business.data && business.data.liveUrl;
-    if (isLive && liveUrl) {
+    var data = (business && business.data) || {};
+    var siteUrl = data.liveUrl || data.demoUrl || (data.customDomain ? 'https://' + data.customDomain : null) || (data.domain ? 'https://' + data.domain : null);
+    if (isLive && siteUrl) {
       toolbar.style.cursor = 'pointer';
       toolbar.title = 'Open live website';
-      toolbar.onclick = function() {
-        try {
-          var parsed = new URL(liveUrl);
-          if (parsed.origin === location.origin) {
-            window.open(liveUrl, '_blank');
-          } else {
-            window.open(liveUrl, '_blank');
-          }
-        } catch(e) {
-          window.open(liveUrl, '_blank');
-        }
-      };
+      toolbar.onclick = function() { window.open(siteUrl, '_blank'); };
     } else {
       toolbar.style.cursor = 'default';
       toolbar.title = '';
