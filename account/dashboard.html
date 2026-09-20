@@ -1828,8 +1828,9 @@
     isPaying = !!data.planActive;
     isLive = !!data.published;
 
-    // Auto-live: if payment is active and domain is connected, go live automatically
-    if (isPaying && !isLive && (data.customDomain || data.domain) && !isAdminView) {
+    // Auto-live: if payment is active and domain is connected, go live automatically.
+    // Skip if the user explicitly took the site offline (manuallyOffline flag).
+    if (isPaying && !isLive && (data.customDomain || data.domain) && !isAdminView && !data.manuallyOffline) {
       isLive = true;
       saveBusiness({ publish: true }).catch(function () {});
     }
@@ -2411,7 +2412,7 @@
       raw.chosenPlan = selectedPlan;
       raw.chosenAnnual = selectedAnnual;
       if (opts.publish) isLive = true;
-      var record = { slug: slug, name: raw.name, raw: raw, planActive: isPaying, published: isLive, updatedAt: new Date().toISOString() };
+      var record = { slug: slug, name: raw.name, raw: raw, planActive: isPaying, published: isLive, manuallyOffline: false, updatedAt: new Date().toISOString() };
       return authenticatedFetch(SUPABASE_URL + '/rest/v1/rpc/upsert_business', {
         method: 'POST',
         headers: authHeaders({ 'Content-Type': 'application/json' }),
@@ -2525,7 +2526,7 @@
       btn.classList.add('pending');
       btn.textContent = 'Taking offline…';
       isLive = false;
-      var record = { slug: slug, name: (business.data.raw || {}).name, raw: business.data.raw, planActive: isPaying, published: false, updatedAt: new Date().toISOString() };
+      var record = { slug: slug, name: (business.data.raw || {}).name, raw: business.data.raw, planActive: isPaying, published: false, manuallyOffline: true, updatedAt: new Date().toISOString() };
       authenticatedFetch(SUPABASE_URL + '/rest/v1/rpc/upsert_business', {
         method: 'POST',
         headers: authHeaders({ 'Content-Type': 'application/json' }),
