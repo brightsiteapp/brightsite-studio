@@ -1383,7 +1383,8 @@
       openSection(null);
     }
   }
-  document.getElementById('editToggle').addEventListener('click', function () { setEditing(!isEditing); });
+  var editToggleBtn = document.getElementById('editToggle');
+  if (editToggleBtn) editToggleBtn.addEventListener('click', function () { setEditing(!isEditing); });
   // The two tabs only change the left-side panel; the preview remains in
   // place, so customers never lose sight of the website they are shaping.
   function isMobileDashboard() { return window.matchMedia('(max-width: 860px)').matches; }
