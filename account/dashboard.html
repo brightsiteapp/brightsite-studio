@@ -1506,7 +1506,7 @@
     } else {
       renderedSection = null;
     }
-    if (isEditing) wireInlineEditing(frame);
+    if (isEditing && !hasUploadedDemo()) wireInlineEditing(frame);
   });
 
   // ---------------- direct on-page editing ----------------
