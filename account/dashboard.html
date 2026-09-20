@@ -1892,6 +1892,7 @@
     media.gallery = Array.isArray(raw.gallery) ? raw.gallery.slice() : [];
     isPaying = !!data.planActive;
     isLive = !!data.published;
+    hasUnpublishedChanges = !!(isLive && data.needsPublish);
 
     // Auto-live: if payment is active and domain is connected, go live automatically.
     // Skip if the user explicitly took the site offline (manuallyOffline flag).
@@ -2077,16 +2078,20 @@
     }
 
     // canGoLive: paying + domain, OR already live (to allow taking offline)
-    // "Publish changes" only appears when the site is already live and there
-    // are pending edits. Otherwise: "Make live" (not live) or "Take offline".
+    // Live + unpublished edits → "Publish changes" until they click it.
+    // Live + no unpublished edits → "Take offline".
     var canGoLive = (isPaying && hasDomain) || isLive;
+    var showPublish = isLive && hasUnpublishedChanges;
     var liveBtnLabel = isLive
-      ? (hasPendingEdit ? 'Publish changes' : 'Take offline')
+      ? (showPublish ? 'Publish changes' : 'Take offline')
       : 'Make live';
     liveBtn.textContent = liveBtnLabel;
     liveBtn.disabled = !canGoLive;
-    liveBtn.title = !isLive && !isPaying ? 'Upgrade your plan to go live' : !isLive && !hasDomain ? 'Connect a domain first' : '';
-    liveBtn.classList.toggle('take-offline', isLive && !hasPendingEdit);
+    liveBtn.title = !isLive && !isPaying ? 'Upgrade your plan to go live'
+      : !isLive && !hasDomain ? 'Connect a domain first'
+      : showPublish ? 'Save these edits to your live website'
+      : '';
+    liveBtn.classList.toggle('take-offline', isLive && !showPublish);
     liveBtn.hidden = false;
   }
 
@@ -2500,6 +2505,8 @@
         // Publishing clears the offline flag; ordinary saves keep it so a
         // customer who took the site offline stays offline across edits.
         manuallyOffline: opts.publish ? false : !!prev.manuallyOffline,
+        // Live sites keep a "needs publish" flag until Publish changes is clicked.
+        needsPublish: opts.publish ? false : (isLive ? !!hasUnpublishedChanges : false),
         updatedAt: new Date().toISOString()
       });
       return authenticatedFetch(SUPABASE_URL + '/rest/v1/rpc/upsert_business', {
@@ -2532,6 +2539,9 @@
   var autoSaveInFlight = false;
   var autoSaveQueued = false;
   var hasPendingEdit = false;
+  // Live sites: edits autosave to the account record, but the live button
+  // stays on "Publish changes" until the customer explicitly publishes.
+  var hasUnpublishedChanges = false;
   var autoSaveRetries = 0;
   var MAX_AUTOSAVE_RETRIES = 4;
 
@@ -2556,7 +2566,8 @@
     updateSectionChecks();
     var wasNotPending = !hasPendingEdit;
     hasPendingEdit = true;
-    if (wasNotPending) renderPlanUI();
+    if (isLive) hasUnpublishedChanges = true;
+    if (wasNotPending || (isLive && hasUnpublishedChanges)) renderPlanUI();
     autoSaveRetries = 0;
     var statusEl = document.getElementById('saveStatus');
     statusEl.textContent = 'Editing…'; statusEl.className = 'save-status';
@@ -2568,11 +2579,16 @@
     var statusEl = document.getElementById('saveStatus');
     if (autoSaveInFlight) { autoSaveQueued = true; return; }
     hasPendingEdit = false;
+    // Do NOT clear hasUnpublishedChanges here — live sites need an explicit Publish click.
     autoSaveInFlight = true;
     statusEl.innerHTML = '<span class="spin"></span> Saving…'; statusEl.className = 'save-status';
     saveBusiness({}).then(function () {
       autoSaveRetries = 0;
-      statusEl.textContent = 'All changes saved'; statusEl.className = 'save-status ok';
+      statusEl.textContent = isLive && hasUnpublishedChanges
+        ? 'Draft saved — publish to update your live site'
+        : 'All changes saved';
+      statusEl.className = 'save-status ok';
+      renderPlanUI();
     }).catch(function (err) {
       autoSaveRetries++;
       if (autoSaveRetries < MAX_AUTOSAVE_RETRIES) {
@@ -2604,7 +2620,7 @@
   // ---------------- make live / publish / take offline ----------------
   document.getElementById('liveBtn').addEventListener('click', function () {
     var domainValue = (business && business.data && (business.data.customDomain || business.data.domain)) || '';
-    var isTakeOffline = isLive && !hasPendingEdit;
+    var isTakeOffline = isLive && !hasUnpublishedChanges;
     // Only block first-time "Make live" — taking offline and publishing updates
     // are always allowed once the site is already live.
     if (!isLive && (!isPaying || !domainValue)) return;
@@ -2657,8 +2673,10 @@
     saveBusiness({ publish: true }).then(function () {
       autoSaveInFlight = false;
       hasPendingEdit = false;
+      hasUnpublishedChanges = false;
       var statusEl = document.getElementById('saveStatus');
-      statusEl.textContent = 'All changes saved'; statusEl.className = 'save-status ok';
+      statusEl.textContent = wasLive ? 'Published to your live site' : 'All changes saved';
+      statusEl.className = 'save-status ok';
       btn.classList.remove('pending');
       btn.disabled = false;
       renderPlanUI();
