@@ -1625,6 +1625,7 @@
 
   // ---------------- load existing business row ----------------
   function loadBusiness() {
+    console.log('[loadBusiness] session.user_id:', session.user_id);
     // Admin view: load directly by slug
     if (isAdminView) {
       var adminSlug = params.get('bs_admin_slug');
@@ -1639,15 +1640,19 @@
     return authenticatedFetch(url, { headers: authHeaders() })
       .then(function (res) { return res.json(); })
       .then(function (rows) {
+        console.log('[loadBusiness] rows:', rows);
         var realRow = rows && Array.isArray(rows) && rows.find(function(r) { return !(r.data && r.data.stub); });
+        console.log('[loadBusiness] realRow:', realRow);
         if (realRow) {
           business = realRow;
           slug = business.id;
+          console.log('[loadBusiness] rendering from realRow');
           renderDashboard();
         } else {
           // Fall back to slug stored in localStorage or URL param (covers rows with null user_id)
           var pendingSlug = localStorage.getItem('bs_pending_slug') || params.get('slug');
-          if (!pendingSlug) { showSetup(); return; }
+          console.log('[loadBusiness] pendingSlug:', pendingSlug);
+          if (!pendingSlug) { console.log('[loadBusiness] no pendingSlug, calling showSetup'); showSetup(); return; }
           return authenticatedFetch(SUPABASE_URL + '/rest/v1/businesses?select=*&id=eq.' + encodeURIComponent(pendingSlug), { headers: authHeaders() })
             .then(function (r) { return r.json(); })
             .then(function (r2) {
@@ -1668,6 +1673,7 @@
     // The builder already supplied these details before account creation.
     // Create the starter record quietly rather than showing a second setup
     // screen. Customers should never need to re-enter these details here.
+    console.log('[showSetup] called, creating business');
     openEditorAfterSetup = true;
     createSetupBusiness(
       params.get('name') || localStorage.getItem('bs_pending_business_name') || (session.email || '').split('@')[0],
@@ -1683,7 +1689,9 @@
     var name = (pendingName || '').trim();
     var chosenSlug = slugify(pendingSlug || name);
     var pendingType = params.get('type') || localStorage.getItem('bs_pending_business_type') || 'Professional Services';
+    console.log('[createSetupBusiness]', { name, chosenSlug, pendingType });
     if (!name || !chosenSlug) {
+      console.log('[createSetupBusiness] missing name or slug, redirecting home');
       location.replace('../');
       return;
     }
@@ -1721,11 +1729,13 @@
         });
       })
       .then(function (rows) {
+        console.log('[createSetupBusiness] business created/claimed');
         localStorage.removeItem('bs_pending_business_name');
         localStorage.removeItem('bs_pending_slug');
         var created = Array.isArray(rows) ? rows[0] : rows;
         if (created) business = created;
         slug = chosenSlug;
+        console.log('[createSetupBusiness] rendering, business:', business);
         if (business) renderDashboard();
       })
       .catch(function (err) {
@@ -1744,6 +1754,7 @@
 
   // ---------------- render ----------------
   function renderDashboard() {
+    console.log('[renderDashboard] called, business:', business);
     document.getElementById('mobileViewTabs').hidden = false;
     appBody().hidden = false;
     var loading = document.getElementById('loadingScreen');
