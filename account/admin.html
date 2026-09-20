@@ -493,7 +493,7 @@ function applyFilter() {
         '<div class="account-meta">' +
           '<span class="account-slug">' + esc(slug) + '</span>' +
           (email ? '<span class="account-email">· ' + esc(email) + '</span>' : '') +
-          (domain ? '<span class="account-slug" style="color:#4f7be0">· ' + esc(domain) + '</span>' : '') +
+          (domain ? '<span class="account-slug" style="color:#4f7be0">· ' + esc(domain) + '</span>' + (s === 'green' ? '<span style="display:inline-flex;align-items:center;gap:3px;margin-left:4px;padding:1px 7px;border-radius:999px;background:#e6f6ec;color:#1f9d55;font-size:10px;font-weight:700"><span style="width:4px;height:4px;border-radius:50%;background:currentColor"></span>Live</span>' : '<span style="display:inline-flex;align-items:center;gap:3px;margin-left:4px;padding:1px 7px;border-radius:999px;background:#fdf2dd;color:#8a5d08;font-size:10px;font-weight:700">Not live</span>') : '') +
           (liveUrl ? '<a href="' + esc(liveUrl) + '" target="_blank" rel="noopener" style="font-size:11px;color:#1f9d55;margin-left:4px" onclick="event.stopPropagation()">↗ view live</a>' : '') +
         '</div>' +
       '</div>' +
@@ -646,15 +646,10 @@ document.getElementById('uploadConfirm').addEventListener('click', function() {
       : /\.css$/i.test(file.name) ? 'text/css'
       : /\.js$/i.test(file.name) ? 'text/javascript'
       : (file.type || 'application/octet-stream');
-    // Delete first so re-upload gets a fresh content-type (upsert preserves old type)
     fetch(SUPABASE_URL + '/storage/v1/object/' + path, {
-      method: 'DELETE', headers: authHeaders()
-    }).catch(function(){}).then(function() {
-      return fetch(SUPABASE_URL + '/storage/v1/object/' + path, {
-        method: 'POST',
-        headers: authHeaders({ 'Content-Type': contentType }),
-        body: file
-      });
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': contentType, 'x-upsert': 'true' }),
+      body: file
     }).then(function(r) {
       if (!r.ok) failed.push(file.name);
       done++;
