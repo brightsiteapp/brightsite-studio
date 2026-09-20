@@ -111,7 +111,7 @@
           <h4>Essential <span style="display:inline-block;font-size:10px;font-weight:800;letter-spacing:.06em;color:#b45309;background:#fef3c7;padding:2px 8px;border-radius:999px;vertical-align:middle;margin-left:4px">Limited time offer</span></h4>
           <div class="desc">Your website live in days — setup fee waived for early customers.</div>
           <div class="price-row">
-            <span class="price"><span class="essential-was" style="font-size:15px;color:#999;text-decoration:line-through;margin-right:4px;display:none">£19</span><span style="font-size:15px;color:#999;text-decoration:line-through;margin-right:4px">£49</span><span class="setup-price">£0</span><small class="hosting-price">+ £17/mo</small><span class="price-save" style="display:none" id="essential-price-save">Save £24/yr</span></span>
+            <span class="price"><span style="font-size:15px;color:#999;text-decoration:line-through;margin-right:4px">£49</span><span class="setup-price">£0</span><small class="hosting-price">+ £17/mo</small><span class="price-save" style="display:none" id="essential-price-save">Save £24/yr</span></span>
           </div>
           <div class="price-note" id="essential-price-note">Billed £204/yr — cancel any time</div>
           <ul>
@@ -215,18 +215,15 @@
 
     if (essentialPlan) {
       var essentialHosting = essentialPlan.querySelector('.hosting-price');
-      var essentialWas = essentialPlan.querySelector('.essential-was');
       var essentialSave = document.getElementById('essential-price-save');
       var essentialNote = document.getElementById('essential-price-note');
       if (isAnnual) {
-        essentialHosting.textContent = '+ £17/mo';
-        if (essentialWas) essentialWas.style.display = 'inline';
+        essentialHosting.innerHTML = '+ <s style="color:#999;margin-right:2px">£19/mo</s> £17/mo';
         if (essentialSave) essentialSave.style.display = 'inline-block';
         if (essentialNote) essentialNote.textContent = 'Billed £204/yr — cancel any time';
         essentialPlan.setAttribute('data-annual-active', '');
       } else {
         essentialHosting.textContent = '+ £19/mo';
-        if (essentialWas) essentialWas.style.display = 'none';
         if (essentialSave) essentialSave.style.display = 'none';
         if (essentialNote) essentialNote.textContent = 'No setup fee — cancel any time';
         essentialPlan.removeAttribute('data-annual-active');
