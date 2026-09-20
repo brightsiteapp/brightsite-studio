@@ -45,7 +45,7 @@
   .left-panel{min-height:0;overflow-y:auto;border-right:1px solid var(--line);background:var(--bg);display:flex;flex-direction:column}
   .left-inner{padding:18px;flex:1}
   @media(max-width:860px){
-    .left-inner{padding-bottom:200px}
+    .left-inner{padding-bottom:calc(env(safe-area-inset-bottom) + 120px)}
   }
 
   .right-panel{min-height:0;display:flex;flex-direction:column;background:#efe9df}
@@ -321,7 +321,7 @@
   @keyframes spin{to{transform:rotate(360deg)}}
 
   /* ---------------- request-an-update mini modal ---------------- */
-  .modal-veil{position:fixed;inset:0;background:rgba(23,20,15,.4);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
+  .modal-veil{position:fixed;inset:0;height:100dvh;background:rgba(23,20,15,.4);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px;box-sizing:border-box}
   .modal-card{width:100%;max-width:420px;max-height:90vh;overflow-y:auto;background:var(--card);border-radius:18px;padding:24px;box-shadow:0 20px 46px rgba(0,0,0,.22)}
   .modal-card h2{font-family:var(--display);font-size:17px;font-weight:700;margin-bottom:6px}
   .modal-card p.hint{color:var(--muted);font-size:13px;margin-bottom:16px;line-height:1.5}
@@ -344,7 +344,7 @@
     .mobile-edit-menu button{display:block;width:100%;padding:12px 10px;border:0;border-radius:9px;background:transparent;color:var(--ink);font:inherit;font-size:13px;font-weight:700;text-align:left;cursor:pointer}
     .mobile-edit-menu button:hover{background:var(--surface)}
     .app-body{grid-template-columns:1fr;position:relative;overflow:hidden}
-    .left-panel,.right-panel{position:absolute;inset:0;width:100%;border-right:0}
+    .left-panel,.right-panel{position:absolute;inset:0;width:100%;border-right:0;padding-bottom:env(safe-area-inset-bottom)}
     .left-panel{z-index:5;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
     body.mode-view .left-panel,body.mode-edit .left-panel{display:flex}
     body.mode-edit .right-panel{display:none}
