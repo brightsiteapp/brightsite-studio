@@ -10,7 +10,9 @@
   // one-time onboarding/loading screen while their saved dashboard loads.
   try {
     var bsStoredSession = JSON.parse(localStorage.getItem('bs_session') || 'null');
-    if (bsStoredSession && bsStoredSession.access_token) document.documentElement.classList.add('bs-existing-session');
+    var bsAdminSession = JSON.parse(localStorage.getItem('bs_admin') || 'null');
+    var bsAdminSlug = new URLSearchParams(location.search).get('bs_admin_slug');
+    if ((bsStoredSession && bsStoredSession.access_token) || (bsAdminSlug && bsAdminSession && bsAdminSession.admin)) document.documentElement.classList.add('bs-existing-session');
   } catch (e) {}
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -588,7 +590,6 @@
       <label for="reqType">What's this about?</label>
       <select id="reqType">
         <option value="update">A change to my website</option>
-        <option value="domain">Connecting or changing my domain</option>
       </select>
     </div>
     <div class="acct-field">
@@ -1937,7 +1938,7 @@
           : '<span style="font-weight:600;color:var(--ink)">' + domainValue + '</span><span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;background:#fdf2dd;color:#8a5d08;font-size:11px;font-weight:700">Not live</span>';
         domainRowValue.innerHTML = domainLiveHtml;
       } else {
-        domainRowValue.innerHTML = '<span style="color:var(--muted)">No domain — <button type="button" onclick="openDomainReq()" style="background:none;border:0;color:var(--accent);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;padding:0">request one</button></span>';
+        domainRowValue.innerHTML = '<span style="color:var(--muted)">No domain yet</span>';
       }
     }
 
@@ -2438,17 +2439,6 @@
       e.returnValue = '';
     }
   });
-
-  // helper for domain request shortcut in account card
-  function openDomainReq() {
-    var reqVeil = document.getElementById('reqVeil');
-    var reqType = document.getElementById('reqType');
-    reqVeil.hidden = false;
-    reqType.value = 'domain';
-    if (typeof updateReqCopy === 'function') updateReqCopy();
-    document.getElementById('reqMessage').focus();
-  }
-  window.openDomainReq = openDomainReq;
 
   // ---------------- make live / publish / take offline ----------------
   document.getElementById('liveBtn').addEventListener('click', function () {
