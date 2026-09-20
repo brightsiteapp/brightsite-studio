@@ -496,6 +496,7 @@
           <div class="section-head"><button type="button" class="section-back" data-back>&#8249; Edit your website</button></div>
           <h3>Business name</h3>
           <div class="acct-field"><label for="fName">Business name</label><input type="text" id="fName"></div>
+          <div class="acct-field"><label for="fCategory">Business type</label><select id="fCategory"><option value="" disabled>Select a type</option><option>Hair &amp; Beauty</option><option>Aesthetics</option><option>Health &amp; Wellness</option><option>Fitness</option><option>Automotive</option><option>Trades</option><option>Home &amp; Garden</option><option>Food &amp; Drink</option><option>Professional Services</option><option>Creative</option><option>Pets</option><option>Other</option></select></div>
           <button type="button" class="builder-done" data-back style="margin-top:8px">Done</button>
         </div>
 
@@ -2006,6 +2007,7 @@
     document.getElementById('acctEmailTop').textContent = resolvedEmail;
     document.getElementById('acctEmailRow').textContent = resolvedEmail;
     document.getElementById('fName').value = raw.name || business.name || '';
+    document.getElementById('fCategory').value = raw.tagline || '';
     document.getElementById('fPhone').value = raw.phone || '';
     document.getElementById('fEmail2').value = resolvedEmail;
     document.getElementById('fWebsite').value = raw.website || '';
@@ -2406,6 +2408,7 @@
   ['fName', 'fPhone', 'fEmail2', 'fAddress', 'fReviewLink', 'fWebsite', 'fInstagram', 'fFacebook'].forEach(function (id) {
     document.getElementById(id).addEventListener('input', function () { scheduleRenderPreview(); scheduleAutoSave(); });
   });
+  document.getElementById('fCategory').addEventListener('change', function () { scheduleRenderPreview(); scheduleAutoSave(); });
 
   function renderReviewEntries() {
     var mount = document.getElementById('reviewEntries');
@@ -2552,6 +2555,7 @@
     return Promise.all(uploads).then(function () {
       var raw = Object.assign({}, (business.data && business.data.raw) || {}, {
         name: document.getElementById('fName').value.trim(),
+        tagline: document.getElementById('fCategory').value.trim(),
         phone: document.getElementById('fPhone').value.trim(),
         email: document.getElementById('fEmail2').value.trim(),
         website: document.getElementById('fWebsite').value.trim(),
