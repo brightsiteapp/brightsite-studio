@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tom's Portfolio</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Georgia', serif; background: #0f0f0f; color: #f0f0f0; }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 24px 48px;
+      border-bottom: 1px solid #222;
+    }
+    nav .logo { font-size: 1.2rem; font-weight: bold; letter-spacing: 0.05em; }
+    nav ul { list-style: none; display: flex; gap: 32px; }
+    nav a { color: #aaa; text-decoration: none; font-size: 0.9rem; letter-spacing: 0.05em; transition: color 0.2s; }
+    nav a:hover { color: #fff; }
+    .burger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; background: none; border: none; }
+    .burger span { display: block; width: 24px; height: 2px; background: #f0f0f0; transition: all 0.3s; }
+    .mobile-menu { display: none; position: fixed; inset: 0; background: #0f0f0f; z-index: 100; flex-direction: column; align-items: center; justify-content: center; gap: 40px; }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a { color: #f0f0f0; text-decoration: none; font-size: 1.5rem; letter-spacing: 0.1em; }
+    .mobile-close { position: absolute; top: 24px; right: 24px; background: none; border: none; color: #f0f0f0; font-size: 1.8rem; cursor: pointer; line-height: 1; }
+
+    .hero {
+      padding: 120px 48px 80px;
+      max-width: 800px;
+    }
+    .hero h1 { font-size: 3.5rem; line-height: 1.1; margin-bottom: 24px; }
+    .hero h1 span { color: #888; }
+    .hero p { font-size: 1.1rem; color: #aaa; line-height: 1.7; max-width: 480px; margin-bottom: 40px; }
+    .hero .cta {
+      display: inline-block;
+      padding: 14px 32px;
+      background: #fff;
+      color: #000;
+      text-decoration: none;
+      font-size: 0.9rem;
+      letter-spacing: 0.05em;
+      transition: background 0.2s;
+    }
+    .hero .cta:hover { background: #ddd; }
+
+    .work {
+      padding: 80px 48px;
+      border-top: 1px solid #222;
+    }
+    .work h2 { font-size: 0.85rem; letter-spacing: 0.12em; color: #666; text-transform: uppercase; margin-bottom: 48px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    .card {
+      background: #1a1a1a;
+      border: 1px solid #222;
+      padding: 32px;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: #444; }
+    .card .tag { font-size: 0.75rem; color: #666; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px; }
+    .card h3 { font-size: 1.2rem; margin-bottom: 12px; }
+    .card p { font-size: 0.9rem; color: #888; line-height: 1.6; }
+
+    .about {
+      padding: 80px 48px;
+      border-top: 1px solid #222;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: center;
+    }
+    .about h2 { font-size: 2rem; margin-bottom: 24px; }
+    .about p { color: #aaa; line-height: 1.8; margin-bottom: 16px; }
+
+    footer {
+      padding: 40px 48px;
+      border-top: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    footer p { font-size: 0.85rem; color: #555; }
+    footer a { color: #555; text-decoration: none; }
+    footer a:hover { color: #aaa; }
+
+    @media (max-width: 768px) {
+      nav { padding: 20px 24px; }
+      nav ul { display: none; }
+      .burger { display: flex; }
+      .hero { padding: 80px 24px 60px; }
+      .hero h1 { font-size: 2.5rem; }
+      .work, .about { padding: 60px 24px; }
+      .about { grid-template-columns: 1fr; gap: 32px; }
+      footer { padding: 32px 24px; flex-direction: column; gap: 12px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="logo">Tom Conroy</div>
+    <ul>
+      <li><a href="#work">Work</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="mailto:hello@tomconroy.com">Contact</a></li>
+    </ul>
+    <button class="burger" onclick="document.getElementById('mobileMenu').classList.add('open')" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <div class="mobile-menu" id="mobileMenu">
+    <button class="mobile-close" onclick="document.getElementById('mobileMenu').classList.remove('open')" aria-label="Close menu">&times;</button>
+    <a href="#work" onclick="document.getElementById('mobileMenu').classList.remove('open')">Work</a>
+    <a href="#about" onclick="document.getElementById('mobileMenu').classList.remove('open')">About</a>
+    <a href="mailto:hello@tomconroy.com">Contact</a>
+  </div>
+
+  <section class="hero">
+    <h1>Design &amp; <span>development</span> for the web.</h1>
+    <p>I build clean, fast websites and digital products. Currently available for freelance projects.</p>
+    <a href="#work" class="cta">View Work</a>
+  </section>
+
+  <section class="work" id="work">
+    <h2>Selected Work</h2>
+    <div class="grid">
+      <div class="card">
+        <div class="tag">Web App</div>
+        <h3>BrightSite Studio</h3>
+        <p>Desktop app for managing and publishing websites with a visual editor and live preview.</p>
+      </div>
+      <div class="card">
+        <div class="tag">E-commerce</div>
+        <h3>Shop Redesign</h3>
+        <p>Full redesign and rebuild of an online store, improving conversion rate by 38%.</p>
+      </div>
+      <div class="card">
+        <div class="tag">Branding</div>
+        <h3>Brand Identity</h3>
+        <p>Logo, color system, and digital style guide for a creative agency launch.</p>
+      </div>
+      <div class="card">
+        <div class="tag">Marketing Site</div>
+        <h3>SaaS Landing Page</h3>
+        <p>High-converting landing page with animated sections and integrated sign-up flow.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="about" id="about">
+    <div>
+      <h2>About Me</h2>
+      <p>I'm a designer and developer based in Ireland. I've been building websites for over 8 years, working with startups, agencies, and independent businesses.</p>
+      <p>I care about the details — typography, spacing, performance, and making things that actually work.</p>
+    </div>
+    <div style="background:#1a1a1a; border:1px solid #222; height:320px; display:flex; align-items:center; justify-content:center; color:#444; font-size:0.85rem; letter-spacing:0.05em;">
+      PHOTO
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2026 Tom Conroy</p>
+    <p><a href="mailto:hello@tomconroy.com">hello@tomconroy.com</a></p>
+  </footer>
+
+</body>
+</html>
