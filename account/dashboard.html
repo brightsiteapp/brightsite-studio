@@ -1401,10 +1401,14 @@
     openSection(null);
   }
   document.getElementById('mobileAccountTab').addEventListener('click', function () {
+    console.log('[tab] Account clicked');
     document.body.classList.remove('mobile-show-site');
     setEditing(false);
   });
-  document.getElementById('mobileWebsiteTab').addEventListener('click', showWebsiteEditor);
+  document.getElementById('mobileWebsiteTab').addEventListener('click', function() {
+    console.log('[tab] Website clicked');
+    showWebsiteEditor();
+  });
   document.getElementById('mobilePreviewEdit').addEventListener('click', showWebsiteEditor);
   document.getElementById('viewWebsiteButton').addEventListener('click', function () {
     if (isMobileDashboard()) showMobileWebsite();
