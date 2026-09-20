@@ -1744,11 +1744,13 @@
         // is delayed; never dump them back on the marketing homepage after
         // they have just set a password.
         console.error('[createSetupBusiness] error:', err);
+        // Even if creation fails, render a provisional dashboard so user isn't stuck on blank page
         var provisional = { slug: chosenSlug, name: name, raw: { name: name, email: session.email || '', tagline: pendingType, services: [], gallery: [] }, updatedAt: new Date().toISOString() };
         business = { id: chosenSlug, name: name, user_id: session.user_id, data: provisional };
         slug = chosenSlug;
         localStorage.setItem('bs_pending_business_name', name);
         localStorage.setItem('bs_pending_slug', chosenSlug);
+        console.log('[createSetupBusiness] rendering provisional dashboard:', business);
         renderDashboard();
       });
   }
@@ -2558,6 +2560,17 @@
 
   console.log('[dashboard] about to call loadBusiness()');
   loadBusiness();
+
+  // Fallback: if renderDashboard hasn't been called after 5s, hide the loading screen
+  // so the user can at least see what's happening
+  setTimeout(function() {
+    var loading = document.getElementById('loadingScreen');
+    if (loading && !loading.hidden) {
+      console.log('[dashboard] timeout: hiding loading screen after 5s, business:', business);
+      loading.hidden = true;
+    }
+  }, 5000);
+
   console.log('[dashboard] IIFE finished');
 })();
 </script>
