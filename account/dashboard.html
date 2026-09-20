@@ -64,12 +64,14 @@
   .live-btn:hover{transform:translateY(-1px)}
   .live-btn:disabled{background:#c9c6bd;cursor:not-allowed;transform:none}
   .live-btn.pending{background:#c0392b}
+  .live-btn.take-offline{background:#6b7280}
+  .live-btn.take-offline:hover{background:#4b5563}
 
   .preview-frame-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:18px}
   .mobile-preview-edit{display:none}
   #sitePreview{width:100%;height:100%;max-width:1180px;border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:0 16px 34px rgba(23,32,31,.08);opacity:1;transition:opacity .16s ease}
   #sitePreview.refreshing{opacity:.55}
-  #sitePreview.is-mobile-preview,.blueprint-site.is-mobile-preview{width:auto;height:min(844px,calc(100vh - 150px));max-width:100%;aspect-ratio:390/844}
+  #sitePreview.is-mobile-preview,.blueprint-site.is-mobile-preview{width:390px;max-width:min(390px,100%);height:min(760px,calc(100vh - 200px));aspect-ratio:390/760;border-radius:40px;border:10px solid #1a1a1a;box-shadow:0 0 0 2px #444,0 28px 60px rgba(0,0,0,.4);outline:none}
   .blueprint-site{width:100%;height:100%;max-width:1180px;overflow:auto;border:1px solid rgba(255,255,255,.1);border-radius:16px;background:#0c0f1a;box-shadow:0 24px 56px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.07);color:rgba(255,255,255,.88);font-family:Inter,sans-serif}
   .blueprint-inner{min-height:100%;display:flex;flex-direction:column;padding:clamp(22px,4vw,58px);background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(59,130,246,.18) 0%,transparent 60%),linear-gradient(160deg,#0c0f1a 0%,#111627 60%,#0e1420 100%)}
   .blueprint-top{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.08)}
@@ -401,6 +403,7 @@
           <div class="info-row"><span class="label">Plan</span><span class="value"><span class="plan-pill" id="planPill"><span class="plan-dot"></span><span id="planLabel">Essential £0</span></span></span></div>
           <div class="info-row"><span class="label">Login email</span><span class="value" id="acctEmailRow"></span></div>
           <div class="info-row"><span class="label">Website status</span><span class="value" id="statusRow">Not live yet</span></div>
+          <div class="info-row" id="domainRow" hidden><span class="label">Domain</span><span class="value" id="domainRowValue" style="display:flex;align-items:center;gap:7px;max-width:none"></span></div>
         </div>
 
         <div class="info-card">
@@ -1769,6 +1772,12 @@
     isPaying = !!data.planActive;
     isLive = !!data.published;
 
+    // Auto-live: if payment is active and domain is connected, go live automatically
+    if (isPaying && !isLive && (data.customDomain || data.domain) && !isAdminView) {
+      isLive = true;
+      saveBusiness({ publish: true }).catch(function () {});
+    }
+
     // Show approve section when preview is ready and not yet approved
     var approveSection = document.getElementById('approveSection');
     var hasPreview = !!(data.demoUrl || data.demoUploaded || data.liveUrl);
@@ -1914,9 +1923,34 @@
     document.getElementById('toolbarStatusLabel').textContent = isLive ? 'Live' : 'Not live';
 
     var liveBtn = document.getElementById('liveBtn');
-    liveBtn.textContent = isLive ? 'Publish changes' : 'Make live';
-    liveBtn.disabled = !isPaying;
-    liveBtn.title = isPaying ? '' : 'Upgrade your plan to go live';
+    var domainValue = (business && business.data && (business.data.customDomain || business.data.domain)) || '';
+    var hasDomain = !!domainValue;
+
+    // Domain row in Account card
+    var domainRow = document.getElementById('domainRow');
+    var domainRowValue = document.getElementById('domainRowValue');
+    if (domainRow && domainRowValue) {
+      if (hasDomain) {
+        domainRow.hidden = false;
+        var domainLiveHtml = isLive
+          ? '<span style="font-weight:600;color:var(--ink)">' + domainValue + '</span><span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;background:#e6f6ec;color:#1f9d55;font-size:11px;font-weight:700"><span style="width:5px;height:5px;border-radius:50%;background:currentColor"></span>Live</span>'
+          : '<span style="font-weight:600;color:var(--ink)">' + domainValue + '</span><span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;background:#fdf2dd;color:#8a5d08;font-size:11px;font-weight:700">Not live</span>';
+        domainRowValue.innerHTML = domainLiveHtml;
+      } else {
+        domainRow.hidden = false;
+        domainRowValue.innerHTML = '<span style="color:var(--muted);font-size:12.5px">None connected — <button type="button" onclick="openDomainReq()" style="background:none;border:0;color:var(--accent);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;padding:0">request one</button></span>';
+      }
+    }
+
+    // canGoLive: paying + domain set
+    var canGoLive = isPaying && hasDomain;
+    var liveBtnLabel = !isPaying ? 'Make live'
+      : isLive ? (hasPendingEdit ? 'Publish updates' : 'Take offline')
+      : 'Make live';
+    liveBtn.textContent = liveBtnLabel;
+    liveBtn.disabled = !canGoLive;
+    liveBtn.title = !isPaying ? 'Upgrade your plan to go live' : !hasDomain ? 'Connect a domain first' : '';
+    liveBtn.classList.toggle('take-offline', isLive && !hasPendingEdit && isPaying);
   }
 
   // ---------------- plan chooser modal ----------------
@@ -2359,7 +2393,9 @@
 
   function scheduleAutoSave() {
     updateSectionChecks();
+    var wasNotPending = !hasPendingEdit;
     hasPendingEdit = true;
+    if (wasNotPending) renderPlanUI();
     autoSaveRetries = 0;
     var statusEl = document.getElementById('saveStatus');
     statusEl.textContent = 'Editing…'; statusEl.className = 'save-status';
@@ -2404,10 +2440,47 @@
     }
   });
 
-  // ---------------- make live / publish ----------------
+  // helper for domain request shortcut in account card
+  function openDomainReq() {
+    var reqVeil = document.getElementById('reqVeil');
+    var reqType = document.getElementById('reqType');
+    reqVeil.hidden = false;
+    reqType.value = 'domain';
+    if (typeof updateReqCopy === 'function') updateReqCopy();
+    document.getElementById('reqMessage').focus();
+  }
+  window.openDomainReq = openDomainReq;
+
+  // ---------------- make live / publish / take offline ----------------
   document.getElementById('liveBtn').addEventListener('click', function () {
-    if (!isPaying) return;
+    var domainValue = (business && business.data && (business.data.customDomain || business.data.domain)) || '';
+    if (!isPaying || !domainValue) return;
     var btn = this;
+    var isTakeOffline = isLive && !hasPendingEdit;
+    if (isTakeOffline) {
+      // Take offline
+      btn.disabled = true;
+      btn.classList.add('pending');
+      btn.textContent = 'Taking offline…';
+      isLive = false;
+      var record = { slug: slug, name: (business.data.raw || {}).name, raw: business.data.raw, planActive: isPaying, published: false, updatedAt: new Date().toISOString() };
+      authenticatedFetch(SUPABASE_URL + '/rest/v1/rpc/upsert_business', {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ p_id: slug, p_name: record.name, p_user_id: session.user_id, p_data: record, p_updated_at: record.updatedAt })
+      }).then(function () {
+        btn.classList.remove('pending');
+        btn.disabled = false;
+        renderPlanUI();
+      }).catch(function () {
+        isLive = true;
+        btn.classList.remove('pending');
+        btn.disabled = false;
+        renderPlanUI();
+      });
+      return;
+    }
+    // Make live / Publish updates
     var wasLive = isLive;
     clearTimeout(autoSaveTimer);
     autoSaveInFlight = true;
@@ -2420,12 +2493,12 @@
       statusEl.textContent = 'All changes saved'; statusEl.className = 'save-status ok';
       btn.classList.remove('pending');
       btn.disabled = false;
-      btn.textContent = 'Publish changes';
+      renderPlanUI();
     }).catch(function () {
       autoSaveInFlight = false;
       btn.classList.remove('pending');
       btn.disabled = false;
-      btn.textContent = wasLive ? 'Publish changes' : 'Make live';
+      renderPlanUI();
     });
   });
 
