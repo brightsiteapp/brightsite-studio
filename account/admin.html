@@ -751,12 +751,128 @@ document.getElementById('goLiveConfirm').addEventListener('click', function() {
   });
 });
 
-// ---- vercel domain ----
+// ---- vercel helpers ----
+function blobToBase64(blob) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function() { resolve(reader.result.split(',')[1]); };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+// Deploy the uploaded site files for `slug` to Vercel, alias `domain` to that deployment.
+// Falls back to just adding the domain to the project if no files exist yet.
+async function deployAndAliasToVercel(slug, domain, statusEl) {
+  var token, projectId;
+  try { token = localStorage.getItem('bs_vercel_token'); projectId = localStorage.getItem('bs_vercel_project'); } catch(e) {}
+  if (!token || !projectId) return;
+
+  var cleanDomain = domain.replace(/^https?:\/\//, '').replace(/\/.*$/, '').trim();
+  if (!cleanDomain) return;
+
+  // 1. List files in Supabase storage for this slug
+  if (statusEl) { statusEl.textContent = 'Domain saved · Fetching site files…'; statusEl.className = 'modal-status ok'; }
+  var listResp = await fetch(SUPABASE_URL + '/storage/v1/object/list/business-media', {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ prefix: slug + '/site/', limit: 200, offset: 0 })
+  });
+  var files = await listResp.json();
+
+  if (!Array.isArray(files) || files.length === 0) {
+    // No uploaded files yet — just register the domain on the project
+    tryAddVercelDomain('https://' + cleanDomain, statusEl);
+    return;
+  }
+
+  // 2. Download each file and encode as base64
+  if (statusEl) { statusEl.textContent = 'Domain saved · Downloading ' + files.length + ' file(s)…'; }
+  var vercelFiles = [];
+  for (var i = 0; i < files.length; i++) {
+    var f = files[i];
+    if (!f.name || f.name.endsWith('/')) continue; // skip virtual folder entries
+    var fileUrl = SUPABASE_URL + '/storage/v1/object/public/business-media/' + slug + '/site/' + f.name;
+    try {
+      var fileResp = await fetch(fileUrl);
+      if (!fileResp.ok) continue;
+      var blob = await fileResp.blob();
+      var b64 = await blobToBase64(blob);
+      vercelFiles.push({ file: f.name, data: b64, encoding: 'base64' });
+    } catch(e) {}
+  }
+
+  if (!vercelFiles.length) {
+    tryAddVercelDomain('https://' + cleanDomain, statusEl);
+    return;
+  }
+
+  // 3. Create a Vercel deployment with the site files
+  if (statusEl) { statusEl.textContent = 'Domain saved · Deploying to Vercel…'; }
+  var deployResp = await fetch('https://api.vercel.com/v13/deployments', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: projectId, files: vercelFiles, projectSettings: { framework: null }, target: 'production' })
+  });
+  var deployData = await deployResp.json();
+
+  if (!deployData.id) {
+    if (statusEl) { statusEl.textContent = 'Domain saved · Deploy failed: ' + ((deployData.error && deployData.error.message) || 'unknown error'); }
+    return;
+  }
+
+  // 4. Poll until deployment is ready (static files are usually fast)
+  var deployId = deployData.id;
+  var ready = false;
+  for (var attempt = 0; attempt < 20; attempt++) {
+    await new Promise(function(r) { setTimeout(r, 3000); });
+    try {
+      var checkResp = await fetch('https://api.vercel.com/v13/deployments/' + encodeURIComponent(deployId), {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      var checkData = await checkResp.json();
+      if (checkData.readyState === 'READY') { ready = true; break; }
+      if (checkData.readyState === 'ERROR') { break; }
+      if (statusEl) { statusEl.textContent = 'Domain saved · Deploying… (' + (checkData.readyState || 'building') + ')'; }
+    } catch(e) {}
+  }
+
+  if (!ready) {
+    if (statusEl) { statusEl.textContent = 'Domain saved · Deployment timed out — check Vercel dashboard'; }
+    return;
+  }
+
+  // 5. Alias the custom domain to this specific deployment
+  var aliasResp = await fetch('https://api.vercel.com/v2/deployments/' + encodeURIComponent(deployId) + '/aliases', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ alias: cleanDomain })
+  });
+  var aliasData = await aliasResp.json();
+
+  if (aliasData.error) {
+    if (statusEl) { statusEl.textContent = 'Deployed · Alias failed: ' + aliasData.error.message; }
+  } else {
+    if (statusEl) { statusEl.textContent = 'Domain saved · Site deployed and ' + cleanDomain + ' connected! ✓'; statusEl.className = 'modal-status ok'; }
+    // Show DNS records
+    try {
+      var dnsResp = await fetch('https://api.vercel.com/v6/domains/' + encodeURIComponent(cleanDomain) + '/config', {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      var cfg = await dnsResp.json();
+      var records = [];
+      if (cfg.cnames && cfg.cnames.length) records.push('CNAME → ' + cfg.cnames[0]);
+      if (cfg.aValues && cfg.aValues.length) records.push('A → ' + cfg.aValues[0]);
+      if (statusEl && records.length) statusEl.textContent += ' · DNS: ' + records.join(', ');
+    } catch(e) {}
+  }
+}
+
+// Lightweight fallback: just register the domain on the Vercel project (no file deploy)
 function tryAddVercelDomain(liveUrl, statusEl) {
   var token, projectId;
   try { token = localStorage.getItem('bs_vercel_token'); projectId = localStorage.getItem('bs_vercel_project'); } catch(e) {}
   if (!token || !projectId) return;
-  // Extract domain from URL
   var domain = liveUrl.replace(/^https?:\/\//, '').replace(/\/.*$/, '').trim();
   if (!domain) return;
 
@@ -771,7 +887,6 @@ function tryAddVercelDomain(liveUrl, statusEl) {
       if (statusEl) { statusEl.textContent += ' · Vercel: ' + data.error.message; }
       return;
     }
-    // Fetch DNS config
     return fetch('https://api.vercel.com/v6/domains/' + encodeURIComponent(domain) + '/config', {
       headers: { Authorization: 'Bearer ' + token }
     }).then(function(r) { return r.json(); }).then(function(cfg) {
@@ -784,7 +899,7 @@ function tryAddVercelDomain(liveUrl, statusEl) {
   .catch(function() {});
 }
 
-// domain modal — also tries Vercel
+// domain modal — deploys site files to Vercel and aliases the domain
 document.getElementById('domainConfirm').addEventListener('click', function() {
   var domain = document.getElementById('domainInput').value.trim();
   var status = document.getElementById('domainStatus');
@@ -810,9 +925,16 @@ document.getElementById('domainConfirm').addEventListener('click', function() {
     btn.textContent = 'Save domain'; btn.disabled = false;
     if (r.ok) {
       status.textContent = 'Domain saved.'; status.className = 'modal-status ok';
-      // Try Vercel
-      tryAddVercelDomain(domain.startsWith('http') ? domain : 'https://' + domain, status);
-      setTimeout(function() { document.getElementById('domainModal').classList.add('hidden'); loadBusinesses(); }, 2000);
+      var vercelToken, vercelProject;
+      try { vercelToken = localStorage.getItem('bs_vercel_token'); vercelProject = localStorage.getItem('bs_vercel_project'); } catch(e) {}
+      if (vercelToken && vercelProject) {
+        // Deploy files and alias domain, then close
+        deployAndAliasToVercel(domainTargetSlug, domain, status).then(function() {
+          setTimeout(function() { document.getElementById('domainModal').classList.add('hidden'); loadBusinesses(); }, 1500);
+        });
+      } else {
+        setTimeout(function() { document.getElementById('domainModal').classList.add('hidden'); loadBusinesses(); }, 2000);
+      }
     } else {
       status.textContent = 'Save failed. Check connection.'; status.className = 'modal-status err';
     }
