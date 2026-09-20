@@ -26,8 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
     link.setAttribute('aria-label', 'My account');
     link.title = 'My account';
   } else {
-    link.href = '/account/login.html?signup=1';
-    link.setAttribute('aria-label', 'Create an account');
-    link.title = 'Create an account';
+    link.hidden = true;
   }
 });
