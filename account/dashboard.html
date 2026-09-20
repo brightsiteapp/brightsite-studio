@@ -1463,6 +1463,45 @@
 
   var lastScrollY = 0;
   var renderedSection = null; // which section's page the preview is currently showing
+  var previewBaseUrl = null; // base URL for fetching sub-pages (services.html, contact.html, etc.)
+
+  function loadPreviewPage(url) {
+    var frame = document.getElementById('sitePreview');
+    frame.classList.add('refreshing');
+    fetch(url)
+      .then(function(r) { return r.text(); })
+      .then(function(html) {
+        if (!/<base\b/i.test(html)) {
+          var baseTag = '<base href="' + previewBaseUrl + '">';
+          var injected = html.replace(/(<head[^>]*>)/i, '$1' + baseTag);
+          html = injected !== html ? injected : baseTag + html;
+        }
+        frame.srcdoc = html;
+      })
+      .catch(function() { frame.classList.remove('refreshing'); });
+  }
+
+  function wirePreviewNav(frame) {
+    try {
+      var doc = frame.contentDocument;
+      if (!doc || doc.getElementById('bsNavLock')) return;
+      var marker = doc.createElement('meta');
+      marker.id = 'bsNavLock';
+      doc.head.appendChild(marker);
+      doc.addEventListener('click', function(e) {
+        var a = e.target.closest('a[href]');
+        if (!a) return;
+        var href = a.getAttribute('href');
+        if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('http')) return;
+        // Intercept relative .html links and fetch them ourselves
+        if (/\.html(\?.*)?$/.test(href) || !/\./.test(href.split('/').pop())) {
+          e.preventDefault();
+          var targetUrl = previewBaseUrl ? previewBaseUrl + href.replace(/^\.\//, '') : null;
+          if (targetUrl) loadPreviewPage(targetUrl);
+        }
+      });
+    } catch(e) {}
+  }
 
   function renderPreview() {
     clearTimeout(previewTimer);
@@ -1494,14 +1533,14 @@
           return;
         }
       } catch(e) {}
+      previewBaseUrl = previewUrl.replace(/\/[^/]*$/, '/');
       fetch(previewUrl)
         .then(function(r) { return r.text(); })
         .then(function(html) {
           // Inject a <base> tag so relative links (services.html, contact.html, etc.)
           // resolve to the storage origin, not the dashboard page.
           if (!/<base\b/i.test(html)) {
-            var baseUrl = previewUrl.replace(/\/[^/]*$/, '/');
-            var baseTag = '<base href="' + baseUrl + '">';
+            var baseTag = '<base href="' + previewBaseUrl + '">';
             var injected = html.replace(/(<head[^>]*>)/i, '$1' + baseTag);
             html = injected !== html ? injected : baseTag + html;
           }
@@ -1528,6 +1567,7 @@
     } else {
       renderedSection = null;
     }
+    if (previewBaseUrl) wirePreviewNav(frame);
     if (isEditing && !hasUploadedDemo()) wireInlineEditing(frame);
   });
 
