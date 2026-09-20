@@ -644,7 +644,7 @@ document.getElementById('uploadConfirm').addEventListener('click', function() {
     }
     fetch(SUPABASE_URL + '/storage/v1/object/' + path, {
       method: 'POST',
-      headers: authHeaders({ 'Content-Type': file.type || 'application/octet-stream', 'x-upsert': 'true' }),
+      headers: authHeaders({ 'Content-Type': /\.html?$/i.test(file.name) ? 'text/html; charset=utf-8' : (file.type || 'application/octet-stream'), 'x-upsert': 'true' }),
       body: file
     }).then(function(r) {
       if (!r.ok) failed.push(file.name);
