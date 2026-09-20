@@ -1961,15 +1961,15 @@
       }
     }
 
-    // canGoLive: paying + domain set
-    var canGoLive = isPaying && hasDomain;
-    var liveBtnLabel = !isPaying ? 'Make live'
-      : isLive ? (hasPendingEdit ? 'Publish updates' : 'Take offline')
+    // canGoLive: paying + domain, OR already live (to allow taking offline)
+    var canGoLive = (isPaying && hasDomain) || isLive;
+    var liveBtnLabel = isLive
+      ? (hasPendingEdit ? 'Publish updates' : 'Take offline')
       : 'Make live';
     liveBtn.textContent = liveBtnLabel;
     liveBtn.disabled = !canGoLive;
-    liveBtn.title = !isPaying ? 'Upgrade your plan to go live' : !hasDomain ? 'Connect a domain first' : '';
-    liveBtn.classList.toggle('take-offline', isLive && !hasPendingEdit && isPaying);
+    liveBtn.title = !isLive && !isPaying ? 'Upgrade your plan to go live' : !isLive && !hasDomain ? 'Connect a domain first' : '';
+    liveBtn.classList.toggle('take-offline', isLive && !hasPendingEdit);
   }
 
   // ---------------- plan chooser modal ----------------
