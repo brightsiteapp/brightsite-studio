@@ -1779,9 +1779,12 @@
     }
 
     document.getElementById('acctName').textContent = raw.name || business.name || '';
+    var resolvedEmail = raw.email || session.email || '';
+    document.getElementById('acctEmailTop').textContent = resolvedEmail;
+    document.getElementById('acctEmailRow').textContent = resolvedEmail;
     document.getElementById('fName').value = raw.name || business.name || '';
     document.getElementById('fPhone').value = raw.phone || '';
-    document.getElementById('fEmail2').value = raw.email || session.email || '';
+    document.getElementById('fEmail2').value = resolvedEmail;
     document.getElementById('fWebsite').value = raw.website || '';
     document.getElementById('fInstagram').value = raw.instagram || '';
     document.getElementById('fFacebook').value = raw.facebook || '';
