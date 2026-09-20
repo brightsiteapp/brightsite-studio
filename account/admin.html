@@ -256,10 +256,10 @@ body { background: var(--bg); min-height: 100vh; }
 <div class="modal-veil hidden" id="uploadModal">
   <div class="modal wide">
     <h2>Upload website for <span id="uploadModalName"></span></h2>
-    <p>Drag in the HTML, CSS, JS and image files. The <code>index.html</code> will be the homepage. Files are hosted on Supabase and the client's status will update to Preview Sent.</p>
+    <p>Drag in site files or a <code>.zip</code> of the whole site. Zips are unpacked automatically. <code>index.html</code> is the homepage. Files are hosted on Supabase and the client's status updates to Preview Sent.</p>
     <div class="drop-zone" id="dropZone">
-      <input type="file" id="fileInput" multiple accept=".html,.htm,.css,.js,.json,.svg,.png,.jpg,.jpeg,.gif,.webp,.ico,.woff,.woff2,.ttf">
-      <p>Drop files here or <b id="browseLink">browse</b></p>
+      <input type="file" id="fileInput" multiple accept=".html,.htm,.css,.js,.json,.svg,.png,.jpg,.jpeg,.gif,.webp,.ico,.woff,.woff2,.ttf,.zip">
+      <p>Drop files or a <b>.zip</b> here, or <b id="browseLink">browse</b></p>
     </div>
     <div class="file-list" id="fileList"></div>
     <div class="upload-progress" id="uploadProgressWrap" style="display:none"><div class="upload-progress-bar" id="uploadProgressBar"></div></div>
@@ -621,51 +621,137 @@ document.getElementById('uploadCancel').addEventListener('click', function() {
   document.getElementById('uploadModal').classList.add('hidden');
 });
 
+function contentTypeForName(name) {
+  if (/\.html?$/i.test(name)) return 'text/html; charset=utf-8';
+  if (/\.css$/i.test(name)) return 'text/css';
+  if (/\.js$/i.test(name)) return 'text/javascript';
+  if (/\.json$/i.test(name)) return 'application/json';
+  if (/\.svg$/i.test(name)) return 'image/svg+xml';
+  if (/\.png$/i.test(name)) return 'image/png';
+  if (/\.jpe?g$/i.test(name)) return 'image/jpeg';
+  if (/\.gif$/i.test(name)) return 'image/gif';
+  if (/\.webp$/i.test(name)) return 'image/webp';
+  if (/\.ico$/i.test(name)) return 'image/x-icon';
+  if (/\.woff2$/i.test(name)) return 'font/woff2';
+  if (/\.woff$/i.test(name)) return 'font/woff';
+  return 'application/octet-stream';
+}
+
+// Expand any .zip in the selection into real site files before upload.
+function expandFilesForUpload(files) {
+  var out = [];
+  var chain = Promise.resolve();
+  files.forEach(function(file) {
+    if (!/\.zip$/i.test(file.name)) {
+      out.push(Promise.resolve(file));
+      return;
+    }
+    if (typeof JSZip === 'undefined') {
+      out.push(Promise.reject(new Error('Zip support failed to load — drop the HTML files instead')));
+      return;
+    }
+    out.push(JSZip.loadAsync(file).then(function(zip) {
+      var entries = [];
+      zip.forEach(function(relPath, entry) {
+        if (entry.dir) return;
+        // Skip macOS junk and hidden files
+        if (/__MACOSX\//.test(relPath) || /(^|\/)\./.test(relPath)) return;
+        entries.push(
+          entry.async('blob').then(function(blob) {
+            // Normalise path: strip a single top-level folder if the zip is site/...
+            var name = relPath.replace(/^(\.\/)+/, '');
+            var parts = name.split('/');
+            if (parts.length > 1 && !/\.html?$/i.test(parts[0])) {
+              // keep nested structure (css/, img/, services.html at root, etc.)
+            }
+            // If everything lives under one root folder (e.g. mysite/index.html), strip it
+            return { name: name, blob: blob };
+          })
+        );
+      });
+      return Promise.all(entries).then(function(items) {
+        if (!items.length) throw new Error(file.name + ' is empty');
+        // Strip common single top-level directory (mysite/index.html → index.html)
+        var tops = {};
+        items.forEach(function(it) {
+          var p = it.name.split('/');
+          if (p.length > 1) tops[p[0]] = true;
+        });
+        var topKeys = Object.keys(tops);
+        var strip = '';
+        if (topKeys.length === 1 && items.every(function(it) { return it.name.indexOf(topKeys[0] + '/') === 0; })) {
+          strip = topKeys[0] + '/';
+        }
+        return items.map(function(it) {
+          var name = strip ? it.name.slice(strip.length) : it.name;
+          return new File([it.blob], name, { type: contentTypeForName(name) });
+        });
+      });
+    }));
+  });
+  return Promise.all(out).then(function(parts) {
+    var flat = [];
+    parts.forEach(function(p) {
+      if (Array.isArray(p)) flat = flat.concat(p);
+      else flat.push(p);
+    });
+    return flat;
+  });
+}
+
 document.getElementById('uploadConfirm').addEventListener('click', function() {
   if (!pendingFiles.length) return;
   var status = document.getElementById('uploadStatus');
   var btn = document.getElementById('uploadConfirm');
   var progressWrap = document.getElementById('uploadProgressWrap');
   var progressBar = document.getElementById('uploadProgressBar');
-  btn.textContent = 'Uploading…'; btn.disabled = true;
+  btn.textContent = 'Preparing…'; btn.disabled = true;
   progressWrap.style.display = 'block';
+  progressBar.style.width = '0%';
   status.textContent = ''; status.className = 'modal-status';
 
-  var total = pendingFiles.length, done = 0, failed = [];
-  var demoUrl = '';
+  expandFilesForUpload(pendingFiles.slice()).then(function(files) {
+    if (!files.length) throw new Error('No files to upload');
+    btn.textContent = 'Uploading…';
+    var total = files.length, done = 0, failed = [];
+    var demoUrl = '';
 
-  function uploadNext(i) {
-    if (i >= pendingFiles.length) {
-      // All done — update business record
-      patchBusinessAfterUpload(demoUrl, failed, btn, status, progressWrap);
-      return;
+    function uploadNext(i) {
+      if (i >= files.length) {
+        patchBusinessAfterUpload(demoUrl, failed, btn, status, progressWrap);
+        return;
+      }
+      var file = files[i];
+      var rel = file.name.replace(/^\/+/, '');
+      var path = 'business-media/' + uploadTargetSlug + '/site/' + rel;
+      var base = rel.split('/').pop();
+      if (base === 'index.html' || base === 'index.htm') {
+        demoUrl = SUPABASE_URL + '/storage/v1/object/public/' + path;
+      }
+      fetch(SUPABASE_URL + '/storage/v1/object/' + path, {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': contentTypeForName(rel), 'x-upsert': 'true' }),
+        body: file
+      }).then(function(r) {
+        if (!r.ok) failed.push(rel);
+        done++;
+        progressBar.style.width = Math.round(done / total * 100) + '%';
+        uploadNext(i + 1);
+      }).catch(function() {
+        failed.push(rel);
+        done++;
+        progressBar.style.width = Math.round(done / total * 100) + '%';
+        uploadNext(i + 1);
+      });
     }
-    var file = pendingFiles[i];
-    var path = 'business-media/' + uploadTargetSlug + '/site/' + file.name;
-    if (file.name === 'index.html' || file.name === 'index.htm') {
-      demoUrl = SUPABASE_URL + '/storage/v1/object/public/' + path;
-    }
-    var contentType = /\.html?$/i.test(file.name) ? 'text/html; charset=utf-8'
-      : /\.css$/i.test(file.name) ? 'text/css'
-      : /\.js$/i.test(file.name) ? 'text/javascript'
-      : (file.type || 'application/octet-stream');
-    fetch(SUPABASE_URL + '/storage/v1/object/' + path, {
-      method: 'POST',
-      headers: authHeaders({ 'Content-Type': contentType, 'x-upsert': 'true' }),
-      body: file
-    }).then(function(r) {
-      if (!r.ok) failed.push(file.name);
-      done++;
-      progressBar.style.width = Math.round(done / total * 100) + '%';
-      uploadNext(i + 1);
-    }).catch(function() {
-      failed.push(file.name);
-      done++;
-      progressBar.style.width = Math.round(done / total * 100) + '%';
-      uploadNext(i + 1);
-    });
-  }
-  uploadNext(0);
+    uploadNext(0);
+  }).catch(function(err) {
+    btn.textContent = 'Upload files';
+    btn.disabled = false;
+    progressWrap.style.display = 'none';
+    status.textContent = (err && err.message) || 'Could not read zip';
+    status.className = 'modal-status err';
+  });
 });
 
 function patchBusinessAfterUpload(demoUrl, failed, btn, status, progressWrap) {
@@ -1029,5 +1115,6 @@ if (stored && stored.admin) {
   document.getElementById('loginWrap').style.display = '';
 }
 </script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 </body>
 </html>
