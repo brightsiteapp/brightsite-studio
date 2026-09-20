@@ -1697,10 +1697,12 @@
           throw new Error('That web address is already taken — choose another.');
         }
         if (existing) {
-          return fetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(chosenSlug), {
-            method: 'PATCH',
-            headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
-            body: JSON.stringify({ user_id: session.user_id })
+          // Use upsert_business RPC to claim the row (handles null user_id rows correctly)
+          var claimRecord = Object.assign({}, existing.data || {}, { slug: chosenSlug, name: existing.name || name, updatedAt: new Date().toISOString() });
+          return authenticatedFetch(SUPABASE_URL + '/rest/v1/rpc/upsert_business', {
+            method: 'POST',
+            headers: authHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ p_id: chosenSlug, p_name: existing.name || name, p_user_id: session.user_id, p_data: claimRecord, p_updated_at: claimRecord.updatedAt })
           }).then(function (res) {
             if (!res.ok) return res.json().then(function (d) { throw new Error(d.message || d.msg || ('Failed (' + res.status + ')')); });
             return res.json();
