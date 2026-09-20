@@ -103,11 +103,12 @@
 <body>
 
   <nav>
-    <div class="logo">Tom Conroy</div>
+    <a href="index.html" class="logo" style="text-decoration:none;color:#f0f0f0;" data-bs="name">Tom Conroy</a>
     <ul>
       <li><a href="#work">Work</a></li>
       <li><a href="#about">About</a></li>
-      <li><a href="mailto:hello@tomconroy.com">Contact</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="contact.html">Contact</a></li>
     </ul>
     <button class="burger" onclick="document.getElementById('mobileMenu').classList.add('open')" aria-label="Open menu">
       <span></span><span></span><span></span>
@@ -118,13 +119,15 @@
     <button class="mobile-close" onclick="document.getElementById('mobileMenu').classList.remove('open')" aria-label="Close menu">&times;</button>
     <a href="#work" onclick="document.getElementById('mobileMenu').classList.remove('open')">Work</a>
     <a href="#about" onclick="document.getElementById('mobileMenu').classList.remove('open')">About</a>
-    <a href="mailto:hello@tomconroy.com">Contact</a>
+    <a href="services.html">Services</a>
+    <a href="contact.html">Contact</a>
   </div>
 
   <section class="hero">
     <h1>Design &amp; <span>development</span> for the web.</h1>
     <p>I build clean, fast websites and digital products. Currently available for freelance projects.</p>
     <a href="#work" class="cta">View Work</a>
+    <a href="contact.html" style="display:inline-block;margin-left:16px;padding:14px 32px;border:1px solid #333;color:#aaa;text-decoration:none;font-size:0.9rem;letter-spacing:0.05em;transition:color 0.2s,border-color 0.2s;" onmouseover="this.style.color='#fff';this.style.borderColor='#666'" onmouseout="this.style.color='#aaa';this.style.borderColor='#333'">Get in touch</a>
   </section>
 
   <section class="work" id="work">
@@ -165,8 +168,8 @@
   </section>
 
   <footer>
-    <p>© 2026 Tom Conroy</p>
-    <p><a href="mailto:hello@tomconroy.com">hello@tomconroy.com</a></p>
+    <p>© 2026 <span data-bs="name">Tom Conroy</span></p>
+    <p><a href="mailto:hello@tomconroy.com" data-bs="email">hello@tomconroy.com</a></p>
   </footer>
 
 </body>

@@ -1469,6 +1469,81 @@
     previewTimer = setTimeout(renderPreview, 320);
   }
 
+  // Apply [data-bs="key"] field values from raw into a document's DOM.
+  // Handles text nodes, href on <a>, and src on <img>.
+  function applyBsData(doc, raw) {
+    if (!doc) return;
+    var FIELD_MAP = {
+      name: raw.name,
+      phone: raw.phone,
+      email: raw.email,
+      address: raw.address
+    };
+    doc.querySelectorAll('[data-bs]').forEach(function(el) {
+      var key = el.dataset.bs;
+      if (key === 'email-href') {
+        if (raw.email) el.href = 'mailto:' + raw.email;
+        return;
+      }
+      if (key === 'phone-href') {
+        if (raw.phone) el.href = 'tel:' + raw.phone;
+        return;
+      }
+      var val = FIELD_MAP[key];
+      if (!val) return;
+      if (el.tagName === 'A') {
+        if (key === 'email') el.href = 'mailto:' + val;
+        else if (key === 'phone') el.href = 'tel:' + val;
+        if (el.childElementCount === 0) el.textContent = val;
+      } else if (el.tagName === 'IMG') {
+        el.src = val;
+      } else {
+        el.textContent = val;
+      }
+    });
+    if (raw.logoImage) {
+      doc.querySelectorAll('[data-bs="logo"]').forEach(function(el) { el.src = raw.logoImage; el.style.display = ''; });
+    }
+    if (raw.heroImage) {
+      doc.querySelectorAll('[data-bs="hero"]').forEach(function(el) { el.src = raw.heroImage; el.style.display = ''; });
+    }
+  }
+
+  // Wire contentEditable on [data-bs] text elements in the uploaded demo iframe
+  // so typing in the preview updates the left-panel fields.
+  function wireDataBsEditing(frame) {
+    try {
+      var doc = frame.contentDocument;
+      if (!doc || doc.getElementById('bsDataBsLock')) return;
+      var style = doc.createElement('style');
+      style.id = 'bsDataBsLock';
+      style.textContent =
+        '[data-bs]:not(a):not(img){cursor:text;outline:1px dashed transparent;outline-offset:2px;border-radius:3px;transition:outline-color .15s}' +
+        '[data-bs]:not(a):not(img):hover,[data-bs]:not(a):not(img):focus{outline-color:#3B82F6;background:rgba(59,130,246,.08)}';
+      doc.head.appendChild(style);
+      var FIELD_IDS = { name: 'fName', phone: 'fPhone', email: 'fEmail2', address: 'fAddress' };
+      doc.querySelectorAll('[data-bs]').forEach(function(el) {
+        var key = el.dataset.bs;
+        if (el.tagName === 'A' || el.tagName === 'IMG' || key === 'email-href' || key === 'phone-href') return;
+        var fieldId = FIELD_IDS[key];
+        if (!fieldId) return;
+        el.contentEditable = 'true';
+        el.spellcheck = false;
+        if (!el.dataset.bsBound) {
+          el.dataset.bsBound = '1';
+          el.addEventListener('input', function() {
+            var val = el.textContent;
+            var field = document.getElementById(fieldId);
+            if (field) field.value = val;
+            doc.querySelectorAll('[data-bs="' + key + '"]:not(a):not(img)').forEach(function(other) {
+              if (other !== el) other.textContent = val;
+            });
+            scheduleAutoSave();
+          });
+        }
+      });
+    } catch(e) {}
+  }
 
   // ---------------- live HTML preview (storage demo or live domain) ----------------
   // Supabase public storage serves files with CSP "default-src 'none'; sandbox" and
@@ -1598,8 +1673,11 @@
       }
     } catch (e) {}
 
-    // Already showing this page — do not wipe the iframe (keeps scroll + nav working)
-    if (previewLoadedUrl === previewUrl) return;
+    // Already showing this page — re-inject business data but keep the iframe as-is
+    if (previewLoadedUrl === previewUrl) {
+      try { applyBsData(frame.contentDocument, currentRaw()); } catch(e) {}
+      return;
+    }
 
     // Live domain serves real HTML with normal headers → use iframe.src
     // Storage demos need srcdoc (see comment above)
@@ -1634,6 +1712,9 @@
     if (previewBaseUrl) wirePreviewNav(frame);
     // Inline editing only for blueprint-era sites with no uploaded HTML
     if (isEditing && !hasUploadedDemo()) wireInlineEditing(frame);
+    // Inject left-panel business data into [data-bs] hooks, then wire them for inline editing.
+    try { applyBsData(frame.contentDocument, currentRaw()); } catch(e) {}
+    if (hasUploadedDemo()) wireDataBsEditing(frame);
   });
 
   // ---------------- direct on-page editing ----------------

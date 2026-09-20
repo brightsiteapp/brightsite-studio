@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact — Tom Conroy</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Georgia', serif; background: #0f0f0f; color: #f0f0f0; }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 24px 48px;
+      border-bottom: 1px solid #222;
+    }
+    nav .logo { font-size: 1.2rem; font-weight: bold; letter-spacing: 0.05em; text-decoration: none; color: #f0f0f0; }
+    nav ul { list-style: none; display: flex; gap: 32px; }
+    nav a { color: #aaa; text-decoration: none; font-size: 0.9rem; letter-spacing: 0.05em; transition: color 0.2s; }
+    nav a:hover { color: #fff; }
+    nav a.active { color: #fff; }
+    .burger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; background: none; border: none; }
+    .burger span { display: block; width: 24px; height: 2px; background: #f0f0f0; transition: all 0.3s; }
+    .mobile-menu { display: none; position: fixed; inset: 0; background: #0f0f0f; z-index: 100; flex-direction: column; align-items: center; justify-content: center; gap: 40px; }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a { color: #f0f0f0; text-decoration: none; font-size: 1.5rem; letter-spacing: 0.1em; }
+    .mobile-close { position: absolute; top: 24px; right: 24px; background: none; border: none; color: #f0f0f0; font-size: 1.8rem; cursor: pointer; line-height: 1; }
+
+    .contact-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: calc(100vh - 73px - 81px);
+    }
+
+    .contact-info {
+      padding: 80px 48px;
+      border-right: 1px solid #222;
+    }
+    .contact-info p.label { font-size: 0.85rem; letter-spacing: 0.12em; color: #666; text-transform: uppercase; margin-bottom: 20px; }
+    .contact-info h1 { font-size: 3rem; line-height: 1.1; margin-bottom: 40px; }
+    .contact-info .intro { color: #aaa; line-height: 1.8; font-size: 0.95rem; margin-bottom: 56px; max-width: 340px; }
+
+    .contact-links { display: flex; flex-direction: column; gap: 0; }
+    .contact-link {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 0;
+      border-top: 1px solid #222;
+      text-decoration: none;
+      color: #f0f0f0;
+      transition: color 0.2s;
+    }
+    .contact-link:last-child { border-bottom: 1px solid #222; }
+    .contact-link:hover { color: #aaa; }
+    .contact-link .link-label { font-size: 0.8rem; letter-spacing: 0.1em; color: #555; text-transform: uppercase; }
+    .contact-link .link-val { font-size: 0.95rem; }
+    .contact-link .arrow { color: #444; font-size: 1.1rem; }
+
+    .contact-form {
+      padding: 80px 48px;
+    }
+    .contact-form h2 { font-size: 1rem; letter-spacing: 0.1em; color: #666; text-transform: uppercase; margin-bottom: 40px; }
+
+    .field { margin-bottom: 28px; }
+    .field label { display: block; font-size: 0.8rem; letter-spacing: 0.1em; color: #555; text-transform: uppercase; margin-bottom: 10px; }
+    .field input,
+    .field textarea,
+    .field select {
+      width: 100%;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      color: #f0f0f0;
+      font-family: 'Georgia', serif;
+      font-size: 0.95rem;
+      padding: 14px 16px;
+      outline: none;
+      transition: border-color 0.2s;
+      appearance: none;
+    }
+    .field input:focus,
+    .field textarea:focus,
+    .field select:focus { border-color: #555; }
+    .field textarea { min-height: 120px; resize: vertical; }
+    .field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23666' d='M1 1l5 5 5-5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; cursor: pointer; }
+    .field select option { background: #1a1a1a; }
+
+    .submit-btn {
+      width: 100%;
+      padding: 16px;
+      background: #fff;
+      color: #000;
+      border: none;
+      font-family: 'Georgia', serif;
+      font-size: 0.9rem;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 8px;
+    }
+    .submit-btn:hover { background: #ddd; }
+
+    .success-msg {
+      display: none;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      padding: 20px;
+      margin-top: 20px;
+      color: #aaa;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    footer {
+      padding: 40px 48px;
+      border-top: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    footer p { font-size: 0.85rem; color: #555; }
+    footer a { color: #555; text-decoration: none; }
+    footer a:hover { color: #aaa; }
+
+    @media (max-width: 768px) {
+      nav { padding: 20px 24px; }
+      nav ul { display: none; }
+      .burger { display: flex; }
+      .contact-wrap { grid-template-columns: 1fr; min-height: auto; }
+      .contact-info { padding: 60px 24px 40px; border-right: none; border-bottom: 1px solid #222; }
+      .contact-info h1 { font-size: 2.2rem; }
+      .contact-info .intro { margin-bottom: 40px; }
+      .contact-form { padding: 40px 24px 60px; }
+      footer { padding: 32px 24px; flex-direction: column; gap: 12px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="logo" data-bs="name">Tom Conroy</a>
+    <ul>
+      <li><a href="index.html#work">Work</a></li>
+      <li><a href="index.html#about">About</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="contact.html" class="active">Contact</a></li>
+    </ul>
+    <button class="burger" onclick="document.getElementById('mobileMenu').classList.add('open')" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <div class="mobile-menu" id="mobileMenu">
+    <button class="mobile-close" onclick="document.getElementById('mobileMenu').classList.remove('open')" aria-label="Close menu">&times;</button>
+    <a href="index.html#work" onclick="document.getElementById('mobileMenu').classList.remove('open')">Work</a>
+    <a href="index.html#about" onclick="document.getElementById('mobileMenu').classList.remove('open')">About</a>
+    <a href="services.html">Services</a>
+    <a href="contact.html">Contact</a>
+  </div>
+
+  <div class="contact-wrap">
+
+    <div class="contact-info">
+      <p class="label">Let's talk</p>
+      <h1>Get in touch</h1>
+      <p class="intro">Available for freelance projects, collaborations, and ongoing retainers. I typically respond within 24 hours.</p>
+
+      <div class="contact-links">
+        <a href="mailto:hello@tomconroy.com" class="contact-link" data-bs="email-href">
+          <div>
+            <div class="link-label">Email</div>
+            <div class="link-val" data-bs="email">hello@tomconroy.com</div>
+          </div>
+          <span class="arrow">↗</span>
+        </a>
+        <a href="https://linkedin.com/in/tomconroy" target="_blank" rel="noopener" class="contact-link">
+          <div>
+            <div class="link-label">LinkedIn</div>
+            <div class="link-val">linkedin.com/in/tomconroy</div>
+          </div>
+          <span class="arrow">↗</span>
+        </a>
+        <a href="https://github.com/brightsiteapp" target="_blank" rel="noopener" class="contact-link">
+          <div>
+            <div class="link-label">GitHub</div>
+            <div class="link-val">github.com/brightsiteapp</div>
+          </div>
+          <span class="arrow">↗</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="contact-form">
+      <h2>Send a message</h2>
+      <form id="contactForm" onsubmit="handleSubmit(event)">
+        <div class="field">
+          <label for="name">Name</label>
+          <input type="text" id="name" name="name" placeholder="Your name" required>
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="your@email.com" required>
+        </div>
+        <div class="field">
+          <label for="project">Project type</label>
+          <select id="project" name="project">
+            <option value="">Select one…</option>
+            <option value="design">Web Design</option>
+            <option value="dev">Web Development</option>
+            <option value="ecom">E-commerce</option>
+            <option value="maintenance">Maintenance / Retainer</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="message">Message</label>
+          <textarea id="message" name="message" placeholder="Tell me about your project…" required></textarea>
+        </div>
+        <button type="submit" class="submit-btn">Send Message</button>
+      </form>
+      <div class="success-msg" id="successMsg">
+        Thanks — I'll be in touch soon.
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <p>© 2026 <span data-bs="name">Tom Conroy</span></p>
+    <p><a href="mailto:hello@tomconroy.com" data-bs="email">hello@tomconroy.com</a></p>
+  </footer>
+
+  <script>
+    function handleSubmit(e) {
+      e.preventDefault();
+      document.getElementById('contactForm').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+    }
+  </script>
+
+</body>
+</html>
