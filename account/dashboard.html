@@ -1476,17 +1476,24 @@
   function loadPreviewPage(url) {
     var frame = document.getElementById('sitePreview');
     frame.classList.add('refreshing');
-    fetch(url)
-      .then(function(r) { return r.text(); })
+    fetch(url, { credentials: 'omit' })
+      .then(function(r) {
+        if (!r.ok) throw new Error('Preview page ' + r.status);
+        return r.text();
+      })
       .then(function(html) {
         if (!/<base\b/i.test(html)) {
-          var baseTag = '<base href="' + previewBaseUrl + '">';
+          var baseHref = previewBaseUrl || (url.replace(/\/[^/]*$/, '/') );
+          var baseTag = '<base href="' + baseHref + '">';
           var injected = html.replace(/(<head[^>]*>)/i, '$1' + baseTag);
           html = injected !== html ? injected : baseTag + html;
         }
         frame.srcdoc = html;
       })
-      .catch(function() { frame.classList.remove('refreshing'); });
+      .catch(function(err) {
+        console.warn('[loadPreviewPage]', url, err);
+        frame.classList.remove('refreshing');
+      });
   }
 
   function wirePreviewNav(frame) {
@@ -1500,14 +1507,29 @@
         var a = e.target.closest('a[href]');
         if (!a) return;
         var href = a.getAttribute('href');
-        if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('http')) return;
-        // Intercept relative .html links and fetch them ourselves
-        if (/\.html(\?.*)?$/.test(href) || !/\./.test(href.split('/').pop())) {
-          e.preventDefault();
-          var targetUrl = previewBaseUrl ? previewBaseUrl + href.replace(/^\.\//, '') : null;
-          if (targetUrl) loadPreviewPage(targetUrl);
+        if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) return;
+        // External absolute URLs open normally
+        if (/^https?:\/\//i.test(href)) return;
+        // Intercept relative page links (services.html, contact.html, /services, etc.)
+        // and load them into the preview iframe via srcdoc so they stay inside the dashboard.
+        e.preventDefault();
+        e.stopPropagation();
+        if (!previewBaseUrl) return;
+        var cleaned = href.replace(/^\.\//, '').replace(/^\//, '');
+        // Map bare section names to .html files when demos use pretty paths
+        if (cleaned && !/\.[a-z0-9]+(\?|$)/i.test(cleaned) && cleaned !== 'index' && cleaned !== 'index.html') {
+          cleaned = cleaned.replace(/\/$/, '') + '.html';
         }
-      });
+        if (!cleaned || cleaned === 'index.html' || cleaned === 'index') {
+          cleaned = (previewBaseUrl.match(/[^/]+\.html(?=[?#]|$)/) || ['index.html'])[0];
+          // Prefer the original demo entry URL when going "home"
+          var data = (business && business.data) || {};
+          var homeUrl = data.demoUrl || data.liveUrl;
+          if (homeUrl) { loadPreviewPage(homeUrl); return; }
+        }
+        var targetUrl = previewBaseUrl + cleaned;
+        loadPreviewPage(targetUrl);
+      }, true);
     } catch(e) {}
   }
 
@@ -2020,14 +2042,17 @@
     }
 
     // canGoLive: paying + domain, OR already live (to allow taking offline)
+    // "Publish changes" only appears when the site is already live and there
+    // are pending edits. Otherwise: "Make live" (not live) or "Take offline".
     var canGoLive = (isPaying && hasDomain) || isLive;
     var liveBtnLabel = isLive
-      ? (hasPendingEdit ? 'Publish updates' : 'Take offline')
+      ? (hasPendingEdit ? 'Publish changes' : 'Take offline')
       : 'Make live';
     liveBtn.textContent = liveBtnLabel;
     liveBtn.disabled = !canGoLive;
     liveBtn.title = !isLive && !isPaying ? 'Upgrade your plan to go live' : !isLive && !hasDomain ? 'Connect a domain first' : '';
     liveBtn.classList.toggle('take-offline', isLive && !hasPendingEdit);
+    liveBtn.hidden = false;
   }
 
   // ---------------- plan chooser modal ----------------
@@ -2377,7 +2402,17 @@
     var storageHeaders = authHeaders({ 'Content-Type': file.type || 'application/octet-stream', 'x-upsert': 'true' });
     return fetch(STORAGE_URL + '/object/' + MEDIA_BUCKET + '/' + slug + '/' + relPath, {
       method: 'POST', headers: storageHeaders, body: file
-    }).then(function (res) { if (!res.ok) throw new Error('Image upload failed (' + res.status + ')'); });
+    }).then(function (res) {
+      if (res.ok) return;
+      return res.text().then(function (body) {
+        var msg = 'Image upload failed (' + res.status + ')';
+        try {
+          var d = JSON.parse(body);
+          msg = d.message || d.error || d.msg || msg;
+        } catch (e) { if (body && body.length < 200) msg = body; }
+        throw new Error(msg);
+      });
+    });
   }
   function deleteFile(relPath) {
     return fetch(STORAGE_URL + '/object/' + MEDIA_BUCKET + '/' + slug + '/' + relPath, {
@@ -2418,7 +2453,20 @@
       raw.chosenPlan = selectedPlan;
       raw.chosenAnnual = selectedAnnual;
       if (opts.publish) isLive = true;
-      var record = { slug: slug, name: raw.name, raw: raw, planActive: isPaying, published: isLive, manuallyOffline: false, updatedAt: new Date().toISOString() };
+      // Merge with existing data so developer-set fields (demoUrl, liveUrl,
+      // customDomain, domain, etc.) are never wiped by a customer autosave.
+      var prev = (business && business.data) || {};
+      var record = Object.assign({}, prev, {
+        slug: slug,
+        name: raw.name,
+        raw: raw,
+        planActive: isPaying,
+        published: isLive,
+        // Publishing clears the offline flag; ordinary saves keep it so a
+        // customer who took the site offline stays offline across edits.
+        manuallyOffline: opts.publish ? false : !!prev.manuallyOffline,
+        updatedAt: new Date().toISOString()
+      });
       return authenticatedFetch(SUPABASE_URL + '/rest/v1/rpc/upsert_business', {
         method: 'POST',
         headers: authHeaders({ 'Content-Type': 'application/json' }),
@@ -2527,21 +2575,36 @@
     if (!isLive && (!isPaying || !domainValue)) return;
     var btn = this;
     if (isTakeOffline) {
-      // Take offline
+      // Take offline — preserve domain/demo/live URLs and other developer fields
       btn.disabled = true;
       btn.classList.add('pending');
       btn.textContent = 'Taking offline…';
       isLive = false;
-      var record = { slug: slug, name: (business.data.raw || {}).name, raw: business.data.raw, planActive: isPaying, published: false, manuallyOffline: true, updatedAt: new Date().toISOString() };
+      var prev = (business && business.data) || {};
+      var offlineName = (prev.raw && prev.raw.name) || prev.name || slug;
+      var record = Object.assign({}, prev, {
+        slug: slug,
+        name: offlineName,
+        planActive: isPaying,
+        published: false,
+        manuallyOffline: true,
+        updatedAt: new Date().toISOString()
+      });
       authenticatedFetch(SUPABASE_URL + '/rest/v1/rpc/upsert_business', {
         method: 'POST',
         headers: authHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ p_id: slug, p_name: record.name, p_user_id: session.user_id, p_data: record, p_updated_at: record.updatedAt })
-      }).then(function () {
+        body: JSON.stringify({ p_id: slug, p_name: offlineName, p_user_id: session.user_id, p_data: record, p_updated_at: record.updatedAt })
+      }).then(function (res) {
+        if (!res.ok) return res.json().then(function (d) { throw new Error(d.message || d.msg || ('Take offline failed (' + res.status + ')')); });
+        return res.json();
+      }).then(function (row) {
+        if (row && row.id) business = row;
+        else if (business) business.data = record;
         btn.classList.remove('pending');
         btn.disabled = false;
         renderPlanUI();
-      }).catch(function () {
+      }).catch(function (err) {
+        console.error('[take offline]', err);
         isLive = true;
         btn.classList.remove('pending');
         btn.disabled = false;
