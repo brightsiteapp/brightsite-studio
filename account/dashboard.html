@@ -2500,6 +2500,7 @@
     btn.textContent = wasLive ? 'Publishing…' : 'Making live…';
     saveBusiness({ publish: true }).then(function () {
       autoSaveInFlight = false;
+      hasPendingEdit = false;
       var statusEl = document.getElementById('saveStatus');
       statusEl.textContent = 'All changes saved'; statusEl.className = 'save-status ok';
       btn.classList.remove('pending');
