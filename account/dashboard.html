@@ -1667,7 +1667,7 @@
             });
         }
       })
-      .catch(function () { showSetup(); });
+      .catch(function (err) { console.error('[loadBusiness] error:', err); showSetup(); });
   }
 
   function showSetup() {
@@ -1743,7 +1743,7 @@
         // Keep the customer in their Website details screen if provisioning
         // is delayed; never dump them back on the marketing homepage after
         // they have just set a password.
-        console.error('Could not create customer workspace:', err);
+        console.error('[createSetupBusiness] error:', err);
         var provisional = { slug: chosenSlug, name: name, raw: { name: name, email: session.email || '', tagline: pendingType, services: [], gallery: [] }, updatedAt: new Date().toISOString() };
         business = { id: chosenSlug, name: name, user_id: session.user_id, data: provisional };
         slug = chosenSlug;

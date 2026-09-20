@@ -63,10 +63,11 @@
 
       var session = {
         access_token: accessToken,
-        refresh_token: refreshToken,
+        refresh_token: refreshToken || null,
         user_id: r.data.id,
         email: r.data.email
       };
+      console.log('[callback] session set:', { access_token: 'set', refresh_token: !!refreshToken, user_id: r.data.id });
       localStorage.setItem('bs_session', JSON.stringify(session));
 
       // Create a stub businesses row so this user appears in admin immediately,
