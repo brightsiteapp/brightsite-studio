@@ -1473,6 +1473,28 @@
   var renderedSection = null; // which section's page the preview is currently showing
   var previewBaseUrl = null; // base URL for fetching sub-pages (services.html, contact.html, etc.)
 
+  function isPreviewHtml(text) {
+    if (!text || typeof text !== 'string') return false;
+    var t = text.trim();
+    if (!t || t.charAt(0) === '{' || t.charAt(0) === '[') return false;
+    return /<html[\s>]|<body[\s>]|<div[\s>]|<section[\s>]/i.test(t);
+  }
+  function injectPreviewBase(html, baseHref) {
+    if (/<base\b/i.test(html)) return html;
+    var baseTag = '<base href="' + baseHref + '">';
+    var injected = html.replace(/(<head[^>]*>)/i, '$1' + baseTag);
+    return injected !== html ? injected : baseTag + html;
+  }
+  function setPreviewHtml(html, baseHref) {
+    var frame = document.getElementById('sitePreview');
+    if (!isPreviewHtml(html)) {
+      console.warn('[preview] refused non-HTML payload');
+      frame.classList.remove('refreshing');
+      return false;
+    }
+    frame.srcdoc = injectPreviewBase(html, baseHref || previewBaseUrl || '');
+    return true;
+  }
   function loadPreviewPage(url) {
     var frame = document.getElementById('sitePreview');
     frame.classList.add('refreshing');
@@ -1482,13 +1504,8 @@
         return r.text();
       })
       .then(function(html) {
-        if (!/<base\b/i.test(html)) {
-          var baseHref = previewBaseUrl || (url.replace(/\/[^/]*$/, '/') );
-          var baseTag = '<base href="' + baseHref + '">';
-          var injected = html.replace(/(<head[^>]*>)/i, '$1' + baseTag);
-          html = injected !== html ? injected : baseTag + html;
-        }
-        frame.srcdoc = html;
+        var baseHref = previewBaseUrl || (url.replace(/\/[^/]*$/, '/') );
+        if (!setPreviewHtml(html, baseHref)) throw new Error('Not HTML');
       })
       .catch(function(err) {
         console.warn('[loadPreviewPage]', url, err);
@@ -1539,9 +1556,14 @@
     var blueprint = document.getElementById('blueprintPreview');
     if (!business) return;
     var data = (business && business.data) || {};
-    // Prefer demoUrl (actual uploaded HTML in Supabase) over liveUrl (Vercel domain)
-    // so the preview shows the real files and relative links resolve correctly.
-    var previewUrl = data.demoUrl || data.liveUrl || null;
+    // When live, prefer the real domain/liveUrl so preview matches production.
+    // Otherwise use demoUrl (storage HTML) so relative links resolve on the bucket.
+    var previewUrl = null;
+    if (data.published && (data.liveUrl || data.customDomain || data.domain)) {
+      previewUrl = data.liveUrl || data.customDomain || data.domain;
+      if (previewUrl && !/^https?:\/\//i.test(previewUrl)) previewUrl = 'https://' + previewUrl;
+    }
+    if (!previewUrl) previewUrl = data.demoUrl || data.liveUrl || null;
     var demoReady = hasUploadedDemo();
     var rvKey = 'bs_revealed_' + (business && business.id || slug || 'x');
     var hasRevealed = !!localStorage.getItem(rvKey);
@@ -1564,19 +1586,18 @@
         }
       } catch(e) {}
       previewBaseUrl = previewUrl.replace(/\/[^/]*$/, '/');
-      fetch(previewUrl)
-        .then(function(r) { return r.text(); })
-        .then(function(html) {
-          // Inject a <base> tag so relative links (services.html, contact.html, etc.)
-          // resolve to the storage origin, not the dashboard page.
-          if (!/<base\b/i.test(html)) {
-            var baseTag = '<base href="' + previewBaseUrl + '">';
-            var injected = html.replace(/(<head[^>]*>)/i, '$1' + baseTag);
-            html = injected !== html ? injected : baseTag + html;
-          }
-          frame.srcdoc = html;
+      fetch(previewUrl, { credentials: 'omit' })
+        .then(function(r) {
+          if (!r.ok) throw new Error('Preview ' + r.status);
+          return r.text();
         })
-        .catch(function() { frame.classList.remove('refreshing'); });
+        .then(function(html) {
+          if (!setPreviewHtml(html, previewBaseUrl)) throw new Error('Not HTML');
+        })
+        .catch(function(err) {
+          console.warn('[renderPreview]', previewUrl, err);
+          frame.classList.remove('refreshing');
+        });
     } else {
       frame.classList.remove('refreshing');
     }
@@ -1585,12 +1606,39 @@
   document.getElementById('sitePreview').addEventListener('load', function () {
     var frame = this;
     frame.classList.remove('refreshing');
+    try {
+      var doc = frame.contentDocument;
+      var bodyText = (doc && doc.body && (doc.body.innerText || doc.body.textContent) || '').trim();
+      // If the iframe navigated to a missing storage object, Chrome shows the
+      // JSON error body. Recover by reloading the home demo via srcdoc.
+      if (bodyText.charAt(0) === '{' && /NoSuchKey|not_found|Object not found/i.test(bodyText)) {
+        var data = (business && business.data) || {};
+        var homeUrl = data.demoUrl || data.liveUrl;
+        if (homeUrl) {
+          console.warn('[preview] recovered from storage 404, reloading home');
+          loadPreviewPage(homeUrl);
+          return;
+        }
+      }
+    } catch (e) {}
     if (activeSection) {
       try {
-        var doc = frame.contentDocument;
+        var doc2 = frame.contentDocument;
         var page = SECTION_PAGE[activeSection] || 'home';
-        doc.querySelectorAll('.page').forEach(function (p) { p.hidden = p.dataset.page !== page; });
+        var pages = doc2.querySelectorAll('.page');
         var isNewSection = activeSection !== renderedSection;
+        if (pages.length) {
+          pages.forEach(function (p) { p.hidden = p.dataset.page !== page; });
+        } else if (isNewSection && page && page !== 'home' && previewBaseUrl) {
+          // Multi-file demos: try contact.html / services.html once when section opens
+          var tryUrl = previewBaseUrl + page + '.html';
+          fetch(tryUrl, { credentials: 'omit' }).then(function (r) {
+            if (!r.ok) return;
+            return r.text().then(function (html) {
+              if (isPreviewHtml(html)) setPreviewHtml(html, previewBaseUrl);
+            });
+          }).catch(function () {});
+        }
         if (frame.contentWindow) frame.contentWindow.scrollTo({ top: isNewSection ? 0 : lastScrollY, behavior: 'instant' });
         renderedSection = activeSection;
       } catch (e) {}
