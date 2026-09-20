@@ -1481,9 +1481,12 @@
     if (!(demoReady && hasRevealed)) return;
     try { if (frame.contentWindow) lastScrollY = frame.contentWindow.scrollY; } catch (e) {}
     frame.classList.add('refreshing');
-    if (previewUrl && frame.src !== previewUrl) {
-      frame.src = previewUrl;
-    } else if (!previewUrl) {
+    if (previewUrl) {
+      fetch(previewUrl)
+        .then(function(r) { return r.text(); })
+        .then(function(html) { frame.srcdoc = html; })
+        .catch(function() { frame.classList.remove('refreshing'); });
+    } else {
       frame.classList.remove('refreshing');
     }
   }
@@ -1586,7 +1589,11 @@
   document.getElementById('fullscreenBtn').addEventListener('click', function () {
     var data = (business && business.data) || {};
     var previewUrl = data.liveUrl || data.demoUrl || null;
-    if (previewUrl) window.open(previewUrl, '_blank');
+    if (!previewUrl) return;
+    fetch(previewUrl).then(function(r) { return r.text(); }).then(function(html) {
+      var blob = new Blob([html], { type: 'text/html' });
+      window.open(URL.createObjectURL(blob), '_blank');
+    });
   });
 
   // This is a preview-only viewport switch: it never changes the customer's
