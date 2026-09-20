@@ -730,6 +730,7 @@
 <script src="../hero-brand-compositor.js?v=20260915-1"></script>
 <script>
 (function(){
+  console.log('[dashboard] IIFE starting');
   var SUPABASE_URL = 'https://vlisyfshmxdsjuybirxe.supabase.co';
   var SUPABASE_ANON_KEY = 'sb_publishable_gYdn5HCo63B0qZj3tG-7ow_myAMHeEB';
   var UPLOAD_WORKER_URL = 'https://brightsite-upload.notify-lead-worker.workers.dev';
@@ -2555,7 +2556,9 @@
     }).catch(function() { btn.disabled = false; btn.textContent = 'Request changes'; });
   });
 
+  console.log('[dashboard] about to call loadBusiness()');
   loadBusiness();
+  console.log('[dashboard] IIFE finished');
 })();
 </script>
 
