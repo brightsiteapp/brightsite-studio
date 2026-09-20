@@ -16,6 +16,6 @@
 // Env vars (SUPABASE_URL / SUPABASE_ANON_KEY) still override these if
 // set, for local development without touching this file.
 module.exports = {
-  SUPABASE_URL: 'https://estqrftkrpqlrxnsltgw.supabase.co',
-  SUPABASE_ANON_KEY: 'sb_publishable_MfwWqSIcsfVE6d5Q7jIxJA_V3Pyf2oP'
+  SUPABASE_URL: 'https://vlisyfshmxdsjuybirxe.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_gYdn5HCo63B0qZj3tG-7ow_myAMHeEB'
 };

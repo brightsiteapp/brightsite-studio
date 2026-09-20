@@ -1432,12 +1432,12 @@ Also interested in: ${extras.join(', ')}` : ''}`;
   });
 
   async function postLead(business_name, details) {
-    const databaseRequest = fetch('https://estqrftkrpqlrxnsltgw.supabase.co/rest/v1/leads', {
+    const databaseRequest = fetch('https://vlisyfshmxdsjuybirxe.supabase.co/rest/v1/leads', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': 'sb_publishable_MfwWqSIcsfVE6d5Q7jIxJA_V3Pyf2oP',
-        'Authorization': 'Bearer sb_publishable_MfwWqSIcsfVE6d5Q7jIxJA_V3Pyf2oP',
+        'apikey': 'sb_publishable_gYdn5HCo63B0qZj3tG-7ow_myAMHeEB',
+        'Authorization': 'Bearer sb_publishable_gYdn5HCo63B0qZj3tG-7ow_myAMHeEB',
         'Prefer': 'return=minimal'
       },
       body: JSON.stringify({ business_name, details, created_at: new Date().toISOString() })
@@ -1472,12 +1472,12 @@ Also interested in: ${extras.join(', ')}` : ''}`;
   // "activate this form" confirmation per recipient and still couldn't
   // carry the business details or preview, so it's no longer used.
   async function postLeadWithMedia(fields, files) {
-    const databaseRequest = fetch('https://estqrftkrpqlrxnsltgw.supabase.co/rest/v1/leads', {
+    const databaseRequest = fetch('https://vlisyfshmxdsjuybirxe.supabase.co/rest/v1/leads', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': 'sb_publishable_MfwWqSIcsfVE6d5Q7jIxJA_V3Pyf2oP',
-        'Authorization': 'Bearer sb_publishable_MfwWqSIcsfVE6d5Q7jIxJA_V3Pyf2oP',
+        'apikey': 'sb_publishable_gYdn5HCo63B0qZj3tG-7ow_myAMHeEB',
+        'Authorization': 'Bearer sb_publishable_gYdn5HCo63B0qZj3tG-7ow_myAMHeEB',
         'Prefer': 'return=minimal'
       },
       body: JSON.stringify({ business_name: fields.Business, details: JSON.stringify(fields), created_at: new Date().toISOString() })
