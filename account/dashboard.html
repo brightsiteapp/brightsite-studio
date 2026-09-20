@@ -1921,7 +1921,7 @@
     document.getElementById('toolbarStatusLabel').textContent = isLive ? 'Live' : 'Not live';
 
     var data = (business && business.data) || {};
-    var siteUrl = data.liveUrl || data.demoUrl || (data.customDomain ? 'https://' + data.customDomain : null) || (data.domain ? 'https://' + data.domain : null);
+    var siteUrl = (data.customDomain ? 'https://' + data.customDomain : null) || (data.domain ? 'https://' + data.domain : null) || data.liveUrl || data.demoUrl;
     if (isLive && siteUrl) {
       toolbar.style.cursor = 'pointer';
       toolbar.title = 'Open live website';
