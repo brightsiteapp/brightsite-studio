@@ -807,10 +807,7 @@
   function authenticatedFetch(url, options, retried) {
     return fetch(url, options).then(function (res) {
       if (retried || (res.status !== 401 && res.status !== 403)) return res;
-      if (isAdminView) {
-        location.href = 'admin.html';
-        return res;
-      }
+      if (isAdminView) return res;
       return refreshSession().then(function () {
         var headers = Object.assign({}, options.headers || {});
         delete headers.Authorization;
