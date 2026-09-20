@@ -1366,16 +1366,15 @@
     isEditing = on;
     document.body.classList.toggle('mode-edit', on);
     document.body.classList.toggle('mode-view', !on);
-    document.getElementById('viewPanel').hidden = on;
-    document.getElementById('builderPanel').hidden = !on;
-    document.getElementById('saveBar').hidden = !on;
-    document.getElementById('editToggle').classList.toggle('active', on);
-    document.getElementById('editToggle').innerHTML = on ? '&#10005; Close' : '&#9998; Edit';
-    document.getElementById('mobileAccountTab').setAttribute('aria-selected', String(!on));
-    document.getElementById('mobileWebsiteTab').setAttribute('aria-selected', String(on));
+    var vp = document.getElementById('viewPanel'); if (vp) vp.hidden = on;
+    var bp = document.getElementById('builderPanel'); if (bp) bp.hidden = !on;
+    var sb = document.getElementById('saveBar'); if (sb) sb.hidden = !on;
+    var et = document.getElementById('editToggle'); if (et) { et.classList.toggle('active', on); et.innerHTML = on ? '&#10005; Close' : '&#9998; Edit'; }
+    var mat = document.getElementById('mobileAccountTab'); if (mat) mat.setAttribute('aria-selected', String(!on));
+    var mwt = document.getElementById('mobileWebsiteTab'); if (mwt) mwt.setAttribute('aria-selected', String(on));
     if (on) {
       var statusEl = document.getElementById('saveStatus');
-      statusEl.textContent = 'All changes saved'; statusEl.className = 'save-status ok';
+      if (statusEl) { statusEl.textContent = 'All changes saved'; statusEl.className = 'save-status ok'; }
       renderPreview();
     } else {
       clearTimeout(autoSaveTimer);
