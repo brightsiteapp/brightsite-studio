@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice INV-001 — MoreDAW</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#F7F2EC;--ink:#1F2530;--muted:#616D79;--line:#E7DED2;--accent:#3B82F6;--card:#FFFFFF}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,sans-serif;line-height:1.65;-webkit-font-smoothing:antialiased;padding:40px 20px;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+  .invoice{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:52px 56px;max-width:760px;width:100%;font-size:14px;line-height:1.7}
+  .inv-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:40px;gap:24px}
+  .inv-logo{font-size:24px;font-weight:800;letter-spacing:-.03em;color:var(--ink)}
+  .inv-meta{text-align:right;font-size:13px;color:var(--muted)}
+  .inv-meta strong{display:block;font-size:20px;font-weight:800;color:var(--ink);margin-bottom:3px}
+  .inv-parties{display:grid;grid-template-columns:1fr 1fr;gap:36px;margin-bottom:36px}
+  .party-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .party-name{font-weight:700;font-size:15px;margin-bottom:2px}
+  .party-detail{font-size:13px;color:var(--muted);white-space:pre-wrap}
+  table{width:100%;border-collapse:collapse;margin-bottom:24px}
+  thead th{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:9px 12px;border-bottom:1.5px solid var(--line);text-align:left}
+  thead th:nth-child(2),thead th:nth-child(3),thead th:nth-child(4){text-align:right}
+  tbody td{padding:12px 12px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top}
+  tbody td:nth-child(2),tbody td:nth-child(3),tbody td:nth-child(4){text-align:right}
+  .totals{display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-top:10px}
+  .tot-row{display:flex;gap:36px;font-size:13px}
+  .tot-row .lbl{min-width:100px;text-align:right;color:var(--muted)}
+  .tot-row .val{min-width:75px;text-align:right;font-variant-numeric:tabular-nums}
+  .tot-row.grand{font-size:17px;font-weight:800;border-top:2px solid var(--line);padding-top:9px;margin-top:5px}
+  .notes{margin-top:36px;padding-top:24px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+  .notes strong{display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px}
+  .actions{display:flex;gap:10px;margin-top:28px;flex-wrap:wrap}
+  .btn{padding:11px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;border:none}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{background:#2563eb}
+  .btn-outline{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
+  .btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+  @media print{
+    body{background:#fff;padding:0}
+    .invoice{border:none;border-radius:0;padding:0;max-width:100%}
+    .actions{display:none}
+  }
+  @media(max-width:580px){
+    .invoice{padding:28px 22px}
+    .inv-header{flex-direction:column;gap:12px}
+    .inv-meta{text-align:left}
+    .inv-parties{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="invoice">
+  <div class="inv-header">
+    <div class="inv-logo">BrightSite</div>
+    <div class="inv-meta">
+      <strong>Invoice INV-001</strong>
+      <div>Date: 20 Sep 2026</div>
+      <div>Due: 4 Oct 2026</div>
+    </div>
+  </div>
+
+  <div class="inv-parties">
+    <div>
+      <div class="party-label">From</div>
+      <div class="party-name">BrightSite</div>
+      <div class="party-detail">brightsiteapp@gmail.com
+wa.me/447535928879</div>
+    </div>
+    <div>
+      <div class="party-label">Bill to</div>
+      <div class="party-name">MoreDAW</div>
+      <div class="party-detail">19 St Stephens Close
+Beverley
+United Kingdom</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th style="text-align:right">Qty</th>
+        <th style="text-align:right">Unit price</th>
+        <th style="text-align:right">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <strong>Pro Website — Build fee</strong><br>
+          <span style="color:var(--muted);font-size:12px">Up to 5 custom-designed pages, custom sections, all Essential features</span>
+        </td>
+        <td style="text-align:right">1</td>
+        <td style="text-align:right">£99.00</td>
+        <td style="text-align:right">£99.00</td>
+      </tr>
+      <tr>
+        <td>
+          <strong>Hosting, SEO &amp; Management</strong><br>
+          <span style="color:var(--muted);font-size:12px">Annual plan — hosting, security, maintenance, SEO &amp; content</span>
+        </td>
+        <td style="text-align:right">1</td>
+        <td style="text-align:right">£228.00</td>
+        <td style="text-align:right">£228.00</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <div class="tot-row"><span class="lbl">Subtotal</span><span class="val">£327.00</span></div>
+    <div class="tot-row grand"><span class="lbl">Total due</span><span class="val">£327.00</span></div>
+  </div>
+
+  <div class="notes">
+    <strong>Payment details</strong>
+    Please pay within 14 days of the invoice date. Contact us at brightsiteapp@gmail.com with any questions.
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" onclick="window.print()">Download / Print PDF</button>
+    <button class="btn btn-outline" onclick="window.location.href='/invoices.html'">Invoice builder</button>
+  </div>
+</div>
+</body>
+</html>

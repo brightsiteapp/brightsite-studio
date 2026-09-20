@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Invoices — BrightSite</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#F7F2EC">
+<link rel="stylesheet" href="styles.css?v=20260908-7">
+<style>
+  .page{padding-top:20px}
+  .page-hero{margin-bottom:0}
+  .page-hero h1{font-size:clamp(24px,3.4vw,32px);margin-bottom:9px;line-height:1.2}
+  .page-hero p{font-size:14px;line-height:1.6;max-width:56ch;margin:0 auto}
+  footer{padding:20px 24px!important}
+
+  /* --- Invoice builder UI --- */
+  #invoice-builder{padding:0 0 60px}
+  .inv-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:640px){.inv-grid{grid-template-columns:1fr}}
+  .inv-field{display:flex;flex-direction:column;gap:5px}
+  .inv-field label{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .inv-field input,.inv-field textarea,.inv-field select{
+    background:var(--card);border:1.5px solid var(--line);border-radius:8px;
+    padding:10px 13px;font-size:14px;font-family:var(--body);color:var(--ink);
+    outline:none;transition:border-color .18s;resize:vertical;width:100%}
+  .inv-field input:focus,.inv-field textarea:focus,.inv-field select:focus{border-color:var(--accent)}
+  .inv-section{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:22px 22px 20px;margin-bottom:16px}
+  .inv-section-title{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+  .inv-items-head{display:grid;grid-template-columns:1fr 80px 90px 80px 32px;gap:8px;align-items:center;
+    font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  @media(max-width:600px){.inv-items-head{display:none}}
+  .inv-item-row{display:grid;grid-template-columns:1fr 80px 90px 80px 32px;gap:8px;align-items:center;margin-bottom:8px}
+  @media(max-width:600px){
+    .inv-item-row{grid-template-columns:1fr 1fr;gap:8px}
+    .inv-item-row .item-desc{grid-column:1/-1}
+    .inv-item-row .item-delete{grid-column:2;justify-self:end}
+  }
+  .inv-item-row input{background:var(--bg);border:1.5px solid var(--line);border-radius:7px;
+    padding:8px 10px;font-size:13px;font-family:var(--body);color:var(--ink);outline:none;
+    transition:border-color .18s;width:100%}
+  .inv-item-row input:focus{border-color:var(--accent);background:var(--card)}
+  .item-delete{width:30px;height:30px;border:none;border-radius:7px;background:transparent;
+    color:#aaa;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    font-size:18px;line-height:1;transition:background .15s,color .15s;flex-shrink:0}
+  .item-delete:hover{background:#fee2e2;color:#dc2626}
+  .add-item-btn{display:flex;align-items:center;gap:7px;padding:8px 14px;border:1.5px dashed var(--line);
+    border-radius:8px;background:transparent;font-size:13px;font-weight:600;color:var(--muted);
+    cursor:pointer;transition:border-color .2s,color .2s;width:100%;justify-content:center;margin-top:4px}
+  .add-item-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .inv-totals{display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-top:16px}
+  .inv-total-row{display:flex;gap:24px;font-size:14px}
+  .inv-total-row .lbl{color:var(--muted);min-width:100px;text-align:right}
+  .inv-total-row .val{min-width:80px;text-align:right;font-variant-numeric:tabular-nums}
+  .inv-total-row.grand{font-size:18px;font-weight:700;border-top:2px solid var(--line);padding-top:8px;margin-top:4px}
+  .inv-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
+  .inv-actions .cta{cursor:pointer;border:none;font-family:var(--body)}
+  .inv-actions .btn-outline{padding:11px 22px;border:1.5px solid var(--line);background:transparent;
+    border-radius:8px;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer;font-family:var(--body);
+    transition:border-color .18s,color .18s}
+  .inv-actions .btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+
+  /* --- Print / PDF preview --- */
+  #invoice-preview{display:none;background:var(--card);border:1.5px solid var(--line);border-radius:14px;
+    padding:48px 52px;max-width:760px;margin:0 auto 32px;font-size:14px;line-height:1.7}
+  #invoice-preview .inv-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:36px;gap:24px}
+  #invoice-preview .inv-header .inv-logo{font-size:22px;font-weight:800;letter-spacing:-.03em;color:var(--ink)}
+  #invoice-preview .inv-header .inv-meta{text-align:right;font-size:13px;color:var(--muted)}
+  #invoice-preview .inv-header .inv-meta strong{display:block;font-size:18px;font-weight:800;color:var(--ink);margin-bottom:2px}
+  #invoice-preview .inv-parties{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:32px}
+  #invoice-preview .party-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  #invoice-preview .party-name{font-weight:700;font-size:15px;margin-bottom:2px}
+  #invoice-preview .party-detail{font-size:13px;color:var(--muted);white-space:pre-wrap}
+  #invoice-preview table{width:100%;border-collapse:collapse;margin-bottom:24px}
+  #invoice-preview thead th{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);padding:8px 10px;border-bottom:1.5px solid var(--line);text-align:left}
+  #invoice-preview thead th:last-child,#invoice-preview thead th:nth-last-child(2),
+  #invoice-preview thead th:nth-last-child(3){text-align:right}
+  #invoice-preview tbody td{padding:10px 10px;border-bottom:1px solid var(--line);vertical-align:top;font-size:13px}
+  #invoice-preview tbody td:last-child,#invoice-preview tbody td:nth-last-child(2),
+  #invoice-preview tbody td:nth-last-child(3){text-align:right}
+  #invoice-preview .inv-totals-print{display:flex;flex-direction:column;align-items:flex-end;gap:5px;margin-top:8px}
+  #invoice-preview .tot-row{display:flex;gap:32px;font-size:13px}
+  #invoice-preview .tot-row .lbl{min-width:90px;text-align:right;color:var(--muted)}
+  #invoice-preview .tot-row .val{min-width:70px;text-align:right;font-variant-numeric:tabular-nums}
+  #invoice-preview .tot-row.grand{font-size:16px;font-weight:800;border-top:2px solid var(--line);padding-top:8px;margin-top:4px}
+  #invoice-preview .inv-notes{margin-top:32px;padding-top:22px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+  #invoice-preview .inv-notes strong{display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;color:var(--muted)}
+  .back-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border:1.5px solid var(--line);
+    background:transparent;border-radius:8px;font-size:14px;font-weight:600;color:var(--ink);
+    cursor:pointer;font-family:var(--body);transition:border-color .18s,color .18s;margin-bottom:20px}
+  .back-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+  @media print{
+    .top,.after.page>section:first-child,footer,.inv-actions,.back-btn,#invoice-builder,.bar{display:none!important}
+    #invoice-preview{display:block!important;border:none!important;padding:0!important;border-radius:0!important;max-width:100%!important;margin:0!important}
+    body{background:#fff!important}
+  }
+</style>
+<script src="reveal.js?v=20260902-3" defer></script>
+<script src="nav.js?v=20260902-3" defer></script>
+<script src="account-nav.js?v=20260916-1" defer></script>
+</head>
+<body>
+<div class="bar" id="bar"></div>
+<div class="top">
+  <a href="/" class="brand"><img src="img/brightsite-logo.png" alt="BrightSite" width="515" height="72"></a>
+  <nav class="tabs" id="navTabs">
+    <a href="/#included">What we do</a>
+    <a href="ourwork.html">Our work</a>
+    <a href="pricing.html">Pricing</a>
+  </nav>
+  <div class="top-right">
+    <a href="/" class="cta">Create Preview</a>
+    <a href="/account/dashboard.html?signup=1" class="account-link" id="accountLink" aria-label="My account" title="My account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg></a>
+    <button type="button" class="burger" id="burgerBtn" aria-label="Open menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</div>
+
+<div class="after page">
+  <section style="padding-top:clamp(20px,3vw,34px);padding-bottom:18px">
+    <div class="wrap">
+      <div class="page-hero">
+        <div class="eyebrow">Invoices</div>
+        <h1>Create &amp; send invoices</h1>
+        <p>Fill in the details below, then preview and download as a PDF.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="invoice-builder">
+    <div class="wrap" style="max-width:780px">
+
+      <!-- Invoice Details -->
+      <div class="inv-section">
+        <div class="inv-section-title">Invoice details</div>
+        <div class="inv-grid">
+          <div class="inv-field">
+            <label for="inv-number">Invoice number</label>
+            <input type="text" id="inv-number" placeholder="INV-001">
+          </div>
+          <div class="inv-field">
+            <label for="inv-date">Invoice date</label>
+            <input type="date" id="inv-date">
+          </div>
+          <div class="inv-field">
+            <label for="inv-due">Due date</label>
+            <input type="date" id="inv-due">
+          </div>
+          <div class="inv-field">
+            <label for="inv-currency">Currency</label>
+            <select id="inv-currency">
+              <option value="£">£ GBP</option>
+              <option value="$">$ USD</option>
+              <option value="€">€ EUR</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- From / To -->
+      <div class="inv-grid" style="margin-bottom:16px">
+        <div class="inv-section" style="margin-bottom:0">
+          <div class="inv-section-title">From (you)</div>
+          <div class="inv-field" style="margin-bottom:10px">
+            <label for="from-name">Business / name</label>
+            <input type="text" id="from-name" placeholder="BrightSite">
+          </div>
+          <div class="inv-field">
+            <label for="from-detail">Address / contact</label>
+            <textarea id="from-detail" rows="3" placeholder="Email, address, phone…"></textarea>
+          </div>
+        </div>
+        <div class="inv-section" style="margin-bottom:0">
+          <div class="inv-section-title">Bill to (client)</div>
+          <div class="inv-field" style="margin-bottom:10px">
+            <label for="to-name">Client name</label>
+            <input type="text" id="to-name" placeholder="Client Ltd">
+          </div>
+          <div class="inv-field">
+            <label for="to-detail">Address / contact</label>
+            <textarea id="to-detail" rows="3" placeholder="Email, address, phone…"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Line Items -->
+      <div class="inv-section">
+        <div class="inv-section-title">Line items</div>
+        <div class="inv-items-head">
+          <span>Description</span>
+          <span style="text-align:center">Qty</span>
+          <span style="text-align:right">Unit price</span>
+          <span style="text-align:right">Total</span>
+          <span></span>
+        </div>
+        <div id="inv-items"></div>
+        <button class="add-item-btn" id="add-item-btn" type="button">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 2v11M2 7.5h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Add line item
+        </button>
+
+        <!-- VAT / Tax -->
+        <div style="display:flex;align-items:center;gap:10px;margin-top:18px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;cursor:pointer">
+            <input type="checkbox" id="vat-toggle" style="width:15px;height:15px;accent-color:var(--accent)">
+            Add VAT / tax
+          </label>
+          <div id="vat-row" style="display:none;display:flex;align-items:center;gap:8px">
+            <input type="number" id="vat-rate" value="20" min="0" max="100" step="0.1"
+              style="width:72px;background:var(--bg);border:1.5px solid var(--line);border-radius:7px;
+              padding:7px 10px;font-size:13px;font-family:var(--body);color:var(--ink);outline:none">
+            <span style="font-size:13px;color:var(--muted)">%</span>
+          </div>
+        </div>
+
+        <div class="inv-totals">
+          <div class="inv-total-row"><span class="lbl">Subtotal</span><span class="val" id="subtotal-display">£0.00</span></div>
+          <div class="inv-total-row" id="vat-total-row" style="display:none"><span class="lbl" id="vat-label">VAT (20%)</span><span class="val" id="vat-display">£0.00</span></div>
+          <div class="inv-total-row grand"><span class="lbl">Total</span><span class="val" id="total-display">£0.00</span></div>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="inv-section">
+        <div class="inv-section-title">Notes / payment terms</div>
+        <div class="inv-field">
+          <textarea id="inv-notes" rows="3" placeholder="e.g. Please pay within 14 days. Bank: sort code 00-00-00, account 12345678"></textarea>
+        </div>
+      </div>
+
+      <div class="inv-actions">
+        <button class="cta" id="preview-btn" type="button">Preview &amp; Download PDF</button>
+        <button class="btn-outline" id="reset-btn" type="button">Clear all</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Print Preview -->
+  <section id="preview-section" style="display:none;padding:0 0 60px">
+    <div class="wrap" style="max-width:780px">
+      <button class="back-btn" id="back-btn" type="button">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Back to editor
+      </button>
+      <div id="invoice-preview"></div>
+      <div class="inv-actions">
+        <button class="cta" id="print-btn" type="button">Download / Print PDF</button>
+        <button class="back-btn" id="back-btn2" type="button" style="margin-bottom:0">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Edit invoice
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <a href="/" class="brand"><img src="img/brightsite-logo.png" alt="BrightSite" width="515" height="72"></a>
+    <p style="margin-top:10px">Websites, SEO &amp; social for brands.</p>
+    <p style="margin-top:8px"><a href="mailto:brightsiteapp@gmail.com">brightsiteapp@gmail.com</a> &middot; <a href="https://wa.me/447535928879" target="_blank" rel="noopener">WhatsApp</a></p>
+    <p style="margin-top:14px;font-size:11px;opacity:.6">&copy; 2026 BrightSite &middot; <a href="terms.html">Terms &amp; Privacy</a></p>
+  </footer>
+</div>
+
+<script>
+// ── Helpers ─────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const sym = () => $('inv-currency').value || '£';
+const fmt = n => sym() + parseFloat(n || 0).toFixed(2);
+
+function today() {
+  const d = new Date();
+  return d.toISOString().slice(0, 10);
+}
+function addDays(dateStr, days) {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+function fmtDate(str) {
+  if (!str) return '';
+  const [y, m, d] = str.split('-');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
+}
+
+// ── Init defaults ────────────────────────────────────────────────────────
+$('inv-number').value = 'INV-001';
+$('inv-date').value = today();
+$('inv-due').value = addDays(today(), 14);
+$('from-name').value = 'BrightSite';
+$('from-detail').value = 'brightsiteapp@gmail.com';
+
+// ── Line items ───────────────────────────────────────────────────────────
+let items = [];
+let nextId = 1;
+
+function addItem(desc = '', qty = 1, price = '') {
+  const id = nextId++;
+  items.push({ id, desc, qty, price });
+  renderItems();
+}
+
+function removeItem(id) {
+  items = items.filter(i => i.id !== id);
+  renderItems();
+}
+
+function renderItems() {
+  const container = $('inv-items');
+  container.innerHTML = '';
+  items.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'inv-item-row';
+    row.innerHTML = `
+      <input class="item-desc" type="text" placeholder="Description" value="${escHtml(item.desc)}" data-id="${item.id}" data-field="desc">
+      <input type="number" placeholder="1" value="${item.qty}" min="0" step="1" data-id="${item.id}" data-field="qty" style="text-align:center">
+      <input type="number" placeholder="0.00" value="${item.price}" min="0" step="0.01" data-id="${item.id}" data-field="price" style="text-align:right">
+      <input type="text" readonly value="${fmt(item.qty * item.price)}" tabindex="-1" style="text-align:right;background:var(--bg);color:var(--muted)">
+      <button class="item-delete" type="button" data-id="${item.id}" title="Remove row">×</button>
+    `;
+    container.appendChild(row);
+  });
+  updateTotals();
+}
+
+$('inv-items').addEventListener('input', e => {
+  const el = e.target;
+  const id = parseInt(el.dataset.id);
+  const field = el.dataset.field;
+  if (!id || !field) return;
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  item[field] = field === 'desc' ? el.value : parseFloat(el.value) || 0;
+  // Update the row total in place
+  const row = el.closest('.inv-item-row');
+  const totalInput = row.querySelectorAll('input')[3];
+  totalInput.value = fmt(item.qty * item.price);
+  updateTotals();
+});
+
+$('inv-items').addEventListener('click', e => {
+  const btn = e.target.closest('.item-delete');
+  if (btn) removeItem(parseInt(btn.dataset.id));
+});
+
+$('add-item-btn').addEventListener('click', () => addItem());
+
+// ── Totals ───────────────────────────────────────────────────────────────
+function updateTotals() {
+  const subtotal = items.reduce((s, i) => s + (i.qty * i.price || 0), 0);
+  const vatOn = $('vat-toggle').checked;
+  const vatRate = parseFloat($('vat-rate').value) || 0;
+  const vatAmt = vatOn ? subtotal * vatRate / 100 : 0;
+  const total = subtotal + vatAmt;
+
+  $('subtotal-display').textContent = fmt(subtotal);
+  $('vat-display').textContent = fmt(vatAmt);
+  $('vat-label').textContent = `VAT (${vatRate}%)`;
+  $('total-display').textContent = fmt(total);
+  $('vat-total-row').style.display = vatOn ? '' : 'none';
+}
+
+$('vat-toggle').addEventListener('change', () => {
+  $('vat-row').style.display = $('vat-toggle').checked ? 'flex' : 'none';
+  updateTotals();
+});
+$('vat-rate').addEventListener('input', updateTotals);
+$('inv-currency').addEventListener('change', () => { renderItems(); updateTotals(); });
+
+// ── Escape helper ────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Preview ──────────────────────────────────────────────────────────────
+$('preview-btn').addEventListener('click', showPreview);
+$('print-btn').addEventListener('click', () => window.print());
+$('back-btn').addEventListener('click', hidePreview);
+$('back-btn2').addEventListener('click', hidePreview);
+$('reset-btn').addEventListener('click', () => {
+  if (!confirm('Clear all invoice data?')) return;
+  items = []; nextId = 1; renderItems();
+  ['inv-number','inv-date','inv-due','from-name','from-detail','to-name','to-detail','inv-notes'].forEach(id => {
+    const el = $(id);
+    if (el) el.value = '';
+  });
+  $('inv-number').value = 'INV-001';
+  $('inv-date').value = today();
+  $('inv-due').value = addDays(today(), 14);
+  updateTotals();
+});
+
+function showPreview() {
+  const subtotal = items.reduce((s, i) => s + (i.qty * i.price || 0), 0);
+  const vatOn = $('vat-toggle').checked;
+  const vatRate = parseFloat($('vat-rate').value) || 0;
+  const vatAmt = vatOn ? subtotal * vatRate / 100 : 0;
+  const total = subtotal + vatAmt;
+  const s = sym();
+
+  const rows = items.map(i => `
+    <tr>
+      <td>${escHtml(i.desc) || '<span style="color:#bbb">—</span>'}</td>
+      <td style="text-align:right">${i.qty}</td>
+      <td style="text-align:right">${s}${parseFloat(i.price||0).toFixed(2)}</td>
+      <td style="text-align:right">${s}${(i.qty*(i.price||0)).toFixed(2)}</td>
+    </tr>`).join('');
+
+  const vatRowPrint = vatOn ? `<div class="tot-row"><span class="lbl">VAT (${vatRate}%)</span><span class="val">${s}${vatAmt.toFixed(2)}</span></div>` : '';
+  const notesHtml = $('inv-notes').value ? `<div class="inv-notes"><strong>Notes / payment terms</strong>${escHtml($('inv-notes').value)}</div>` : '';
+
+  $('invoice-preview').innerHTML = `
+    <div class="inv-header">
+      <div class="inv-logo">${escHtml($('from-name').value) || 'BrightSite'}</div>
+      <div class="inv-meta">
+        <strong>Invoice ${escHtml($('inv-number').value)}</strong>
+        <div>Date: ${fmtDate($('inv-date').value)}</div>
+        ${$('inv-due').value ? `<div>Due: ${fmtDate($('inv-due').value)}</div>` : ''}
+      </div>
+    </div>
+    <div class="inv-parties">
+      <div>
+        <div class="party-label">From</div>
+        <div class="party-name">${escHtml($('from-name').value)}</div>
+        <div class="party-detail">${escHtml($('from-detail').value)}</div>
+      </div>
+      <div>
+        <div class="party-label">Bill to</div>
+        <div class="party-name">${escHtml($('to-name').value)}</div>
+        <div class="party-detail">${escHtml($('to-detail').value)}</div>
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>Description</th><th style="text-align:right">Qty</th><th style="text-align:right">Unit price</th><th style="text-align:right">Total</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="4" style="color:#bbb;text-align:center;padding:20px 0">No line items added</td></tr>'}</tbody>
+    </table>
+    <div class="inv-totals-print">
+      <div class="tot-row"><span class="lbl">Subtotal</span><span class="val">${s}${subtotal.toFixed(2)}</span></div>
+      ${vatRowPrint}
+      <div class="tot-row grand"><span class="lbl">Total</span><span class="val">${s}${total.toFixed(2)}</span></div>
+    </div>
+    ${notesHtml}
+  `;
+
+  $('invoice-preview').style.display = 'block';
+  $('invoice-builder').style.display = 'none';
+  $('preview-section').style.display = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function hidePreview() {
+  $('invoice-preview').style.display = 'none';
+  $('preview-section').style.display = 'none';
+  $('invoice-builder').style.display = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Seed one empty row ───────────────────────────────────────────────────
+addItem('Website design & build', 1, 299);
+</script>
+</body>
+</html>
