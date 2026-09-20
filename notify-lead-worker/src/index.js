@@ -307,6 +307,17 @@ async function handleStripeWebhook(req, env) {
   return Response.json({ received: true });
 }
 
+async function checkLeadRateLimit(env, req) {
+  if (!env.RATE_LIMIT) return false;
+  const ip = req.headers.get('CF-Connecting-IP') || 'unknown';
+  const hour = Math.floor(Date.now() / 3600000);
+  const key = `lead:${ip}:${hour}`;
+  const count = parseInt(await env.RATE_LIMIT.get(key) || '0', 10);
+  if (count >= 10) return true;
+  await env.RATE_LIMIT.put(key, String(count + 1), { expirationTtl: 7200 });
+  return false;
+}
+
 export default {
   async fetch(req, env) {
     const origin = req.headers.get('Origin') || '';
@@ -362,6 +373,10 @@ export default {
 
     if (!env.RESEND_API_KEY) {
       return Response.json({ error: 'RESEND_API_KEY not configured' }, { status: 500, headers: cors });
+    }
+
+    if (await checkLeadRateLimit(env, req)) {
+      return Response.json({ error: 'Too many requests' }, { status: 429, headers: cors });
     }
 
     const contentType = req.headers.get('Content-Type') || '';
