@@ -733,7 +733,6 @@
 (function(){
   var SUPABASE_URL = 'https://vlisyfshmxdsjuybirxe.supabase.co';
   var SUPABASE_ANON_KEY = 'sb_publishable_gYdn5HCo63B0qZj3tG-7ow_myAMHeEB';
-  var R2_PUBLIC_URL = 'https://pub-38c2019362f64b6780e0b217ba84be8c.r2.dev';
   var UPLOAD_WORKER_URL = 'https://brightsite-upload.notify-lead-worker.workers.dev';
   var GALLERY_MAX = 20;
 
@@ -2190,7 +2189,7 @@
   function mediaUrl(relPath) {
     if (!relPath || !slug) return null;
     if (/^https?:\/\//.test(relPath)) return relPath;
-    return R2_PUBLIC_URL + '/' + slug + '/' + relPath;
+    return UPLOAD_WORKER_URL + '/img/' + slug + '/' + relPath;
   }
   document.getElementById('logoInput').addEventListener('change', function (e) {
     var file = e.target.files[0]; e.target.value = '';
