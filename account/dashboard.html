@@ -1532,7 +1532,7 @@
       if (!doc.getElementById('bsInlineLock')) {
         var style = doc.createElement('style');
         style.id = 'bsInlineLock';
-        style.textContent = 'a,button{pointer-events:none!important;cursor:default!important}' +
+        style.textContent = 'a:not([data-nav]),button:not(.menu-toggle){pointer-events:none!important;cursor:default!important}' +
           '.bs-inline-editable{cursor:text;outline:1px dashed transparent;outline-offset:2px;border-radius:4px;transition:outline-color .15s ease,background-color .15s ease}' +
           '.bs-inline-editable:hover,.bs-inline-editable:focus{outline-color:#3B82F6;background:rgba(59,130,246,.08);pointer-events:auto!important}';
         doc.head.appendChild(style);
