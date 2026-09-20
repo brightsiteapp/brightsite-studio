@@ -1474,6 +1474,7 @@
     var demoReady = hasUploadedDemo();
     var rvKey = 'bs_revealed_' + (business && business.id || slug || 'x');
     var hasRevealed = !!localStorage.getItem(rvKey);
+    console.log('[renderPreview]', { demoReady, hasRevealed, blueprintHidden: demoReady && hasRevealed });
     blueprint.hidden = demoReady && hasRevealed;
     frame.hidden = !(demoReady && hasRevealed);
     renderBlueprint(currentRaw());
