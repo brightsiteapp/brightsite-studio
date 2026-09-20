@@ -1784,7 +1784,8 @@
       document.getElementById('approveDesc').textContent = '';
     }
     var demoReady = hasPreview;
-    document.getElementById('editToggle').hidden = false;
+    var et = document.getElementById('editToggle');
+    if (et) et.hidden = false;
     document.getElementById('developerBuildingMessage').hidden = demoReady;
     var revealKey = 'bs_preview_revealed_' + (business.id || slug || 'current');
     if (demoReady && !sessionStorage.getItem(revealKey)) {
