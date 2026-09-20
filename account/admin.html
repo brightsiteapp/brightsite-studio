@@ -551,7 +551,10 @@ var domainTargetSlug = null;
 function openDomainModal(slug, name) {
   domainTargetSlug = slug;
   document.getElementById('domainModalName').textContent = name;
-  document.getElementById('domainInput').value = '';
+  // Pre-fill with existing domain so the user doesn't have to retype it
+  var existing = allBusinesses.find(function(b) { return b.id === slug; });
+  var currentDomain = (existing && existing.data && (existing.data.customDomain || existing.data.domain)) || '';
+  document.getElementById('domainInput').value = currentDomain;
   document.getElementById('domainStatus').textContent = '';
   document.getElementById('domainStatus').className = 'modal-status';
   document.getElementById('domainModal').classList.remove('hidden');

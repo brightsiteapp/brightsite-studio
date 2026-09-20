@@ -1470,7 +1470,9 @@
     var blueprint = document.getElementById('blueprintPreview');
     if (!business) return;
     var data = (business && business.data) || {};
-    var previewUrl = data.liveUrl || data.demoUrl || null;
+    // Prefer demoUrl (actual uploaded HTML in Supabase) over liveUrl (Vercel domain)
+    // so the preview shows the real files and relative links resolve correctly.
+    var previewUrl = data.demoUrl || data.liveUrl || null;
     var demoReady = hasUploadedDemo();
     var rvKey = 'bs_revealed_' + (business && business.id || slug || 'x');
     var hasRevealed = !!localStorage.getItem(rvKey);
@@ -1608,7 +1610,7 @@
 
   document.getElementById('fullscreenBtn').addEventListener('click', function () {
     var data = (business && business.data) || {};
-    var previewUrl = data.liveUrl || data.demoUrl || null;
+    var previewUrl = data.demoUrl || data.liveUrl || null;
     if (!previewUrl) return;
     try { if (new URL(previewUrl).origin === location.origin) return; } catch(e) {}
     fetch(previewUrl).then(function(r) { return r.text(); }).then(function(html) {
