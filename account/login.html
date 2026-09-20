@@ -295,8 +295,11 @@
           return;
         }
         if (isSignup && !data.access_token) {
-          // Email confirmation is turned on in the Supabase project —
-          // no session yet, tell the user to check their inbox.
+          // Email confirmation is turned on — save pending values now so they
+          // survive the email link → callback → dashboard redirect.
+          if (nameParam) localStorage.setItem('bs_pending_business_name', nameParam);
+          if (typeParam) localStorage.setItem('bs_pending_business_type', typeParam);
+          if (slugParam) localStorage.setItem('bs_pending_slug', slugParam);
           showStatus('Account created! Check your email to confirm it, then log in.', 'ok');
           submitBtn.disabled = false;
           setMode(false);
