@@ -642,10 +642,19 @@ document.getElementById('uploadConfirm').addEventListener('click', function() {
     if (file.name === 'index.html' || file.name === 'index.htm') {
       demoUrl = SUPABASE_URL + '/storage/v1/object/public/' + path;
     }
+    var contentType = /\.html?$/i.test(file.name) ? 'text/html; charset=utf-8'
+      : /\.css$/i.test(file.name) ? 'text/css'
+      : /\.js$/i.test(file.name) ? 'text/javascript'
+      : (file.type || 'application/octet-stream');
+    // Delete first so re-upload gets a fresh content-type (upsert preserves old type)
     fetch(SUPABASE_URL + '/storage/v1/object/' + path, {
-      method: 'POST',
-      headers: authHeaders({ 'Content-Type': /\.html?$/i.test(file.name) ? 'text/html; charset=utf-8' : (file.type || 'application/octet-stream'), 'x-upsert': 'true' }),
-      body: file
+      method: 'DELETE', headers: authHeaders()
+    }).catch(function(){}).then(function() {
+      return fetch(SUPABASE_URL + '/storage/v1/object/' + path, {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': contentType }),
+        body: file
+      });
     }).then(function(r) {
       if (!r.ok) failed.push(file.name);
       done++;
