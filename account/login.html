@@ -97,7 +97,7 @@
 
   var params = new URLSearchParams(location.search);
   var slugParam = params.get('slug') || '';
-  var isSignup = false;
+  var isSignup = params.get('signup') === '1';
   var emailParam = params.get('email') || '';
   var nameParam = params.get('name') || '';
   var typeParam = params.get('type') || '';
@@ -160,13 +160,20 @@
     passwordInput.closest('.acct-field').style.display = '';
     googleWrap.style.display = '';
     googleBtn.style.display = '';
-    document.querySelector('.acct-toggle').style.display = '';
     backToLogin.style.display = 'none';
-    title.textContent = 'Log in';
-    sub.textContent = "Manage your website's services, prices, contact info and photos.";
-    submitBtn.textContent = 'Log in';
-    passwordInput.autocomplete = 'current-password';
-    forgotWrap.style.display = '';
+    if (isSignup) {
+      title.textContent = 'Create your account';
+      sub.textContent = 'Set up a login so you can manage your own website — services, prices, contact info and photos.';
+      submitBtn.textContent = 'Sign up';
+      passwordInput.autocomplete = 'new-password';
+      forgotWrap.style.display = 'none';
+    } else {
+      title.textContent = 'Log in';
+      sub.textContent = "Manage your website's services, prices, contact info and photos.";
+      submitBtn.textContent = 'Log in';
+      passwordInput.autocomplete = 'current-password';
+      forgotWrap.style.display = '';
+    }
     statusEl.textContent = '';
     statusEl.className = 'acct-status';
   }
