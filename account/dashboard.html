@@ -1482,6 +1482,15 @@
     try { if (frame.contentWindow) lastScrollY = frame.contentWindow.scrollY; } catch (e) {}
     frame.classList.add('refreshing');
     if (previewUrl) {
+      // Guard: never load same-origin URLs in the preview (would show the dashboard recursively)
+      try {
+        var parsedPreview = new URL(previewUrl);
+        if (parsedPreview.origin === location.origin) {
+          console.warn('[preview] previewUrl points to same origin — skipping:', previewUrl);
+          frame.classList.remove('refreshing');
+          return;
+        }
+      } catch(e) {}
       fetch(previewUrl)
         .then(function(r) { return r.text(); })
         .then(function(html) { frame.srcdoc = html; })
@@ -1590,6 +1599,7 @@
     var data = (business && business.data) || {};
     var previewUrl = data.liveUrl || data.demoUrl || null;
     if (!previewUrl) return;
+    try { if (new URL(previewUrl).origin === location.origin) return; } catch(e) {}
     fetch(previewUrl).then(function(r) { return r.text(); }).then(function(html) {
       var blob = new Blob([html], { type: 'text/html' });
       window.open(URL.createObjectURL(blob), '_blank');
