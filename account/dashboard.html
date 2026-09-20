@@ -2474,9 +2474,11 @@
   // ---------------- make live / publish / take offline ----------------
   document.getElementById('liveBtn').addEventListener('click', function () {
     var domainValue = (business && business.data && (business.data.customDomain || business.data.domain)) || '';
-    if (!isPaying || !domainValue) return;
-    var btn = this;
     var isTakeOffline = isLive && !hasPendingEdit;
+    // Only block first-time "Make live" — taking offline and publishing updates
+    // are always allowed once the site is already live.
+    if (!isLive && (!isPaying || !domainValue)) return;
+    var btn = this;
     if (isTakeOffline) {
       // Take offline
       btn.disabled = true;
