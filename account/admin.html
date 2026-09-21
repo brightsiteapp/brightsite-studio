@@ -312,6 +312,8 @@ body { background: var(--bg); min-height: 100vh; }
 <script>
 var SUPABASE_URL = 'https://vlisyfshmxdsjuybirxe.supabase.co';
 var SUPABASE_ANON_KEY = 'sb_publishable_gYdn5HCo63B0qZj3tG-7ow_myAMHeEB';
+var UPLOAD_WORKER = 'https://brightsite-upload.notify-lead-worker.workers.dev';
+var R2_PUBLIC_URL = 'https://pub-38c2019362f64b6780e0b217ba84be8c.r2.dev';
 
 var ADMIN_EMAIL = 'brightsiteapp@gmail.com';
 
@@ -367,8 +369,8 @@ function authHeaders(extra) {
 function loadBusinesses() {
   document.getElementById('accountsList').innerHTML = '<div class="loading-row"><span class="spinner"></span> Loading accounts…</div>';
 
-  fetch(SUPABASE_URL + '/rest/v1/businesses?select=id,name,user_id,data,updated_at&order=updated_at.desc', {
-    headers: authHeaders()
+  fetch('/api/admin-businesses', {
+    headers: { 'Authorization': 'Bearer ' + (adminSession && adminSession.access_token || '') }
   })
   .then(function(r) {
     if (r.status === 401 || r.status === 403) {
@@ -723,14 +725,14 @@ document.getElementById('uploadConfirm').addEventListener('click', function() {
       }
       var file = files[i];
       var rel = file.name.replace(/^\/+/, '');
-      var path = 'business-media/' + uploadTargetSlug + '/site/' + rel;
+      var r2Key = uploadTargetSlug + '/site/' + rel;
       var base = rel.split('/').pop();
       if (base === 'index.html' || base === 'index.htm') {
-        demoUrl = SUPABASE_URL + '/storage/v1/object/public/' + path;
+        demoUrl = R2_PUBLIC_URL + '/' + r2Key;
       }
-      fetch(SUPABASE_URL + '/storage/v1/object/' + path, {
-        method: 'POST',
-        headers: authHeaders({ 'Content-Type': contentTypeForName(rel), 'x-upsert': 'true' }),
+      fetch(UPLOAD_WORKER + '/upload/' + r2Key, {
+        method: 'PUT',
+        headers: { 'Authorization': 'Bearer ' + (adminSession && adminSession.access_token ? adminSession.access_token : ''), 'Content-Type': contentTypeForName(rel), 'x-admin': '1' },
         body: file
       }).then(function(r) {
         if (!r.ok) failed.push(rel);
@@ -860,12 +862,11 @@ async function deployAndAliasToVercel(slug, domain, statusEl) {
   var cleanDomain = domain.replace(/^https?:\/\//, '').replace(/\/.*$/, '').trim();
   if (!cleanDomain) return;
 
-  // 1. List files in Supabase storage for this slug
+  // 1. List files in R2 for this slug
   if (statusEl) { statusEl.textContent = 'Domain saved · Fetching site files…'; statusEl.className = 'modal-status ok'; }
-  var listResp = await fetch(SUPABASE_URL + '/storage/v1/object/list/business-media', {
-    method: 'POST',
-    headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ prefix: slug + '/site/', limit: 200, offset: 0 })
+  var adminToken = (adminSession && adminSession.access_token) ? adminSession.access_token : '';
+  var listResp = await fetch(UPLOAD_WORKER + '/list/' + slug + '/site/', {
+    headers: { 'Authorization': 'Bearer ' + adminToken, 'x-admin': '1' }
   });
   var files = await listResp.json();
 
@@ -875,15 +876,14 @@ async function deployAndAliasToVercel(slug, domain, statusEl) {
     return;
   }
 
-  // 2. Download each file and encode as base64
+  // 2. Download each file from R2 public URL and encode as base64
   if (statusEl) { statusEl.textContent = 'Domain saved · Downloading ' + files.length + ' file(s)…'; }
   var vercelFiles = [];
   for (var i = 0; i < files.length; i++) {
     var f = files[i];
     if (!f.name || f.name.endsWith('/')) continue; // skip virtual folder entries
-    var fileUrl = SUPABASE_URL + '/storage/v1/object/public/business-media/' + slug + '/site/' + f.name;
     try {
-      var fileResp = await fetch(fileUrl);
+      var fileResp = await fetch(f.url);
       if (!fileResp.ok) continue;
       var blob = await fileResp.blob();
       var b64 = await blobToBase64(blob);
