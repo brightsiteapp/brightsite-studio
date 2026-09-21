@@ -81,7 +81,7 @@ async function runHomepageFlow(label, contextOptions, mobile) {
 
   page.on('pageerror', (error) => errors.push(error.message));
   await page.route('https://*.vercel.app/**', (route) => route.abort());
-  await page.route('https://klreehoegatehoubhhog.supabase.co/**', (route) => {
+  await page.route('https://vlisyfshmxdsjuybirxe.supabase.co/**', (route) => {
     route.fulfill({ status: 201, body: '' });
   });
   await page.emulateMedia({ reducedMotion: 'no-preference' });

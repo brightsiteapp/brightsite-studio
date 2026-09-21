@@ -1,14 +1,4 @@
-// Cloudflare Worker that emails brightsiteapp@gmail.com whenever a
-// lead is captured on the site. Handles two shapes of request:
-//  - application/json: a quick text-only lead ping (business_name, details)
-//  - multipart/form-data: the full WhatsApp handoff — business details plus
-//    any uploaded photos and the generated site preview, sent as one email
-//    with real attachments via Resend (replaces the old formsubmit.co path,
-//    which needed a manual "activate this form" step per recipient and
-//    still couldn't include the business details or preview).
-// Leads are also logged to Supabase (see homepage-builder.js), but that
-// table isn't checked automatically — this runs regardless of whether the
-// customer presses the WhatsApp handoff.
+// Cloudflare Worker — lead capture, billing portal, and Stripe webhook handler.
 
 const ALLOWED_ORIGINS = new Set([
   'https://brightsite.app',
@@ -24,111 +14,44 @@ function corsHeaders(origin) {
   };
 }
 
-function bufferToBase64(buffer) {
-  let binary = '';
-  const bytes = new Uint8Array(buffer);
-  const chunkSize = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-  }
-  return btoa(binary);
-}
 
 async function handleJsonLead(body, env, cors) {
-  const { business_name, details } = body || {};
+  const { business_name } = body || {};
   if (!business_name) {
     return Response.json({ error: 'business_name required' }, { status: 400, headers: cors });
   }
-  const emailRes = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${env.RESEND_API_KEY}`,
-    },
-    body: JSON.stringify({
-      from: 'BrightSite Leads <leads@brightsite.app>',
-      to: ['brightsiteapp@gmail.com'],
-      subject: `New lead: ${business_name}`,
-      text: details || '(no further details)',
-    }),
-  });
-  if (!emailRes.ok) {
-    throw new Error(`Resend ${emailRes.status}: ${await emailRes.text()}`);
-  }
 }
 
-const TEXT_FIELDS = [
-  'Business', 'Customer', 'Customer email', 'Industry', 'Location',
-  'Template', 'Font', 'Colour scheme', 'Interested in',
-  'Current website', 'Social media', 'Media notes', 'Account setup url',
-];
-
-// Fired alongside the internal notification whenever the handoff carried a
-// customer email address, so the customer isn't left wondering whether their
-// WhatsApp/email button-press actually did anything while they wait to hear
-// back. Best-effort: a failure here shouldn't fail the whole lead capture.
-async function sendCustomerWelcomeEmail(env, email, business, accountUrl) {
-  try {
-    const emailRes = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${env.RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: 'BrightSite <leads@brightsite.app>',
-        to: [email],
-        subject: 'Welcome to BrightSite — we’ve got your design idea',
-        text: `Welcome to BrightSite!\n\nWe've received your website info${business ? ` for ${business}` : ''} and will be in touch today.\n\nIn the meantime, set up your account so you can manage your own site:\n${accountUrl || 'https://brightsite.app'}\n\nSpeak soon,\nThe BrightSite team`,
-      }),
-    });
-    if (!emailRes.ok) {
-      console.error(`Resend welcome email ${emailRes.status}: ${await emailRes.text()}`);
-    }
-  } catch (error) {
-    console.error('Customer welcome email failed', error);
-  }
-}
 
 async function handleFormLead(form, env, cors) {
-  const business = form.get('Business') || 'Unknown business';
-  const lines = TEXT_FIELDS
-    .map(name => [name, form.get(name)])
-    .filter(([, value]) => value)
-    .map(([name, value]) => `${name}: ${value}`);
+}
 
-  const attachments = [];
-  for (const [name, value] of form.entries()) {
-    if (value instanceof File && value.size > 0) {
-      attachments.push({
-        filename: value.name || `${name}.dat`,
-        content: bufferToBase64(await value.arrayBuffer()),
-      });
-    }
-  }
+async function handleNewSignup(body, env, cors) {
+  const { email, business_name, business_type, slug } = body || {};
+  if (!email) return Response.json({ error: 'email required' }, { status: 400, headers: cors });
 
-  const emailRes = await fetch('https://api.resend.com/emails', {
+  if (!env.RESEND_API_KEY) return Response.json({ ok: true }, { headers: cors });
+
+  const lines = [
+    `Email: ${email}`,
+    business_name ? `Business: ${business_name}` : '',
+    business_type ? `Type: ${business_type}` : '',
+    slug ? `Slug: ${slug}` : '',
+    `Time: ${new Date().toLocaleString('en-GB', { timeZone: 'Europe/London' })}`,
+  ].filter(Boolean).join('\n');
+
+  await fetch('https://api.resend.com/emails', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${env.RESEND_API_KEY}`,
-    },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.RESEND_API_KEY}` },
     body: JSON.stringify({
-      from: 'BrightSite Leads <leads@brightsite.app>',
+      from: 'BrightSite <leads@brightsite.app>',
       to: ['brightsiteapp@gmail.com'],
-      subject: `New BrightSite customer handoff — ${business}`,
-      text: lines.join('\n') || '(no further details)',
-      attachments,
+      subject: `New sign up: ${email}`,
+      text: lines,
     }),
   });
-  if (!emailRes.ok) {
-    throw new Error(`Resend ${emailRes.status}: ${await emailRes.text()}`);
-  }
 
-  const customerEmail = form.get('Customer email');
-  if (customerEmail) {
-    await sendCustomerWelcomeEmail(env, customerEmail, business, form.get('Account setup url'));
-  }
+  return Response.json({ ok: true }, { headers: cors });
 }
 
 // account/dashboard.html's "Manage billing" button — Studio itself runs on
@@ -265,34 +188,7 @@ async function verifyStripeSignature(rawBody, signature, secret) {
 }
 
 async function sendCancellationEmail(env, subscription) {
-  const customer = typeof subscription.customer === 'string'
-    ? await stripeCall(env, `customers/${subscription.customer}`)
-    : subscription.customer;
-  const business = subscription.metadata?.brightsite_slug || 'a BrightSite customer';
-  const details = subscription.cancellation_details || {};
-  const ending = subscription.cancel_at_period_end
-    ? `at the end of the current billing period${subscription.cancel_at ? ` (${new Date(subscription.cancel_at * 1000).toLocaleDateString('en-GB')})` : ''}`
-    : 'immediately';
-  const reason = details.reason ? details.reason.replace(/_/g, ' ') : 'No reason supplied';
-  const text = [
-    `${business} has cancelled their Stripe subscription ${ending}.`,
-    `Customer: ${customer?.email || 'Unknown email'}`,
-    `Reason: ${reason}`,
-    details.comment ? `Comment: ${details.comment}` : '',
-    '',
-    'Studio will place this customer in the cancelled/payment-issue area on its next billing refresh.'
-  ].filter(Boolean).join('\n');
-  const emailRes = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.RESEND_API_KEY}` },
-    body: JSON.stringify({
-      from: 'BrightSite <leads@brightsite.app>',
-      to: ['brightsiteapp@gmail.com'],
-      subject: `Stripe cancellation: ${business}`,
-      text
-    })
-  });
-  if (!emailRes.ok) throw new Error(`Resend ${emailRes.status}: ${await emailRes.text()}`);
+  // Email sending disabled — re-enable when ready
 }
 
 async function handleStripeWebhook(req, env) {
@@ -371,8 +267,15 @@ export default {
       }
     }
 
-    if (!env.RESEND_API_KEY) {
-      return Response.json({ error: 'RESEND_API_KEY not configured' }, { status: 500, headers: cors });
+    if (url.pathname === '/new-signup') {
+      try {
+        let body;
+        try { body = await req.json(); } catch { body = {}; }
+        return await handleNewSignup(body, env, cors);
+      } catch (error) {
+        console.error('new-signup failed:', error);
+        return Response.json({ error: 'Could not send signup notification.' }, { status: 502, headers: cors });
+      }
     }
 
     if (await checkLeadRateLimit(env, req)) {

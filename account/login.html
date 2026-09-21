@@ -283,6 +283,11 @@
           if (nameParam) localStorage.setItem('bs_pending_business_name', nameParam);
           if (typeParam) localStorage.setItem('bs_pending_business_type', typeParam);
           if (slugParam) localStorage.setItem('bs_pending_slug', slugParam);
+          fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/new-signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, business_name: nameParam || undefined, business_type: typeParam || undefined, slug: slugParam || undefined })
+          }).catch(function(){});
           showStatus('Account created! Check your email to confirm it, then log in.', 'ok');
           submitBtn.disabled = false;
           setMode(false);
@@ -303,6 +308,13 @@
         }
         if (slugParam) localStorage.setItem('bs_pending_slug', slugParam);
         if (typeParam) localStorage.setItem('bs_pending_business_type', typeParam);
+        if (isSignup) {
+          fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/new-signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, business_name: nameParam || undefined, business_type: typeParam || undefined, slug: slugParam || undefined })
+          }).catch(function(){});
+        }
         showStatus('Success — redirecting…', 'ok');
         // Preserve the builder handoff values until the dashboard has written
         // its starter business record. Dropping name/type here could leave a
