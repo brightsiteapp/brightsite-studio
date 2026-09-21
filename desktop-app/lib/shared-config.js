@@ -17,5 +17,12 @@
 // set, for local development without touching this file.
 module.exports = {
   SUPABASE_URL: 'https://vlisyfshmxdsjuybirxe.supabase.co',
-  SUPABASE_ANON_KEY: 'sb_publishable_gYdn5HCo63B0qZj3tG-7ow_myAMHeEB'
+  SUPABASE_ANON_KEY: 'sb_publishable_gYdn5HCo63B0qZj3tG-7ow_myAMHeEB',
+
+  // Cloudflare R2 — media storage (logos, hero images, gallery photos)
+  R2_ACCOUNT_ID: 'e6f9e4f6b64e79fce6486a6abb93955c',
+  R2_ACCESS_KEY_ID: 'aeb6f6a485af4c92c2fe2c2214dceee8',
+  R2_SECRET_ACCESS_KEY: 'fec2fdd60e615d92149c7433e7b4ef065f20ce0b8e7c6f8e7bb0abc43258496f',
+  R2_BUCKET: 'brightsite-media',
+  R2_PUBLIC_URL: 'https://pub-38c2019362f64b6780e0b217ba84be8c.r2.dev'
 };

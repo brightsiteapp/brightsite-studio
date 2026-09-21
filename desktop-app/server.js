@@ -10,6 +10,7 @@ const browserFetch = require('./lib/browser-fetch');
 const businessSearch = require('./lib/business-search');
 const places = require('./lib/places');
 const sync = require('./lib/supabase-sync');
+const r2 = require('./lib/r2-media');
 const requests = require('./lib/customer-requests');
 const { deployToVercel, canDeploy, resetCanDeploy, takeOffline, addDomain, removeDomain } = require('./lib/deploy');
 const siteImport = require('./lib/site-import');
@@ -64,7 +65,7 @@ function createApp(options = {}) {
         if (!local || new Date(row.updated_at) > new Date(local.updatedAt || 0)) {
           storage.upsertProject(row.id, row.data);
         }
-        await sync.syncMediaForProject(storage.projectDir(row.id), row.data);
+        await r2.syncMediaForProject(storage.projectDir(row.id), row.data);
       }
       sync.flushPending(storage.readProject);
     }
@@ -161,7 +162,7 @@ function createApp(options = {}) {
     const kept = new Set(mediaPaths(afterRaw));
     for (const relPath of mediaPaths(beforeRaw)) {
       if (kept.has(relPath)) continue;
-      sync.deleteMedia(slug, relPath);
+      r2.deleteMedia(slug, relPath);
       try { fs.unlinkSync(path.join(storage.projectDir(slug), relPath)); } catch { /* already gone */ }
     }
   }
@@ -183,7 +184,7 @@ function createApp(options = {}) {
       const project = storage.readProject(req.params.slug);
       storage.deleteProject(req.params.slug);
       sync.deleteOne(req.params.slug);
-      mediaPaths(project?.raw).forEach(relPath => sync.deleteMedia(req.params.slug, relPath));
+      mediaPaths(project?.raw).forEach(relPath => r2.deleteMedia(req.params.slug, relPath));
       res.json({ ok: true });
     } catch (err) {
       res.status(404).json({ error: err.message });
@@ -799,7 +800,7 @@ function createApp(options = {}) {
       const filename = slot === 'gallery' ? `${Date.now()}${ext}` : `${slot}${ext}`;
       fs.writeFileSync(path.join(dir, filename), req.file.buffer);
       const relPath = slot === 'gallery' ? `img/gallery/${filename}` : `img/${filename}`;
-      sync.uploadMedia(slug, relPath, req.file.buffer);
+      r2.uploadMedia(slug, relPath, req.file.buffer);
       res.json({ path: relPath, url: `/projects/${slug}/${relPath}` });
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -808,7 +809,7 @@ function createApp(options = {}) {
 
   // Pull an image found during import (a remote URL) into the project
   // folder, so it becomes a normal local media file like any upload —
-  // and mirror it to shared Storage the same way.
+  // and mirror it to R2 the same way.
   app.post('/api/projects/:slug/media/:slot/fetch', async (req, res) => {
     const { slug, slot } = req.params;
     const url = String(req.body?.url || '').trim();
@@ -823,7 +824,7 @@ function createApp(options = {}) {
       const filename = slot === 'gallery' ? `${Date.now()}${ext}` : `${slot}${ext}`;
       fs.writeFileSync(path.join(dir, filename), buffer);
       const relPath = slot === 'gallery' ? `img/gallery/${filename}` : `img/${filename}`;
-      sync.uploadMedia(slug, relPath, buffer);
+      r2.uploadMedia(slug, relPath, buffer);
       res.json({ path: relPath, url: `/projects/${slug}/${relPath}` });
     } catch (err) {
       res.status(502).json({ error: err.message });
