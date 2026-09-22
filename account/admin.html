@@ -374,6 +374,7 @@ function loadBusinesses() {
     headers: { 'Authorization': 'Bearer ' + (adminSession && adminSession.access_token || '') }
   })
   .then(function(r) {
+      document.getElementById('loginErr').textContent = 'Your admin session has expired, or this Google account is not authorised. Sign in with brightsiteapp@gmail.com.';
     if (r.status === 401 || r.status === 403) {
       clearStoredSession();
       adminSession = null;
