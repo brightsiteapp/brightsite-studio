@@ -1,3 +1,6 @@
+const ACCOUNTS_SUPABASE_URL = 'https://vlisyfshmxdsjuybirxe.supabase.co';
+const ACCOUNTS_SUPABASE_ANON_KEY = 'sb_publishable_gYdn5HCo63B0qZj3tG-7ow_myAMHeEB';
+
 const ADMIN_EMAILS = new Set(
   (process.env.ADMIN_EMAILS || 'brightsiteapp@gmail.com')
     .split(',')
@@ -39,15 +42,10 @@ export default async function handler(request, response) {
     return json(response, 405, { error: 'Method not allowed' });
   }
 
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const anonKey = process.env.SUPABASE_ANON_KEY;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl = ACCOUNTS_SUPABASE_URL;
+  const anonKey = ACCOUNTS_SUPABASE_ANON_KEY;
   const token = bearerToken(request);
 
-  if (!supabaseUrl || !anonKey || !serviceRoleKey) {
-    console.error('Admin businesses is missing Supabase server configuration');
-    return json(response, 503, { error: 'Account administration is not configured' });
-  }
   if (!token) return json(response, 401, { error: 'Authentication required' });
 
   try {
@@ -59,7 +57,7 @@ export default async function handler(request, response) {
 
     const businesses = await fetch(
       `${supabaseUrl}/rest/v1/businesses?select=*&order=updated_at.desc`,
-      { headers: { apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}` } }
+      { headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` } }
     );
     if (!businesses.ok) {
       console.error('Admin businesses query failed', businesses.status);
