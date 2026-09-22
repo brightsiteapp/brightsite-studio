@@ -25,6 +25,15 @@ async function currentUser(supabaseUrl, anonKey, token) {
 }
 
 export default async function handler(request, response) {
+  const origin = request.headers.origin;
+  if (origin === 'https://brightsite.app' || origin === 'https://www.brightsite.app') {
+    response.setHeader('Access-Control-Allow-Origin', origin);
+    response.setHeader('Access-Control-Allow-Headers', 'Authorization');
+    response.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    response.setHeader('Vary', 'Origin');
+  }
+  if (request.method === 'OPTIONS') return response.status(204).end();
+
   if (request.method !== 'GET') {
     response.setHeader('Allow', 'GET');
     return json(response, 405, { error: 'Method not allowed' });
