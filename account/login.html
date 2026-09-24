@@ -83,6 +83,8 @@
       Continue with Google
     </a>
 
+    <div class="acct-toggle" id="modeToggle" style="margin-top:12px"></div>
+
     <div class="acct-toggle" id="backToLogin" style="display:none">
       <button type="button" id="backToLoginBtn">&larr; Back to log in</button>
     </div>
@@ -167,17 +169,21 @@
       submitBtn.textContent = 'Sign up';
       passwordInput.autocomplete = 'new-password';
       forgotWrap.style.display = 'none';
+      modeToggle.innerHTML = 'Already have an account? <button type="button" id="switchModeBtn">Log in</button>';
     } else {
       title.textContent = 'Log in';
       sub.textContent = "Manage your website's services, prices, contact info and photos.";
       submitBtn.textContent = 'Log in';
       passwordInput.autocomplete = 'current-password';
       forgotWrap.style.display = '';
+      modeToggle.innerHTML = "Don't have an account? <button type=\"button\" id=\"switchModeBtn\">Sign up</button>";
     }
+    document.getElementById('switchModeBtn').addEventListener('click', function () { setMode(!isSignup); });
     statusEl.textContent = '';
     statusEl.className = 'acct-status';
   }
 
+  var modeToggle = document.getElementById('modeToggle');
   var backToLogin = document.getElementById('backToLogin');
   var backToLoginBtn = document.getElementById('backToLoginBtn');
 
@@ -192,7 +198,7 @@
     passwordInput.closest('.acct-field').style.display = 'none';
     googleWrap.style.display = 'none';
     googleBtn.style.display = 'none';
-    document.querySelector('.acct-toggle').style.display = 'none';
+    modeToggle.style.display = 'none';
     backToLogin.style.display = '';
     statusEl.textContent = '';
     statusEl.className = 'acct-status';
@@ -200,7 +206,7 @@
   }
 
   forgotBtn.addEventListener('click', function () { setForgotMode(); });
-  backToLoginBtn.addEventListener('click', function () { backToLogin.style.display = 'none'; setMode(false); });
+  backToLoginBtn.addEventListener('click', function () { backToLogin.style.display = 'none'; modeToggle.style.display = ''; setMode(false); });
 
   var googleBtn = document.getElementById('googleBtn');
   googleBtn.addEventListener('click', function (e) {

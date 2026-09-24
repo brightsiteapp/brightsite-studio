@@ -256,13 +256,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const qaPills = document.getElementById('qaPills');
   const qaSlideName = document.getElementById('qaSlideName');
   const qaSlideType = document.getElementById('qaSlideType');
-  const qaSlideLocation = document.getElementById('qaSlideLocation');
   const qaSlideEmail = document.getElementById('qaSlideEmail');
   const qaFieldName = document.getElementById('qaFieldName');
   const qaFieldType = document.getElementById('qaFieldType');
-  const qaFieldLocation = document.getElementById('qaFieldLocation');
   const qaFieldEmail = document.getElementById('qaFieldEmail');
-  const qaLocationNext = document.getElementById('qaLocationNext');
   const qaEmailNext = document.getElementById('qaEmailNext');
   const qaProgress = document.getElementById('qaProgress');
   const qaProgressLabel = document.getElementById('qaProgressLabel');
@@ -321,7 +318,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   wireField(qaFieldName, bizNameInput, qaNameGo);
   wireField(qaFieldType, bizTagline, qaTypeGo);
-  wireField(qaFieldLocation, bizLocation, qaLocationNext);
   wireField(qaFieldEmail, bizEmail, qaEmailNext);
 
   // crossfades the box's content from whichever slide is active to `next`
@@ -394,12 +390,6 @@ document.addEventListener('DOMContentLoaded', () => {
     removePillsFrom(2);
     goToSlide(qaSlideName, bizNameInput);
     setProgressStep(2);
-  }
-  function goBackToLocation() {
-    collapseGenerated();
-    removePillsFrom(3);
-    goToSlide(qaSlideLocation, bizLocation);
-    setProgressStep(3);
   }
   function goBackToEmail() {
     collapseGenerated();
@@ -550,7 +540,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const li = document.createElement('li');
       li.setAttribute('role', 'option');
       li.dataset.index = String(index);
-      li.innerHTML = `${s.mainText || s.text}${s.secondaryText ? `<small>${s.secondaryText}</small>` : ''}`;
+      const mainSpan = document.createElement('span');
+      mainSpan.textContent = s.mainText || s.text;
+      li.append(mainSpan);
+      if (s.secondaryText) {
+        const small = document.createElement('small');
+        small.textContent = s.secondaryText;
+        li.append(small);
+      }
       li.addEventListener('mousedown', (e) => { e.preventDefault(); choosePlace(s); });
       qaSuggest.appendChild(li);
     });
@@ -746,15 +743,6 @@ document.addEventListener('DOMContentLoaded', () => {
       .finally(() => finishEnrichment(run));
   }
 
-  function advanceToEmail() {
-    const loc = formatBusinessName(bizLocation.value);
-    if (!loc) return;
-    bizLocation.value = loc;
-    addPill(3, loc);
-    setProgressStep(4);
-    goToSlide(qaSlideEmail, bizEmail);
-  }
-
   function buildAccountSetupUrl(name, email) {
     const previewSlug = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
     const params = new URLSearchParams({ slug: previewSlug, signup: '1', flow: '2' });
@@ -765,7 +753,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function finishEmail() {
-    const loc = 'United Kingdom';
+    const loc = bizLocation.value.trim() || 'United Kingdom';
     const email = bizEmail.value.trim();
     if (!email || isCreatingPreview) return;
     bizEmail.value = email;
@@ -1419,9 +1407,6 @@ Also interested in: ${extras.join(', ')}` : ''}`;
       await rerenderPersonalisedHero({ appearanceOnly: true, refreshSite: false });
       controls.querySelector(`[data-tool="${button.dataset.font ? 'font' : 'layout'}"]`).focus();
     }
-  });
-  controls.addEventListener('change', async event => {
-    return;
   });
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape' && activeTool) {

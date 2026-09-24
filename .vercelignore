@@ -1,1 +1,4 @@
-serve.mjs
+desktop-app/dist/
+desktop-app-v2/dist/
+.claude/
+node_modules/
