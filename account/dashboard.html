@@ -216,8 +216,15 @@
   .builder-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
   .builder-head h2{font-family:var(--display);font-size:16px;font-weight:700}
   .builder-view-website{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:0 13px;border:1px solid rgba(59,130,246,.2);border-radius:999px;background:#edf5ff;color:var(--accent);font:700 12px/1 Inter,sans-serif;cursor:pointer;transition:background .16s ease,transform .16s ease}
-  .builder-view-website:hover{background:#dcecff;transform:translateY(-1px)}
+  .builder-view-website:hover{transform:translateY(-1px)}
   .builder-view-website svg{width:15px;height:15px}
+  .builder-view-website.pvw-pending{background:#fee2e2;color:#dc2626;border-color:rgba(220,38,38,.25)}
+  .builder-view-website.pvw-pending:hover{background:#fecaca}
+  .builder-view-website.pvw-designing{background:#fef3c7;color:#b45309;border-color:rgba(180,83,9,.25)}
+  .builder-view-website.pvw-designing:hover{background:#fde68a}
+  .builder-view-website.pvw-ready{background:#e6f6ec;color:#1f9d55;border-color:rgba(31,157,85,.25)}
+  .builder-view-website.pvw-ready:hover{background:#d1fae5}
+  .builder-view-website .pvw-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
   @media(min-width:861px){
     .builder-view-website{display:none}
   }
@@ -471,7 +478,7 @@
         <div id="builderList">
           <div class="builder-head">
             <h2 id="builderHeading">Edit your website</h2>
-            <button type="button" class="builder-view-website" id="viewWebsiteButton"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>View website</button>
+            <button type="button" class="builder-view-website pvw-pending" id="viewWebsiteButton"><span class="pvw-dot"></span><span id="viewWebsiteLabel">Preview pending</span></button>
             <button type="button" class="builder-done" id="builderDoneButton" hidden>Done</button>
           </div>
           <button type="button" class="sec-btn" data-section="name"><span class="sec-title"><span class="section-tick"></span>Business name</span><span class="chev">&#8250;</span></button>
@@ -1994,6 +2001,13 @@
     // Hide progress ticks permanently once preview has been uploaded
     document.querySelectorAll('.section-tick').forEach(function(el) { el.hidden = demoReady; });
     document.getElementById('websiteProgress').hidden = demoReady;
+    // Set initial preview state button (will be refined once updateSections runs)
+    var vwb = document.getElementById('viewWebsiteButton');
+    var vwl = document.getElementById('viewWebsiteLabel');
+    if (vwb && vwl && demoReady) {
+      vwb.className = vwb.className.replace(/\bpvw-\S+/g, '').trim() + ' builder-view-website pvw-ready';
+      vwl.textContent = 'Preview ready';
+    }
     var et = document.getElementById('editToggle');
     if (et) et.hidden = false;
     document.getElementById('developerBuildingMessage').hidden = demoReady;
@@ -2059,6 +2073,16 @@
       sendStageEmail('all_details_complete');
     }
     _prevAllDone = allDoneNow;
+    // Update preview state button
+    (function() {
+      var btn = document.getElementById('viewWebsiteButton');
+      var lbl = document.getElementById('viewWebsiteLabel');
+      if (!btn || !lbl) return;
+      var pvwReady = hasUploadedDemo();
+      var pvwState = pvwReady ? 'ready' : (allDoneNow ? 'designing' : 'pending');
+      btn.className = btn.className.replace(/\bpvw-\S+/g, '').trim() + ' builder-view-website pvw-' + pvwState;
+      lbl.textContent = pvwReady ? 'Preview ready' : (allDoneNow ? 'Preview being made' : 'Preview pending');
+    })();
   }
 
   var PLAN_CONFIG = {
