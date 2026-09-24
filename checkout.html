@@ -155,9 +155,11 @@
   var PUBLISHABLE_KEY = 'pk_live_51UFf7iGqCP7G2YApFHjoKMHkxsEIrf0SJiBpxeTR2MRZ4zs26OQ5jjBClWu8OvZXGXAZvMectFW0zLEuGFFKC7CA008zYaYMzc';
 
   var params = new URLSearchParams(location.search);
-  var plan    = (params.get('plan') || 'essential').toLowerCase();
-  var email   = params.get('email') || '';
-  var slug    = params.get('slug') || '';
+  var plan         = (params.get('plan') || 'essential').toLowerCase();
+  var email        = params.get('email') || '';
+  var slug         = params.get('slug') || '';
+  var addonBooking = params.get('addon_booking') === '1';
+  var addonStore   = params.get('addon_store') === '1';
 
   // billing state
   var selectedAnnual = (params.get('billing') || 'annual') !== 'monthly';
@@ -170,6 +172,17 @@
 
   var info = PLAN_INFO[plan] || PLAN_INFO.essential;
   document.getElementById('plan-name').textContent = info.name;
+
+  // Render add-on badges if selected
+  var addonBadges = '';
+  if (addonBooking) addonBadges += '<span style="display:inline-block;margin-top:8px;margin-right:6px;padding:3px 10px;background:#EBF3FE;color:#2F7DED;border-radius:999px;font-size:11px;font-weight:700;">+ Booking form £19/mo</span>';
+  if (addonStore)   addonBadges += '<span style="display:inline-block;margin-top:8px;padding:3px 10px;background:#EBF3FE;color:#2F7DED;border-radius:999px;font-size:11px;font-weight:700;">+ Online store £19/mo</span>';
+  if (addonBadges) {
+    var addonEl = document.createElement('div');
+    addonEl.style.marginTop = '4px';
+    addonEl.innerHTML = addonBadges;
+    document.querySelector('.plan-row').after(addonEl);
+  }
 
   var checkoutEl = document.getElementById('checkout-wrap');
   var loadingEl  = document.getElementById('loading');
@@ -210,7 +223,7 @@
     fetch('https://api.brightsite.app/api/create-checkout-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan: plan, billing: billing, email: email, slug: slug, return_url: returnUrl })
+      body: JSON.stringify({ plan: plan, billing: billing, email: email, slug: slug, return_url: returnUrl, addon_booking: addonBooking, addon_store: addonStore })
     })
       .then(function (r) { return r.json(); })
       .then(function (data) {
