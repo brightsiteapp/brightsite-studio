@@ -478,7 +478,7 @@
         <div id="builderList">
           <div class="builder-head">
             <h2 id="builderHeading">Edit your website</h2>
-            <button type="button" class="builder-view-website pvw-pending" id="viewWebsiteButton"><span class="pvw-dot"></span><span id="viewWebsiteLabel">Preview pending</span></button>
+            <button type="button" class="builder-view-website pvw-pending" id="viewWebsiteButton"><span class="pvw-dot"></span><span id="viewWebsiteLabel">Enter details</span></button>
             <button type="button" class="builder-done" id="builderDoneButton" hidden>Done</button>
           </div>
           <button type="button" class="sec-btn" data-section="name"><span class="sec-title"><span class="section-tick"></span>Business name</span><span class="chev">&#8250;</span></button>
@@ -2081,7 +2081,7 @@
       var pvwReady = hasUploadedDemo();
       var pvwState = pvwReady ? 'ready' : (allDoneNow ? 'designing' : 'pending');
       btn.className = btn.className.replace(/\bpvw-\S+/g, '').trim() + ' builder-view-website pvw-' + pvwState;
-      lbl.textContent = pvwReady ? 'Preview ready' : (allDoneNow ? 'Preview being made' : 'Preview pending');
+      lbl.textContent = pvwReady ? 'Preview ready' : (allDoneNow ? 'Preview pending' : 'Enter details');
     })();
   }
 
