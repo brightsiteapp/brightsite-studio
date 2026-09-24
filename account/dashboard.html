@@ -1991,6 +1991,9 @@
       document.getElementById('approveDesc').textContent = '';
     }
     var demoReady = hasPreview;
+    // Hide progress ticks permanently once preview has been uploaded
+    document.querySelectorAll('.section-tick').forEach(function(el) { el.hidden = demoReady; });
+    document.getElementById('websiteProgress').hidden = demoReady;
     var et = document.getElementById('editToggle');
     if (et) et.hidden = false;
     document.getElementById('developerBuildingMessage').hidden = demoReady;
