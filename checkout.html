@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Checkout · BrightSite</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --accent: #2F7DED;
+    --ink: #1D252B;
+    --muted: #69747B;
+    --line: #E8E4DE;
+    --bg: #F5F2EE;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 0;
+  }
+  .header {
+    background: #fff;
+    border-bottom: 1px solid var(--line);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .logo {
+    width: 28px; height: 28px;
+    background: var(--accent);
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo span { color: #fff; font-size: 14px; }
+  .header-title { font-size: 15px; font-weight: 700; color: var(--ink); }
+  .header-secure {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex; align-items: center; gap: 5px;
+  }
+  .lock { font-size: 12px; }
+
+  .container { padding: 20px 16px 48px; max-width: 480px; margin: 0 auto; }
+
+  .plan-summary {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .plan-summary-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px; }
+  .plan-row { display: flex; align-items: center; gap: 10px; }
+  .plan-icon {
+    width: 36px; height: 36px; border-radius: 9px;
+    background: var(--accent); display: flex; align-items: center; justify-content: center;
+    font-size: 15px; color: #fff; flex-shrink: 0;
+  }
+  .plan-info { flex: 1; }
+  .plan-name { font-size: 15px; font-weight: 700; color: var(--ink); }
+  .plan-price { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .plan-billing-toggle {
+    display: flex; gap: 0; padding: 3px;
+    border: 1px solid var(--line); border-radius: 9px;
+    background: #fff; width: fit-content; margin: 12px 0 0;
+  }
+  .plan-billing-toggle button {
+    border: 0; border-radius: 6px; background: transparent;
+    color: var(--muted); font: inherit; font-size: 12px; font-weight: 700;
+    padding: 6px 13px; cursor: pointer; transition: background .15s, color .15s;
+  }
+  .plan-billing-toggle button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+
+  #loading {
+    text-align: center; padding: 48px 0;
+  }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--line); border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 14px; color: var(--muted); }
+
+  #error-msg {
+    display: none;
+    background: #FEF2F2; border: 1px solid #FECACA; border-radius: 12px;
+    padding: 14px 16px; font-size: 13px; color: #DC2626; margin-bottom: 16px;
+  }
+
+  #checkout-wrap { background: #fff; border-radius: 14px; overflow: hidden; }
+
+  .success-box {
+    display: none;
+    background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 14px;
+    padding: 28px 20px; text-align: center;
+  }
+  .success-icon { font-size: 36px; margin-bottom: 12px; }
+  .success-title { font-size: 18px; font-weight: 700; color: #15803D; margin-bottom: 6px; }
+  .success-body { font-size: 14px; color: #166534; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo"><span>✦</span></div>
+  <span class="header-title">BrightSite Checkout</span>
+  <span class="header-secure"><span class="lock">🔒</span> Secure</span>
+</div>
+
+<div class="container">
+  <div class="plan-summary">
+    <div class="plan-summary-label">Your plan</div>
+    <div class="plan-row">
+      <div class="plan-icon">✦</div>
+      <div class="plan-info">
+        <div class="plan-name" id="plan-name">Essential</div>
+        <div class="plan-price" id="plan-price">£0 setup · £17–19/mo</div>
+      </div>
+    </div>
+    <div class="plan-billing-toggle" id="billing-toggle">
+      <button type="button" id="btn-monthly" aria-pressed="false">Monthly</button>
+      <button type="button" id="btn-annual" aria-pressed="true">Annual <span style="font-size:10px;background:#eaf0fe;color:var(--accent);padding:2px 6px;border-radius:20px;margin-left:3px">Save 50%</span></button>
+    </div>
+  </div>
+
+  <div id="error-msg"></div>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading secure checkout…</div>
+  </div>
+
+  <div id="checkout-wrap" style="display:none"></div>
+
+  <div class="success-box" id="success-box">
+    <div class="success-icon">✅</div>
+    <div class="success-title">Payment successful!</div>
+    <div class="success-body">Your plan is confirmed. We'll be in touch shortly to get your site set up.</div>
+  </div>
+</div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+(function () {
+  var PUBLISHABLE_KEY = 'pk_live_51UFf7iGqCP7G2YApFHjoKMHkxsEIrf0SJiBpxeTR2MRZ4zs26OQ5jjBClWu8OvZXGXAZvMectFW0zLEuGFFKC7CA008zYaYMzc';
+
+  var params = new URLSearchParams(location.search);
+  var plan    = (params.get('plan') || 'essential').toLowerCase();
+  var email   = params.get('email') || '';
+  var slug    = params.get('slug') || '';
+
+  // billing state
+  var selectedAnnual = (params.get('billing') || 'annual') !== 'monthly';
+
+  var PLAN_INFO = {
+    essential: { name: 'Essential', setupMonthly: '£0 setup · £19/mo', setupAnnual: '£0 setup · £17/mo (annual)' },
+    pro:       { name: 'Pro',       setupMonthly: '£199 setup · £19/mo', setupAnnual: '£99 setup · £19/mo (annual)' },
+    prestige:  { name: 'Prestige',  setupMonthly: '£299 setup · £19/mo', setupAnnual: '£149 setup · £19/mo (annual)' },
+  };
+
+  var info = PLAN_INFO[plan] || PLAN_INFO.essential;
+  document.getElementById('plan-name').textContent = info.name;
+
+  var checkoutEl = document.getElementById('checkout-wrap');
+  var loadingEl  = document.getElementById('loading');
+  var errorEl    = document.getElementById('error-msg');
+  var successEl  = document.getElementById('success-box');
+  var checkout   = null;
+
+  function updatePriceLabel() {
+    var inf = PLAN_INFO[plan] || PLAN_INFO.essential;
+    document.getElementById('plan-price').textContent = selectedAnnual ? inf.setupAnnual : inf.setupMonthly;
+  }
+  updatePriceLabel();
+
+  function setBilling(annual) {
+    selectedAnnual = annual;
+    document.getElementById('btn-annual').setAttribute('aria-pressed', annual ? 'true' : 'false');
+    document.getElementById('btn-monthly').setAttribute('aria-pressed', annual ? 'false' : 'true');
+    updatePriceLabel();
+    loadCheckout();
+  }
+  document.getElementById('btn-annual').addEventListener('click', function () { if (!selectedAnnual) setBilling(true); });
+  document.getElementById('btn-monthly').addEventListener('click', function () { if (selectedAnnual) setBilling(false); });
+
+  // initialise toggle UI
+  document.getElementById('btn-annual').setAttribute('aria-pressed', selectedAnnual ? 'true' : 'false');
+  document.getElementById('btn-monthly').setAttribute('aria-pressed', selectedAnnual ? 'false' : 'true');
+
+  function loadCheckout() {
+    if (checkout) { checkout.destroy(); checkout = null; }
+    checkoutEl.innerHTML = '';
+    checkoutEl.style.display = 'none';
+    errorEl.style.display = 'none';
+    loadingEl.style.display = 'block';
+
+    var billing = selectedAnnual ? 'annual' : 'monthly';
+    var returnUrl = 'https://brightsite.app/checkout?success=1&plan=' + encodeURIComponent(plan) + '&slug=' + encodeURIComponent(slug);
+
+    fetch('https://api.brightsite.app/api/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan: plan, billing: billing, email: email, slug: slug, return_url: returnUrl })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.clientSecret) throw new Error(data.error || 'No client secret returned');
+        var stripe = Stripe(PUBLISHABLE_KEY);
+        return stripe.initEmbeddedCheckout({ clientSecret: data.clientSecret });
+      })
+      .then(function (co) {
+        checkout = co;
+        loadingEl.style.display = 'none';
+        checkoutEl.style.display = 'block';
+        co.mount(checkoutEl);
+      })
+      .catch(function (err) {
+        loadingEl.style.display = 'none';
+        errorEl.textContent = 'Could not load checkout: ' + err.message + '. Please try again.';
+        errorEl.style.display = 'block';
+      });
+  }
+
+  // Success state
+  if (params.get('success') === '1') {
+    loadingEl.style.display = 'none';
+    document.querySelector('.plan-summary').style.display = 'none';
+    successEl.style.display = 'block';
+  } else {
+    loadCheckout();
+  }
+})();
+</script>
+</body>
+</html>
