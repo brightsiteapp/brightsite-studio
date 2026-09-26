@@ -24,6 +24,7 @@
 <style>
   html,body{height:100vh;height:100dvh;overflow:hidden}
   body{padding:0;display:flex;flex-direction:column}
+  @media(max-width:860px){html,body{position:fixed;width:100%;top:0;left:0}}
   button,a,[role="button"]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 
   /* ---------------- header ---------------- */
@@ -118,7 +119,7 @@
   .msgs-time.me{color:rgba(255,255,255,.65);text-align:right}
   .msgs-time.them{color:#aaa}
   .msgs-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px}
-  .msgs-input-bar{flex:none;display:flex;align-items:flex-end;gap:8px;padding:10px 14px;background:#fff;border-top:1px solid var(--line)}
+  .msgs-input-bar{flex:none;display:flex;align-items:flex-end;gap:8px;padding:10px 14px;padding-bottom:max(10px,env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--line);position:sticky;bottom:0}
   .msgs-input{flex:1;background:var(--bg);border:0;border-radius:20px;padding:9px 14px;font:inherit;font-size:14px;color:var(--ink);resize:none;max-height:120px;outline:none;line-height:1.45}
   .msgs-send{width:36px;height:36px;border-radius:50%;border:0;background:#2F7DED;color:#fff;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;transition:background .15s,opacity .15s}
   .msgs-send:disabled{background:#c5d8f7;cursor:not-allowed;opacity:.6}
