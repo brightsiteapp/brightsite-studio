@@ -446,6 +446,7 @@
           <div class="info-row"><span class="label">Login email</span><span class="value" id="acctEmailRow"></span></div>
           <div class="info-row"><span class="label">Website status</span><span class="value" id="statusRow">Not live yet</span></div>
           <div class="info-row" id="domainRow" hidden><span class="label">Domain</span><span class="value" id="domainRowValue" style="display:flex;align-items:center;gap:7px;max-width:none"></span></div>
+          <div class="info-row" style="border-bottom:0"><span class="label">Password</span><span class="value"><button type="button" id="pwdCardToggle" style="background:none;border:0;padding:0;font:inherit;font-size:13px;font-weight:700;color:#2563EB;cursor:pointer">Change password</button></span></div>
         </div>
 
         <div class="info-card" id="domainCard">
@@ -460,10 +461,8 @@
           <div id="domainResult" hidden></div>
         </div>
 
-        <div class="info-card">
-          <h2>Password</h2>
-          <button type="button" class="sec-btn" id="pwdCardToggle">Change password<span class="chev">&#8250;</span></button>
-          <form id="pwdForm" hidden>
+        <div class="info-card" id="pwdCard" hidden>
+          <form id="pwdForm">
             <div class="acct-field" style="margin-top:10px">
               <label for="fNewPassword">New password</label>
               <input type="password" id="fNewPassword" autocomplete="new-password" minlength="6" placeholder="••••••••">
@@ -1322,9 +1321,10 @@
       pwdInput.type = pwdShowToggle.checked ? 'text' : 'password';
     });
 
+    var pwdCard = document.getElementById('pwdCard');
     toggleBtn.addEventListener('click', function () {
-      pwdForm.hidden = !pwdForm.hidden;
-      if (!pwdForm.hidden) pwdInput.focus();
+      pwdCard.hidden = !pwdCard.hidden;
+      if (!pwdCard.hidden) pwdInput.focus();
     });
 
     pwdForm.addEventListener('submit', function (e) {
@@ -2276,14 +2276,12 @@
     var domainRow = document.getElementById('domainRow');
     var domainRowValue = document.getElementById('domainRowValue');
     if (domainRow && domainRowValue) {
-      domainRow.hidden = false;
+      domainRow.hidden = !hasDomain;
       if (hasDomain) {
         var domainLiveHtml = isLive
           ? '<span style="font-weight:600;color:var(--ink)">' + domainValue + '</span><span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;background:#e6f6ec;color:#1f9d55;font-size:11px;font-weight:700"><span style="width:5px;height:5px;border-radius:50%;background:currentColor"></span>Live</span>'
           : '<span style="font-weight:600;color:var(--ink)">' + domainValue + '</span><span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;background:#fdf2dd;color:#8a5d08;font-size:11px;font-weight:700">Not live</span>';
         domainRowValue.innerHTML = domainLiveHtml;
-      } else {
-        domainRowValue.innerHTML = '<span style="color:var(--muted)">No domain yet</span>';
       }
     }
 
