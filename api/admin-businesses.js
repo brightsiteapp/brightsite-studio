@@ -55,13 +55,17 @@ export default async function handler(request, response) {
       return json(response, 403, { error: 'Administrator access required' });
     }
 
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || anonKey;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const adminUrl = process.env.SUPABASE_URL || supabaseUrl;
+    const queryKey = serviceRoleKey || anonKey;
+    const queryUrl = serviceRoleKey ? adminUrl : supabaseUrl;
     const businesses = await fetch(
-      `${supabaseUrl}/rest/v1/businesses?select=*&order=updated_at.desc`,
-      { headers: { apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}` } }
+      `${queryUrl}/rest/v1/businesses?select=*&order=updated_at.desc`,
+      { headers: { apikey: queryKey, Authorization: `Bearer ${queryKey}` } }
     );
     if (!businesses.ok) {
-      console.error('Admin businesses query failed', businesses.status);
+      const errBody = await businesses.text();
+      console.error('Admin businesses query failed', businesses.status, errBody);
       return json(response, 502, { error: 'Could not load accounts' });
     }
 
