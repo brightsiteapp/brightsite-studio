@@ -399,9 +399,9 @@
     .mobile-edit-menu h2{margin:6px 8px 8px;font-family:var(--display);font-size:14px}
     .mobile-edit-menu button{display:block;width:100%;padding:12px 10px;border:0;border-radius:9px;background:transparent;color:var(--ink);font:inherit;font-size:13px;font-weight:700;text-align:left;cursor:pointer}
     .mobile-edit-menu button:hover{background:var(--surface)}
-    .app-body{grid-template-columns:1fr;position:relative;overflow:hidden}
+    .app-body{grid-template-columns:1fr;position:relative}
     .left-panel,.right-panel{position:absolute;inset:0;width:100%;border-right:0;padding-bottom:env(safe-area-inset-bottom)}
-    .left-panel{z-index:5;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
+    .left-panel{z-index:5;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
     body.msgs-active .left-panel{overflow:hidden;display:flex;flex-direction:column;height:100%}
     body.msgs-active .left-inner{display:flex;flex:1;min-height:0;flex-direction:column;padding-bottom:0}
     body.msgs-active #msgsPanel{flex:1;min-height:0}
