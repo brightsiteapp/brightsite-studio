@@ -790,14 +790,14 @@
   if (isAdminView) {
     document.addEventListener('DOMContentLoaded', function() {
       var b = document.createElement('div');
-      b.style.cssText = 'position:sticky;top:0;left:0;right:0;z-index:999;background:#1d4ed8;color:#fff;text-align:center;padding:7px 16px;font-size:12px;font-weight:700;letter-spacing:.02em';
-      var slugText = document.createTextNode(params.get('bs_admin_slug'));
-      b.appendChild(document.createTextNode('ADMIN VIEW · '));
-      b.appendChild(slugText);
+      b.style.cssText = 'position:sticky;top:0;left:0;right:0;z-index:999;background:#1d4ed8;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:7px 16px;font-size:12px;font-weight:700';
+      var nameSpan = document.createElement('span');
+      nameSpan.textContent = params.get('bs_admin_slug');
       var link = document.createElement('a');
       link.href = 'admin.html';
-      link.style.cssText = 'color:#93c5fd;margin-left:8px';
+      link.style.cssText = 'color:#93c5fd';
       link.textContent = '← Back to admin';
+      b.appendChild(nameSpan);
       b.appendChild(link);
       document.body.prepend(b);
     });
