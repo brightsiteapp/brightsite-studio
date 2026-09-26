@@ -101,7 +101,6 @@ body { background: var(--bg); min-height: 100vh; }
 .account-slug { font-size: 12px; color: var(--muted); font-weight: 500; }
 .account-email { font-size: 12px; color: var(--muted); }
 .account-updated { font-size: 11px; color: #aaa; margin-left: auto; flex-shrink: 0; }
-.account-joined { font-size: 11px; color: #aaa; }
 
 .status-tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; flex-shrink: 0; }
 .status-tag.green { background: var(--green-bg); color: var(--green); }
@@ -118,8 +117,6 @@ body { background: var(--bg); min-height: 100vh; }
   .btn-label { display: none; }
   .action-btn { padding: 7px; justify-content: center; }
   .status-tag { display: none; }
-  .account-updated { display: none; }
-  .account-joined { display: inline; }
 }
 .action-btn { border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); font: inherit; font-size: 12px; font-weight: 600; padding: 6px 11px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
 .action-btn:hover { border-color: var(--accent); color: var(--accent); }
@@ -522,7 +519,6 @@ function applyFilter() {
           (email ? '<span class="account-email">· ' + esc(email) + '</span>' : '') +
           (domain ? '<span class="account-slug" style="color:#4f7be0">· ' + esc(domain) + '</span>' + (s === 'green' ? '<span style="display:inline-flex;align-items:center;gap:3px;margin-left:4px;padding:1px 7px;border-radius:999px;background:#e6f6ec;color:#1f9d55;font-size:10px;font-weight:700"><span style="width:4px;height:4px;border-radius:50%;background:currentColor"></span>Live</span>' : '<span style="display:inline-flex;align-items:center;gap:3px;margin-left:4px;padding:1px 7px;border-radius:999px;background:#fdf2dd;color:#8a5d08;font-size:10px;font-weight:700">Not live</span>') : '') +
           (liveUrl ? '<a href="' + esc(liveUrl) + '" target="_blank" rel="noopener" style="font-size:11px;color:#1f9d55;margin-left:4px" onclick="event.stopPropagation()">↗ view live</a>' : '') +
-          (b.created_at ? '<span class="account-joined">· Joined ' + timeAgo(b.created_at) + '</span>' : '') +
         '</div>' +
       '</div>' +
       '<span class="status-tag ' + s + '">' + statusLabel(s) + '</span>' +
