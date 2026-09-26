@@ -106,7 +106,7 @@
           <input type="checkbox" id="billing-checkbox" checked aria-label="Toggle annual billing">
           <span class="slider round"></span>
         </label>
-        <span id="label-annual" class="toggle-label active">Pay Annually <span class="badge">Save on setup</span></span>
+        <span id="label-annual" class="toggle-label active">Pay Annually <span class="badge">Save money</span></span>
       </div>
 
       <div class="plans" style="max-width:1180px;margin:0 auto">
@@ -114,7 +114,7 @@
           <h4>Free</h4>
           <div class="desc">Your website built for free — just pay £19/mo hosting to go live.</div>
           <div class="price-row">
-            <span class="price"><span class="setup-price">Free</span><small class="hosting-price">£19/mo hosting</small></span>
+            <span class="price"><span class="setup-price">Free</span><small class="hosting-price" id="essential-hosting-price">£19/mo hosting</small></span>
           </div>
           <div class="price-note" id="essential-price-note">£19/mo hosting — cancel any time</div>
           <ul>
@@ -218,11 +218,14 @@
 
     if (essentialPlan) {
       var essentialNote = document.getElementById('essential-price-note');
+      var essentialHosting = document.getElementById('essential-hosting-price');
       if (isAnnual) {
-        if (essentialNote) essentialNote.textContent = 'Billed £228/yr — cancel any time';
+        if (essentialNote) essentialNote.textContent = 'Billed £204/yr — save £24 a year';
+        if (essentialHosting) essentialHosting.textContent = '£17/mo hosting';
         essentialPlan.setAttribute('data-annual-active', '');
       } else {
-        if (essentialNote) essentialNote.textContent = 'No setup fee — cancel any time';
+        if (essentialNote) essentialNote.textContent = '£19/mo hosting — cancel any time';
+        if (essentialHosting) essentialHosting.textContent = '£19/mo hosting';
         essentialPlan.removeAttribute('data-annual-active');
       }
     }
