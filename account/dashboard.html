@@ -105,7 +105,7 @@
   /* messages panel */
   .msgs-panel{display:none;flex-direction:column;height:100%;background:var(--bg)}
   .msgs-panel.active{display:flex}
-  .msgs-list{flex:1;min-height:0;overflow-y:auto;overflow-x:visible;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:16px 44px 16px 16px;display:flex;flex-direction:column;gap:4px}
+  .msgs-list{flex:1;min-height:0;overflow-y:auto;overflow-x:visible;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:16px 16px 16px 44px;display:flex;flex-direction:column;gap:4px}
   .msgs-date-divider{text-align:center;margin:10px 0;font-size:11px;color:var(--muted)}
   .msgs-row{display:flex;flex-direction:column;align-items:flex-end;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
   .msgs-row.them{align-items:flex-start}
@@ -124,7 +124,7 @@
   .msgs-send:disabled{background:#c5d8f7;cursor:not-allowed;opacity:.6}
   .msgs-send img{pointer-events:none}
   .msgs-row{position:relative}
-  .msgs-dots{display:none;position:absolute;right:-28px;top:50%;transform:translateY(-50%);background:none;border:0;cursor:pointer;padding:4px;color:var(--muted);font-size:18px;line-height:1;border-radius:6px;z-index:1}
+  .msgs-dots{display:none;position:absolute;left:-28px;top:50%;transform:translateY(-50%);background:none;border:0;cursor:pointer;padding:4px;color:var(--muted);font-size:18px;line-height:1;border-radius:6px;z-index:1}
   .msgs-dots:hover{background:rgba(0,0,0,.06)}
   .msgs-row.me:hover .msgs-dots,
   .msgs-row.me.show-dots .msgs-dots,
