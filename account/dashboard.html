@@ -2870,10 +2870,14 @@
         pendingDomainPrice = price;
         pendingDomainPence = pricePence;
         pendingDomainTld = selectedTld;
+        var domainIsFree = ['pro','prestige'].includes(selectedPlan) && (pricePence === 0 || pricePence <= 1200);
+        var domainSubline = domainIsFree
+          ? 'Added to your plan — <span style="text-decoration:line-through;opacity:.5;margin-right:3px">' + price + '</span><span style="font-weight:700">Free</span>'
+          : 'Added to your plan — ' + price;
         resultEl.innerHTML = '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid #c6dfc8;border-radius:12px;background:#f2faf3">'
           + '<span style="font-size:18px">✓</span>'
           + '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14px;color:var(--ink)">' + fullDomain + '</div>'
-          + '<div style="font-size:12px;color:#1f9d55;margin-top:1px">Added to your plan — ' + price + '/yr</div></div>'
+          + '<div style="font-size:12px;color:#1f9d55;margin-top:1px">' + domainSubline + '</div></div>'
           + '<button type="button" onclick="document.getElementById(\'domainResult\').hidden=true;document.getElementById(\'domainSearchInput\').value=\'\';pendingDomain=null;pendingDomainPrice=null;pendingDomainPence=null;pendingDomainTld=null;" style="font:inherit;font-size:12px;font-weight:600;color:var(--muted);background:none;border:0;cursor:pointer;padding:0;white-space:nowrap">Change</button>'
           + '</div>';
       } else {
@@ -3167,9 +3171,10 @@
         var list = document.getElementById('msgsList');
         rows.forEach(function(msg){
           if (msg.created_at > (msgsLastTs || '')) msgsLastTs = msg.created_at;
-          var isMe = msg.sender === 'admin';
+          var isMe = msg.sender === 'customer';
           var row = document.createElement('div');
           row.className = 'msgs-row ' + (isMe ? 'me' : 'them');
+          row.dataset.msgId = msg.id;
           var bubble = document.createElement('div');
           bubble.className = 'msgs-bubble ' + (isMe ? 'me' : 'them');
           if (msg.image_url) {
@@ -3190,13 +3195,23 @@
           var senderLabel = document.createElement('span');
           senderLabel.className = 'msgs-sender';
           if (isMe) {
-            senderLabel.textContent = 'Tom';
+            var myFullName = (business && business.data && business.data.raw && business.data.raw.fullName) || '';
+            var myFirstName = myFullName.split(' ')[0] || (business && business.data && business.data.raw && business.data.raw.name) || 'You';
+            senderLabel.textContent = myFirstName;
           } else {
-            var fullName = (business && business.data && business.data.raw && business.data.raw.fullName) || '';
-            var firstName = fullName.split(' ')[0] || (business && business.data && business.data.raw && business.data.raw.name) || (business && business.business_name) || 'You';
-            senderLabel.textContent = firstName;
+            senderLabel.textContent = 'Tom';
           }
           row.appendChild(senderLabel);
+          if (isMe) {
+            var delBtn = document.createElement('button');
+            delBtn.textContent = '×';
+            delBtn.title = 'Delete message';
+            delBtn.style.cssText = 'display:none;background:none;border:0;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;line-height:1;align-self:flex-start;margin-top:2px';
+            delBtn.addEventListener('click', function() { msgsDelete(msg.id, row); });
+            row.appendChild(delBtn);
+            row.addEventListener('mouseenter', function(){ delBtn.style.display='block'; });
+            row.addEventListener('mouseleave', function(){ delBtn.style.display='none'; });
+          }
           list.appendChild(row);
         });
         msgsLoaded = true;
@@ -3215,18 +3230,29 @@
     fetch(SUPABASE_URL + '/rest/v1/messages', {
       method: 'POST',
       headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
-      body: JSON.stringify({ business_id: business.id, sender: 'admin', body: body })
-    }).then(function(){
-      input.value = '';
-      input.style.height = '';
+      body: JSON.stringify({ business_id: business.id, sender: 'customer', body: body })
+    }).then(function(res){
       msgsSending = false;
       document.getElementById('msgsSend').disabled = false;
+      if (!res.ok) { console.warn('[msgs] send failed', res.status); return; }
+      input.value = '';
+      input.style.height = '';
       msgsLoad(false);
     }).catch(function(e){
       console.warn('[msgs] send error', e);
       msgsSending = false;
       document.getElementById('msgsSend').disabled = false;
     });
+  }
+
+  function msgsDelete(id, rowEl) {
+    if (!id) return;
+    fetch(SUPABASE_URL + '/rest/v1/messages?id=eq.' + encodeURIComponent(id), {
+      method: 'DELETE',
+      headers: authHeaders()
+    }).then(function(res){
+      if (res.ok && rowEl) rowEl.remove();
+    }).catch(function(e){ console.warn('[msgs] delete error', e); });
   }
 
   (function(){
