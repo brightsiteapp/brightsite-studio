@@ -27,7 +27,7 @@
   button,a,[role="button"]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 
   /* ---------------- header ---------------- */
-  .app-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 18px;border-bottom:1px solid var(--line);background:var(--bg);flex:none}
+  .app-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 18px;padding-top:calc(10px + env(safe-area-inset-top, 0px));border-bottom:1px solid var(--line);background:var(--bg);flex:none}
   .app-header .brand-mini{display:flex;align-items:center;gap:10px;text-decoration:none;flex:none}
   .app-header .brand-mini img{height:22px;width:auto}
   .app-header-right{display:flex;align-items:center;gap:10px;min-width:0}
@@ -105,12 +105,12 @@
   /* messages panel */
   .msgs-panel{display:none;flex-direction:column;height:100%;background:var(--bg)}
   .msgs-panel.active{display:flex}
-  .msgs-list{flex:1;overflow-y:auto;overflow-x:visible;padding:16px 44px 16px 16px;display:flex;flex-direction:column;gap:4px}
+  .msgs-list{flex:1;min-height:0;overflow-y:auto;overflow-x:visible;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:16px 44px 16px 16px;display:flex;flex-direction:column;gap:4px}
   .msgs-date-divider{text-align:center;margin:10px 0;font-size:11px;color:var(--muted)}
-  .msgs-row{display:flex;flex-direction:column;align-items:flex-end}
+  .msgs-row{display:flex;flex-direction:column;align-items:flex-end;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
   .msgs-row.them{align-items:flex-start}
   .msgs-sender{font-size:11px;font-weight:600;color:var(--muted);margin-top:3px;padding:0 4px}
-  .msgs-bubble{max-width:78%;padding:10px 14px;border-radius:18px;font-size:14px;line-height:1.5;position:relative}
+  .msgs-bubble{max-width:78%;padding:10px 14px;border-radius:18px;font-size:14px;line-height:1.5;position:relative;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
   .msgs-bubble.me{background:#2F7DED;color:#fff;border-bottom-right-radius:4px}
   .msgs-bubble.them{background:#fff;color:#111;border-bottom-left-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
   .msgs-bubble img{display:block;width:200px;height:150px;object-fit:cover;border-radius:10px;margin-bottom:6px}
@@ -126,7 +126,9 @@
   .msgs-row{position:relative}
   .msgs-dots{display:none;position:absolute;right:-28px;top:50%;transform:translateY(-50%);background:none;border:0;cursor:pointer;padding:4px;color:var(--muted);font-size:18px;line-height:1;border-radius:6px;z-index:1}
   .msgs-dots:hover{background:rgba(0,0,0,.06)}
-  .msgs-row.me:hover .msgs-dots,.msgs-row.me.show-dots .msgs-dots{display:flex;align-items:center;justify-content:center}
+  .msgs-row.me:hover .msgs-dots,
+  .msgs-row.me.show-dots .msgs-dots,
+  .msgs-row.me.is-latest .msgs-dots{display:flex;align-items:center;justify-content:center}
   .msgs-menu{display:none;position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.12);min-width:120px;z-index:100;overflow:hidden}
   .msgs-menu.open{display:block}
   .msgs-menu button{display:block;width:100%;padding:10px 14px;border:0;background:none;font:inherit;font-size:13px;font-weight:600;color:var(--ink);text-align:left;cursor:pointer}
@@ -403,9 +405,10 @@
     .app-body{grid-template-columns:1fr;position:relative}
     .left-panel,.right-panel{position:absolute;inset:0;width:100%;border-right:0;padding-bottom:env(safe-area-inset-bottom)}
     .left-panel{z-index:5;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
-    body.msgs-active .left-panel{overflow:hidden;display:flex;flex-direction:column;height:100%}
-    body.msgs-active .left-inner{display:flex;flex:1;min-height:0;flex-direction:column;padding-bottom:0}
-    body.msgs-active #msgsPanel{flex:1;min-height:0}
+    body.msgs-active .left-panel{overflow:hidden;display:flex;flex-direction:column;height:100%;min-height:0}
+    body.msgs-active .left-inner{display:flex;flex:1;min-height:0;flex-direction:column;padding-bottom:0;overflow:hidden}
+    body.msgs-active #msgsPanel{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+    body.msgs-active #msgsList{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
     body.mode-view .left-panel,body.mode-edit .left-panel{display:flex}
     body.mode-view .right-panel{display:none}
     body.mode-edit .right-panel{display:none}
@@ -3263,17 +3266,30 @@
             });
             editBtn.addEventListener('click', function() { closeMenu(); msgsStartEdit(msg.id, msg.body, bubble); });
             delBtn2.addEventListener('click', function() { closeMenu(); msgsDelete(msg.id, row); });
-            // mobile long-press
+            // mobile long-press (non-passive so we can block iOS callout/copy menu)
             var longPressTimer = null;
-            row.addEventListener('touchstart', function() { longPressTimer = setTimeout(function(){ row.classList.add('show-dots'); menu.classList.add('open'); }, 600); }, {passive:true});
-            row.addEventListener('touchend', function() { clearTimeout(longPressTimer); }, {passive:true});
-            row.addEventListener('touchmove', function() { clearTimeout(longPressTimer); }, {passive:true});
+            var longPressFired = false;
+            row.addEventListener('touchstart', function(e) {
+              longPressFired = false;
+              longPressTimer = setTimeout(function() {
+                longPressFired = true;
+                row.classList.add('show-dots');
+                menu.classList.add('open');
+              }, 500);
+            }, {passive: true});
+            row.addEventListener('touchend', function(e) {
+              clearTimeout(longPressTimer);
+              if (longPressFired) { e.preventDefault(); }
+            }, {passive: false});
+            row.addEventListener('touchmove', function() { clearTimeout(longPressTimer); }, {passive: true});
+            row.addEventListener('contextmenu', function(e) { e.preventDefault(); });
           }
-          // mark most recent own message
-          list.querySelectorAll('.msgs-row.me').forEach(function(r){ r.classList.remove('show-dots'); });
-          if (isMe) row.classList.add('show-dots');
+          // mark most recent own message (always show dots on desktop for latest)
           list.appendChild(row);
-          if (isMe) list.querySelectorAll('.msgs-row.me:not(:last-child)').forEach(function(r){ r.classList.remove('show-dots'); });
+          if (isMe) {
+            list.querySelectorAll('.msgs-row.me').forEach(function(r){ r.classList.remove('is-latest'); });
+            row.classList.add('is-latest');
+          }
         });
         msgsLoaded = true;
         document.getElementById('msgsEmpty').style.display = 'none';
@@ -3357,7 +3373,7 @@
     document.getElementById('msgsEditInput').value = '';
   }
 
-  // Close any open menu on outside click
+  // Close any open menu on outside click (is-latest keeps dots visible on newest)
   document.addEventListener('click', function() {
     document.querySelectorAll('.msgs-menu.open').forEach(function(m){
       m.classList.remove('open');
