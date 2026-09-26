@@ -2291,7 +2291,8 @@
     function isDomainFreeForPlan() {
       if (!pendingDomain || !FREE_DOMAIN_PLANS.includes(selectedPlan)) return false;
       var pence = pendingDomainPence || 0;
-      return pence > 0 && pence <= FREE_DOMAIN_MAX_PENCE;
+      // treat unknown price as free-eligible (safe — backend re-validates at charge time)
+      return pence === 0 || pence <= FREE_DOMAIN_MAX_PENCE;
     }
 
     function updateDomainAddonRow() {
@@ -2798,16 +2799,21 @@
     try {
       var resp = await fetch('https://api.brightsite.app/api/check-domain?domain=' + encodeURIComponent(fullDomain));
       var json = await resp.json();
+      // fall back to hardcoded pence if CF didn't return a price
+      var DOMAIN_TLD_PENCE_FALLBACK = {'.com':800,'.co.uk':500,'.uk':500,'.net':800,'.org':800,'.io':3200,'.app':1200,'.co':800};
       var price = json.priceLabel || (DOMAIN_TLD_PRICES[selectedTld] || '£?/yr');
+      var pricePence = json.pricePence || DOMAIN_TLD_PENCE_FALLBACK[selectedTld] || 800;
       if (json.available) {
-        // store pending domain so it can be added at plan checkout
         pendingDomain = fullDomain;
         pendingDomainPrice = price;
-        pendingDomainPence = json.pricePence || null;
+        pendingDomainPence = pricePence;
         pendingDomainTld = selectedTld;
-        var slug = (business && business.id) || '';
-        var buyUrl = 'https://brightsite.app/domain-checkout?domain=' + encodeURIComponent(fullDomain) + '&email=' + encodeURIComponent(session.email || '') + '&slug=' + encodeURIComponent(slug);
-        resultEl.innerHTML = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><span style="padding:3px 10px;border-radius:999px;background:#e6f6ec;color:#1f9d55;font-size:12px;font-weight:700">Available</span><span style="font-weight:700;font-size:14px">' + fullDomain + '</span><span style="margin-left:auto;font-weight:700;font-size:14px;color:var(--ink)">' + price + '</span></div><p style="margin:0 0 10px;font-size:12px;color:var(--muted)">One-off payment, billed at checkout</p><a href="' + buyUrl + '" style="display:flex;align-items:center;justify-content:center;width:100%;min-height:42px;border-radius:10px;background:#2563EB;color:#fff;font:inherit;font-size:14px;font-weight:700;text-decoration:none">Buy domain</a>';
+        resultEl.innerHTML = '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid #c6dfc8;border-radius:12px;background:#f2faf3">'
+          + '<span style="font-size:18px">✓</span>'
+          + '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14px;color:var(--ink)">' + fullDomain + '</div>'
+          + '<div style="font-size:12px;color:#1f9d55;margin-top:1px">Added to your plan — ' + price + '/yr</div></div>'
+          + '<button type="button" onclick="document.getElementById(\'domainResult\').hidden=true;document.getElementById(\'domainSearchInput\').value=\'\';pendingDomain=null;pendingDomainPrice=null;pendingDomainPence=null;pendingDomainTld=null;" style="font:inherit;font-size:12px;font-weight:600;color:var(--muted);background:none;border:0;cursor:pointer;padding:0;white-space:nowrap">Change</button>'
+          + '</div>';
       } else {
         pendingDomain = null; pendingDomainPrice = null; pendingDomainPence = null; pendingDomainTld = null;
         resultEl.innerHTML = '<p style="margin:0;font-size:13px;color:var(--muted)">That domain isn\'t available. Try a different name or extension.</p>';
