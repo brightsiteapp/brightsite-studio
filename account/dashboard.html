@@ -544,13 +544,15 @@
           <h3>Business Info</h3>
           <div class="acct-field"><label for="fName">Business name</label><input type="text" id="fName"></div>
           <div class="acct-field"><label for="fCategory">Business type</label><select id="fCategory"><option value="" disabled>Select a type</option><option>Hair &amp; Beauty</option><option>Aesthetics</option><option>Health &amp; Wellness</option><option>Fitness</option><option>Automotive</option><option>Trades</option><option>Home &amp; Garden</option><option>Food &amp; Drink</option><option>Professional Services</option><option>Creative</option><option>Pets</option><option>Other</option></select></div>
-          <div class="acct-field">
-            <label for="fFullName">Your full name <span style="font-size:11px;font-weight:600;color:var(--muted);margin-left:4px">optional</span></label>
-            <input type="text" id="fFullName" placeholder="e.g. Jane Smith">
-            <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12.5px;font-weight:600;color:var(--ink);cursor:pointer">
-              <input type="checkbox" id="fFullNameDisplay" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
-              Display on website
-            </label>
+          <div style="border-top:1px solid var(--line);margin-top:14px;padding-top:14px">
+            <div class="acct-field" style="margin-bottom:0">
+              <label for="fFullName">Full Name</label>
+              <input type="text" id="fFullName" placeholder="e.g. Jane Smith">
+              <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer">
+                <input type="checkbox" id="fFullNameDisplay" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+                Display full name on website
+              </label>
+            </div>
           </div>
           <button type="button" class="builder-done" data-back style="margin-top:8px">Done</button>
         </div>
@@ -558,8 +560,8 @@
         <div class="builder-section" data-section-panel="contact" hidden>
           <div class="section-head"><button type="button" class="section-back" data-back>&#8249; Edit your website</button></div>
           <h3>Contact info</h3>
-          <div class="acct-field"><label for="fPhone">Phone number</label><input type="text" id="fPhone" placeholder="e.g. 020 7946 0958"></div>
           <div class="acct-field"><label for="fEmail2">Email</label><input type="email" id="fEmail2" placeholder="you@example.com"></div>
+          <div class="acct-field"><label for="fPhone">Phone number <span style="font-size:11px;font-weight:600;color:var(--muted);margin-left:4px">(optional)</span></label><input type="text" id="fPhone" placeholder="e.g. 020 7946 0958"></div>
           <div class="acct-field"><label for="fWebsite">Existing website <span style="font-size:11px;font-weight:600;color:var(--muted);margin-left:4px">optional</span></label><input type="url" id="fWebsite" placeholder="e.g. https://yoursite.com"></div>
           <div class="acct-field"><label for="fInstagram">Instagram <span style="font-size:11px;font-weight:600;color:var(--muted);margin-left:4px">optional</span></label><input type="text" id="fInstagram" placeholder="e.g. @yourbusiness"></div>
           <div class="acct-field"><label for="fFacebook">Facebook <span style="font-size:11px;font-weight:600;color:var(--muted);margin-left:4px">optional</span></label><input type="text" id="fFacebook" placeholder="e.g. facebook.com/yourbusiness"></div>
@@ -1460,6 +1462,7 @@
   }
   document.getElementById('mobileAccountTab').addEventListener('click', function () {
     console.log('[tab] Account clicked');
+    if (hasPendingEdit && !autoSaveInFlight) { clearTimeout(autoSaveTimer); runAutoSave(); }
     hideMessagesPanel();
     document.body.classList.remove('mobile-show-site');
     setEditing(false);
@@ -1473,6 +1476,7 @@
   });
   document.getElementById('mobileMessagesTab').addEventListener('click', function() {
     console.log('[tab] Messages clicked');
+    if (hasPendingEdit && !autoSaveInFlight) { clearTimeout(autoSaveTimer); runAutoSave(); }
     showMessagesTab();
   });
   document.getElementById('mobilePreviewEdit').addEventListener('click', showWebsiteEditor);
@@ -1505,12 +1509,15 @@
     btn.addEventListener('click', function () {
       if (activeSection) sectionDoneClicked[activeSection] = true;
       updateSectionChecks();
+      // Flush any pending edit immediately so data isn't lost
+      if (hasPendingEdit && !autoSaveInFlight) { clearTimeout(autoSaveTimer); runAutoSave(); }
       openSection(null);
     });
   });
   document.getElementById('builderDoneButton').addEventListener('click', function () {
     if (activeSection) sectionDoneClicked[activeSection] = true;
     updateSectionChecks();
+    if (hasPendingEdit && !autoSaveInFlight) { clearTimeout(autoSaveTimer); runAutoSave(); }
     openSection(null);
   });
 
@@ -2141,12 +2148,13 @@
     openEditorAfterSetup = false;
     updateSectionChecks();
     // First visit → open Messages tab so they can talk to their developer.
+    // Subsequent visits → open Account tab (view mode) by default.
     var firstVisitKey = 'bs_first_visit_' + (session.user_id || session.email || 'u');
     if (!localStorage.getItem(firstVisitKey)) {
       localStorage.setItem(firstVisitKey, '1');
-      if (isMobileDashboard()) { showMessagesTab(); } else { showMessagesTab(); }
+      showMessagesTab();
     } else {
-      setEditing(true);
+      setEditing(false);
     }
   }
 
@@ -2164,9 +2172,14 @@
       document.querySelector('[data-section="' + section + '"]')?.classList.toggle('is-complete', complete[section]);
     });
     var added = Object.keys(complete).filter(function (section) { return complete[section]; }).length;
-    document.getElementById('websiteProgress').innerHTML = 'Your website details: <b>' + added + ' of ' + Object.keys(complete).length + ' added</b>';
-    document.getElementById('builderGuidance').hidden = true;
     var allDoneNow = added >= Object.keys(complete).length;
+    var pvwReady = hasUploadedDemo();
+    if (allDoneNow && !pvwReady) {
+      document.getElementById('websiteProgress').innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309"><span style="width:8px;height:8px;border-radius:50%;background:#b45309;display:inline-block;flex:none"></span><b>All details added — we\'re designing your preview!</b></span>';
+    } else {
+      document.getElementById('websiteProgress').innerHTML = 'Your website details: <b>' + added + ' of ' + Object.keys(complete).length + ' added</b>';
+    }
+    document.getElementById('builderGuidance').hidden = true;
     if (allDoneNow && !_prevAllDone) {
       sendStageEmail('all_details_complete');
     }
@@ -2176,10 +2189,9 @@
       var btn = document.getElementById('viewWebsiteButton');
       var lbl = document.getElementById('viewWebsiteLabel');
       if (!btn || !lbl) return;
-      var pvwReady = hasUploadedDemo();
       var pvwState = pvwReady ? 'ready' : (allDoneNow ? 'designing' : 'pending');
       btn.className = btn.className.replace(/\bpvw-\S+/g, '').trim() + ' builder-view-website pvw-' + pvwState;
-      lbl.textContent = pvwReady ? 'Preview ready' : (allDoneNow ? 'Preview pending' : 'Enter details');
+      lbl.textContent = pvwReady ? 'Preview ready' : (allDoneNow ? 'Designing preview' : 'Enter details');
     })();
   }
 
