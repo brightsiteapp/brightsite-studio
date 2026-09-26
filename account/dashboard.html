@@ -24,7 +24,6 @@
 <style>
   html,body{height:100vh;height:100dvh;overflow:hidden}
   body{padding:0;display:flex;flex-direction:column}
-  @media(max-width:860px){html,body{position:fixed;width:100%;top:0;left:0}}
   button,a,[role="button"]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 
   /* ---------------- header ---------------- */
@@ -407,10 +406,8 @@
     .app-body{grid-template-columns:1fr;position:relative}
     .left-panel,.right-panel{position:absolute;inset:0;width:100%;border-right:0;padding-bottom:env(safe-area-inset-bottom)}
     .left-panel{z-index:5;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
-    body.msgs-active .left-panel{overflow:hidden;display:flex;flex-direction:column;height:100%;min-height:0}
-    body.msgs-active .left-inner{display:flex;flex:1;min-height:0;flex-direction:column;padding-bottom:0;overflow:hidden}
-    body.msgs-active #msgsPanel{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
-    body.msgs-active #msgsList{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+    body.msgs-active #msgsPanel{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex !important;flex-direction:column;background:var(--bg);overflow:hidden}
+    body.msgs-active #msgsList{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
     body.mode-view .left-panel,body.mode-edit .left-panel{display:flex}
     body.mode-view .right-panel{display:none}
     body.mode-edit .right-panel{display:none}
@@ -1479,7 +1476,19 @@
     var bp = document.getElementById('builderPanel'); if (bp) bp.hidden = true;
     var sb = document.getElementById('saveBar'); if (sb) sb.hidden = true;
     var mp = document.getElementById('msgsPanel');
-    if (mp) { mp.hidden = false; mp.style.display = 'flex'; }
+    if (mp) {
+      mp.hidden = false;
+      mp.style.display = 'flex';
+      // on mobile, set top offset = header + tabs height so panel sits below them
+      if (window.innerWidth <= 860) {
+        var hdr = document.querySelector('.app-header');
+        var tabs = document.getElementById('mobileViewTabs');
+        var offset = (hdr ? hdr.getBoundingClientRect().bottom : 0) || ((tabs ? tabs.getBoundingClientRect().bottom : 0));
+        if (!offset && tabs) offset = tabs.getBoundingClientRect().bottom;
+        mp.style.top = (offset || 94) + 'px';
+        mp.style.paddingTop = '0';
+      }
+    }
     // personalise welcome greeting with business name
     var bname = (business && business.data && business.data.raw && business.data.raw.name) || (business && business.business_name) || '';
     var welcomeEl = document.getElementById('msgsWelcome');
@@ -1489,7 +1498,7 @@
   function hideMessagesPanel() {
     document.body.classList.remove('msgs-active');
     var mp = document.getElementById('msgsPanel');
-    if (mp) { mp.hidden = true; mp.style.display = 'none'; }
+    if (mp) { mp.hidden = true; mp.style.display = 'none'; mp.style.top = ''; }
     msgsStopPolling();
   }
   document.getElementById('mobileAccountTab').addEventListener('click', function () {
