@@ -58,12 +58,13 @@ body { background: var(--bg); min-height: 100vh; }
 .page-body { flex: 1; padding: 24px 20px; max-width: 1200px; margin: 0 auto; width: 100%; }
 
 /* ---- filter bar ---- */
-.filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+.filter-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.filter-bar-row2 { margin-bottom: 18px; }
 .filter-pill { border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; background: var(--card); color: var(--muted); }
 .filter-pill:hover { border-color: var(--muted); }
 .filter-pill.active { background: var(--ink); color: #fff; border-color: var(--ink); }
 .filter-pill .count { display: inline-block; margin-left: 4px; font-size: 11px; font-weight: 700; opacity: .7; }
-.search-input { flex: 1; min-width: 180px; border: 1px solid var(--line); border-radius: 10px; padding: 7px 12px; font: inherit; font-size: 13px; outline: none; background: var(--card); }
+.search-input { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 7px 12px; font: inherit; font-size: 13px; outline: none; background: var(--card); box-sizing: border-box; }
 .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
 
 /* ---- list ---- */
@@ -210,19 +211,12 @@ body { background: var(--bg); min-height: 100vh; }
   <div class="page-body">
     <div class="filter-bar">
       <button type="button" class="filter-pill active" data-filter="all" id="filterAll">All <span class="count" id="cAll"></span></button>
-      <button type="button" class="filter-pill" data-filter="red">
-        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#b23b2c;margin-right:3px;vertical-align:middle"></span>
-        To build <span class="count" id="cRed"></span>
-      </button>
-      <button type="button" class="filter-pill" data-filter="yellow">
-        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e8a320;margin-right:3px;vertical-align:middle"></span>
-        Preview sent <span class="count" id="cYellow"></span>
-      </button>
-      <button type="button" class="filter-pill" data-filter="green">
-        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#1f9d55;margin-right:3px;vertical-align:middle"></span>
-        Live <span class="count" id="cGreen"></span>
-      </button>
-      <input type="search" class="search-input" id="searchInput" placeholder="Search name or slug…">
+      <button type="button" class="filter-pill" data-filter="red"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#b23b2c;margin-right:4px;vertical-align:middle"></span>Build <span class="count" id="cRed"></span></button>
+      <button type="button" class="filter-pill" data-filter="yellow"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e8a320;margin-right:4px;vertical-align:middle"></span>Preview <span class="count" id="cYellow"></span></button>
+      <button type="button" class="filter-pill" data-filter="green"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#1f9d55;margin-right:4px;vertical-align:middle"></span>Live <span class="count" id="cGreen"></span></button>
+    </div>
+    <div class="filter-bar-row2">
+      <input type="search" class="search-input" id="searchInput" placeholder="Search name or slug…" style="width:100%;box-sizing:border-box">
     </div>
 
     <div class="accounts-list" id="accountsList">
