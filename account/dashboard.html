@@ -552,9 +552,9 @@
           <h3>Contact info</h3>
           <div class="acct-field"><label for="fPhone">Phone number</label><input type="text" id="fPhone" placeholder="e.g. 020 7946 0958"></div>
           <div class="acct-field"><label for="fEmail2">Email</label><input type="email" id="fEmail2" placeholder="you@example.com"></div>
-          <div class="acct-field"><label for="fWebsite">Existing website</label><input type="url" id="fWebsite" placeholder="e.g. https://yoursite.com"></div>
-          <div class="acct-field"><label for="fInstagram">Instagram</label><input type="text" id="fInstagram" placeholder="e.g. @yourbusiness"></div>
-          <div class="acct-field"><label for="fFacebook">Facebook</label><input type="text" id="fFacebook" placeholder="e.g. facebook.com/yourbusiness"></div>
+          <div class="acct-field"><label for="fWebsite">Existing website <span style="font-size:11px;font-weight:600;color:var(--muted);margin-left:4px">optional</span></label><input type="url" id="fWebsite" placeholder="e.g. https://yoursite.com"></div>
+          <div class="acct-field"><label for="fInstagram">Instagram <span style="font-size:11px;font-weight:600;color:var(--muted);margin-left:4px">optional</span></label><input type="text" id="fInstagram" placeholder="e.g. @yourbusiness"></div>
+          <div class="acct-field"><label for="fFacebook">Facebook <span style="font-size:11px;font-weight:600;color:var(--muted);margin-left:4px">optional</span></label><input type="text" id="fFacebook" placeholder="e.g. facebook.com/yourbusiness"></div>
           <button type="button" class="builder-done" data-back style="margin-top:8px">Done</button>
         </div>
 
@@ -1354,6 +1354,7 @@
   var activeSection = null; // which builder section (if any) is drilled into
   var hoursStructured = defaultHours();
   var hoursEdited = false;
+  var sectionDoneClicked = {}; // tracks which sections the user has clicked Done on
   var DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   var SECTION_PAGE = { name: 'home', media: 'home', reviews: 'home', contact: 'contact', hours: 'contact', address: 'contact', prices: 'services' };
 
@@ -1486,9 +1487,17 @@
     btn.addEventListener('click', function () { openSection(btn.dataset.section); });
   });
   document.querySelectorAll('[data-back]').forEach(function (btn) {
-    btn.addEventListener('click', function () { openSection(null); });
+    btn.addEventListener('click', function () {
+      if (activeSection) sectionDoneClicked[activeSection] = true;
+      updateSectionChecks();
+      openSection(null);
+    });
   });
-  document.getElementById('builderDoneButton').addEventListener('click', function () { openSection(null); });
+  document.getElementById('builderDoneButton').addEventListener('click', function () {
+    if (activeSection) sectionDoneClicked[activeSection] = true;
+    updateSectionChecks();
+    openSection(null);
+  });
 
   // ---------------- live preview (the same renderer Studio/deploy uses) ----------------
   function currentRaw() {
@@ -2125,12 +2134,12 @@
   function updateSectionChecks() {
     var complete = {
       name: !!document.getElementById('fName').value.trim(),
-      contact: !!document.getElementById('fPhone').value.trim() && !!document.getElementById('fEmail2').value.trim(),
-      hours: hoursEdited,
-      address: !!document.getElementById('fAddress').value.trim(),
-      prices: services.some(function (group) { return group.items.some(function (item) { return item.name && item.name.trim(); }); }),
-      reviews: reviewQuotes.some(function (quote) { return quote.trim(); }) || !!document.getElementById('fReviewLink').value.trim(),
-      media: !!media.logoImage || !!media.heroImage || media.gallery.length > 0 || !!pendingUploads.logo || !!pendingUploads.hero || pendingUploads.gallery.length > 0
+      contact: (!!document.getElementById('fPhone').value.trim() || !!document.getElementById('fEmail2').value.trim()) || !!sectionDoneClicked.contact,
+      hours: hoursEdited || !!sectionDoneClicked.hours,
+      address: !!document.getElementById('fAddress').value.trim() || !!sectionDoneClicked.address,
+      prices: services.some(function (group) { return group.items.some(function (item) { return item.name && item.name.trim(); }); }) || !!sectionDoneClicked.prices,
+      reviews: reviewQuotes.some(function (quote) { return quote.trim(); }) || !!document.getElementById('fReviewLink').value.trim() || !!sectionDoneClicked.reviews,
+      media: !!media.logoImage || !!media.heroImage || media.gallery.length > 0 || !!pendingUploads.logo || !!pendingUploads.hero || pendingUploads.gallery.length > 0 || !!sectionDoneClicked.media
     };
     Object.keys(complete).forEach(function (section) {
       document.querySelector('[data-section="' + section + '"]')?.classList.toggle('is-complete', complete[section]);
