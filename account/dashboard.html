@@ -432,10 +432,6 @@
 <div class="app-header">
   <a href="/" class="brand-mini"><img src="../img/brightsite-logo.png" alt="BrightSite"></a>
   <div class="app-header-right">
-    <div class="who">
-      <div class="name" id="acctName"></div>
-      <div class="email" id="acctEmailTop"></div>
-    </div>
     <button class="app-logout" id="logoutBtn" type="button">Log out</button>
   </div>
 </div>
@@ -794,7 +790,7 @@
   if (isAdminView) {
     document.addEventListener('DOMContentLoaded', function() {
       var b = document.createElement('div');
-      b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999;background:#1d4ed8;color:#fff;text-align:center;padding:7px 16px;font-size:12px;font-weight:700;letter-spacing:.02em';
+      b.style.cssText = 'position:sticky;top:0;left:0;right:0;z-index:999;background:#1d4ed8;color:#fff;text-align:center;padding:7px 16px;font-size:12px;font-weight:700;letter-spacing:.02em';
       var slugText = document.createTextNode(params.get('bs_admin_slug'));
       b.appendChild(document.createTextNode('ADMIN VIEW · '));
       b.appendChild(slugText);
