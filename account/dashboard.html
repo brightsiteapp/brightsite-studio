@@ -596,9 +596,9 @@
 
         <div style="padding:16px 0 4px">
           <div style="margin-top:0">
-            <a href="https://wa.me/447535928879" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:44px;border-radius:999px;background:#2563EB;color:#fff;font:inherit;font-size:13px;font-weight:700;text-decoration:none">
+            <button type="button" id="contactDevBtn" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:44px;border-radius:999px;background:#2563EB;color:#fff;border:0;font:inherit;font-size:13px;font-weight:700;cursor:pointer">
               Contact developer
-            </a>
+            </button>
           </div>
         </div>
 
@@ -1484,6 +1484,9 @@
   });
   document.getElementById('mobileMessagesTab').addEventListener('click', function() {
     console.log('[tab] Messages clicked');
+    showMessagesTab();
+  });
+  document.getElementById('contactDevBtn').addEventListener('click', function() {
     showMessagesTab();
   });
   document.getElementById('mobilePreviewEdit').addEventListener('click', showWebsiteEditor);
