@@ -398,6 +398,8 @@
     .app-body{grid-template-columns:1fr;position:relative;overflow:hidden}
     .left-panel,.right-panel{position:absolute;inset:0;width:100%;border-right:0;padding-bottom:env(safe-area-inset-bottom)}
     .left-panel{z-index:5;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
+    body.msgs-active .left-panel{overflow:hidden;display:flex;flex-direction:column}
+    body.msgs-active .left-inner{flex:1;min-height:0}
     body.mode-view .left-panel,body.mode-edit .left-panel{display:flex}
     body.mode-edit .right-panel{display:none}
     body.mobile-show-site .left-panel{display:none}
@@ -628,7 +630,7 @@
       <div id="msgsPanel" hidden style="display:none;flex-direction:column;flex:1;min-height:0">
         <div style="padding:16px 18px 10px;border-bottom:1px solid var(--line);flex:none"><h2 style="margin:0;font-size:16px;font-weight:700">Messages</h2></div>
         <div class="msgs-list" id="msgsList">
-          <div class="msgs-empty" id="msgsEmpty" style="flex-direction:column;gap:6px;text-align:center;padding:24px">
+          <div class="msgs-empty" id="msgsEmpty" style="display:flex;flex-direction:column;gap:6px;text-align:center;padding:24px">
             <span id="msgsWelcome" style="font-size:15px;font-weight:700;color:var(--ink)">Hey!</span>
             <span style="font-size:13px;color:var(--muted)">Send a message to get started.</span>
           </div>
