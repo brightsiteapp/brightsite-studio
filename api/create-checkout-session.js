@@ -3,11 +3,10 @@ import Stripe from 'stripe';
 // Stripe Price IDs for each plan+billing combination.
 // Recurring prices are for hosting; one-time prices are setup fees added to the first invoice.
 
-// Add-on price IDs — create these as £19/mo recurring products in your Stripe dashboard
-// and replace the placeholder IDs below.
-const ADDON_PRICES = {
-  booking: 'price_BOOKING_FORM_19_MONTHLY', // TODO: replace with real Stripe price ID
-  store:   'price_ONLINE_STORE_19_MONTHLY', // TODO: replace with real Stripe price ID
+// Domain registration prices in pence (one-off, billed at checkout)
+const DOMAIN_TLD_PRICES_PENCE = {
+  '.com': 1500, '.co.uk': 1000, '.uk': 1000, '.net': 1500,
+  '.org': 1500, '.io': 4000, '.app': 2000, '.co': 1500,
 };
 
 const PLAN_PRICES = {
@@ -48,7 +47,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { plan, billing, email, slug, addon_booking, addon_store } = req.body || {};
+  const { plan, billing, email, slug, domain } = req.body || {};
 
   if (!plan || !billing) return res.status(400).json({ error: 'Missing plan or billing' });
 
@@ -61,8 +60,21 @@ export default async function handler(req, res) {
 
     const lineItems = [{ price: prices.recurring, quantity: 1 }];
     if (prices.setup) lineItems.push({ price: prices.setup, quantity: 1 });
-    if (addon_booking) lineItems.push({ price: ADDON_PRICES.booking, quantity: 1 });
-    if (addon_store)   lineItems.push({ price: ADDON_PRICES.store,   quantity: 1 });
+
+    // optional domain registration (one-off)
+    if (domain) {
+      const tld = '.' + domain.split('.').slice(1).join('.');
+      const domainPence = DOMAIN_TLD_PRICES_PENCE[tld] || 1500;
+      lineItems.push({
+        price_data: {
+          currency: 'gbp',
+          product_data: { name: 'Domain: ' + domain },
+          unit_amount: domainPence,
+          recurring: undefined,
+        },
+        quantity: 1,
+      });
+    }
 
     const returnUrl = `https://brightsite.app/account/dashboard?slug=${encodeURIComponent(slug || '')}&payment=success`;
 
@@ -72,7 +84,7 @@ export default async function handler(req, res) {
       line_items: lineItems,
       return_url: returnUrl,
       customer_email: email || undefined,
-      metadata: { plan, billing, slug: slug || '', addon_booking: addon_booking ? '1' : '0', addon_store: addon_store ? '1' : '0' },
+      metadata: { plan, billing, slug: slug || '', domain: domain || '' },
     });
 
     res.status(200).json({ clientSecret: session.client_secret });

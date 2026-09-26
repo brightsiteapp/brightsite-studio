@@ -106,9 +106,9 @@
   .msgs-panel.active{display:flex}
   .msgs-list{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:4px}
   .msgs-date-divider{text-align:center;margin:10px 0;font-size:11px;color:var(--muted)}
-  .msgs-row{display:flex}
-  .msgs-row.me{justify-content:flex-end}
-  .msgs-row.them{justify-content:flex-start}
+  .msgs-row{display:flex;flex-direction:column;align-items:flex-end}
+  .msgs-row.them{align-items:flex-start}
+  .msgs-sender{font-size:11px;font-weight:600;color:var(--muted);margin-top:3px;padding:0 4px}
   .msgs-bubble{max-width:78%;padding:10px 14px;border-radius:18px;font-size:14px;line-height:1.5;position:relative}
   .msgs-bubble.me{background:#2F7DED;color:#fff;border-bottom-right-radius:4px}
   .msgs-bubble.them{background:#fff;color:#111;border-bottom-left-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
@@ -119,8 +119,9 @@
   .msgs-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px}
   .msgs-input-bar{flex:none;display:flex;align-items:flex-end;gap:8px;padding:10px 14px;background:#fff;border-top:1px solid var(--line)}
   .msgs-input{flex:1;background:var(--bg);border:0;border-radius:20px;padding:9px 14px;font:inherit;font-size:14px;color:var(--ink);resize:none;max-height:120px;outline:none;line-height:1.45}
-  .msgs-send{width:36px;height:36px;border-radius:50%;border:0;background:#2F7DED;color:#fff;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;transition:background .15s}
-  .msgs-send:disabled{background:#c5d8f7;cursor:not-allowed}
+  .msgs-send{width:36px;height:36px;border-radius:50%;border:0;background:#2F7DED;color:#fff;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;transition:background .15s,opacity .15s}
+  .msgs-send:disabled{background:#c5d8f7;cursor:not-allowed;opacity:.6}
+  .msgs-send img{pointer-events:none}
 
   .website-progress{margin:0 0 14px;font-size:12px;font-weight:700;color:var(--muted)}.website-progress b{color:var(--accent)}
   .blueprint-nav{display:flex;gap:14px;flex-wrap:wrap;margin-left:auto}.blueprint-nav button{padding:6px 0;border:0;border-bottom:1px solid transparent;background:transparent;color:rgba(255,255,255,.4);font:700 11px Inter,sans-serif;cursor:pointer}.blueprint-nav button[aria-current="page"]{border-color:#3b82f6;color:#fff}.blueprint-page{padding:34px 0;border-bottom:1px solid rgba(255,255,255,.07)}.blueprint-page h3{margin:0 0 16px;color:#60a5fa;font-size:11px;letter-spacing:.13em;text-transform:uppercase}.blueprint-page-intro{max-width:560px;margin:0 0 28px}.blueprint-page-intro h2{margin:7px 0 0;font-size:clamp(28px,4vw,48px);line-height:1;letter-spacing:-.06em;color:#fff}.blueprint-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.blueprint-photo{min-height:150px;border:1px dashed rgba(255,255,255,.18);border-radius:8px;background:rgba(255,255,255,.04);display:grid;place-items:center;color:rgba(255,255,255,.3);font-size:11px;font-weight:700}.blueprint-review{padding:18px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(255,255,255,.05);backdrop-filter:blur(10px);font-size:14px;line-height:1.55}.blueprint-services-full{grid-template-columns:1fr}.blueprint-service-group+.blueprint-service-group{margin-top:28px}.blueprint-service-group h3{margin-bottom:10px;font-size:14px;letter-spacing:-.02em;text-transform:none;color:rgba(255,255,255,.88)}.blueprint-services-full .blueprint-service{min-height:70px;display:flex;align-items:center;justify-content:space-between;gap:20px}.blueprint-services-full .blueprint-service .blueprint-line{margin-left:auto}.blueprint-contact-bar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:16px;padding:20px 22px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(255,255,255,.06);backdrop-filter:blur(16px)}.blueprint-contact-bar b{font-size:18px;letter-spacing:-.04em;color:#fff}.blueprint-contact-bar span{padding:9px 12px;border:1px solid rgba(59,130,246,.4);border-radius:6px;font-size:11px;font-weight:800;background:rgba(59,130,246,.15);color:#93c5fd}.blueprint-contact-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(230px,.8fr);gap:16px;margin-bottom:16px}.blueprint-contact-card,.blueprint-hours{padding:22px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(255,255,255,.05);backdrop-filter:blur(12px)}.blueprint-contact-card h3,.blueprint-hours h3{margin:0 0 14px;color:#60a5fa;font-size:11px;letter-spacing:.13em;text-transform:uppercase}.blueprint-contact-card p{margin:0 0 8px;font-size:14px;font-weight:700;color:#fff}.blueprint-contact-card span{font-size:13px;color:rgba(255,255,255,.5)}.blueprint-hours-row{display:flex;justify-content:space-between;gap:18px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:12px}.blueprint-hours-row:last-child{border-bottom:0}.blueprint-map{min-height:220px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0px,rgba(255,255,255,.03) 1px,transparent 1px,transparent 28px),repeating-linear-gradient(90deg,rgba(255,255,255,.03) 0px,rgba(255,255,255,.03) 1px,transparent 1px,transparent 28px);display:grid;place-items:center;color:rgba(255,255,255,.4);font-size:12px;font-weight:700}.blueprint-map span{padding:9px 12px;background:rgba(255,255,255,.07);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.14);border-radius:6px;color:rgba(255,255,255,.7)}.blueprint-focus-current{outline:3px solid rgba(59,130,246,.55);outline-offset:5px;transition:outline-color .2s ease}.blueprint-site.is-mobile-preview .blueprint-inner{padding:16px}.blueprint-site.is-mobile-preview .blueprint-top{gap:10px}.blueprint-site.is-mobile-preview .blueprint-brand{font-size:13px}.blueprint-site.is-mobile-preview .blueprint-nav{gap:8px}.blueprint-site.is-mobile-preview .blueprint-nav button{font-size:10px}.blueprint-site.is-mobile-preview .blueprint-hero{display:flex;flex-direction:column;align-items:stretch;min-height:0;margin-top:14px;padding:0}.blueprint-site.is-mobile-preview .blueprint-illustration{position:relative;inset:auto;order:0;min-height:230px;z-index:0}.blueprint-site.is-mobile-preview .blueprint-illustration::after{background:rgba(10,14,28,.6)}.blueprint-site.is-mobile-preview .blueprint-hero-copy{order:1;max-width:none;padding:20px;box-shadow:none;border-radius:0;border-width:0 0 1px}.blueprint-site.is-mobile-preview .blueprint-title{font-size:42px}.blueprint-site.is-mobile-preview .blueprint-gallery,.blueprint-site.is-mobile-preview .blueprint-contact-grid{grid-template-columns:1fr}.blueprint-site.is-mobile-preview .blueprint-contact-bar{align-items:flex-start;flex-direction:column}.preview-ready-toast{position:fixed;right:22px;bottom:22px;z-index:80;max-width:330px;padding:15px 17px;border:1px solid #b9d3fb;border-radius:14px;background:#fff;box-shadow:0 16px 38px rgba(23,32,31,.16);font-size:13px;line-height:1.45}.preview-ready-toast b{display:block;margin-bottom:3px;color:var(--ink)}
@@ -215,21 +216,20 @@
   .plan-choice-features li::before{content:'✓';font-size:10px;font-weight:800;color:#1f9d55;background:#e6f6ec;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
 
   /* sleek custom checkboxes in modal */
-  .plan-addon-row{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;margin-bottom:7px;cursor:pointer;transition:border-color .15s,background .15s}
-  .plan-addon-row:last-child{margin-bottom:0}
-  .plan-addon-row:hover{border-color:var(--accent);background:rgba(59,130,246,.04)}
-  .plan-addon-row input[type=checkbox]{display:none}
-  .plan-addon-box{width:18px;height:18px;border:2px solid #c9c6bd;border-radius:5px;flex-shrink:0;display:grid;place-items:center;transition:background .15s,border-color .15s;background:#fff}
-  .plan-addon-row input:checked ~ .plan-addon-box{background:var(--accent);border-color:var(--accent)}
-  .plan-addon-row input:checked ~ .plan-addon-box::after{content:'';display:block;width:5px;height:9px;border:2px solid #fff;border-top:0;border-left:0;transform:rotate(45deg) translate(-1px,-1px)}
-  .plan-addon-label{flex:1;font-size:13px;font-weight:600;color:var(--ink)}
-  .plan-addon-price{font-size:12px;font-weight:700;color:var(--accent);background:#eaf0fe;padding:2px 8px;border-radius:20px}
   .plan-divider{margin:14px 0 10px;border:0;border-top:1px solid var(--line)}
-  .plan-select-btn{width:100%;min-height:40px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s,transform .12s}
-  .plan-select-btn:hover{transform:translateY(-1px)}
-  .plan-choice-card.featured .plan-select-btn{background:var(--accent)}
-  .plan-choice-card.featured .plan-select-btn:hover{background:#2563eb}
-  .plan-choice-card.selected .plan-select-btn{background:#1f9d55}
+  .plan-domain-row{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;cursor:pointer;transition:border-color .15s,background .15s;margin-top:14px}
+  .plan-domain-row:hover{border-color:var(--accent);background:rgba(59,130,246,.04)}
+  .plan-domain-row input[type=checkbox]{display:none}
+  .plan-domain-box{width:18px;height:18px;border:2px solid #c9c6bd;border-radius:5px;flex-shrink:0;display:grid;place-items:center;transition:background .15s,border-color .15s;background:#fff}
+  .plan-domain-row input:checked ~ .plan-domain-box{background:var(--accent);border-color:var(--accent)}
+  .plan-domain-row input:checked ~ .plan-domain-box::after{content:'';display:block;width:5px;height:9px;border:2px solid #fff;border-top:0;border-left:0;transform:rotate(45deg) translate(-1px,-1px)}
+  .plan-domain-info{flex:1;min-width:0}
+  .plan-domain-name{font-size:13px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .plan-domain-sub{font-size:11px;color:var(--muted);margin-top:1px}
+  .plan-domain-price{font-size:12px;font-weight:700;color:var(--accent);background:#eaf0fe;padding:2px 8px;border-radius:20px;white-space:nowrap}
+  .plan-select-btn{width:100%;min-height:40px;border:2px solid var(--accent);border-radius:999px;background:transparent;color:var(--accent);font:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s,color .15s,transform .12s}
+  .plan-select-btn:hover{background:rgba(59,130,246,.08);transform:translateY(-1px)}
+  .plan-choice-card.selected .plan-select-btn{background:var(--accent);color:#fff}
   .plan-modal-note{font-size:11.5px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.5}
 
   /* compact plan display card */
@@ -613,7 +613,7 @@
         </div>
         <div class="msgs-input-bar">
           <textarea class="msgs-input" id="msgsInput" rows="1" placeholder="Message…"></textarea>
-          <button class="msgs-send" id="msgsSend" disabled>&#9650;</button>
+          <button class="msgs-send" id="msgsSend" disabled><img src="../favicon.png" style="width:18px;height:18px;object-fit:contain;opacity:1;display:block" alt="Send"></button>
         </div>
       </div>
 
@@ -683,21 +683,7 @@
           <li>Mobile optimisation</li>
           <li>1–3 pages with contact &amp; enquiry forms</li>
         </ul>
-        <hr class="plan-divider">
-        <label class="plan-addon-row" id="essBookingLabel">
-          <input type="checkbox" id="essBookingCheck">
-          <span class="plan-addon-box"></span>
-          <span class="plan-addon-label">Booking form</span>
-          <span class="plan-addon-price">+£19/mo</span>
-        </label>
-        <label class="plan-addon-row" id="essStoreLabel">
-          <input type="checkbox" id="essStoreCheck">
-          <span class="plan-addon-box"></span>
-          <span class="plan-addon-label">Online store</span>
-          <span class="plan-addon-price">+£19/mo</span>
-        </label>
-        <hr class="plan-divider">
-        <button type="button" class="plan-select-btn" data-select="essential">Select Free</button>
+        <button type="button" class="plan-select-btn" data-select="essential" style="margin-top:14px">Select Free</button>
       </div>
 
       <!-- Pro -->
@@ -717,21 +703,7 @@
           <li>Custom sections built for you</li>
           <li>Interactions &amp; animations</li>
         </ul>
-        <hr class="plan-divider">
-        <label class="plan-addon-row" id="proBookingLabel">
-          <input type="checkbox" id="proBookingCheck">
-          <span class="plan-addon-box"></span>
-          <span class="plan-addon-label">Booking form</span>
-          <span class="plan-addon-price">+£19/mo</span>
-        </label>
-        <label class="plan-addon-row" id="proStoreLabel">
-          <input type="checkbox" id="proStoreCheck">
-          <span class="plan-addon-box"></span>
-          <span class="plan-addon-label">Online store</span>
-          <span class="plan-addon-price">+£19/mo</span>
-        </label>
-        <hr class="plan-divider">
-        <button type="button" class="plan-select-btn" data-select="pro">Select Pro</button>
+        <button type="button" class="plan-select-btn" data-select="pro" style="margin-top:14px">Select Pro</button>
       </div>
 
       <!-- Prestige -->
@@ -750,23 +722,20 @@
           <li>Multi-location or multi-service structure</li>
           <li>Priority same-day support</li>
         </ul>
-        <hr class="plan-divider">
-        <label class="plan-addon-row" id="presBookingLabel">
-          <input type="checkbox" id="presBookingCheck">
-          <span class="plan-addon-box"></span>
-          <span class="plan-addon-label">Booking form</span>
-          <span class="plan-addon-price">+£19/mo</span>
-        </label>
-        <label class="plan-addon-row" id="presStoreLabel">
-          <input type="checkbox" id="presStoreCheck">
-          <span class="plan-addon-box"></span>
-          <span class="plan-addon-label">Online store</span>
-          <span class="plan-addon-price">+£19/mo</span>
-        </label>
-        <hr class="plan-divider">
-        <button type="button" class="plan-select-btn" data-select="prestige">Select Prestige</button>
+        <button type="button" class="plan-select-btn" data-select="prestige" style="margin-top:14px">Select Prestige</button>
       </div>
 
+    </div>
+    <div id="planDomainAddon" hidden style="padding:0 4px 4px">
+      <label class="plan-domain-row" id="planDomainAddonLabel">
+        <input type="checkbox" id="planDomainAddonCheck" checked>
+        <span class="plan-domain-box"></span>
+        <span class="plan-domain-info">
+          <span class="plan-domain-name" id="planDomainAddonName"></span>
+          <span class="plan-domain-sub">One-off payment, billed at checkout</span>
+        </span>
+        <span class="plan-domain-price" id="planDomainAddonPrice"></span>
+      </label>
     </div>
     <p class="plan-modal-note">See a free personalised preview before you commit. Hosting covers security, updates and ongoing management on every plan. Cancel any time.</p>
   </div>
@@ -1376,7 +1345,7 @@
   var isPaying = false;
   var selectedPlan = 'essential'; // essential | pro | prestige
   var selectedAnnual = false;
-  var selectedAddons = { booking: false, store: false };
+  var selectedAddons = { booking: false, store: false, domain: null };
   var isLive = false;
   var isEditing = false;
   var openEditorAfterSetup = false;
@@ -2214,10 +2183,8 @@
   function planPriceLabel() {
     var cfg = PLAN_CONFIG[selectedPlan];
     var tier = selectedAnnual ? cfg.annual : cfg.monthly;
-    var addonCount = (selectedAddons.booking ? 1 : 0) + (selectedAddons.store ? 1 : 0);
-    var addonText = addonCount ? (' + ' + addonCount + ' add-on' + (addonCount > 1 ? 's' : '')) : '';
-    if (selectedPlan === 'essential') return tier.setup + ' · ' + tier.hosting + addonText;
-    return tier.setup + ' setup · ' + tier.hosting + addonText;
+    if (selectedPlan === 'essential') return tier.setup + ' · ' + tier.hosting;
+    return tier.setup + ' setup · ' + tier.hosting;
   }
 
   function buildStripeUrl() {
@@ -2322,6 +2289,18 @@
     function openPlanModal() {
       // sync current selections into modal
       syncModalState();
+      // show domain add-on row if a domain was searched and is available
+      var domainAddon = document.getElementById('planDomainAddon');
+      if (domainAddon) {
+        if (pendingDomain) {
+          document.getElementById('planDomainAddonName').textContent = pendingDomain;
+          document.getElementById('planDomainAddonPrice').textContent = pendingDomainPrice || '';
+          document.getElementById('planDomainAddonCheck').checked = true;
+          domainAddon.hidden = false;
+        } else {
+          domainAddon.hidden = true;
+        }
+      }
       veil.hidden = false;
       document.body.style.overflow = 'hidden';
     }
@@ -2347,15 +2326,7 @@
         card.classList.toggle('selected', p === selectedPlan);
       });
 
-      // sync addon checkboxes per card
-      ['ess', 'pro', 'pres'].forEach(function (prefix) {
-        var bookingCb = document.getElementById(prefix + 'BookingCheck');
-        var storeCb = document.getElementById(prefix + 'StoreCheck');
-        if (bookingCb) bookingCb.checked = selectedAddons.booking;
-        if (storeCb) storeCb.checked = selectedAddons.store;
-      });
-
-      updateSelectLabels();
+            updateSelectLabels();
     }
 
     function updatePriceDisplay() {
@@ -2411,14 +2382,11 @@
     document.querySelectorAll('[data-select]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         selectedPlan = btn.dataset.select;
-        // read addons from the card that was selected
-        var prefix = { essential: 'ess', pro: 'pro', prestige: 'pres' }[selectedPlan];
-        selectedAddons.booking = document.getElementById(prefix + 'BookingCheck').checked;
-        selectedAddons.store = document.getElementById(prefix + 'StoreCheck').checked;
+        // read domain add-on state
+        var domainCheck = document.getElementById('planDomainAddonCheck');
+        selectedAddons.domain = (pendingDomain && domainCheck && domainCheck.checked) ? pendingDomain : null;
         // save to business data
         if (business && business.data && business.data.raw) {
-          business.data.raw.bookingAddon = selectedAddons.booking;
-          business.data.raw.storeAddon = selectedAddons.store;
           business.data.raw.chosenPlan = selectedPlan;
           business.data.raw.chosenAnnual = selectedAnnual;
           saveBusiness();
@@ -2430,29 +2398,12 @@
     });
 
     // keep addon selections in sync across cards (they share one selectedAddons state)
-    ['ess', 'pro', 'pres'].forEach(function (prefix) {
-      ['Booking', 'Store'].forEach(function (addon) {
-        var cb = document.getElementById(prefix + addon + 'Check');
-        if (!cb) return;
-        cb.addEventListener('change', function () {
-          selectedAddons[addon.toLowerCase()] = cb.checked;
-          // mirror to other cards
-          ['ess', 'pro', 'pres'].forEach(function (p) {
-            var other = document.getElementById(p + addon + 'Check');
-            if (other && other !== cb) other.checked = cb.checked;
-          });
-        });
-      });
-    });
-
-    // restore saved plan choice on load
+        // restore saved plan choice on load
     function restoreSavedPlan() {
       if (!business || !business.data || !business.data.raw) return;
       var raw = business.data.raw;
       if (raw.chosenPlan && PLAN_CONFIG[raw.chosenPlan]) selectedPlan = raw.chosenPlan;
       if (typeof raw.chosenAnnual === 'boolean') selectedAnnual = raw.chosenAnnual;
-      selectedAddons.booking = !!raw.bookingAddon;
-      selectedAddons.store = !!raw.storeAddon;
       renderPlanUI();
     }
 
@@ -2790,6 +2741,9 @@
   var DOMAIN_TLDS = ['.com', '.co.uk', '.net', '.org', '.io', '.co', '.uk', '.app'];
   var DOMAIN_TLD_PRICES = { '.com': '£15/yr', '.co.uk': '£10/yr', '.uk': '£10/yr', '.net': '£15/yr', '.org': '£15/yr', '.io': '£40/yr', '.app': '£20/yr', '.co': '£15/yr' };
   var selectedTld = '.com';
+  var pendingDomain = null;
+  var pendingDomainPrice = null;
+  var pendingDomainTld = null;
   var domainTldBtn = document.getElementById('domainTldBtn');
   var domainTldPicker = document.getElementById('domainTldPicker');
   var domainTldPickerOpen = false;
@@ -2829,10 +2783,15 @@
       var json = await resp.json();
       var price = DOMAIN_TLD_PRICES[selectedTld] || '£15/yr';
       if (json.available) {
+        // store pending domain so it can be added at plan checkout
+        pendingDomain = fullDomain;
+        pendingDomainPrice = price;
+        pendingDomainTld = selectedTld;
         var slug = (business && business.id) || '';
         var buyUrl = 'https://brightsite.app/domain-checkout?domain=' + encodeURIComponent(fullDomain) + '&email=' + encodeURIComponent(session.email || '') + '&slug=' + encodeURIComponent(slug);
-        resultEl.innerHTML = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="padding:3px 10px;border-radius:999px;background:#e6f6ec;color:#1f9d55;font-size:12px;font-weight:700">Available</span><span style="font-weight:700;font-size:14px">' + fullDomain + '</span><span style="margin-left:auto;color:var(--muted);font-size:13px">' + price + '</span></div><a href="' + buyUrl + '" style="display:flex;align-items:center;justify-content:center;width:100%;min-height:42px;border-radius:10px;background:#2563EB;color:#fff;font:inherit;font-size:14px;font-weight:700;text-decoration:none">Buy domain</a>';
+        resultEl.innerHTML = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><span style="padding:3px 10px;border-radius:999px;background:#e6f6ec;color:#1f9d55;font-size:12px;font-weight:700">Available</span><span style="font-weight:700;font-size:14px">' + fullDomain + '</span><span style="margin-left:auto;font-weight:700;font-size:14px;color:var(--ink)">' + price + '</span></div><p style="margin:0 0 10px;font-size:12px;color:var(--muted)">One-off payment, billed at checkout</p><a href="' + buyUrl + '" style="display:flex;align-items:center;justify-content:center;width:100%;min-height:42px;border-radius:10px;background:#2563EB;color:#fff;font:inherit;font-size:14px;font-weight:700;text-decoration:none">Buy domain</a>';
       } else {
+        pendingDomain = null; pendingDomainPrice = null; pendingDomainTld = null;
         resultEl.innerHTML = '<p style="margin:0;font-size:13px;color:var(--muted)">That domain isn\'t available. Try a different name or extension.</p>';
       }
     } catch(e) {
@@ -3142,6 +3101,16 @@
           time.textContent = new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
           bubble.appendChild(time);
           row.appendChild(bubble);
+          var senderLabel = document.createElement('span');
+          senderLabel.className = 'msgs-sender';
+          if (isMe) {
+            senderLabel.textContent = 'Tom';
+          } else {
+            var bname = (business && (business.data && business.data.raw && business.data.raw.name)) || (business && business.business_name) || '';
+            var initials = bname.split(/\s+/).filter(Boolean).slice(0,2).map(function(w){return w[0].toUpperCase();}).join('') || '?';
+            senderLabel.textContent = initials;
+          }
+          row.appendChild(senderLabel);
           list.appendChild(row);
         });
         msgsLoaded = true;
@@ -3220,10 +3189,12 @@
       upgradeBtn.disabled = true;
       upgradeBtn.textContent = 'Loading…';
 
+      var domainCheck = document.getElementById('planDomainAddonCheck');
+      var addDomain = pendingDomain && domainCheck && domainCheck.checked ? pendingDomain : null;
       fetch('https://api.brightsite.app/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: plan, billing: billing, email: getSessionEmail(), slug: getSlug() })
+        body: JSON.stringify({ plan: plan, billing: billing, email: getSessionEmail(), slug: getSlug(), domain: addDomain || undefined })
       })
         .then(function (r) { return r.json(); })
         .then(function (data) {
