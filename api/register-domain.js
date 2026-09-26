@@ -45,7 +45,9 @@ export default async function handler(req, res) {
   if (event.type !== 'checkout.session.completed') return res.status(200).json({ received: true });
 
   const session = event.data.object;
-  if (session.metadata?.type !== 'domain_registration') return res.status(200).json({ received: true });
+  const isDomainOnly = session.metadata?.type === 'domain_registration';
+  const isCombined   = !isDomainOnly && !!session.metadata?.domain;
+  if (!isDomainOnly && !isCombined) return res.status(200).json({ received: true });
 
   const domain = session.metadata.domain;
   const slug   = session.metadata.slug;
