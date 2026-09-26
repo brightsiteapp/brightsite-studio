@@ -1921,7 +1921,7 @@
       .then(function (res) { return res.json(); })
       .then(function (rows) {
         console.log('[loadBusiness] rows:', rows);
-        var realRow = rows && Array.isArray(rows) && rows.find(function(r) { return !(r.data && r.data.stub); });
+        var realRow = rows && Array.isArray(rows) && (rows.find(function(r) { return !(r.data && r.data.stub); }) || rows[0]);
         console.log('[loadBusiness] realRow:', realRow);
         if (realRow) {
           business = realRow;
@@ -2136,6 +2136,9 @@
     document.getElementById('developerNote').value = raw.notes || '';
     hoursStructured = hoursFromRaw(raw);
     hoursEdited = raw.hoursEdited === true;
+    if (raw.sectionDoneClicked && typeof raw.sectionDoneClicked === 'object') {
+      Object.assign(sectionDoneClicked, raw.sectionDoneClicked);
+    }
 
     renderServices();
     renderReviewEntries();
@@ -2734,7 +2737,8 @@
         hoursEdited: hoursEdited,
         logoImage: media.logoImage,
         heroImage: media.heroImage,
-        gallery: media.gallery
+        gallery: media.gallery,
+        sectionDoneClicked: sectionDoneClicked
       }, servicesToRaw(services));
       raw.notes = document.getElementById('developerNote').value.trim();
       raw.bookingAddon = selectedAddons.booking;
