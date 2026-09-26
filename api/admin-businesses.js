@@ -2,7 +2,7 @@ const ACCOUNTS_SUPABASE_URL = 'https://vlisyfshmxdsjuybirxe.supabase.co';
 const ACCOUNTS_SUPABASE_ANON_KEY = 'sb_publishable_gYdn5HCo63B0qZj3tG-7ow_myAMHeEB';
 
 const ADMIN_EMAILS = new Set(
-  (process.env.ADMIN_EMAILS || 'brightsiteapp@gmail.com')
+  (process.env.ADMIN_EMAILS || 'brightsiteapp@gmail.com,tommeofficial1@gmail.com')
     .split(',')
     .map((email) => email.trim().toLowerCase())
     .filter(Boolean)
