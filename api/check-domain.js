@@ -1,5 +1,29 @@
 const ALLOWED_ORIGINS = ['https://brightsite.app'];
-const CF_MARKUP_PENCE = 0; // at-cost, no markup
+const CF_MARKUP_PENCE = 0;
+
+// Authoritative RDAP servers per TLD — bypasses rdap.org which rate-limits server requests
+const RDAP_SERVERS = {
+  'com':   'https://rdap.verisign.com/com/v1/domain/',
+  'net':   'https://rdap.verisign.com/net/v1/domain/',
+  'org':   'https://rdap.publicinterestregistry.org/rdap/domain/',
+  'uk':    'https://rdap.nominet.uk/uk/domain/',
+  'co.uk': 'https://rdap.nominet.uk/uk/domain/',
+  'io':    'https://rdap.nic.io/domain/',
+  'app':   'https://rdap.nic.app/domain/',
+  'co':    'https://rdap.nic.co/domain/',
+};
+
+function getRdapUrl(domain) {
+  const parts = domain.split('.');
+  if (parts.length >= 3) {
+    const two = parts.slice(-2).join('.');
+    if (RDAP_SERVERS[two]) return RDAP_SERVERS[two] + encodeURIComponent(domain);
+  }
+  const tld = parts[parts.length - 1];
+  if (RDAP_SERVERS[tld]) return RDAP_SERVERS[tld] + encodeURIComponent(domain);
+  // fallback to rdap.org for unsupported TLDs
+  return 'https://rdap.org/domain/' + encodeURIComponent(domain);
+}
 
 async function getCloudflareDomainPrice(domain) {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
@@ -42,10 +66,10 @@ export default async function handler(req, res) {
   const clean = domain.toLowerCase().trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
 
   try {
-    const rdapUrl = `https://rdap.org/domain/${encodeURIComponent(clean)}`;
+    const rdapUrl = getRdapUrl(clean);
     const rdapRes = await fetch(rdapUrl, {
       headers: { Accept: 'application/rdap+json' },
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(6000),
     });
 
     if (rdapRes.ok) {
