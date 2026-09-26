@@ -1509,15 +1509,19 @@
     btn.addEventListener('click', function () {
       if (activeSection) sectionDoneClicked[activeSection] = true;
       updateSectionChecks();
-      // Flush any pending edit immediately so data isn't lost
-      if (hasPendingEdit && !autoSaveInFlight) { clearTimeout(autoSaveTimer); runAutoSave(); }
+      // Always save on Done — sectionDoneClicked changed even if no field was typed
+      hasPendingEdit = true;
+      clearTimeout(autoSaveTimer);
+      if (!autoSaveInFlight) runAutoSave(); else autoSaveQueued = true;
       openSection(null);
     });
   });
   document.getElementById('builderDoneButton').addEventListener('click', function () {
     if (activeSection) sectionDoneClicked[activeSection] = true;
     updateSectionChecks();
-    if (hasPendingEdit && !autoSaveInFlight) { clearTimeout(autoSaveTimer); runAutoSave(); }
+    hasPendingEdit = true;
+    clearTimeout(autoSaveTimer);
+    if (!autoSaveInFlight) runAutoSave(); else autoSaveQueued = true;
     openSection(null);
   });
 
