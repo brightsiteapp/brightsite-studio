@@ -89,6 +89,38 @@
   .mobile-view-tabs button{flex:1;min-height:36px;border:0;border-radius:10px;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
   .mobile-view-tabs button[aria-selected="true"]{background:var(--accent);color:#fff}
   .mobile-view-tabs button:disabled{opacity:.42;cursor:not-allowed}
+
+  /* messages panel */
+  .msgs-panel{display:none;flex-direction:column;height:100%;background:var(--bg)}
+  .msgs-panel.active{display:flex}
+  .msgs-list{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:4px}
+  .msgs-date-divider{text-align:center;margin:10px 0;font-size:11px;color:var(--muted)}
+  .msgs-row{display:flex}
+  .msgs-row.me{justify-content:flex-end}
+  .msgs-row.them{justify-content:flex-start}
+  .msgs-bubble{max-width:78%;padding:10px 14px;border-radius:18px;font-size:14px;line-height:1.5;position:relative}
+  .msgs-bubble.me{background:#2F7DED;color:#fff;border-bottom-right-radius:4px}
+  .msgs-bubble.them{background:#fff;color:#111;border-bottom-left-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  .msgs-bubble img{display:block;width:200px;height:150px;object-fit:cover;border-radius:10px;margin-bottom:6px}
+  .msgs-time{font-size:10px;margin-top:3px;display:block}
+  .msgs-time.me{color:rgba(255,255,255,.65);text-align:right}
+  .msgs-time.them{color:#aaa}
+  .msgs-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px}
+  .msgs-input-bar{flex:none;display:flex;align-items:flex-end;gap:8px;padding:10px 14px;background:#fff;border-top:1px solid var(--line)}
+  .msgs-input{flex:1;background:var(--bg);border:0;border-radius:20px;padding:9px 14px;font:inherit;font-size:14px;color:var(--ink);resize:none;max-height:120px;outline:none;line-height:1.45}
+  .msgs-send{width:36px;height:36px;border-radius:50%;border:0;background:#2F7DED;color:#fff;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;transition:background .15s}
+  .msgs-send:disabled{background:#c5d8f7;cursor:not-allowed}
+  @media(max-width:860px){
+    .mobile-show-messages .left-panel{display:none}
+    .mobile-show-messages .right-panel{display:none}
+    .mobile-show-messages #msgsFullPanel{display:flex}
+  }
+  #msgsFullPanel{display:none;position:fixed;inset:0;flex-direction:column;background:var(--bg);z-index:50}
+  #msgsFullPanel.desktop-msgs{display:flex;position:static;inset:auto;height:100%;flex:1;min-height:0}
+  .msgs-full-header{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#fff;border-bottom:1px solid var(--line);flex:none}
+  .msgs-full-header h2{margin:0;font-size:15px;font-weight:700}
+  .msgs-full-header .msgs-sub{font-size:11px;color:var(--muted);margin-top:1px}
+
   .website-progress{margin:0 0 14px;font-size:12px;font-weight:700;color:var(--muted)}.website-progress b{color:var(--accent)}
   .blueprint-nav{display:flex;gap:14px;flex-wrap:wrap;margin-left:auto}.blueprint-nav button{padding:6px 0;border:0;border-bottom:1px solid transparent;background:transparent;color:rgba(255,255,255,.4);font:700 11px Inter,sans-serif;cursor:pointer}.blueprint-nav button[aria-current="page"]{border-color:#3b82f6;color:#fff}.blueprint-page{padding:34px 0;border-bottom:1px solid rgba(255,255,255,.07)}.blueprint-page h3{margin:0 0 16px;color:#60a5fa;font-size:11px;letter-spacing:.13em;text-transform:uppercase}.blueprint-page-intro{max-width:560px;margin:0 0 28px}.blueprint-page-intro h2{margin:7px 0 0;font-size:clamp(28px,4vw,48px);line-height:1;letter-spacing:-.06em;color:#fff}.blueprint-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.blueprint-photo{min-height:150px;border:1px dashed rgba(255,255,255,.18);border-radius:8px;background:rgba(255,255,255,.04);display:grid;place-items:center;color:rgba(255,255,255,.3);font-size:11px;font-weight:700}.blueprint-review{padding:18px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(255,255,255,.05);backdrop-filter:blur(10px);font-size:14px;line-height:1.55}.blueprint-services-full{grid-template-columns:1fr}.blueprint-service-group+.blueprint-service-group{margin-top:28px}.blueprint-service-group h3{margin-bottom:10px;font-size:14px;letter-spacing:-.02em;text-transform:none;color:rgba(255,255,255,.88)}.blueprint-services-full .blueprint-service{min-height:70px;display:flex;align-items:center;justify-content:space-between;gap:20px}.blueprint-services-full .blueprint-service .blueprint-line{margin-left:auto}.blueprint-contact-bar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:16px;padding:20px 22px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(255,255,255,.06);backdrop-filter:blur(16px)}.blueprint-contact-bar b{font-size:18px;letter-spacing:-.04em;color:#fff}.blueprint-contact-bar span{padding:9px 12px;border:1px solid rgba(59,130,246,.4);border-radius:6px;font-size:11px;font-weight:800;background:rgba(59,130,246,.15);color:#93c5fd}.blueprint-contact-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(230px,.8fr);gap:16px;margin-bottom:16px}.blueprint-contact-card,.blueprint-hours{padding:22px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(255,255,255,.05);backdrop-filter:blur(12px)}.blueprint-contact-card h3,.blueprint-hours h3{margin:0 0 14px;color:#60a5fa;font-size:11px;letter-spacing:.13em;text-transform:uppercase}.blueprint-contact-card p{margin:0 0 8px;font-size:14px;font-weight:700;color:#fff}.blueprint-contact-card span{font-size:13px;color:rgba(255,255,255,.5)}.blueprint-hours-row{display:flex;justify-content:space-between;gap:18px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:12px}.blueprint-hours-row:last-child{border-bottom:0}.blueprint-map{min-height:220px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0px,rgba(255,255,255,.03) 1px,transparent 1px,transparent 28px),repeating-linear-gradient(90deg,rgba(255,255,255,.03) 0px,rgba(255,255,255,.03) 1px,transparent 1px,transparent 28px);display:grid;place-items:center;color:rgba(255,255,255,.4);font-size:12px;font-weight:700}.blueprint-map span{padding:9px 12px;background:rgba(255,255,255,.07);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.14);border-radius:6px;color:rgba(255,255,255,.7)}.blueprint-focus-current{outline:3px solid rgba(59,130,246,.55);outline-offset:5px;transition:outline-color .2s ease}.blueprint-site.is-mobile-preview .blueprint-inner{padding:16px}.blueprint-site.is-mobile-preview .blueprint-top{gap:10px}.blueprint-site.is-mobile-preview .blueprint-brand{font-size:13px}.blueprint-site.is-mobile-preview .blueprint-nav{gap:8px}.blueprint-site.is-mobile-preview .blueprint-nav button{font-size:10px}.blueprint-site.is-mobile-preview .blueprint-hero{display:flex;flex-direction:column;align-items:stretch;min-height:0;margin-top:14px;padding:0}.blueprint-site.is-mobile-preview .blueprint-illustration{position:relative;inset:auto;order:0;min-height:230px;z-index:0}.blueprint-site.is-mobile-preview .blueprint-illustration::after{background:rgba(10,14,28,.6)}.blueprint-site.is-mobile-preview .blueprint-hero-copy{order:1;max-width:none;padding:20px;box-shadow:none;border-radius:0;border-width:0 0 1px}.blueprint-site.is-mobile-preview .blueprint-title{font-size:42px}.blueprint-site.is-mobile-preview .blueprint-gallery,.blueprint-site.is-mobile-preview .blueprint-contact-grid{grid-template-columns:1fr}.blueprint-site.is-mobile-preview .blueprint-contact-bar{align-items:flex-start;flex-direction:column}.preview-ready-toast{position:fixed;right:22px;bottom:22px;z-index:80;max-width:330px;padding:15px 17px;border:1px solid #b9d3fb;border-radius:14px;background:#fff;box-shadow:0 16px 38px rgba(23,32,31,.16);font-size:13px;line-height:1.45}.preview-ready-toast b{display:block;margin-bottom:3px;color:var(--ink)}
 
@@ -398,6 +430,7 @@
 <nav class="mobile-view-tabs" id="mobileViewTabs" aria-label="Account sections" hidden>
   <button type="button" id="mobileAccountTab" aria-selected="true">Account</button>
   <button type="button" id="mobileWebsiteTab" aria-selected="false">Website</button>
+  <button type="button" id="mobileMessagesTab" aria-selected="false">Messages</button>
 </nav>
 
 <div id="appBody" class="app-body" hidden>
@@ -600,6 +633,23 @@
     <button type="button" class="mobile-preview-edit" id="mobilePreviewEdit" aria-label="Done viewing website"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Done</button>
   </div>
 
+</div>
+
+<!-- ========== MESSAGES FULL PANEL ========== -->
+<div id="msgsFullPanel" style="display:none;position:fixed;inset:0;flex-direction:column;background:var(--bg);z-index:50">
+  <div class="msgs-full-header">
+    <div>
+      <h2>Messages</h2>
+      <div class="msgs-sub" id="msgsBusinessName"></div>
+    </div>
+  </div>
+  <div class="msgs-list" id="msgsList">
+    <div class="msgs-empty" id="msgsEmpty">No messages yet</div>
+  </div>
+  <div class="msgs-input-bar">
+    <textarea class="msgs-input" id="msgsInput" rows="1" placeholder="Message…"></textarea>
+    <button class="msgs-send" id="msgsSend" disabled>&#9650;</button>
+  </div>
 </div>
 
 <div class="preview-ready-toast" id="previewReadyToast" hidden><b>Your first website preview is ready.</b>Your developer has uploaded a finished version for you to explore.</div>
@@ -1389,8 +1439,12 @@
     var bp = document.getElementById('builderPanel'); if (bp) bp.hidden = !on;
     var sb = document.getElementById('saveBar'); if (sb) sb.hidden = !on;
     var et = document.getElementById('editToggle'); if (et) { et.classList.toggle('active', on); et.innerHTML = on ? '&#10005; Close' : '&#9998; Edit'; }
-    var mat = document.getElementById('mobileAccountTab'); if (mat) mat.setAttribute('aria-selected', String(!on));
-    var mwt = document.getElementById('mobileWebsiteTab'); if (mwt) mwt.setAttribute('aria-selected', String(on));
+    var mmt = document.getElementById('mobileMessagesTab');
+    var msgsActive = mmt && mmt.getAttribute('aria-selected') === 'true';
+    if (!msgsActive) {
+      var mat = document.getElementById('mobileAccountTab'); if (mat) mat.setAttribute('aria-selected', String(!on));
+      var mwt = document.getElementById('mobileWebsiteTab'); if (mwt) mwt.setAttribute('aria-selected', String(on));
+    }
     if (on) {
       var statusEl = document.getElementById('saveStatus');
       if (statusEl) { statusEl.textContent = 'All changes saved'; statusEl.className = 'save-status ok'; }
@@ -1408,24 +1462,53 @@
   function isMobileDashboard() { return window.matchMedia('(max-width: 860px)').matches; }
   function showMobileWebsite() {
     setEditing(false);
+    hideMessagesPanel();
     if (!isMobileDashboard()) return;
     document.body.classList.add('mobile-show-site');
-    document.getElementById('mobileAccountTab').setAttribute('aria-selected', 'false');
-    document.getElementById('mobileWebsiteTab').setAttribute('aria-selected', 'true');
+    setActiveTab('mobileWebsiteTab');
   }
   function showWebsiteEditor() {
+    hideMessagesPanel();
     document.body.classList.remove('mobile-show-site');
     setEditing(true);
     openSection(null);
   }
-  document.getElementById('mobileAccountTab').addEventListener('click', function () {
-    console.log('[tab] Account clicked');
+  // ---- tab helpers ----
+  function setActiveTab(tabId) {
+    ['mobileAccountTab','mobileWebsiteTab','mobileMessagesTab'].forEach(function(id){
+      var el = document.getElementById(id);
+      if (el) el.setAttribute('aria-selected', String(el.id === tabId));
+    });
+  }
+  function showMessagesTab() {
+    setActiveTab('mobileMessagesTab');
     document.body.classList.remove('mobile-show-site');
     setEditing(false);
+    var panel = document.getElementById('msgsFullPanel');
+    if (panel) { panel.style.display = 'flex'; }
+    msgsInit();
+  }
+  function hideMessagesPanel() {
+    var panel = document.getElementById('msgsFullPanel');
+    if (panel) panel.style.display = 'none';
+    msgsStopPolling();
+  }
+  document.getElementById('mobileAccountTab').addEventListener('click', function () {
+    console.log('[tab] Account clicked');
+    hideMessagesPanel();
+    document.body.classList.remove('mobile-show-site');
+    setEditing(false);
+    setActiveTab('mobileAccountTab');
   });
   document.getElementById('mobileWebsiteTab').addEventListener('click', function() {
     console.log('[tab] Website clicked');
+    hideMessagesPanel();
     showWebsiteEditor();
+    setActiveTab('mobileWebsiteTab');
+  });
+  document.getElementById('mobileMessagesTab').addEventListener('click', function() {
+    console.log('[tab] Messages clicked');
+    showMessagesTab();
   });
   document.getElementById('mobilePreviewEdit').addEventListener('click', showWebsiteEditor);
   document.getElementById('viewWebsiteButton').addEventListener('click', function () {
@@ -2955,6 +3038,113 @@
   }, 5000);
 
   console.log('[dashboard] IIFE finished');
+
+  // ========== MESSAGES ==========
+  var msgsLoaded = false;
+  var msgsLastTs = null;
+  var msgsPollTimer = null;
+  var msgsSending = false;
+
+  function msgsInit() {
+    if (!business) return;
+    document.getElementById('msgsBusinessName').textContent = business.name || '';
+    if (!msgsLoaded) { msgsLoad(true); }
+    msgsStartPolling();
+  }
+
+  function msgsStartPolling() {
+    msgsStopPolling();
+    msgsPollTimer = setInterval(function(){ msgsLoad(false); }, 3000);
+  }
+
+  function msgsStopPolling() {
+    if (msgsPollTimer) { clearInterval(msgsPollTimer); msgsPollTimer = null; }
+  }
+
+  function msgsLoad(initial) {
+    if (!business) return;
+    var url = SUPABASE_URL + '/rest/v1/messages?select=id,sender,body,image_url,created_at&business_id=eq.' + encodeURIComponent(business.id) + '&order=created_at.asc';
+    if (!initial && msgsLastTs) {
+      url += '&created_at=gt.' + encodeURIComponent(msgsLastTs);
+    }
+    fetch(url, { headers: authHeaders() })
+      .then(function(r){ return r.json(); })
+      .then(function(rows){
+        if (!Array.isArray(rows) || rows.length === 0) return;
+        if (initial) {
+          document.getElementById('msgsList').innerHTML = '';
+        }
+        var list = document.getElementById('msgsList');
+        rows.forEach(function(msg){
+          if (msg.created_at > (msgsLastTs || '')) msgsLastTs = msg.created_at;
+          var isMe = msg.sender === 'admin';
+          var row = document.createElement('div');
+          row.className = 'msgs-row ' + (isMe ? 'me' : 'them');
+          var bubble = document.createElement('div');
+          bubble.className = 'msgs-bubble ' + (isMe ? 'me' : 'them');
+          if (msg.image_url) {
+            var img = document.createElement('img');
+            img.src = msg.image_url; img.alt = '';
+            bubble.appendChild(img);
+          }
+          if (msg.body) {
+            var txt = document.createElement('span');
+            txt.textContent = msg.body;
+            bubble.appendChild(txt);
+          }
+          var time = document.createElement('span');
+          time.className = 'msgs-time ' + (isMe ? 'me' : 'them');
+          time.textContent = new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+          bubble.appendChild(time);
+          row.appendChild(bubble);
+          list.appendChild(row);
+        });
+        msgsLoaded = true;
+        document.getElementById('msgsEmpty').style.display = 'none';
+        list.scrollTop = list.scrollHeight;
+      })
+      .catch(function(e){ console.warn('[msgs] load error', e); });
+  }
+
+  function msgsSend() {
+    var input = document.getElementById('msgsInput');
+    var body = input.value.trim();
+    if (!body || msgsSending || !business) return;
+    msgsSending = true;
+    document.getElementById('msgsSend').disabled = true;
+    fetch(SUPABASE_URL + '/rest/v1/messages', {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+      body: JSON.stringify({ business_id: business.id, sender: 'admin', body: body })
+    }).then(function(){
+      input.value = '';
+      input.style.height = '';
+      msgsSending = false;
+      document.getElementById('msgsSend').disabled = false;
+      msgsLoad(false);
+    }).catch(function(e){
+      console.warn('[msgs] send error', e);
+      msgsSending = false;
+      document.getElementById('msgsSend').disabled = false;
+    });
+  }
+
+  (function(){
+    var input = document.getElementById('msgsInput');
+    var sendBtn = document.getElementById('msgsSend');
+    if (!input || !sendBtn) return;
+    input.addEventListener('input', function(){
+      sendBtn.disabled = !input.value.trim();
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+    });
+    input.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); msgsSend(); }
+    });
+    sendBtn.addEventListener('click', msgsSend);
+  })();
+  // ========== END MESSAGES ==========
+
 })();
 </script>
 
