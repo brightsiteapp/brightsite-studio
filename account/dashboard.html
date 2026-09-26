@@ -594,14 +594,6 @@
           <button type="button" class="builder-done" data-back style="margin-top:8px">Done</button>
         </div>
 
-        <div style="padding:16px 0 4px">
-          <div style="margin-top:0">
-            <button type="button" id="contactDevBtn" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:44px;border-radius:999px;background:#2563EB;color:#fff;border:0;font:inherit;font-size:13px;font-weight:700;cursor:pointer">
-              Contact developer
-            </button>
-          </div>
-        </div>
-
       </div>
 
       <!-- ---------------- messages panel ---------------- -->
@@ -1484,9 +1476,6 @@
   });
   document.getElementById('mobileMessagesTab').addEventListener('click', function() {
     console.log('[tab] Messages clicked');
-    showMessagesTab();
-  });
-  document.getElementById('contactDevBtn').addEventListener('click', function() {
     showMessagesTab();
   });
   document.getElementById('mobilePreviewEdit').addEventListener('click', showWebsiteEditor);
