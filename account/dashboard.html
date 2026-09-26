@@ -43,7 +43,9 @@
   }
 
   .left-panel{min-height:0;overflow-y:auto;border-right:1px solid var(--line);background:var(--bg);display:flex;flex-direction:column}
-  .left-inner{padding:18px;flex:1}
+  .left-inner{padding:18px;flex:1;display:flex;flex-direction:column}
+  body.msgs-active .left-panel{overflow:hidden}
+  body.msgs-active .left-inner{padding:0;overflow:hidden}
   @media(max-width:860px){
     .left-inner{padding-bottom:calc(env(safe-area-inset-bottom) + 120px)}
   }
@@ -90,6 +92,15 @@
   .mobile-view-tabs button[aria-selected="true"]{background:var(--accent);color:#fff}
   .mobile-view-tabs button:disabled{opacity:.42;cursor:not-allowed}
 
+  /* notes accordion */
+  .notes-accordion{border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
+  .notes-accordion[open]{background:var(--card)}
+  .notes-summary{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;font-size:14px;font-weight:700;cursor:pointer;list-style:none;user-select:none}
+  .notes-summary::-webkit-details-marker{display:none}
+  .notes-summary .chev{transition:transform .2s;font-size:16px;color:var(--muted)}
+  .notes-accordion[open] .notes-summary .chev{transform:rotate(90deg)}
+  .notes-body{padding:0 16px 16px}
+
   /* messages panel */
   .msgs-panel{display:none;flex-direction:column;height:100%;background:var(--bg)}
   .msgs-panel.active{display:flex}
@@ -110,16 +121,6 @@
   .msgs-input{flex:1;background:var(--bg);border:0;border-radius:20px;padding:9px 14px;font:inherit;font-size:14px;color:var(--ink);resize:none;max-height:120px;outline:none;line-height:1.45}
   .msgs-send{width:36px;height:36px;border-radius:50%;border:0;background:#2F7DED;color:#fff;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;transition:background .15s}
   .msgs-send:disabled{background:#c5d8f7;cursor:not-allowed}
-  @media(max-width:860px){
-    .mobile-show-messages .left-panel{display:none}
-    .mobile-show-messages .right-panel{display:none}
-    .mobile-show-messages #msgsFullPanel{display:flex}
-  }
-  #msgsFullPanel{display:none;position:fixed;inset:0;flex-direction:column;background:var(--bg);z-index:50}
-  #msgsFullPanel.desktop-msgs{display:flex;position:static;inset:auto;height:100%;flex:1;min-height:0}
-  .msgs-full-header{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#fff;border-bottom:1px solid var(--line);flex:none}
-  .msgs-full-header h2{margin:0;font-size:15px;font-weight:700}
-  .msgs-full-header .msgs-sub{font-size:11px;color:var(--muted);margin-top:1px}
 
   .website-progress{margin:0 0 14px;font-size:12px;font-weight:700;color:var(--muted)}.website-progress b{color:var(--accent)}
   .blueprint-nav{display:flex;gap:14px;flex-wrap:wrap;margin-left:auto}.blueprint-nav button{padding:6px 0;border:0;border-bottom:1px solid transparent;background:transparent;color:rgba(255,255,255,.4);font:700 11px Inter,sans-serif;cursor:pointer}.blueprint-nav button[aria-current="page"]{border-color:#3b82f6;color:#fff}.blueprint-page{padding:34px 0;border-bottom:1px solid rgba(255,255,255,.07)}.blueprint-page h3{margin:0 0 16px;color:#60a5fa;font-size:11px;letter-spacing:.13em;text-transform:uppercase}.blueprint-page-intro{max-width:560px;margin:0 0 28px}.blueprint-page-intro h2{margin:7px 0 0;font-size:clamp(28px,4vw,48px);line-height:1;letter-spacing:-.06em;color:#fff}.blueprint-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.blueprint-photo{min-height:150px;border:1px dashed rgba(255,255,255,.18);border-radius:8px;background:rgba(255,255,255,.04);display:grid;place-items:center;color:rgba(255,255,255,.3);font-size:11px;font-weight:700}.blueprint-review{padding:18px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(255,255,255,.05);backdrop-filter:blur(10px);font-size:14px;line-height:1.55}.blueprint-services-full{grid-template-columns:1fr}.blueprint-service-group+.blueprint-service-group{margin-top:28px}.blueprint-service-group h3{margin-bottom:10px;font-size:14px;letter-spacing:-.02em;text-transform:none;color:rgba(255,255,255,.88)}.blueprint-services-full .blueprint-service{min-height:70px;display:flex;align-items:center;justify-content:space-between;gap:20px}.blueprint-services-full .blueprint-service .blueprint-line{margin-left:auto}.blueprint-contact-bar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:16px;padding:20px 22px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(255,255,255,.06);backdrop-filter:blur(16px)}.blueprint-contact-bar b{font-size:18px;letter-spacing:-.04em;color:#fff}.blueprint-contact-bar span{padding:9px 12px;border:1px solid rgba(59,130,246,.4);border-radius:6px;font-size:11px;font-weight:800;background:rgba(59,130,246,.15);color:#93c5fd}.blueprint-contact-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(230px,.8fr);gap:16px;margin-bottom:16px}.blueprint-contact-card,.blueprint-hours{padding:22px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(255,255,255,.05);backdrop-filter:blur(12px)}.blueprint-contact-card h3,.blueprint-hours h3{margin:0 0 14px;color:#60a5fa;font-size:11px;letter-spacing:.13em;text-transform:uppercase}.blueprint-contact-card p{margin:0 0 8px;font-size:14px;font-weight:700;color:#fff}.blueprint-contact-card span{font-size:13px;color:rgba(255,255,255,.5)}.blueprint-hours-row{display:flex;justify-content:space-between;gap:18px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:12px}.blueprint-hours-row:last-child{border-bottom:0}.blueprint-map{min-height:220px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0px,rgba(255,255,255,.03) 1px,transparent 1px,transparent 28px),repeating-linear-gradient(90deg,rgba(255,255,255,.03) 0px,rgba(255,255,255,.03) 1px,transparent 1px,transparent 28px);display:grid;place-items:center;color:rgba(255,255,255,.4);font-size:12px;font-weight:700}.blueprint-map span{padding:9px 12px;background:rgba(255,255,255,.07);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.14);border-radius:6px;color:rgba(255,255,255,.7)}.blueprint-focus-current{outline:3px solid rgba(59,130,246,.55);outline-offset:5px;transition:outline-color .2s ease}.blueprint-site.is-mobile-preview .blueprint-inner{padding:16px}.blueprint-site.is-mobile-preview .blueprint-top{gap:10px}.blueprint-site.is-mobile-preview .blueprint-brand{font-size:13px}.blueprint-site.is-mobile-preview .blueprint-nav{gap:8px}.blueprint-site.is-mobile-preview .blueprint-nav button{font-size:10px}.blueprint-site.is-mobile-preview .blueprint-hero{display:flex;flex-direction:column;align-items:stretch;min-height:0;margin-top:14px;padding:0}.blueprint-site.is-mobile-preview .blueprint-illustration{position:relative;inset:auto;order:0;min-height:230px;z-index:0}.blueprint-site.is-mobile-preview .blueprint-illustration::after{background:rgba(10,14,28,.6)}.blueprint-site.is-mobile-preview .blueprint-hero-copy{order:1;max-width:none;padding:20px;box-shadow:none;border-radius:0;border-width:0 0 1px}.blueprint-site.is-mobile-preview .blueprint-title{font-size:42px}.blueprint-site.is-mobile-preview .blueprint-gallery,.blueprint-site.is-mobile-preview .blueprint-contact-grid{grid-template-columns:1fr}.blueprint-site.is-mobile-preview .blueprint-contact-bar{align-items:flex-start;flex-direction:column}.preview-ready-toast{position:fixed;right:22px;bottom:22px;z-index:80;max-width:330px;padding:15px 17px;border:1px solid #b9d3fb;border-radius:14px;background:#fff;box-shadow:0 16px 38px rgba(23,32,31,.16);font-size:13px;line-height:1.45}.preview-ready-toast b{display:block;margin-bottom:3px;color:var(--ink)}
@@ -502,7 +503,7 @@
           </div>
           <p id="approveStatus" style="margin:8px 0 0;font-size:12px;color:#1f9d55;font-weight:600;min-height:16px"></p>
         </div>
-        <p class="developer-building-message" id="developerBuildingMessage"><b>Your developer is creating your website preview. It'll be ready in 1–2 days.</b><br>Add your details, services and photos to help us build your website. We'll call you to discuss it too.<br><a href="tel:07588404181">Call us on 07588 404181</a> with any questions, requests or information.</p>
+        <p class="developer-building-message" id="developerBuildingMessage" hidden></p>
         <p class="website-progress" id="websiteProgress">Your website details: <b>0 of 7 added</b></p>
 
         <div id="builderList">
@@ -519,14 +520,16 @@
           <button type="button" class="sec-btn" data-section="reviews"><span class="sec-title"><span class="section-tick"></span>Reviews</span><span class="chev">&#8250;</span></button>
           <button type="button" class="sec-btn" data-section="media"><span class="sec-title"><span class="section-tick"></span>Media</span><span class="chev">&#8250;</span></button>
           <p class="builder-guidance" id="builderGuidance" hidden></p>
-          <div class="info-card" style="margin-top:16px">
-            <h2>Note for your developer</h2>
-            <p class="info-hint">Tell us anything useful about your business, website, or what you'd like us to focus on.</p>
-            <div class="acct-field" style="margin-top:12px">
-              <label for="developerNote">Your note</label>
-              <textarea id="developerNote" placeholder="For example: I'd like online bookings and a warm, premium look."></textarea>
+          <details class="notes-accordion" id="notesAccordion" style="margin-top:16px">
+            <summary class="notes-summary">Note for your developer<span class="chev">&#8250;</span></summary>
+            <div class="notes-body">
+              <p class="info-hint">Tell us anything useful about your business, website, or what you'd like us to focus on.</p>
+              <div class="acct-field" style="margin-top:10px">
+                <label for="developerNote">Your note</label>
+                <textarea id="developerNote" placeholder="For example: I'd like online bookings and a warm, premium look."></textarea>
+              </div>
             </div>
-          </div>
+          </details>
         </div>
 
         <div class="builder-section" data-section-panel="name" hidden>
@@ -592,10 +595,7 @@
         </div>
 
         <div style="padding:16px 0 4px">
-          <div class="req-btn-wrap">
-            <button type="button" class="req-btn" id="requestBtn">Request an update</button>
-          </div>
-          <div style="margin-top:10px">
+          <div style="margin-top:0">
             <a href="https://wa.me/447535928879" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:44px;border-radius:999px;background:#25D366;color:#fff;font:inherit;font-size:13px;font-weight:700;text-decoration:none">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
               Contact Tom
@@ -603,6 +603,18 @@
           </div>
         </div>
 
+      </div>
+
+      <!-- ---------------- messages panel ---------------- -->
+      <div id="msgsPanel" hidden style="display:none;flex-direction:column;flex:1;min-height:0">
+        <div style="padding:16px 18px 10px;border-bottom:1px solid var(--line);flex:none"><h2 style="margin:0;font-size:16px;font-weight:700">Messages</h2></div>
+        <div class="msgs-list" id="msgsList">
+          <div class="msgs-empty" id="msgsEmpty">No messages yet</div>
+        </div>
+        <div class="msgs-input-bar">
+          <textarea class="msgs-input" id="msgsInput" rows="1" placeholder="Message…"></textarea>
+          <button class="msgs-send" id="msgsSend" disabled>&#9650;</button>
+        </div>
       </div>
 
     </div>
@@ -635,48 +647,9 @@
 
 </div>
 
-<!-- ========== MESSAGES FULL PANEL ========== -->
-<div id="msgsFullPanel" style="display:none;position:fixed;inset:0;flex-direction:column;background:var(--bg);z-index:50">
-  <div class="msgs-full-header">
-    <div>
-      <h2>Messages</h2>
-      <div class="msgs-sub" id="msgsBusinessName"></div>
-    </div>
-  </div>
-  <div class="msgs-list" id="msgsList">
-    <div class="msgs-empty" id="msgsEmpty">No messages yet</div>
-  </div>
-  <div class="msgs-input-bar">
-    <textarea class="msgs-input" id="msgsInput" rows="1" placeholder="Message…"></textarea>
-    <button class="msgs-send" id="msgsSend" disabled>&#9650;</button>
-  </div>
-</div>
 
 <div class="preview-ready-toast" id="previewReadyToast" hidden><b>Your first website preview is ready.</b>Your developer has uploaded a finished version for you to explore.</div>
 
-<!-- Request an update modal -->
-<div class="modal-veil" id="reqVeil" hidden>
-  <div class="modal-card">
-    <button type="button" class="modal-close" id="reqClose">&times;</button>
-    <h2>Tell us what you'd like to change</h2>
-    <p class="hint">Write it however feels natural — "please add a new service", "change my phone number", "I want a darker look", "I need online booking".</p>
-    <div class="acct-field">
-      <label for="reqType">What's this about?</label>
-      <select id="reqType">
-        <option value="update">A change to my website</option>
-      </select>
-    </div>
-    <div class="acct-field">
-      <label for="reqMessage" id="reqMessageLabel">Your update</label>
-      <textarea id="reqMessage" placeholder="e.g. Please add a new service called deep tissue massage, £60 for 60 minutes."></textarea>
-    </div>
-    <div class="modal-actions">
-      <button type="button" class="modal-cancel" id="reqCancel">Cancel</button>
-      <button type="button" class="modal-send" id="reqSend">Send</button>
-    </div>
-    <div class="save-status" id="reqStatus" style="text-align:center;margin-top:10px"></div>
-  </div>
-</div>
 
 <!-- Plan chooser modal -->
 <div class="plan-modal-veil" id="planModalVeil" hidden>
@@ -1483,14 +1456,18 @@
   function showMessagesTab() {
     setActiveTab('mobileMessagesTab');
     document.body.classList.remove('mobile-show-site');
-    setEditing(false);
-    var panel = document.getElementById('msgsFullPanel');
-    if (panel) { panel.style.display = 'flex'; }
+    document.body.classList.add('msgs-active');
+    var vp = document.getElementById('viewPanel'); if (vp) vp.hidden = true;
+    var bp = document.getElementById('builderPanel'); if (bp) bp.hidden = true;
+    var sb = document.getElementById('saveBar'); if (sb) sb.hidden = true;
+    var mp = document.getElementById('msgsPanel');
+    if (mp) { mp.hidden = false; mp.style.display = 'flex'; }
     msgsInit();
   }
   function hideMessagesPanel() {
-    var panel = document.getElementById('msgsFullPanel');
-    if (panel) panel.style.display = 'none';
+    document.body.classList.remove('msgs-active');
+    var mp = document.getElementById('msgsPanel');
+    if (mp) { mp.hidden = true; mp.style.display = 'none'; }
     msgsStopPolling();
   }
   document.getElementById('mobileAccountTab').addEventListener('click', function () {
@@ -2288,7 +2265,7 @@
     liveBtn.textContent = liveBtnLabel;
     liveBtn.disabled = !canGoLive;
     liveBtn.title = !isLive && !isPaying ? 'Upgrade your plan to go live'
-      : !isLive && !hasDomain ? 'Connect a domain first'
+      : !isLive && !hasDomain ? 'A domain will be assigned when your site is ready'
       : showPublish ? 'Save these edits to your live website'
       : '';
     liveBtn.classList.toggle('take-offline', isLive && !showPublish);
@@ -2894,67 +2871,6 @@
     });
   });
 
-  // ---------------- request an update ----------------
-  var reqVeil = document.getElementById('reqVeil');
-  var reqType = document.getElementById('reqType');
-  var reqMessage = document.getElementById('reqMessage');
-  var reqMessageLabel = document.getElementById('reqMessageLabel');
-  function openReq(type) {
-    reqVeil.hidden = false;
-    reqType.value = type === 'domain' ? 'domain' : 'update';
-    updateReqCopy();
-    reqMessage.focus();
-  }
-  function updateReqCopy() {
-    if (reqType.value === 'domain') {
-      reqMessageLabel.textContent = 'Your domain';
-      reqMessage.placeholder = 'e.g. I own willowbeauty.co.uk and want my site to use it, or I want to buy a new domain.';
-    } else {
-      reqMessageLabel.textContent = 'Your update';
-      reqMessage.placeholder = 'e.g. Please add a new service called deep tissue massage, £60 for 60 minutes.';
-    }
-  }
-  reqType.addEventListener('change', updateReqCopy);
-  function closeReq() { reqVeil.hidden = true; document.getElementById('reqStatus').textContent = ''; }
-  document.getElementById('requestBtn').addEventListener('click', function () { openReq('update'); });
-  document.getElementById('reqClose').addEventListener('click', closeReq);
-  document.getElementById('reqCancel').addEventListener('click', closeReq);
-  reqVeil.addEventListener('click', function (e) { if (e.target === reqVeil) closeReq(); });
-
-  document.getElementById('reqSend').addEventListener('click', function () {
-    var btn = this;
-    var statusEl = document.getElementById('reqStatus');
-    var message = reqMessage.value.trim();
-    var isDomain = reqType.value === 'domain';
-    if (!message) { statusEl.textContent = isDomain ? 'Let us know the domain you\'d like first.' : 'Let us know what you\'d like changed first.'; statusEl.className = 'save-status err'; return; }
-
-    var businessName = (business && business.data && business.data.raw && business.data.raw.name) || (business && business.name) || (session.email || '');
-    btn.disabled = true;
-    statusEl.textContent = 'Sending…'; statusEl.className = 'save-status';
-
-    var details = JSON.stringify({ type: isDomain ? 'domain_change_request' : 'account_update_request', slug: slug, email: session.email || '', message: message });
-    var databaseRequest = authenticatedFetch(SUPABASE_URL + '/rest/v1/leads', {
-      method: 'POST',
-      headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
-      body: JSON.stringify({ business_name: businessName, details: details, created_at: new Date().toISOString() })
-    });
-    var formData = new FormData();
-    formData.append('Business', businessName);
-    formData.append('Email', session.email || '');
-    formData.append(isDomain ? 'Domain change' : 'Update', message);
-    var emailRequest = fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/', { method: 'POST', body: formData, keepalive: true });
-
-    Promise.allSettled([databaseRequest, emailRequest]).then(function (results) {
-      btn.disabled = false;
-      var ok = results.some(function (r) { return r.status === 'fulfilled' && r.value.ok; });
-      if (ok) {
-        document.getElementById('reqMessage').value = '';
-        closeReq();
-      } else {
-        statusEl.textContent = 'Something went wrong — please try again.'; statusEl.className = 'save-status err';
-      }
-    });
-  });
 
   // Redirects to Stripe's own Billing Portal, so a customer can update
   // their card, see invoices, or cancel — including Stripe's cancellation
@@ -3047,7 +2963,6 @@
 
   function msgsInit() {
     if (!business) return;
-    document.getElementById('msgsBusinessName').textContent = business.name || '';
     if (!msgsLoaded) { msgsLoad(true); }
     msgsStartPolling();
   }
