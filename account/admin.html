@@ -109,6 +109,8 @@ body { background: var(--bg); min-height: 100vh; }
 @media(max-width:600px){
   .app-header { padding: 10px 14px; gap: 8px; }
   .account-row { flex-wrap: wrap; gap: 10px; }
+  .btn-label { display: none; }
+  .action-btn { padding: 7px; justify-content: center; }
   .account-info { min-width: 0; width: 100%; }
   .row-actions { width: 100%; }
   .page-body { padding: 16px 14px; }
@@ -512,16 +514,16 @@ function applyFilter() {
         (d.demoApproved && s !== 'green' ? '<button type="button" class="action-btn live" onclick="openGoLiveModal(\'' + esc(slug) + '\',\'' + esc(name) + '\')" title="Go live">✓ Go live</button>' : '') +
         '<button type="button" class="action-btn" onclick="openDomainModal(\'' + esc(slug) + '\',\'' + esc(name) + '\')" title="Connect domain">' +
           '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 1.5c-2 2-2 9 0 13M8 1.5c2 2 2 9 0 13M1.5 8h13"/></svg>' +
-          'Domain</button>' +
+          '<span class="btn-label">Domain</span></button>' +
         '<button type="button" class="action-btn" onclick="openUploadModal(\'' + esc(slug) + '\',\'' + esc(name) + '\')" title="Upload site files">' +
           '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 11V4M5 6.5l3-3 3 3M3 13h10"/></svg>' +
-          'Upload</button>' +
+          '<span class="btn-label">Upload</span></button>' +
         '<button type="button" class="action-btn" onclick="openAccountDashboard(\'' + esc(slug) + '\')" title="View dashboard">' +
           '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 2.5l2.5 2.5-8 8H3v-2.5l8-8z"/><path d="M9.5 4l2 2"/></svg>' +
-          'View</button>' +
+          '<span class="btn-label">View</span></button>' +
         '<button type="button" class="action-btn danger" onclick="openDeleteModal(\'' + esc(slug) + '\',\'' + esc(name) + '\')" title="Delete account">' +
           '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 4.5h11M6 4.5V3h4v1.5M6.5 7v5M9.5 7v5M3.5 4.5l.7 8.5h7.6l.7-8.5"/></svg>' +
-        '</button>' +
+          '<span class="btn-label">Delete</span></button>' +
       '</div>' +
     '</div>';
   }).join('');
