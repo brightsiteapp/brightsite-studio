@@ -448,6 +448,18 @@
           <div class="info-row" id="domainRow" hidden><span class="label">Domain</span><span class="value" id="domainRowValue" style="display:flex;align-items:center;gap:7px;max-width:none"></span></div>
         </div>
 
+        <div class="info-card" id="domainCard">
+          <h2>Get a domain</h2>
+          <p class="info-hint" style="margin-bottom:12px">Register your own domain name and we'll connect it to your website.</p>
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <input type="text" id="domainSearchInput" placeholder="yourbusiness" autocomplete="off" autocapitalize="none" style="flex:1;min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px;background:var(--card);color:var(--text)">
+            <button type="button" id="domainTldBtn" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap">.com ▾</button>
+            <button type="button" id="domainCheckBtn" style="padding:10px 16px;border:0;border-radius:10px;background:#2563EB;color:#fff;font:inherit;font-size:14px;font-weight:700;cursor:pointer">Check</button>
+          </div>
+          <div id="domainTldPicker" hidden style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
+          <div id="domainResult" hidden></div>
+        </div>
+
         <div class="info-card">
           <h2>Password</h2>
           <button type="button" class="sec-btn" id="pwdCardToggle">Change password<span class="chev">&#8250;</span></button>
@@ -2127,11 +2139,16 @@
     if (typeof window._bsRestoreSavedPlan === 'function') window._bsRestoreSavedPlan();
     else renderPlanUI();
     renderPreview();
-    // A new customer lands directly on the Website tab, with their basic
-    // details ready to fill in beside the live skeleton preview.
-    setEditing(true);
     openEditorAfterSetup = false;
     updateSectionChecks();
+    // First visit → open Messages tab so they can talk to their developer.
+    var firstVisitKey = 'bs_first_visit_' + (session.user_id || session.email || 'u');
+    if (!localStorage.getItem(firstVisitKey)) {
+      localStorage.setItem(firstVisitKey, '1');
+      if (isMobileDashboard()) { showMessagesTab(); } else { showMessagesTab(); }
+    } else {
+      setEditing(true);
+    }
   }
 
   function updateSectionChecks() {
@@ -2269,6 +2286,10 @@
         domainRowValue.innerHTML = '<span style="color:var(--muted)">No domain yet</span>';
       }
     }
+
+    // Domain search card — hide if they already have a domain
+    var domainCard = document.getElementById('domainCard');
+    if (domainCard) domainCard.hidden = hasDomain;
 
     // canGoLive: paying + domain, OR already live (to allow taking offline)
     // Live + unpublished edits → "Publish changes" until they click it.
@@ -2761,6 +2782,67 @@
   }
 
   document.getElementById('developerNote').addEventListener('input', function () { scheduleAutoSave(); });
+
+  // ---------------- domain search ----------------
+  var DOMAIN_TLDS = ['.com', '.co.uk', '.net', '.org', '.io', '.co', '.uk', '.app'];
+  var DOMAIN_TLD_PRICES = { '.com': '£15/yr', '.co.uk': '£10/yr', '.uk': '£10/yr', '.net': '£15/yr', '.org': '£15/yr', '.io': '£40/yr', '.app': '£20/yr', '.co': '£15/yr' };
+  var selectedTld = '.com';
+  var domainTldBtn = document.getElementById('domainTldBtn');
+  var domainTldPicker = document.getElementById('domainTldPicker');
+  var domainTldPickerOpen = false;
+
+  // Build TLD picker options
+  DOMAIN_TLDS.forEach(function(tld) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = tld;
+    btn.style.cssText = 'padding:6px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);font:inherit;font-size:13px;font-weight:600;cursor:pointer';
+    btn.addEventListener('click', function() {
+      selectedTld = tld;
+      domainTldBtn.textContent = tld + ' ▾';
+      domainTldPicker.hidden = true;
+      domainTldPickerOpen = false;
+      document.getElementById('domainResult').hidden = true;
+    });
+    domainTldPicker.appendChild(btn);
+  });
+
+  domainTldBtn.addEventListener('click', function() {
+    domainTldPickerOpen = !domainTldPickerOpen;
+    domainTldPicker.hidden = !domainTldPickerOpen;
+  });
+
+  document.getElementById('domainCheckBtn').addEventListener('click', async function() {
+    var q = document.getElementById('domainSearchInput').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+    if (!q) return;
+    var fullDomain = q + selectedTld;
+    var resultEl = document.getElementById('domainResult');
+    var btn = document.getElementById('domainCheckBtn');
+    btn.textContent = 'Checking…';
+    btn.disabled = true;
+    resultEl.hidden = true;
+    try {
+      var resp = await fetch('https://api.brightsite.app/api/check-domain?domain=' + encodeURIComponent(fullDomain));
+      var json = await resp.json();
+      var price = DOMAIN_TLD_PRICES[selectedTld] || '£15/yr';
+      if (json.available) {
+        var slug = (business && business.id) || '';
+        var buyUrl = 'https://brightsite.app/domain-checkout?domain=' + encodeURIComponent(fullDomain) + '&email=' + encodeURIComponent(session.email || '') + '&slug=' + encodeURIComponent(slug);
+        resultEl.innerHTML = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="padding:3px 10px;border-radius:999px;background:#e6f6ec;color:#1f9d55;font-size:12px;font-weight:700">Available</span><span style="font-weight:700;font-size:14px">' + fullDomain + '</span><span style="margin-left:auto;color:var(--muted);font-size:13px">' + price + '</span></div><a href="' + buyUrl + '" style="display:flex;align-items:center;justify-content:center;width:100%;min-height:42px;border-radius:10px;background:#2563EB;color:#fff;font:inherit;font-size:14px;font-weight:700;text-decoration:none">Buy domain</a>';
+      } else {
+        resultEl.innerHTML = '<p style="margin:0;font-size:13px;color:var(--muted)">That domain isn\'t available. Try a different name or extension.</p>';
+      }
+    } catch(e) {
+      resultEl.innerHTML = '<p style="margin:0;font-size:13px;color:var(--muted)">Couldn\'t check availability. Please try again.</p>';
+    }
+    resultEl.hidden = false;
+    btn.textContent = 'Check';
+    btn.disabled = false;
+  });
+
+  document.getElementById('domainSearchInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('domainCheckBtn').click();
+  });
 
   // ---------------- autosave ----------------
   var autoSaveTimer = null;
