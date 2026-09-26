@@ -110,7 +110,7 @@
   .msgs-row{display:flex;flex-direction:column;align-items:flex-end;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
   .msgs-row.them{align-items:flex-start}
   .msgs-sender{font-size:11px;font-weight:600;color:var(--muted);margin-top:3px;padding:0 4px}
-  .msgs-bubble{max-width:78%;padding:10px 14px;border-radius:18px;font-size:14px;line-height:1.5;position:relative;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+  .msgs-bubble{max-width:100%;min-width:0;padding:10px 14px;border-radius:18px;font-size:14px;line-height:1.5;position:relative;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
   .msgs-bubble.me{background:#2F7DED;color:#fff;border-bottom-right-radius:4px}
   .msgs-bubble.them{background:#fff;color:#111;border-bottom-left-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
   .msgs-bubble img{display:block;width:200px;height:150px;object-fit:cover;border-radius:10px;margin-bottom:6px}
@@ -124,7 +124,7 @@
   .msgs-send:disabled{background:#c5d8f7;cursor:not-allowed;opacity:.6}
   .msgs-send img{pointer-events:none}
   .msgs-row{position:relative}
-  .msgs-bubble-wrap{display:flex;align-items:center;gap:6px}
+  .msgs-bubble-wrap{display:flex;align-items:center;gap:6px;max-width:88%}
   .msgs-dots{display:none;background:none;border:0;cursor:pointer;padding:4px 6px;color:var(--ink);font-size:20px;font-weight:700;line-height:1;border-radius:6px;opacity:.5;flex:none}
   .msgs-dots:hover{background:rgba(0,0,0,.08);opacity:1}
   .msgs-row.me:hover .msgs-dots,
