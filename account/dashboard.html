@@ -876,8 +876,8 @@
     statusEl.textContent = msg; statusEl.className = 'save-status err';
   }
 
-  document.getElementById('acctName').textContent = session.email || '';
-  document.getElementById('acctEmailTop').textContent = session.email || '';
+  var _acctName = document.getElementById('acctName'); if (_acctName) _acctName.textContent = session.email || '';
+  var _acctEmailTop = document.getElementById('acctEmailTop'); if (_acctEmailTop) _acctEmailTop.textContent = session.email || '';
   document.getElementById('acctEmailRow').textContent = session.email || '';
   document.getElementById('logoutBtn').addEventListener('click', function () {
     localStorage.removeItem('bs_session');
@@ -2135,9 +2135,9 @@
       setTimeout(function () { readyToast.hidden = true; }, 6500);
     }
 
-    document.getElementById('acctName').textContent = raw.name || business.name || '';
+    var _an = document.getElementById('acctName'); if (_an) _an.textContent = raw.name || business.name || '';
     var resolvedEmail = raw.email || session.email || '';
-    document.getElementById('acctEmailTop').textContent = resolvedEmail;
+    var _aet = document.getElementById('acctEmailTop'); if (_aet) _aet.textContent = resolvedEmail;
     document.getElementById('acctEmailRow').textContent = resolvedEmail;
     document.getElementById('fName').value = raw.name || business.name || '';
     document.getElementById('fCategory').value = raw.tagline || '';
