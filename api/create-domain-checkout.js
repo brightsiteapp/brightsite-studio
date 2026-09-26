@@ -1,27 +1,42 @@
 import Stripe from 'stripe';
 
 const ALLOWED_ORIGINS = ['https://brightsite.app'];
+const CF_MARKUP_PENCE = 0; // at-cost, no markup
 
-// Domain pricing tiers by TLD (in pence)
-const TLD_PRICES = {
-  'com':   1500,  // £15
-  'co.uk': 1000,  // £10
-  'uk':    1000,  // £10
-  'net':   1500,  // £15
-  'org':   1500,  // £15
-  'io':    4000,  // £40
-  'app':   2000,  // £20
+async function getCloudflareDomainPrice(domain) {
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const token     = process.env.CLOUDFLARE_API_TOKEN;
+  if (!accountId || !token) return null;
+
+  const res = await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${accountId}/registrar/domains/${encodeURIComponent(domain)}/available`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(5000),
+    }
+  );
+  if (!res.ok) return null;
+  const json = await res.json();
+  if (!json.success || !json.result?.price) return null;
+  const EXCHANGE_RATE = 0.79;
+  const costPence = Math.round(json.result.price * EXCHANGE_RATE * 100);
+  return costPence + CF_MARKUP_PENCE;
+}
+
+// Fallback prices (pence) if Cloudflare API is unavailable
+const FALLBACK_PRICES = {
+  'com': 800, 'co.uk': 500, 'uk': 500, 'net': 800,
+  'org': 800, 'io': 3200, 'app': 1200,
 };
-const DEFAULT_PRICE = 1500; // £15 fallback
 
-function getTLDPrice(domain) {
+function getFallbackPrice(domain) {
   const parts = domain.split('.');
   if (parts.length >= 3) {
     const twoPartTld = parts.slice(-2).join('.');
-    if (TLD_PRICES[twoPartTld] !== undefined) return TLD_PRICES[twoPartTld];
+    if (FALLBACK_PRICES[twoPartTld] !== undefined) return FALLBACK_PRICES[twoPartTld];
   }
   const tld = parts[parts.length - 1];
-  return TLD_PRICES[tld] ?? DEFAULT_PRICE;
+  return FALLBACK_PRICES[tld] ?? 800;
 }
 
 export default async function handler(req, res) {
@@ -39,7 +54,10 @@ export default async function handler(req, res) {
   if (!domain) return res.status(400).json({ error: 'Missing domain' });
 
   const clean = domain.toLowerCase().trim();
-  const priceInPence = getTLDPrice(clean);
+
+  // Fetch real price from Cloudflare; fall back to approximate at-cost prices
+  const cfPrice = await getCloudflareDomainPrice(clean);
+  const priceInPence = cfPrice ?? getFallbackPrice(clean);
 
   try {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
@@ -68,11 +86,7 @@ export default async function handler(req, res) {
         slug: slug || '',
       },
       payment_intent_data: {
-        metadata: {
-          type: 'domain_registration',
-          domain: clean,
-          slug: slug || '',
-        },
+        metadata: { type: 'domain_registration', domain: clean, slug: slug || '' },
       },
     });
 

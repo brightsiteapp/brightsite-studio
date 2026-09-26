@@ -3,11 +3,39 @@ import Stripe from 'stripe';
 // Stripe Price IDs for each plan+billing combination.
 // Recurring prices are for hosting; one-time prices are setup fees added to the first invoice.
 
-// Domain registration prices in pence (one-off, billed at checkout)
-const DOMAIN_TLD_PRICES_PENCE = {
-  '.com': 1500, '.co.uk': 1000, '.uk': 1000, '.net': 1500,
-  '.org': 1500, '.io': 4000, '.app': 2000, '.co': 1500,
+const CF_MARKUP_PENCE = 0;
+
+// Fallback domain prices in pence if Cloudflare API is unavailable
+const DOMAIN_FALLBACK_PENCE = {
+  'com': 800, 'co.uk': 500, 'uk': 500, 'net': 800,
+  'org': 800, 'io': 3200, 'app': 1200,
 };
+
+async function getCloudflareDomainPrice(domain) {
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const token     = process.env.CLOUDFLARE_API_TOKEN;
+  if (!accountId || !token) return null;
+  try {
+    const res = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/registrar/domains/${encodeURIComponent(domain)}/available`,
+      { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(5000) }
+    );
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (!json.success || !json.result?.price) return null;
+    const costPence = Math.round(json.result.price * 0.79 * 100);
+    return costPence + CF_MARKUP_PENCE;
+  } catch { return null; }
+}
+
+function getDomainFallbackPrice(domain) {
+  const parts = domain.split('.');
+  if (parts.length >= 3) {
+    const two = parts.slice(-2).join('.');
+    if (DOMAIN_FALLBACK_PENCE[two] !== undefined) return DOMAIN_FALLBACK_PENCE[two];
+  }
+  return DOMAIN_FALLBACK_PENCE[parts[parts.length - 1]] ?? 800;
+}
 
 const PLAN_PRICES = {
   essential_monthly: {
@@ -63,14 +91,13 @@ export default async function handler(req, res) {
 
     // optional domain registration (one-off)
     if (domain) {
-      const tld = '.' + domain.split('.').slice(1).join('.');
-      const domainPence = DOMAIN_TLD_PRICES_PENCE[tld] || 1500;
+      const cfPrice = await getCloudflareDomainPrice(domain);
+      const domainPence = cfPrice ?? getDomainFallbackPrice(domain);
       lineItems.push({
         price_data: {
           currency: 'gbp',
           product_data: { name: 'Domain: ' + domain },
           unit_amount: domainPence,
-          recurring: undefined,
         },
         quantity: 1,
       });

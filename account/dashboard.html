@@ -2781,7 +2781,7 @@
     try {
       var resp = await fetch('https://api.brightsite.app/api/check-domain?domain=' + encodeURIComponent(fullDomain));
       var json = await resp.json();
-      var price = DOMAIN_TLD_PRICES[selectedTld] || '£15/yr';
+      var price = json.priceLabel || (DOMAIN_TLD_PRICES[selectedTld] || '£?/yr');
       if (json.available) {
         // store pending domain so it can be added at plan checkout
         pendingDomain = fullDomain;

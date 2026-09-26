@@ -1,4 +1,27 @@
 const ALLOWED_ORIGINS = ['https://brightsite.app'];
+const CF_MARKUP_PENCE = 0; // at-cost, no markup
+
+async function getCloudflareDomainPrice(domain) {
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const token     = process.env.CLOUDFLARE_API_TOKEN;
+  if (!accountId || !token) return null;
+
+  const res = await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${accountId}/registrar/domains/${encodeURIComponent(domain)}/available`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(5000),
+    }
+  );
+  if (!res.ok) return null;
+  const json = await res.json();
+  if (!json.success || !json.result?.price) return null;
+  // Cloudflare returns price in USD — convert to GBP pence using a fixed rate,
+  // then add the £5 markup. Adjust EXCHANGE_RATE as needed.
+  const EXCHANGE_RATE = 0.79; // USD → GBP (update periodically)
+  const costPence = Math.round(json.result.price * EXCHANGE_RATE * 100);
+  return costPence + CF_MARKUP_PENCE;
+}
 
 export default async function handler(req, res) {
   const origin = req.headers.origin || '';
@@ -23,16 +46,25 @@ export default async function handler(req, res) {
       signal: AbortSignal.timeout(5000),
     });
 
-    if (rdapRes.status === 404) {
-      return res.status(200).json({ domain: clean, available: true });
-    }
     if (rdapRes.ok) {
       return res.status(200).json({ domain: clean, available: false });
     }
-    // RDAP returned an unexpected status — treat as unavailable to be safe
+
+    if (rdapRes.status === 404) {
+      // Domain is available — fetch real price from Cloudflare
+      const pricePence = await getCloudflareDomainPrice(clean);
+      return res.status(200).json({
+        domain: clean,
+        available: true,
+        pricePence: pricePence ?? null,
+        // human-readable fallback label if Cloudflare price unavailable
+        priceLabel: pricePence ? `£${(pricePence / 100).toFixed(0)}/yr` : null,
+      });
+    }
+
     return res.status(200).json({ domain: clean, available: false, rdapStatus: rdapRes.status });
   } catch (err) {
-    console.error('RDAP check error:', err.message);
+    console.error('Domain check error:', err.message);
     return res.status(500).json({ error: 'Domain check failed', detail: err.message });
   }
 }
