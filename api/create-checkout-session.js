@@ -93,11 +93,16 @@ export default async function handler(req, res) {
     if (domain) {
       const cfPrice = await getCloudflareDomainPrice(domain);
       const domainPence = cfPrice ?? getDomainFallbackPrice(domain);
+      const freeDomainPlans = ['pro', 'prestige'];
+      const domainIsFree = freeDomainPlans.includes(plan) && domainPence <= 1200;
       lineItems.push({
         price_data: {
           currency: 'gbp',
-          product_data: { name: 'Domain: ' + domain },
-          unit_amount: domainPence,
+          product_data: {
+            name: 'Domain: ' + domain,
+            description: domainIsFree ? 'Included free with your plan' : '1-year registration',
+          },
+          unit_amount: domainIsFree ? 0 : domainPence,
         },
         quantity: 1,
       });

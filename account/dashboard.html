@@ -702,6 +702,7 @@
           <li>Up to 5 custom-designed pages</li>
           <li>Custom sections built for you</li>
           <li>Interactions &amp; animations</li>
+          <li>Free domain included <span style="font-size:10px;font-weight:600;color:var(--muted)">(under £12/yr)</span></li>
         </ul>
         <button type="button" class="plan-select-btn" data-select="pro" style="margin-top:14px">Select Pro</button>
       </div>
@@ -721,6 +722,7 @@
           <li>Up to 7 custom-designed pages</li>
           <li>Multi-location or multi-service structure</li>
           <li>Priority same-day support</li>
+          <li>Free domain included <span style="font-size:10px;font-weight:600;color:var(--muted)">(under £12/yr)</span></li>
         </ul>
         <button type="button" class="plan-select-btn" data-select="prestige" style="margin-top:14px">Select Prestige</button>
       </div>
@@ -2286,21 +2288,38 @@
     var monthlyBtn = document.getElementById('billingMonthly');
     var annualBtn = document.getElementById('billingAnnual');
 
-    function openPlanModal() {
-      // sync current selections into modal
-      syncModalState();
-      // show domain add-on row if a domain was searched and is available
+    var FREE_DOMAIN_PLANS = ['pro', 'prestige'];
+    var FREE_DOMAIN_MAX_PENCE = 1200; // £12
+
+    function isDomainFreeForPlan() {
+      if (!pendingDomain || !FREE_DOMAIN_PLANS.includes(selectedPlan)) return false;
+      var pence = pendingDomainPence || 0;
+      return pence > 0 && pence <= FREE_DOMAIN_MAX_PENCE;
+    }
+
+    function updateDomainAddonRow() {
       var domainAddon = document.getElementById('planDomainAddon');
-      if (domainAddon) {
-        if (pendingDomain) {
-          document.getElementById('planDomainAddonName').textContent = pendingDomain;
-          document.getElementById('planDomainAddonPrice').textContent = pendingDomainPrice || '';
-          document.getElementById('planDomainAddonCheck').checked = true;
-          domainAddon.hidden = false;
-        } else {
-          domainAddon.hidden = true;
-        }
+      if (!domainAddon) return;
+      if (!pendingDomain) { domainAddon.hidden = true; return; }
+      document.getElementById('planDomainAddonName').textContent = pendingDomain;
+      var isFree = isDomainFreeForPlan();
+      var priceEl = document.getElementById('planDomainAddonPrice');
+      if (isFree) {
+        priceEl.textContent = 'Free';
+        priceEl.style.background = '#e6f6ec';
+        priceEl.style.color = '#1f9d55';
+        document.getElementById('planDomainAddonCheck').checked = true;
+      } else {
+        priceEl.textContent = pendingDomainPrice || '';
+        priceEl.style.background = '';
+        priceEl.style.color = '';
+        document.getElementById('planDomainAddonCheck').checked = true;
       }
+      domainAddon.hidden = false;
+    }
+
+    function openPlanModal() {
+      syncModalState();
       veil.hidden = false;
       document.body.style.overflow = 'hidden';
     }
@@ -2326,7 +2345,8 @@
         card.classList.toggle('selected', p === selectedPlan);
       });
 
-            updateSelectLabels();
+      updateSelectLabels();
+      updateDomainAddonRow();
     }
 
     function updatePriceDisplay() {
@@ -2743,6 +2763,7 @@
   var selectedTld = '.com';
   var pendingDomain = null;
   var pendingDomainPrice = null;
+  var pendingDomainPence = null;
   var pendingDomainTld = null;
   var domainTldBtn = document.getElementById('domainTldBtn');
   var domainTldPicker = document.getElementById('domainTldPicker');
@@ -2786,12 +2807,13 @@
         // store pending domain so it can be added at plan checkout
         pendingDomain = fullDomain;
         pendingDomainPrice = price;
+        pendingDomainPence = json.pricePence || null;
         pendingDomainTld = selectedTld;
         var slug = (business && business.id) || '';
         var buyUrl = 'https://brightsite.app/domain-checkout?domain=' + encodeURIComponent(fullDomain) + '&email=' + encodeURIComponent(session.email || '') + '&slug=' + encodeURIComponent(slug);
         resultEl.innerHTML = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><span style="padding:3px 10px;border-radius:999px;background:#e6f6ec;color:#1f9d55;font-size:12px;font-weight:700">Available</span><span style="font-weight:700;font-size:14px">' + fullDomain + '</span><span style="margin-left:auto;font-weight:700;font-size:14px;color:var(--ink)">' + price + '</span></div><p style="margin:0 0 10px;font-size:12px;color:var(--muted)">One-off payment, billed at checkout</p><a href="' + buyUrl + '" style="display:flex;align-items:center;justify-content:center;width:100%;min-height:42px;border-radius:10px;background:#2563EB;color:#fff;font:inherit;font-size:14px;font-weight:700;text-decoration:none">Buy domain</a>';
       } else {
-        pendingDomain = null; pendingDomainPrice = null; pendingDomainTld = null;
+        pendingDomain = null; pendingDomainPrice = null; pendingDomainPence = null; pendingDomainTld = null;
         resultEl.innerHTML = '<p style="margin:0;font-size:13px;color:var(--muted)">That domain isn\'t available. Try a different name or extension.</p>';
       }
     } catch(e) {
