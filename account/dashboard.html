@@ -2302,16 +2302,15 @@
       var isFree = isDomainFreeForPlan();
       var priceEl = document.getElementById('planDomainAddonPrice');
       if (isFree) {
-        priceEl.textContent = 'Free';
+        priceEl.innerHTML = '<span style="text-decoration:line-through;opacity:.5;margin-right:5px">' + (pendingDomainPrice || '') + '</span><span>£0</span>';
         priceEl.style.background = '#e6f6ec';
         priceEl.style.color = '#1f9d55';
-        document.getElementById('planDomainAddonCheck').checked = true;
       } else {
         priceEl.textContent = pendingDomainPrice || '';
         priceEl.style.background = '';
         priceEl.style.color = '';
-        document.getElementById('planDomainAddonCheck').checked = true;
       }
+      document.getElementById('planDomainAddonCheck').checked = true;
       domainAddon.hidden = false;
     }
 
