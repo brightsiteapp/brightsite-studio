@@ -52,9 +52,9 @@
     .top{display:flex;justify-content:space-between;padding:calc(9px + env(safe-area-inset-top, 0px)) 14px 9px;background:var(--bg);backdrop-filter:none}
     .burger{display:flex}
     .tabs{position:fixed;top:0;left:0;width:100%;height:100%;justify-self:auto;z-index:39;justify-content:center;flex-direction:column;align-items:center;
-      gap:28px;background:var(--bg);opacity:0;visibility:hidden;transform:translateY(-10px);
-      transition:opacity .3s ease,transform .3s ease,visibility 0s .3s linear}
-    .tabs.open{opacity:1;visibility:visible;transform:none;transition:opacity .3s ease,transform .3s ease}
+      gap:28px;background:var(--bg);opacity:0;visibility:hidden;
+      transition:opacity .3s ease,visibility 0s .3s linear}
+    .tabs.open{opacity:1;visibility:visible;transition:opacity .3s ease}
     .tabs a{font-size:19px;letter-spacing:.08em}
   }
   .top .brand{display:inline-flex;align-items:center;text-decoration:none;pointer-events:auto}

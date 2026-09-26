@@ -37,6 +37,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#F7F2EC">
 <link rel="canonical" href="https://brightsite.app/">
+<link rel="manifest" href="/manifest.json">
 
 <!-- Local Business Schema -->
 <script type="application/ld+json">
@@ -124,7 +125,7 @@
 }
 </script>
 
-<link rel="stylesheet" href="styles.css?v=20260915-2">
+<link rel="stylesheet" href="styles.css?v=20260927-1">
 <link rel="stylesheet" href="builder-glass.css?v=20260913-1">
 <script src="reveal.js?v=20260902-4" defer></script>
 <script src="nav.js?v=20260902-4" defer></script>
@@ -545,5 +546,12 @@
 <a class="mobile-demo-cta" href="#top">Create my free demo</a>
 
 <script src="homepage-proof.js?v=20260905-2" defer></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+</script>
 </body>
 </html>
