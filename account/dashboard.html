@@ -166,6 +166,7 @@
   .info-row .value{color:var(--ink);font-weight:600;text-align:right;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .plan-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;background:#fdf2dd;color:#8a5d08;font-size:11.5px;font-weight:700}
   .plan-pill.active{background:#e6f6ec;color:#1f9d55}
+  .plan-pill.offline{background:#fde8e8;color:#b91c1c}
   .plan-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
   .billing-btn{width:100%;margin-top:6px;background:none;border:1px solid var(--line);border-radius:999px;padding:10px 16px;font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;transition:border-color .18s ease,color .18s ease}
   .billing-btn:hover{border-color:var(--accent);color:var(--ink)}
@@ -442,9 +443,8 @@
       <div id="viewPanel">
         <div class="info-card">
           <h2>Account</h2>
-          <div class="info-row"><span class="label">Plan</span><span class="value"><span class="plan-pill" id="planPill"><span class="plan-dot"></span><span id="planLabel">Free</span></span></span></div>
+          <div class="info-row"><span class="label">Plan</span><span class="value"><span class="plan-pill" id="planPill"><span class="plan-dot"></span><span id="planLabel">Free selected</span></span></span></div>
           <div class="info-row"><span class="label">Login email</span><span class="value" id="acctEmailRow"></span></div>
-          <div class="info-row"><span class="label">Website status</span><span class="value" id="statusRow">Not live yet</span></div>
           <div class="info-row" id="domainRow" hidden><span class="label">Domain</span><span class="value" id="domainRowValue" style="display:flex;align-items:center;gap:7px;max-width:none"></span></div>
           <div class="info-row" style="border-bottom:0"><span class="label">Password</span><span class="value"><button type="button" id="pwdCardToggle" style="background:none;border:0;padding:0;font:inherit;font-size:13px;font-weight:700;color:#2563EB;cursor:pointer">Change password</button></span></div>
         </div>
@@ -2227,11 +2227,16 @@
 
   function renderPlanUI() {
     var pill = document.getElementById('planPill');
-    pill.classList.toggle('active', isPaying);
-    document.getElementById('planLabel').textContent = isPaying
-      ? (PLAN_CONFIG[selectedPlan].label + ' active')
-      : (PLAN_CONFIG[selectedPlan].label + ' selected');
-    document.getElementById('statusRow').textContent = isLive ? 'Live' : 'Not live yet';
+    var planName = PLAN_CONFIG[selectedPlan].label;
+    var isOffline = isPaying && !isLive;
+    pill.classList.toggle('active', isLive);
+    pill.classList.toggle('offline', isOffline);
+    pill.classList.toggle('plan-pill', true);
+    var pillText = isLive ? (planName + ' · Live')
+      : isOffline ? (planName + ' · Offline')
+      : isPaying ? (planName + ' · Active')
+      : (planName + ' selected');
+    document.getElementById('planLabel').textContent = pillText;
     document.getElementById('billingHint').textContent = isPaying
       ? 'Your plan is active. Manage payment details any time.'
       : 'Your plan is selected. Add features now; you\'ll manage billing once your account is active.';
