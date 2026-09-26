@@ -2041,6 +2041,34 @@
 
     var data = business.data = business.data || {};
     var raw = data.raw = data.raw || {};
+    // Merge app-format fields into raw so website and app share the same data.
+    // App stores fields flat in data; website stores them in data.raw — read both.
+    if (!raw.name && data.name) raw.name = data.name;
+    if (!raw.tagline && (data.tagline || data.businessType)) raw.tagline = data.tagline || data.businessType || '';
+    if (!raw.phone && data.phone) raw.phone = data.phone;
+    if (!raw.email && data.email) raw.email = data.email;
+    if (!raw.address && data.address) raw.address = data.address;
+    if (!raw.notes && data.notes) raw.notes = data.notes;
+    if (!raw.reviewLink && data.reviewLink) raw.reviewLink = data.reviewLink;
+    if (!raw.logoImage && data.logo) raw.logoImage = data.logo;
+    if (!raw.heroImage && data.hero) raw.heroImage = data.hero;
+    if ((!raw.gallery || !raw.gallery.length) && Array.isArray(data.gallery) && data.gallery.length) raw.gallery = data.gallery;
+    if ((!raw.reviewQuotes || !raw.reviewQuotes.length) && Array.isArray(data.reviews) && data.reviews.length) {
+      raw.reviewQuotes = data.reviews.map(function(r) { return (typeof r === 'string') ? r : (r.text || ''); }).filter(Boolean);
+    }
+    if ((!raw.hoursStructured || raw.hoursStructured.length !== 7) && Array.isArray(data.openingHours) && data.openingHours.length === 7) {
+      raw.hoursStructured = data.openingHours.map(function(h) {
+        var from = h.from || '9:00'; var to = h.to || '5:00';
+        if (h.fromPeriod === 'PM' && !from.startsWith('12')) from = (parseInt(from) + 12) + ':' + (from.split(':')[1] || '00');
+        if (h.toPeriod === 'PM' && !to.startsWith('12')) to = (parseInt(to) + 12) + ':' + (to.split(':')[1] || '00');
+        return { day: h.day, open: !!h.open, from: from, to: to };
+      });
+    }
+    if ((!raw.serviceGroups || !raw.serviceGroups.length) && Array.isArray(data.services) && data.services.length) {
+      raw.serviceGroups = data.services.map(function(g) {
+        return { name: g.title || '', items: (g.items || []).map(function(it) { return [it.name || '', it.price || '']; }) };
+      });
+    }
     services = servicesFromRaw(raw);
     media.logoImage = raw.logoImage || null;
     media.heroImage = raw.heroImage || null;
@@ -2676,12 +2704,41 @@
       raw.chosenPlan = selectedPlan;
       raw.chosenAnnual = selectedAnnual;
       if (opts.publish) isLive = true;
+      // Build app-compatible flat fields so the phone app reads the same data.
+      var appHours = (hoursStructured || []).map(function(h) {
+        var from = h.from || '9:00'; var to = h.to || '5:00';
+        var fromH = parseInt(from); var toH = parseInt(to);
+        return { day: h.day, open: !!h.open,
+          from: fromH >= 12 ? String(fromH === 12 ? 12 : fromH - 12) + ':' + (from.split(':')[1] || '00') : from,
+          fromPeriod: fromH >= 12 ? 'PM' : 'AM',
+          to: toH >= 12 ? String(toH === 12 ? 12 : toH - 12) + ':' + (to.split(':')[1] || '00') : to,
+          toPeriod: toH >= 12 ? 'PM' : 'AM' };
+      });
+      var appServices = services.map(function(g) {
+        return { title: g.name || '', items: g.items.filter(function(it){return it.name && it.name.trim();}).map(function(it) {
+          return { name: it.name || '', price: it.price || '', time: it.duration || '' };
+        }) };
+      }).filter(function(g){return g.items.length;});
+      var appReviews = reviewQuotes.filter(Boolean).map(function(t) { return { author: '', text: t, rating: 5, date: '' }; });
       // Merge with existing data so developer-set fields (demoUrl, liveUrl,
       // customDomain, domain, etc.) are never wiped by a customer autosave.
       var prev = (business && business.data) || {};
       var record = Object.assign({}, prev, {
         slug: slug,
         name: raw.name,
+        tagline: raw.tagline || '',
+        businessType: raw.tagline || '',
+        phone: raw.phone || '',
+        email: raw.email || '',
+        address: raw.address || '',
+        notes: raw.notes || '',
+        reviewLink: raw.reviewLink || '',
+        logo: raw.logoImage || null,
+        hero: raw.heroImage || null,
+        gallery: raw.gallery || [],
+        openingHours: appHours,
+        services: appServices,
+        reviews: appReviews,
         raw: raw,
         planActive: isPaying,
         published: isLive,
