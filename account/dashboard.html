@@ -27,7 +27,7 @@
   button,a,[role="button"]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 
   /* ---------------- header ---------------- */
-  .app-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 18px;padding-top:calc(10px + env(safe-area-inset-top, 0px));border-bottom:1px solid var(--line);background:var(--bg);flex:none}
+  .app-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 18px;padding-top:calc(10px + env(safe-area-inset-top, 0px));border-bottom:1px solid var(--line);background:var(--bg);flex:none;position:relative;z-index:20}
   .app-header .brand-mini{display:flex;align-items:center;gap:10px;text-decoration:none;flex:none}
   .app-header .brand-mini img{height:22px;width:auto}
   .app-header-right{display:flex;align-items:center;gap:10px;min-width:0}
@@ -88,7 +88,7 @@
   .preview-device-toggle{display:flex;align-items:center;padding:3px;border:1px solid var(--line);border-radius:11px;background:#fff}
   .preview-device-toggle button{border:0;border-radius:8px;background:transparent;color:var(--muted);height:28px;padding:0 9px;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
   .preview-device-toggle button[aria-pressed="true"]{background:var(--accent);color:#fff}
-  .mobile-view-tabs{display:flex;width:380px;gap:6px;padding:8px 14px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--bg);flex:none}
+  .mobile-view-tabs{display:flex;width:380px;gap:6px;padding:8px 14px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--bg);flex:none;position:relative;z-index:20}
   .mobile-view-tabs button{flex:1;min-height:36px;border:0;border-radius:10px;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
   .mobile-view-tabs button[aria-selected="true"]{background:var(--accent);color:#fff}
   .mobile-view-tabs button:disabled{opacity:.42;cursor:not-allowed}
@@ -406,7 +406,7 @@
     .app-body{grid-template-columns:1fr;position:relative}
     .left-panel,.right-panel{position:absolute;inset:0;width:100%;border-right:0;padding-bottom:env(safe-area-inset-bottom)}
     .left-panel{z-index:5;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
-    body.msgs-active #msgsPanel{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex !important;flex-direction:column;background:var(--bg);overflow:hidden}
+    body.msgs-active #msgsPanel{position:fixed;top:0;left:0;right:0;bottom:0;z-index:15;display:flex !important;flex-direction:column;background:var(--bg);overflow:hidden;padding-top:var(--msgs-offset,94px)}
     body.msgs-active #msgsList{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
     body.mode-view .left-panel,body.mode-edit .left-panel{display:flex}
     body.mode-view .right-panel{display:none}
@@ -1479,14 +1479,11 @@
     if (mp) {
       mp.hidden = false;
       mp.style.display = 'flex';
-      // on mobile, set top offset = header + tabs height so panel sits below them
       if (window.innerWidth <= 860) {
-        var hdr = document.querySelector('.app-header');
         var tabs = document.getElementById('mobileViewTabs');
-        var offset = (hdr ? hdr.getBoundingClientRect().bottom : 0) || ((tabs ? tabs.getBoundingClientRect().bottom : 0));
-        if (!offset && tabs) offset = tabs.getBoundingClientRect().bottom;
-        mp.style.top = (offset || 94) + 'px';
-        mp.style.paddingTop = '0';
+        var offset = tabs ? tabs.getBoundingClientRect().bottom : 94;
+        document.documentElement.style.setProperty('--msgs-offset', (offset || 94) + 'px');
+        mp.style.top = '';
       }
     }
     // personalise welcome greeting with business name
