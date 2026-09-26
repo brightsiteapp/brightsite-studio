@@ -7,20 +7,21 @@ async function getCloudflareDomainPrice(domain) {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const token     = process.env.CLOUDFLARE_API_TOKEN;
   if (!accountId || !token) return null;
-
-  const res = await fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${accountId}/registrar/domains/${encodeURIComponent(domain)}/available`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-      signal: AbortSignal.timeout(5000),
-    }
-  );
-  if (!res.ok) return null;
-  const json = await res.json();
-  if (!json.success || !json.result?.price) return null;
-  const EXCHANGE_RATE = 0.79;
-  const costPence = Math.round(json.result.price * EXCHANGE_RATE * 100);
-  return costPence + CF_MARKUP_PENCE;
+  try {
+    const res = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/registrar/domains/${encodeURIComponent(domain)}/available`,
+      { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(5000) }
+    );
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (!json.success || !json.result?.price) return null;
+    const EXCHANGE_RATE = 0.79;
+    const costPence = Math.round(json.result.price * EXCHANGE_RATE * 100);
+    return costPence + CF_MARKUP_PENCE;
+  } catch (err) {
+    console.warn('CF price lookup failed:', err.message);
+    return null;
+  }
 }
 
 // Fallback prices (pence) if Cloudflare API is unavailable
