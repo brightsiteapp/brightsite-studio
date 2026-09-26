@@ -92,14 +92,7 @@
   .mobile-view-tabs button[aria-selected="true"]{background:var(--accent);color:#fff}
   .mobile-view-tabs button:disabled{opacity:.42;cursor:not-allowed}
 
-  /* notes accordion */
-  .notes-accordion{border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
-  .notes-accordion[open]{background:var(--card)}
-  .notes-summary{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;font-size:14px;font-weight:700;cursor:pointer;list-style:none;user-select:none}
-  .notes-summary::-webkit-details-marker{display:none}
-  .notes-summary .chev{transition:transform .2s;font-size:16px;color:var(--muted)}
-  .notes-accordion[open] .notes-summary .chev{transform:rotate(90deg)}
-  .notes-body{padding:0 16px 16px}
+
 
   /* messages panel */
   .msgs-panel{display:none;flex-direction:column;height:100%;background:var(--bg)}
@@ -432,6 +425,7 @@
   <button type="button" id="mobileAccountTab" aria-selected="true">Account</button>
   <button type="button" id="mobileWebsiteTab" aria-selected="false">Website</button>
   <button type="button" id="mobileMessagesTab" aria-selected="false">Messages</button>
+  <button type="button" id="mobileNotesTab" aria-selected="false">Notes</button>
 </nav>
 
 <div id="appBody" class="app-body" hidden>
@@ -520,16 +514,6 @@
           <button type="button" class="sec-btn" data-section="reviews"><span class="sec-title"><span class="section-tick"></span>Reviews</span><span class="chev">&#8250;</span></button>
           <button type="button" class="sec-btn" data-section="media"><span class="sec-title"><span class="section-tick"></span>Media</span><span class="chev">&#8250;</span></button>
           <p class="builder-guidance" id="builderGuidance" hidden></p>
-          <details class="notes-accordion" id="notesAccordion" style="margin-top:16px">
-            <summary class="notes-summary">Notes<span class="chev">&#8250;</span></summary>
-            <div class="notes-body">
-              <p class="info-hint">Tell us anything useful about your business, website, or what you'd like us to focus on.</p>
-              <div class="acct-field" style="margin-top:10px">
-                <label for="developerNote">Your note</label>
-                <textarea id="developerNote" placeholder="e.g. We'd love to highlight our new treatment menu, and please use calming colours..."></textarea>
-              </div>
-            </div>
-          </details>
         </div>
 
         <div class="builder-section" data-section-panel="name" hidden>
@@ -606,6 +590,12 @@
       </div>
 
       <!-- ---------------- messages panel ---------------- -->
+      <div id="notesPanel" hidden style="display:none;flex-direction:column;flex:1;min-height:0;padding:16px 18px;overflow-y:auto">
+        <h2 style="margin:0 0 8px;font-size:16px;font-weight:700">Notes</h2>
+        <p class="info-hint" style="margin:0 0 12px">Tell us anything useful about your business, website, or what you'd like us to focus on.</p>
+        <textarea id="notesPanelInput" style="flex:1;min-height:160px;resize:none;width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit;font-size:14px;background:var(--card);color:var(--text)" placeholder="e.g. We'd love to highlight our new treatment menu, and please use calming colours..."></textarea>
+      </div>
+
       <div id="msgsPanel" hidden style="display:none;flex-direction:column;flex:1;min-height:0">
         <div style="padding:16px 18px 10px;border-bottom:1px solid var(--line);flex:none"><h2 style="margin:0;font-size:16px;font-weight:700">Messages</h2></div>
         <div class="msgs-list" id="msgsList">
@@ -1448,12 +1438,13 @@
   }
   // ---- tab helpers ----
   function setActiveTab(tabId) {
-    ['mobileAccountTab','mobileWebsiteTab','mobileMessagesTab'].forEach(function(id){
+    ['mobileAccountTab','mobileWebsiteTab','mobileMessagesTab','mobileNotesTab'].forEach(function(id){
       var el = document.getElementById(id);
       if (el) el.setAttribute('aria-selected', String(el.id === tabId));
     });
   }
   function showMessagesTab() {
+    hideNotesPanel();
     setActiveTab('mobileMessagesTab');
     document.body.classList.remove('mobile-show-site');
     document.body.classList.add('msgs-active');
@@ -1470,9 +1461,25 @@
     if (mp) { mp.hidden = true; mp.style.display = 'none'; }
     msgsStopPolling();
   }
+  function showNotesTab() {
+    hideMessagesPanel();
+    setActiveTab('mobileNotesTab');
+    document.body.classList.remove('mobile-show-site');
+    setEditing(false);
+    var vp = document.getElementById('viewPanel'); if (vp) vp.hidden = true;
+    var bp = document.getElementById('builderPanel'); if (bp) bp.hidden = true;
+    var sb = document.getElementById('saveBar'); if (sb) sb.hidden = true;
+    var np = document.getElementById('notesPanel');
+    if (np) { np.hidden = false; np.style.display = 'flex'; }
+  }
+  function hideNotesPanel() {
+    var np = document.getElementById('notesPanel');
+    if (np) { np.hidden = true; np.style.display = 'none'; }
+  }
   document.getElementById('mobileAccountTab').addEventListener('click', function () {
     console.log('[tab] Account clicked');
     hideMessagesPanel();
+    hideNotesPanel();
     document.body.classList.remove('mobile-show-site');
     setEditing(false);
     setActiveTab('mobileAccountTab');
@@ -1480,12 +1487,17 @@
   document.getElementById('mobileWebsiteTab').addEventListener('click', function() {
     console.log('[tab] Website clicked');
     hideMessagesPanel();
+    hideNotesPanel();
     showWebsiteEditor();
     setActiveTab('mobileWebsiteTab');
   });
   document.getElementById('mobileMessagesTab').addEventListener('click', function() {
     console.log('[tab] Messages clicked');
     showMessagesTab();
+  });
+  document.getElementById('mobileNotesTab').addEventListener('click', function() {
+    console.log('[tab] Notes clicked');
+    showNotesTab();
   });
   document.getElementById('mobilePreviewEdit').addEventListener('click', showWebsiteEditor);
   document.getElementById('viewWebsiteButton').addEventListener('click', function () {
@@ -2099,7 +2111,7 @@
     document.getElementById('fAddress').value = raw.address || '';
     reviewQuotes = Array.isArray(raw.reviewQuotes) ? raw.reviewQuotes.slice() : (raw.reviews ? [raw.reviews] : []);
     document.getElementById('fReviewLink').value = raw.reviewLink || '';
-    document.getElementById('developerNote').value = raw.notes || '';
+    document.getElementById('notesPanelInput').value = raw.notes || '';
     hoursStructured = hoursFromRaw(raw);
     hoursEdited = raw.hoursEdited === true;
 
@@ -2670,7 +2682,7 @@
         heroImage: media.heroImage,
         gallery: media.gallery
       }, servicesToRaw(services));
-      raw.notes = document.getElementById('developerNote').value.trim();
+      raw.notes = document.getElementById('notesPanelInput').value.trim();
       raw.bookingAddon = selectedAddons.booking;
       raw.storeAddon = selectedAddons.store;
       raw.chosenPlan = selectedPlan;
@@ -2715,7 +2727,7 @@
     });
   }
 
-  document.getElementById('developerNote').addEventListener('input', function () { scheduleAutoSave(); });
+  document.getElementById('notesPanelInput').addEventListener('input', function () { scheduleAutoSave(); });
 
   // ---------------- autosave ----------------
   var autoSaveTimer = null;
