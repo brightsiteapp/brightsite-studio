@@ -521,12 +521,12 @@
           <button type="button" class="sec-btn" data-section="media"><span class="sec-title"><span class="section-tick"></span>Media</span><span class="chev">&#8250;</span></button>
           <p class="builder-guidance" id="builderGuidance" hidden></p>
           <details class="notes-accordion" id="notesAccordion" style="margin-top:16px">
-            <summary class="notes-summary">Note for your developer<span class="chev">&#8250;</span></summary>
+            <summary class="notes-summary">Notes<span class="chev">&#8250;</span></summary>
             <div class="notes-body">
               <p class="info-hint">Tell us anything useful about your business, website, or what you'd like us to focus on.</p>
               <div class="acct-field" style="margin-top:10px">
                 <label for="developerNote">Your note</label>
-                <textarea id="developerNote" placeholder="For example: I'd like online bookings and a warm, premium look."></textarea>
+                <textarea id="developerNote" placeholder="e.g. We'd love to highlight our new treatment menu, and please use calming colours..."></textarea>
               </div>
             </div>
           </details>
@@ -2099,7 +2099,7 @@
     document.getElementById('fAddress').value = raw.address || '';
     reviewQuotes = Array.isArray(raw.reviewQuotes) ? raw.reviewQuotes.slice() : (raw.reviews ? [raw.reviews] : []);
     document.getElementById('fReviewLink').value = raw.reviewLink || '';
-    document.getElementById('developerNote').value = raw.developerNote || '';
+    document.getElementById('developerNote').value = raw.notes || '';
     hoursStructured = hoursFromRaw(raw);
     hoursEdited = raw.hoursEdited === true;
 
@@ -2670,7 +2670,7 @@
         heroImage: media.heroImage,
         gallery: media.gallery
       }, servicesToRaw(services));
-      raw.developerNote = document.getElementById('developerNote').value.trim();
+      raw.notes = document.getElementById('developerNote').value.trim();
       raw.bookingAddon = selectedAddons.booking;
       raw.storeAddon = selectedAddons.store;
       raw.chosenPlan = selectedPlan;
