@@ -55,9 +55,10 @@ export default async function handler(request, response) {
       return json(response, 403, { error: 'Administrator access required' });
     }
 
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || anonKey;
     const businesses = await fetch(
       `${supabaseUrl}/rest/v1/businesses?select=*&order=updated_at.desc`,
-      { headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` } }
+      { headers: { apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}` } }
     );
     if (!businesses.ok) {
       console.error('Admin businesses query failed', businesses.status);
