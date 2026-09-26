@@ -172,8 +172,8 @@ body { background: var(--bg); min-height: 100vh; }
 .action-btn.live:hover { background: var(--green-bg); }
 .approved-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 999px; font-size: 10px; font-weight: 800; background: #e6f6ec; color: #1f9d55; margin-left: 4px; }
 /* ---- settings btn ---- */
-.settings-btn { border: 1px solid var(--line); border-radius: 999px; background: none; padding: 6px 14px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--muted); }
-.settings-btn:hover { border-color: var(--muted); }
+.settings-btn { border: 1px solid var(--line); border-radius: 999px; background: none; padding: 7px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); font-size: 17px; line-height: 1; }
+.settings-btn:hover { border-color: var(--muted); color: var(--ink); }
 </style>
 </head>
 <body>
@@ -202,7 +202,7 @@ body { background: var(--bg); min-height: 100vh; }
     <div class="app-header-divider"></div>
     <span class="admin-badge">Admin</span>
     <div class="app-header-right">
-      <button type="button" class="settings-btn" id="settingsBtn">⚙ Settings</button>
+      <button type="button" class="settings-btn" id="settingsBtn" title="Settings">⚙</button>
       <button type="button" class="logout-btn" id="logoutBtn">Sign out</button>
     </div>
   </header>
