@@ -801,17 +801,14 @@
   var isAdminView = !!(params.get('bs_admin_slug') && adminSession && adminSession.admin);
   if (isAdminView) {
     document.addEventListener('DOMContentLoaded', function() {
-      var b = document.createElement('div');
-      b.style.cssText = 'position:sticky;top:0;left:0;right:0;z-index:999;background:#1d4ed8;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:7px 16px;font-size:12px;font-weight:700';
-      var nameSpan = document.createElement('span');
-      nameSpan.textContent = params.get('bs_admin_slug');
-      var link = document.createElement('a');
-      link.href = 'admin.html';
-      link.style.cssText = 'color:#93c5fd';
-      link.textContent = '← Back to admin';
-      b.appendChild(nameSpan);
-      b.appendChild(link);
-      document.body.prepend(b);
+      var right = document.querySelector('.app-header-right');
+      if (right) {
+        var link = document.createElement('a');
+        link.href = 'admin.html';
+        link.style.cssText = 'display:flex;align-items:center;gap:5px;color:#2563eb;font-size:12.5px;font-weight:700;text-decoration:none;white-space:nowrap';
+        link.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>Admin';
+        right.insertBefore(link, right.firstChild);
+      }
     });
   }
 
