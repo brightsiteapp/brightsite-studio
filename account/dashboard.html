@@ -611,7 +611,9 @@
         </div>
         <div class="msgs-input-bar">
           <textarea class="msgs-input" id="msgsInput" rows="1" placeholder="Message…"></textarea>
-          <button class="msgs-send" id="msgsSend" disabled><img src="../favicon.png" style="width:18px;height:18px;object-fit:contain;opacity:1;display:block" alt="Send"></button>
+          <button class="msgs-send" id="msgsSend" disabled>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 1L13 7M7 1L1 7M7 1V13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
         </div>
       </div>
 
@@ -3141,9 +3143,8 @@
           if (isMe) {
             senderLabel.textContent = 'Tom';
           } else {
-            var bname = (business && (business.data && business.data.raw && business.data.raw.name)) || (business && business.business_name) || '';
-            var initials = bname.split(/\s+/).filter(Boolean).slice(0,2).map(function(w){return w[0].toUpperCase();}).join('') || '?';
-            senderLabel.textContent = initials;
+            var bname = (business && business.data && business.data.raw && business.data.raw.name) || (business && business.business_name) || 'You';
+            senderLabel.textContent = bname;
           }
           row.appendChild(senderLabel);
           list.appendChild(row);
