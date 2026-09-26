@@ -106,7 +106,15 @@ body { background: var(--bg); min-height: 100vh; }
 .status-tag.red { background: var(--red-bg); color: var(--red); }
 .status-tag.stub { background: #f0f0f0; color: #777; }
 
-.row-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.row-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; flex-wrap: wrap; }
+@media(max-width:600px){
+  .app-header { padding: 10px 14px; gap: 8px; }
+  .header-stat { display: none; }
+  .account-row { flex-wrap: wrap; gap: 10px; }
+  .account-info { min-width: 0; width: 100%; }
+  .row-actions { width: 100%; }
+  .page-body { padding: 16px 14px; }
+}
 .action-btn { border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); font: inherit; font-size: 12px; font-weight: 600; padding: 6px 11px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
 .action-btn:hover { border-color: var(--accent); color: var(--accent); }
 .action-btn.danger:hover { border-color: var(--red); color: var(--red); }
