@@ -1002,14 +1002,15 @@
     var fEmail2 = document.getElementById('fEmail2');
     var fAddress = document.getElementById('fAddress');
     var fReviewLink = document.getElementById('fReviewLink');
+    var sdc = (typeof sectionDoneClicked !== 'undefined' && sectionDoneClicked) || {};
     var added = [
-      !!(fName && fName.value.trim()) || !!sectionDoneClicked.business,
-      !!(fPhone && fPhone.value.trim()) || !!(fEmail2 && fEmail2.value.trim()) || !!sectionDoneClicked.contact,
-      hoursEdited || !!sectionDoneClicked.hours,
-      !!(fAddress && fAddress.value.trim()) || !!sectionDoneClicked.address,
-      !!(services && services.some(function(g){return g.items.some(function(i){return i.name && i.name.trim()});})) || !!sectionDoneClicked.prices,
-      !!(reviewQuotes && reviewQuotes.some(function(q){return q.trim();})) || !!(fReviewLink && fReviewLink.value.trim()) || !!sectionDoneClicked.reviews,
-      !!(media && (media.logoImage || media.heroImage || (media.gallery && media.gallery.length > 0))) || !!(pendingUploads && (pendingUploads.logo || pendingUploads.hero || (pendingUploads.gallery && pendingUploads.gallery.length > 0))) || !!sectionDoneClicked.media
+      !!(fName && fName.value.trim()) || !!sdc.name,
+      !!(fPhone && fPhone.value.trim()) || !!(fEmail2 && fEmail2.value.trim()) || !!sdc.contact,
+      hoursEdited || !!sdc.hours,
+      !!(fAddress && fAddress.value.trim()) || !!sdc.address,
+      !!(services && services.some(function(g){return g.items.some(function(i){return i.name && i.name.trim()});})) || !!sdc.prices,
+      !!(reviewQuotes && reviewQuotes.some(function(q){return q.trim();})) || !!(fReviewLink && fReviewLink.value.trim()) || !!sdc.reviews,
+      !!(media && (media.logoImage || media.heroImage || (media.gallery && media.gallery.length > 0))) || !!(pendingUploads && (pendingUploads.logo || pendingUploads.hero || (pendingUploads.gallery && pendingUploads.gallery.length > 0))) || !!sdc.media
     ].filter(Boolean).length;
     var demoReady = hasUploadedDemo();
     var allDone = added >= 7;
@@ -2212,7 +2213,6 @@
     document.getElementById('builderGuidance').hidden = true;
     if (allDoneNow && !_prevAllDone) {
       sendStageEmail('all_details_complete');
-      renderBlueprint(currentRaw ? currentRaw() : (business || {}));
     }
     _prevAllDone = allDoneNow;
     // Update preview state button
