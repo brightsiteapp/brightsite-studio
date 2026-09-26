@@ -409,7 +409,7 @@
       <div id="viewPanel">
         <div class="info-card">
           <h2>Account</h2>
-          <div class="info-row"><span class="label">Plan</span><span class="value"><span class="plan-pill" id="planPill"><span class="plan-dot"></span><span id="planLabel">Essential £0</span></span></span></div>
+          <div class="info-row"><span class="label">Plan</span><span class="value"><span class="plan-pill" id="planPill"><span class="plan-dot"></span><span id="planLabel">Free</span></span></span></div>
           <div class="info-row"><span class="label">Login email</span><span class="value" id="acctEmailRow"></span></div>
           <div class="info-row"><span class="label">Website status</span><span class="value" id="statusRow">Not live yet</span></div>
           <div class="info-row" id="domainRow" hidden><span class="label">Domain</span><span class="value" id="domainRowValue" style="display:flex;align-items:center;gap:7px;max-width:none"></span></div>
@@ -439,12 +439,12 @@
               <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
             </div>
             <div class="plan-chosen-info">
-              <div class="plan-chosen-name" id="planChosenName">Essential</div>
-              <div class="plan-chosen-price" id="planChosenPrice">£0 setup · £19/mo hosting</div>
+              <div class="plan-chosen-name" id="planChosenName">Free</div>
+              <div class="plan-chosen-price" id="planChosenPrice">Free · £19/mo hosting</div>
             </div>
             <button type="button" class="plan-chosen-change" id="choosePlanBtn">Change plan</button>
           </div>
-          <p class="info-hint" id="billingHint">Your Essential plan is selected. Add features now; you'll manage billing once your account is active.</p>
+          <p class="info-hint" id="billingHint">Your Free plan is selected. Add features now; you'll manage billing once your account is active.</p>
           <button type="button" class="upgrade-btn" id="upgradeBtn">Pay for your site</button>
           <button type="button" class="billing-btn" id="billingBtn" hidden>Manage billing</button>
           <div id="stripeEmbedWrap" hidden style="margin-top:14px;border:1px solid var(--line);border-radius:14px;overflow:hidden">
@@ -456,9 +456,6 @@
           </div>
         </div>
 
-        <div class="req-btn-wrap">
-          <button type="button" class="req-btn" id="requestBtn">Request an update</button>
-        </div>
       </div>
 
       <!-- ---------------- edit mode ---------------- -->
@@ -563,6 +560,18 @@
 
       </div>
 
+      <div id="builderActions" style="padding:0 0 16px">
+        <div class="req-btn-wrap">
+          <button type="button" class="req-btn" id="requestBtn">Request an update</button>
+        </div>
+        <div style="margin-top:10px">
+          <a href="https://wa.me/447535928879" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:44px;border-radius:999px;background:#25D366;color:#fff;font:inherit;font-size:13px;font-weight:700;text-decoration:none">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            Contact Tom
+          </a>
+        </div>
+      </div>
+
     </div>
 
     <div class="save-bar" id="saveBar" hidden>
@@ -635,20 +644,17 @@
     </div>
     <div class="plan-cards-grid" id="planCardsGrid">
 
-      <!-- Essential -->
+      <!-- Free -->
       <div class="plan-choice-card" data-plan="essential" id="planCardEssential">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px">
-          <div class="plan-choice-name">Essential</div>
-          <span style="font-size:10px;font-weight:800;letter-spacing:.06em;color:#b45309;background:#fef3c7;padding:3px 8px;border-radius:999px;white-space:nowrap">Limited time</span>
-        </div>
-        <div class="plan-choice-desc">Your website live in days — setup fee waived for early customers.</div>
+        <div class="plan-choice-name">Free</div>
+        <div class="plan-choice-desc">Your website built for free — just pay £19/mo hosting to go live.</div>
         <div class="plan-choice-price-row">
-          <span style="font-size:13px;color:#999;text-decoration:line-through;margin-right:2px">£49</span><span class="plan-choice-setup" data-monthly="£0" data-annual="£0">£0</span>
-          <span class="plan-choice-hosting" data-monthly="+ £19/mo" data-annual="+ £17/mo">+ £17/mo</span>
+          <span class="plan-choice-setup" data-monthly="Free" data-annual="Free">Free</span>
+          <span class="plan-choice-hosting" data-monthly="£19/mo hosting" data-annual="£19/mo hosting">£19/mo hosting</span>
         </div>
-        <div class="plan-choice-note" data-monthly="No setup fee — cancel any time" data-annual="Billed £204/yr — cancel any time">Billed £204/yr — cancel any time</div>
+        <div class="plan-choice-note" data-monthly="£19/mo hosting — cancel any time" data-annual="£19/mo hosting — cancel any time">£19/mo hosting — cancel any time</div>
         <ul class="plan-choice-features">
-          <li>Setup fee waived — limited time</li>
+          <li>Website built for you at no cost</li>
           <li>Hosting, security &amp; maintenance</li>
           <li>SEO &amp; SEO-focused content</li>
           <li>Mobile optimisation</li>
@@ -668,7 +674,7 @@
           <span class="plan-addon-price">+£19/mo</span>
         </label>
         <hr class="plan-divider">
-        <button type="button" class="plan-select-btn" data-select="essential">Select Essential</button>
+        <button type="button" class="plan-select-btn" data-select="essential">Select Free</button>
       </div>
 
       <!-- Pro -->
@@ -683,7 +689,7 @@
         </div>
         <div class="plan-choice-note" data-monthly="One-off build, then £19/mo" data-annual="One-off build, then £228/yr">One-off build, then £228/yr</div>
         <ul class="plan-choice-features">
-          <li>Everything in Essential</li>
+          <li>Everything in Free</li>
           <li>Up to 5 custom-designed pages</li>
           <li>Custom sections built for you</li>
           <li>Interactions &amp; animations</li>
@@ -2087,9 +2093,9 @@
 
   var PLAN_CONFIG = {
     essential: {
-      label: 'Essential',
-      monthly: { setup: '£0', hosting: '£19/mo', note: 'No setup fee' },
-      annual:  { setup: '£0', hosting: '£17/mo', note: 'No setup fee' },
+      label: 'Free',
+      monthly: { setup: 'Free', hosting: '£19/mo hosting', note: '£19/mo hosting — cancel any time' },
+      annual:  { setup: 'Free', hosting: '£19/mo hosting', note: '£19/mo hosting — cancel any time' },
       stripeMonthly: 'https://buy.stripe.com/14A14n87jcE4dfJbxX3gk00',
       stripeAnnual:  'https://buy.stripe.com/bJecN55ZbbA00sX6dD3gk02',
       iconColor: '#2563eb'
@@ -2117,6 +2123,7 @@
     var tier = selectedAnnual ? cfg.annual : cfg.monthly;
     var addonCount = (selectedAddons.booking ? 1 : 0) + (selectedAddons.store ? 1 : 0);
     var addonText = addonCount ? (' + ' + addonCount + ' add-on' + (addonCount > 1 ? 's' : '')) : '';
+    if (selectedPlan === 'essential') return tier.setup + ' · ' + tier.hosting + addonText;
     return tier.setup + ' setup · ' + tier.hosting + addonText;
   }
 
