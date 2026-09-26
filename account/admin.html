@@ -51,8 +51,7 @@ body { background: var(--bg); min-height: 100vh; }
 .app-header-divider { width: 1px; height: 18px; background: var(--line); }
 .admin-badge { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); background: rgba(37,99,235,.1); padding: 3px 9px; border-radius: 999px; }
 .app-header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
-.header-stat { font-size: 12px; color: var(--muted); }
-.header-stat b { color: var(--ink); font-weight: 700; }
+
 .logout-btn { border: 1px solid var(--line); border-radius: 999px; background: none; padding: 6px 14px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--ink); }
 .logout-btn:hover { border-color: var(--muted); }
 
@@ -109,7 +108,6 @@ body { background: var(--bg); min-height: 100vh; }
 .row-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; flex-wrap: wrap; }
 @media(max-width:600px){
   .app-header { padding: 10px 14px; gap: 8px; }
-  .header-stat { display: none; }
   .account-row { flex-wrap: wrap; gap: 10px; }
   .account-info { min-width: 0; width: 100%; }
   .row-actions { width: 100%; }
@@ -199,7 +197,6 @@ body { background: var(--bg); min-height: 100vh; }
     <div class="app-header-divider"></div>
     <span class="admin-badge">Admin</span>
     <div class="app-header-right">
-      <span class="header-stat" id="headerStats"></span>
       <button type="button" class="settings-btn" id="settingsBtn">⚙ Settings</button>
       <button type="button" class="logout-btn" id="logoutBtn">Sign out</button>
     </div>
@@ -462,7 +459,7 @@ function renderBusinesses(businesses, emails) {
   document.getElementById('cRed').textContent = counts.red;
   document.getElementById('cYellow').textContent = counts.yellow;
   document.getElementById('cGreen').textContent = counts.green;
-  document.getElementById('headerStats').innerHTML = '<b>' + counts.all + '</b> total &nbsp;·&nbsp; <b>' + counts.red + '</b> to build &nbsp;·&nbsp; <b>' + counts.green + '</b> live';
+
 
   allBusinesses = sorted;
   applyFilter();
