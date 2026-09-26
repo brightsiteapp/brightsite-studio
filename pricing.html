@@ -123,8 +123,6 @@
             <li>SEO &amp; SEO-focused content</li>
             <li>Mobile optimisation</li>
             <li>1–3 pages with contact &amp; enquiry forms</li>
-            <li class="addon">+ Booking form add-on for +£19/mo</li>
-            <li class="addon">+ Online store add-on for +£19/mo</li>
           </ul>
           <a href="/account/login.html?signup=1" class="go">Sign up</a>
         </div>
@@ -133,16 +131,14 @@
           <h4>Pro</h4>
           <div class="desc"><b>Best for:</b> businesses that need a website with lots of info.</div>
           <div class="price-row">
-            <span class="price"><span class="price-was">£199</span><span class="setup-price">£99</span><small class="hosting-price">+ £228/yr</small><span class="price-save">Save 50%</span></span>
+            <span class="price"><span class="price-was">£199</span><span class="setup-price">£99</span><small class="hosting-price" id="pro-hosting-price">£19/mo hosting</small><span class="price-save">Save 50%</span></span>
           </div>
-          <div class="price-note">One-off build, then hosting &amp; management</div>
+          <div class="price-note" id="pro-price-note">One-off build, then £228/yr</div>
           <ul>
             <li>Everything in Free</li>
             <li>Up to 5 custom-designed pages</li>
             <li>Custom sections built for you</li>
             <li>Interactions &amp; animations</li>
-            <li class="addon">+ Booking form add-on for +£19/mo</li>
-            <li class="addon">+ Online store add-on for +£19/mo</li>
           </ul>
           <a href="/account/login.html?signup=1" class="go">Sign up</a>
         </div>
@@ -151,21 +147,19 @@
           <h4>Prestige</h4>
           <div class="desc"><b>Best for:</b> corporate needs and multi-location brands.</div>
           <div class="price-row">
-            <span class="price"><span class="price-was">£299</span><span class="setup-price">£149</span><small class="hosting-price">+ £228/yr</small><span class="price-save">Save 50%</span></span>
+            <span class="price"><span class="price-was">£299</span><span class="setup-price">£149</span><small class="hosting-price" id="prestige-hosting-price">£19/mo hosting</small><span class="price-save">Save 50%</span></span>
           </div>
-          <div class="price-note">One-off build, then hosting &amp; management</div>
+          <div class="price-note" id="prestige-price-note">One-off build, then £228/yr</div>
           <ul>
             <li>Everything in Free &amp; Pro</li>
             <li>Up to 7 custom-designed pages</li>
             <li>Multi-location or multi-service structure</li>
             <li>Priority same-day support</li>
-            <li class="addon">+ Booking form add-on for +£19/mo</li>
-            <li class="addon">+ Online store add-on for +£19/mo</li>
           </ul>
           <a href="/account/login.html?signup=1" class="go">Sign up</a>
         </div>
       </div>
-      <p class="pricing-note">See a free personalised preview before you commit. Hosting covers security, updates and ongoing management on every plan. A booking form or online store can be added to any plan for £19/mo each. Cancel any time.</p>
+      <p class="pricing-note">See a free personalised preview before you commit. Hosting covers security, updates and ongoing management on every plan. Cancel any time.</p>
     </div>
   </section>
 
@@ -207,11 +201,15 @@
       if (isAnnual) {
         setupPrice.textContent = '£' + plan.dataset.setupAnnual;
         if (priceWas) priceWas.textContent = '£' + plan.dataset.setupMonthly;
-        hostingPrice.textContent = '+ £228/yr';
+        hostingPrice.textContent = '£19/mo hosting';
+        var note = plan.querySelector('.price-note');
+        if (note) note.textContent = 'One-off build, then £228/yr';
         plan.setAttribute('data-annual-active', '');
       } else {
         setupPrice.textContent = '£' + plan.dataset.setupMonthly;
         hostingPrice.textContent = '+ £19/mo';
+        var note = plan.querySelector('.price-note');
+        if (note) note.textContent = 'One-off build, then £19/mo';
         plan.removeAttribute('data-annual-active');
       }
     });
