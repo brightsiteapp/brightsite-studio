@@ -642,12 +642,15 @@
       <!-- ---------------- messages panel ---------------- -->
       <div id="msgsPanel" hidden style="display:none;flex-direction:column;flex:1;min-height:0">
         <div style="padding:16px 18px 10px;border-bottom:1px solid var(--line);flex:none;position:sticky;top:0;background:var(--bg);z-index:1"><h2 style="margin:0;font-size:16px;font-weight:700">Messages</h2></div>
-        <div class="msgs-list" id="msgsList">
-          <div class="msgs-empty" id="msgsEmpty" style="display:flex;flex-direction:column;gap:6px;text-align:center;padding:24px">
-            <span id="msgsWelcome" style="font-size:15px;font-weight:700;color:var(--ink)">Hey!</span>
-            <span style="font-size:13px;color:var(--muted)">Send a message to get started.</span>
+        <div style="position:relative;flex:1 1 0%;min-height:0;overflow:hidden">
+          <div class="msgs-list" id="msgsList" style="position:absolute;inset:0;overflow:hidden">
+            <div class="msgs-empty" id="msgsEmpty" style="display:flex;flex-direction:column;gap:6px;text-align:center;padding:24px">
+              <span id="msgsWelcome" style="font-size:15px;font-weight:700;color:var(--ink)">Hey!</span>
+              <span style="font-size:13px;color:var(--muted)">Send a message to get started.</span>
+            </div>
+            <div id="msgsError" hidden style="margin:16px;padding:10px 14px;border-radius:10px;background:#fde8e8;color:#b23b2c;font-size:12.5px;font-weight:600;text-align:center"></div>
           </div>
-          <div id="msgsError" hidden style="margin:16px;padding:10px 14px;border-radius:10px;background:#fde8e8;color:#b23b2c;font-size:12.5px;font-weight:600;text-align:center"></div>
+          <div id="msgsScrollBar" style="position:absolute;right:3px;top:0;width:3px;background:rgba(0,0,0,.25);border-radius:3px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:2"></div>
         </div>
         <div class="msgs-edit-bar" id="msgsEditBar">
           <input type="text" id="msgsEditInput" placeholder="Edit message…">
@@ -1491,22 +1494,13 @@
     root.style.setProperty('--msgs-panel-top', panelTop + 'px');
     root.style.setProperty('--msgs-panel-height', panelH + 'px');
     var ml = document.getElementById('msgsList');
-    if (ml && mp) {
-      // measure heading and input bar, give remainder to list
-      var msgsHeading = mp.firstElementChild;
-      var msgsInput = mp.querySelector('.msgs-input-bar');
-      var msgsEditBar = document.getElementById('msgsEditBar');
-      var headingH = msgsHeading ? msgsHeading.offsetHeight : 48;
-      var inputH = msgsInput ? msgsInput.offsetHeight : 60;
-      var editH = (msgsEditBar && !msgsEditBar.hidden) ? msgsEditBar.offsetHeight : 0;
-      var listH = panelH - headingH - inputH - editH;
-      ml.style.height = listH + 'px';
-      ml.style.overflowY = 'scroll';
-      ml.style.webkitOverflowScrolling = 'touch';
-      ml.style.flex = 'none';
-    }
-    // iOS Safari: block touchmove on body, allow only within #msgsList
+    // Custom scroll: block all page touchmove, drive msgsList scrollTop manually
     document.addEventListener('touchmove', _msgsTouchBlock, {passive:false, capture:false});
+    if (ml) {
+      ml.addEventListener('touchstart', _msgsListTouchStart, {passive:true});
+      ml.addEventListener('touchmove', _msgsListTouchMove, {passive:false});
+      ml.addEventListener('touchend', _msgsListTouchEnd, {passive:true});
+    }
     var bname = (business && business.data && business.data.raw && business.data.raw.name) || (business && business.business_name) || '';
     var welcomeEl = document.getElementById('msgsWelcome');
     if (welcomeEl) welcomeEl.textContent = bname ? 'Hey ' + bname + '!' : 'Hey!';
@@ -1514,20 +1508,46 @@
   }
   function _msgsTouchBlock(e) {
     if (!document.body.classList.contains('msgs-active')) return;
-    var el = e.target;
-    while (el && el !== document.body) {
-      if (el.id === 'msgsList') return;
-      el = el.parentElement;
-    }
     e.preventDefault();
+  }
+  var _msgsTouch = null;
+  function _msgsListTouchStart(e) {
+    _msgsTouch = {y: e.touches[0].clientY, top: this.scrollTop};
+  }
+  function _msgsListTouchMove(e) {
+    if (!_msgsTouch) return;
+    e.stopPropagation();
+    var dy = e.touches[0].clientY - _msgsTouch.y;
+    this.scrollTop = _msgsTouch.top - dy;
+    _msgsUpdateBar(this);
+  }
+  function _msgsListTouchEnd() { _msgsTouch = null; }
+  function _msgsUpdateBar(ml) {
+    var bar = document.getElementById('msgsScrollBar');
+    if (!bar || ml.scrollHeight <= ml.clientHeight) { if (bar) bar.style.opacity='0'; return; }
+    var ratio = ml.clientHeight / ml.scrollHeight;
+    var trackH = ml.clientHeight;
+    var thumbH = Math.max(30, ratio * trackH);
+    var thumbTop = (ml.scrollTop / (ml.scrollHeight - ml.clientHeight)) * (trackH - thumbH);
+    bar.style.height = thumbH + 'px';
+    bar.style.top = thumbTop + 'px';
+    bar.style.opacity = '1';
+    clearTimeout(bar._hide);
+    bar._hide = setTimeout(function(){ bar.style.opacity='0'; }, 1200);
   }
   function hideMessagesPanel() {
     document.removeEventListener('touchmove', _msgsTouchBlock, false);
+    var ml = document.getElementById('msgsList');
+    if (ml) {
+      ml.removeEventListener('touchstart', _msgsListTouchStart);
+      ml.removeEventListener('touchmove', _msgsListTouchMove);
+      ml.removeEventListener('touchend', _msgsListTouchEnd);
+    }
     document.body.classList.remove('msgs-active');
     var mp = document.getElementById('msgsPanel');
     if (mp) { mp.hidden = true; mp.style.display = 'none'; }
     var ml = document.getElementById('msgsList');
-    if (ml) { ml.style.height = ''; ml.style.overflowY = ''; ml.style.flex = ''; }
+    if (ml) { ml.style.height = ''; ml.style.overflowY = ''; ml.style.flex = ''; ml.scrollTop = 0; }
     msgsStopPolling();
   }
   document.getElementById('mobileAccountTab').addEventListener('click', function () {
