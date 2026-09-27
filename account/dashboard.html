@@ -3477,48 +3477,10 @@
 
   if (upgradeBtn) {
     upgradeBtn.addEventListener('click', function () {
-      var plan = upgradeBtn.dataset.plan || 'essential';
-      var billing = upgradeBtn.dataset.billing || 'monthly';
-      if (!plan || !billing) return;
-
-      // On mobile, redirect to hosted Stripe checkout (embedded checkout has iframe issues on mobile Safari)
-      if (window.innerWidth <= 860) {
-        var hostedUrl = upgradeBtn.dataset.stripeUrl;
-        if (hostedUrl) { window.location.href = hostedUrl + '?prefilled_email=' + encodeURIComponent(getSessionEmail()); return; }
+      var hostedUrl = upgradeBtn.dataset.stripeUrl;
+      if (hostedUrl) {
+        window.location.href = hostedUrl + '?prefilled_email=' + encodeURIComponent(getSessionEmail());
       }
-
-      upgradeBtn.disabled = true;
-      upgradeBtn.textContent = 'Loading…';
-
-      var domainCheck = document.getElementById('planDomainAddonCheck');
-      var addDomain = pendingDomain && domainCheck && domainCheck.checked ? pendingDomain : null;
-      fetch('https://api.brightsite.app/api/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: plan, billing: billing, email: getSessionEmail(), slug: getSlug(), domain: addDomain || undefined })
-      })
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-          if (!data.clientSecret) throw new Error(data.error || 'No client secret');
-          var stripe = Stripe(PUBLISHABLE_KEY);
-          return stripe.initEmbeddedCheckout({ clientSecret: data.clientSecret });
-        })
-        .then(function (co) {
-          checkout = co;
-          embedMount.innerHTML = '';
-          co.mount(embedMount);
-          embedWrap.hidden = false;
-          embedWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          upgradeBtn.hidden = true;
-          upgradeBtn.disabled = false;
-          upgradeBtn.textContent = 'Pay for your site';
-        })
-        .catch(function (err) {
-          console.error(err);
-          upgradeBtn.disabled = false;
-          upgradeBtn.textContent = 'Pay for your site';
-          alert('Could not load checkout. Please try again.');
-        });
     });
   }
 
