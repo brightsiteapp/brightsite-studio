@@ -401,13 +401,12 @@
     .mobile-edit-menu button:hover{background:var(--surface)}
     .app-body{grid-template-columns:1fr;position:relative}
     .left-panel,.right-panel{position:absolute;inset:0;width:100%;border-right:0;padding-bottom:env(safe-area-inset-bottom)}
-    .left-panel{z-index:5;overflow-y:auto;overscroll-behavior-y:contain;display:block}
-    .left-inner{flex:none;min-height:100%}
-    body.mode-view .left-panel,body.mode-edit .left-panel{display:flex}
+    .left-panel{z-index:5;overflow-y:auto;overscroll-behavior-y:contain;display:block !important}
+    .left-inner{display:block;flex:none;min-height:100%}
     body.mode-view .right-panel{display:none}
     body.mode-edit .right-panel{display:none}
-    body.mobile-show-site .left-panel{display:none}
-    body.mobile-show-site .right-panel{display:flex}
+    body.mobile-show-site .left-panel{display:none !important}
+    body.mobile-show-site .right-panel{display:flex !important}
     .preview-frame-wrap{padding:8px}
     #sitePreview{border-radius:12px}
     .preview-device-toggle{display:none}
