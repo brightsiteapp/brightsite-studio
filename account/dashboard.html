@@ -1681,6 +1681,7 @@
     var domainAddonCheck = document.getElementById('planDomainAddonCheck');
     if (domainAddonCheck) {
       domainAddonCheck.addEventListener('change', function() {
+        if (typeof _exposeDomain === 'function') _exposeDomain();
         if (business && business.data && business.data.raw) saveBusiness();
       });
     }
@@ -1804,6 +1805,7 @@
         // populate the search input so it looks correct
         var inp = document.getElementById('domainSearchInput');
         if (inp) inp.value = raw.chosenDomain.replace(/\.[^.]+(\.[^.]+)?$/, '');
+        if (typeof _exposeDomain === 'function') _exposeDomain();
         if (window._bsUpdateDomainAddon) window._bsUpdateDomainAddon();
       }
       renderPlanUI();
@@ -1884,6 +1886,11 @@
   var pendingDomainPrice = null;
   var pendingDomainPence = null;
   var pendingDomainTld = null;
+  // expose for Stripe block (separate script scope)
+  function _exposeDomain() {
+    var check = document.getElementById('planDomainAddonCheck');
+    window._bsPendingDomain = (pendingDomain && check && check.checked) ? pendingDomain : null;
+  }
   var domainTldBtn = document.getElementById('domainTldBtn');
   var domainTldPicker = document.getElementById('domainTldPicker');
   var domainTldPickerOpen = false;
@@ -1939,13 +1946,15 @@
             + '<span style="font-size:18px">✓</span>'
             + '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14px;color:var(--ink)">' + fullDomain + '</div>'
             + '<div style="font-size:12px;color:#1f9d55;margin-top:1px">' + subline + '</div></div>'
-            + '<button type="button" onclick="pendingDomain=null;pendingDomainPrice=null;pendingDomainPence=null;pendingDomainTld=null;document.getElementById(\'domainResult\').hidden=true;document.getElementById(\'domainSearchInput\').value=\'\';if(window._bsUpdateDomainAddon)window._bsUpdateDomainAddon();" style="font:inherit;font-size:12px;font-weight:600;color:var(--muted);background:none;border:0;cursor:pointer;padding:0;white-space:nowrap">Change</button>'
+            + '<button type="button" onclick="pendingDomain=null;pendingDomainPrice=null;pendingDomainPence=null;pendingDomainTld=null;window._bsPendingDomain=null;document.getElementById(\'domainResult\').hidden=true;document.getElementById(\'domainSearchInput\').value=\'\';if(window._bsUpdateDomainAddon)window._bsUpdateDomainAddon();" style="font:inherit;font-size:12px;font-weight:600;color:var(--muted);background:none;border:0;cursor:pointer;padding:0;white-space:nowrap">Change</button>'
             + '</div>';
         }
         renderDomainResult();
+        _exposeDomain();
         if (window._bsUpdateDomainAddon) window._bsUpdateDomainAddon();
       } else {
         pendingDomain = null; pendingDomainPrice = null; pendingDomainPence = null; pendingDomainTld = null;
+        _exposeDomain();
         resultEl.innerHTML = '<p style="margin:0;font-size:13px;color:var(--muted)">That domain isn\'t available. Try a different name or extension.</p>';
       }
     } catch(e) {
@@ -2783,15 +2792,13 @@
       var billing = upgradeBtn.dataset.billing || 'annual';
       var email = getSessionEmail();
       var slug = getSlug();
-      var domain = (typeof pendingDomain !== 'undefined' && pendingDomain) || '';
-      var domainCheck = document.getElementById('planDomainAddonCheck');
-      var includeDomain = domain && domainCheck && domainCheck.checked;
+      var includeDomain = window._bsPendingDomain || '';
 
       var url = '/checkout.html?plan=' + encodeURIComponent(plan)
         + '&billing=' + encodeURIComponent(billing)
         + '&email=' + encodeURIComponent(email)
         + '&slug=' + encodeURIComponent(slug);
-      if (includeDomain) url += '&addon_domain=' + encodeURIComponent(domain);
+      if (includeDomain) url += '&addon_domain=' + encodeURIComponent(includeDomain);
 
       window.location.href = url;
     });
