@@ -420,6 +420,12 @@
     .blueprint-site{border-radius:12px}.blueprint-inner{padding:22px}.blueprint-top{align-items:flex-start}.blueprint-nav{gap:10px;justify-content:flex-end}.blueprint-hero{min-height:430px;padding:18px}.blueprint-hero-copy{padding:18px}.blueprint-illustration{min-height:190px}.blueprint-services,.blueprint-contact-grid{grid-template-columns:1fr}.blueprint-gallery{grid-template-columns:1fr}.loading-grid{grid-template-columns:1fr}.loading-grid .blueprint-site{height:380px}.loading-steps{padding:16px}
   }
   @media(max-width:860px){
+  /* website section buttons: 2-col grid so all 8 fit without scrolling */
+  #builderList{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  #builderList .builder-head{grid-column:1/-1;margin-bottom:0}
+  #builderList .builder-guidance{grid-column:1/-1}
+  #builderList .sec-btn{margin-bottom:0;flex-direction:column;align-items:flex-start;gap:6px;padding:12px 14px}
+  #builderList .sec-btn .chev{display:none}
   /* domain card collapsed by default on mobile — tap opens overlay */
   #domainCard{cursor:pointer}
   #domainCard h2{display:flex;align-items:center;justify-content:space-between;margin-bottom:0}
