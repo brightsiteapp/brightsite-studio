@@ -77,7 +77,7 @@ body.v2 {
 /* ---------- main + page headers ---------- */
 .v2-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .v2-view { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 18px; padding: 26px 28px 24px; }
-.v2-page-head { display: flex; align-items: center; gap: 18px; }
+.v2-page-head { flex-shrink: 0; display: flex; align-items: center; gap: 18px; }
 .v2-page-title h1 { margin: 0; font-size: 30px; font-weight: 750; letter-spacing: -0.025em; color: var(--v2-title); }
 .v2-summary { margin: 4px 0 0; font-size: 14px; color: #475467; }
 .v2-add { position: relative; flex: 1; max-width: 640px; margin-left: auto; }
@@ -654,7 +654,7 @@ body.v2 .notice-strip {
 
 /* ---------- tasks ---------- */
 .v2-task-add {
-  display: grid; grid-template-columns: minmax(0, 1fr) 210px 150px 120px auto; gap: 8px; padding: 10px;
+  flex-shrink: 0; display: grid; grid-template-columns: minmax(0, 1fr) 210px 150px 120px auto; gap: 8px; padding: 10px;
   background: #fff; border: 1px solid #e8ecf2; border-radius: 16px; box-shadow: var(--v2-shadow);
 }
 .v2-task-add input, .v2-task-add select {
@@ -691,7 +691,7 @@ body.v2 .notice-strip {
 .v2-empty-big { margin: 0; padding: 26px 18px; font-size: 13px; text-align: center; }
 
 /* ---------- accounts ---------- */
-.v2-account-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.v2-account-filters { flex-shrink: 0; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
 .v2-account-filter {
   display: flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid #e8ecf2; border-radius: 999px;
   background: #fff; color: var(--muted); font: 600 12.5px inherit; cursor: pointer; transition: all 0.15s;
@@ -699,6 +699,7 @@ body.v2 .notice-strip {
 .v2-account-filter:hover { border-color: var(--accent); color: var(--ink); }
 .v2-account-filter.is-active { background: var(--accent); border-color: var(--accent); color: #fff; }
 .v2-account-filter.is-active .v2-account-count { background: rgba(255, 255, 255, 0.25); color: #fff; }
+#v2Accounts { flex: 1; min-height: 0; overflow-y: auto; }
 .v2-account-group { margin-bottom: 20px; }
 .v2-account-group h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px 2px; font-size: 12.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.02em; }
 .v2-account-count { padding: 1px 7px; border-radius: 999px; background: #f2f4f7; color: #475467; font-size: 11px; font-weight: 700; }
