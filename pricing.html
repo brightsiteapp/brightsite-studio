@@ -32,8 +32,9 @@
   footer{padding:20px 24px!important}
 
   /* All cards same width + blue outline */
-  #pricing .plans{align-items:stretch}
-  #pricing .plan{border-color:var(--accent);position:relative}
+  #pricing .plans{display:grid;grid-template-columns:repeat(3,1fr);align-items:stretch}
+  #pricing .plan{border-color:var(--accent);position:relative;box-sizing:border-box;width:100%}
+  @media(max-width:900px){#pricing .plans{grid-template-columns:1fr}}
 
   /* Toggle: absolute top-right so h4 never wraps */
   .plan-header{margin-bottom:6px}
