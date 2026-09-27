@@ -39,7 +39,7 @@
 
   /* Toggle: flex row with h4 so they never overlap */
   .plan-header{margin-bottom:6px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-  .plan-header h4{margin:0;flex-shrink:0}
+  .plan-header h4{margin:0;min-width:0}
   .card-billing{position:static;display:flex;align-items:stretch;gap:0;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;flex-shrink:0;margin-top:4px}
   .card-billing button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:11px;font-weight:700;padding:6px 10px;cursor:pointer;line-height:1.2;transition:background .15s,color .15s;white-space:nowrap;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
   .card-billing button.active{background:var(--accent);color:#fff}
@@ -119,7 +119,7 @@
         <!-- Free Plan -->
         <div class="plan feature" data-setup-monthly="0" data-setup-annual="0" data-essential>
           <div class="plan-header">
-            <h4>Free&nbsp;Plan</h4>
+            <h4>Free Plan</h4>
             <div class="card-billing">
               <button type="button" class="card-bill-monthly">Monthly</button>
               <button type="button" class="card-bill-annual active">Annual <span class="card-save-badge">Save £24</span></button>
