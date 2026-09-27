@@ -398,6 +398,76 @@
   #builderList{display:flex;flex-direction:column;gap:8px}
   #builderList .sec-btn{margin-bottom:0;height:56px;padding:12px 14px;overflow:hidden}
 
+  /* preview placeholder — desktop panel + mobile card */
+  .preview-placeholder{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    background:#0f0f1a;
+    color:#fff;
+    text-align:center;
+    padding:40px 32px;
+    position:relative;
+    overflow:hidden;
+  }
+  .preview-placeholder::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:radial-gradient(ellipse 70% 55% at 50% 50%, rgba(99,102,241,.22) 0%, transparent 70%);
+    animation:glowPulse 3.5s ease-in-out infinite;
+    pointer-events:none;
+  }
+  @keyframes glowPulse{
+    0%,100%{opacity:.6;transform:scale(1)}
+    50%{opacity:1;transform:scale(1.08)}
+  }
+  .preview-placeholder-biz{
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:rgba(255,255,255,.45);
+    margin-bottom:14px;
+    position:relative;
+  }
+  .preview-placeholder-title{
+    font-family:var(--display);
+    font-size:30px;
+    font-weight:800;
+    line-height:1.18;
+    margin-bottom:14px;
+    background:linear-gradient(135deg,#e88fff 0%,#ff8a65 55%,#ffb347 100%);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+    position:relative;
+    animation:titleGlow 3.5s ease-in-out infinite;
+  }
+  @keyframes titleGlow{
+    0%,100%{filter:drop-shadow(0 0 8px rgba(232,143,255,.35))}
+    50%{filter:drop-shadow(0 0 22px rgba(232,143,255,.75))}
+  }
+  .preview-placeholder-sub{
+    font-size:13px;
+    color:rgba(255,255,255,.45);
+    max-width:220px;
+    line-height:1.6;
+    position:relative;
+  }
+  /* mobile card: shown inline below cards, hidden on desktop */
+  .mobile-preview-card{
+    border-radius:18px;
+    flex:none;
+    min-height:200px;
+    margin-top:8px;
+  }
+  @media(min-width:800px){
+    .mobile-preview-card{display:none;}
+  }
+
 </style>
 
 <body>
@@ -550,6 +620,13 @@
         <button type="button" class="sec-btn" data-section="notes"><span class="sec-title">Notes</span><span class="chev">›</span></button>
       </div>
 
+      <!-- mobile preview card (hidden on desktop) -->
+      <div class="preview-placeholder mobile-preview-card" id="mobilePreviewCard">
+        <div class="preview-placeholder-biz" id="mobilePreviewBizName">Your business</div>
+        <div class="preview-placeholder-title">Fill in your<br>details</div>
+        <div class="preview-placeholder-sub">Complete all sections — add info until all ticks are green</div>
+      </div>
+
       <!-- section detail panels (only one shown at a time) -->
       <div class="builder-section" data-section-panel="name" hidden>
         <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button></div>
@@ -669,10 +746,10 @@
     <span class="desk-preview-status" id="deskPreviewStatus">Not live</span>
     <a class="desk-preview-link" id="deskPreviewLink" href="#" target="_blank" hidden>View live site ↗</a>
   </div>
-  <div id="deskPreviewPlaceholder" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1a1a2e;color:#fff;text-align:center;padding:40px">
-    <div style="font-size:13px;font-weight:600;opacity:.5;letter-spacing:.08em;text-transform:uppercase;margin-bottom:16px" id="deskPreviewBizName">Your business</div>
-    <div style="font-size:32px;font-weight:800;margin-bottom:12px;line-height:1.2">Your website<br>preview will<br>appear here</div>
-    <div style="font-size:14px;opacity:.55;max-width:260px;line-height:1.6">Fill in your website details on the left — once they're complete we'll design your preview.</div>
+  <div id="deskPreviewPlaceholder" class="preview-placeholder">
+    <div class="preview-placeholder-biz" id="deskPreviewBizName">Your business</div>
+    <div class="preview-placeholder-title">Fill in your<br>details</div>
+    <div class="preview-placeholder-sub">Complete all sections — add info until all ticks are green</div>
   </div>
   <iframe id="deskPreviewFrame" src="about:blank" title="Website preview" style="display:none;flex:1;border:0;width:100%"></iframe>
 </div>
@@ -1095,7 +1172,10 @@
     var deskBizName = document.getElementById('deskPreviewBizName');
     if (deskStatus) { deskStatus.textContent = isLive ? '● Live' : '● Not live'; deskStatus.style.color = isLive ? '#1f9d55' : '#b45309'; }
     if (deskLink) { deskLink.hidden = !liveUrl; if (liveUrl) deskLink.href = liveUrl; }
-    if (deskBizName) deskBizName.textContent = (raw.name || business.name || '').toUpperCase();
+    var bizLabel = (raw.name || business.name || '').toUpperCase();
+    if (deskBizName) deskBizName.textContent = bizLabel;
+    var mobileBizName = document.getElementById('mobilePreviewBizName');
+    if (mobileBizName) mobileBizName.textContent = bizLabel;
     if (liveUrl && deskFrame) {
       if (deskPlaceholder) deskPlaceholder.style.display = 'none';
       deskFrame.style.display = 'block';
@@ -1869,6 +1949,8 @@
   function openSection(id) {
     activeSection = id;
     document.getElementById('builderList').hidden = !!id;
+    var mpc = document.getElementById('mobilePreviewCard');
+    if (mpc) mpc.hidden = !!id;
     document.querySelectorAll('.builder-section').forEach(function(el) {
       el.hidden = el.dataset.sectionPanel !== id;
     });
