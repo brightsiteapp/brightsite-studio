@@ -2326,6 +2326,8 @@
     upgradeBtn.hidden = false;
     upgradeBtn.dataset.plan = selectedPlan;
     upgradeBtn.dataset.billing = selectedAnnual ? 'annual' : 'monthly';
+    var _cfg = PLAN_CONFIG[selectedPlan] || {};
+    upgradeBtn.dataset.stripeUrl = selectedAnnual ? (_cfg.stripeAnnual || '') : (_cfg.stripeMonthly || '');
 
     var domainNote = document.getElementById('domainIncludedNote');
     if (domainNote) {
@@ -3479,8 +3481,7 @@
 
       // On mobile, redirect to hosted Stripe checkout (embedded checkout has iframe issues on mobile Safari)
       if (window.innerWidth <= 860) {
-        var cfg = PLAN_CONFIG && PLAN_CONFIG[plan];
-        var hostedUrl = cfg ? (billing === 'annual' ? cfg.stripeAnnual : cfg.stripeMonthly) : null;
+        var hostedUrl = upgradeBtn.dataset.stripeUrl;
         if (hostedUrl) { window.location.href = hostedUrl + '?prefilled_email=' + encodeURIComponent(getSessionEmail()); return; }
       }
 
