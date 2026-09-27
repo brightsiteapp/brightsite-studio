@@ -362,11 +362,11 @@
   .svc-group-head{display:flex;align-items:center;gap:6px;margin-bottom:8px}
   .svc-group-head input{flex:1;font:inherit;font-size:13.5px;font-weight:700;color:var(--ink);border:1px solid transparent;background:transparent;padding:6px 8px;border-radius:8px;min-width:0;box-sizing:border-box}
   .svc-group-head input:focus,.svc-group-head input:hover{border-color:var(--line);background:#fff;outline:none}
-  .svc-row{display:flex;gap:6px;margin-bottom:7px;align-items:center;flex-wrap:wrap}
+  .svc-row{display:flex;gap:6px;margin-bottom:7px;align-items:center}
   .svc-row input{min-height:38px;padding:0 10px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:13px;box-sizing:border-box}
-  .svc-row .svc-name{flex:1 1 100%;min-width:0}
-  .svc-row .svc-meta{display:flex;flex:1 1 100%;gap:6px;align-items:center;margin-left:34px}
-  .svc-row .svc-meta input{flex:1;min-width:0}
+  .svc-row .svc-name{flex:1 1 0;min-width:0}
+  .svc-row .svc-price{width:58px;flex:none;text-align:center}
+  .svc-row .svc-time{width:62px;flex:none;text-align:center}
   .svc-remove{background:none;border:0;color:var(--muted);font-size:16px;line-height:1;cursor:pointer;width:28px;height:28px;border-radius:7px;flex:none}
   .svc-remove:hover{background:#f3efe8;color:#b23b2c}
   .dash-add{margin-top:2px;background:none;border:1px dashed var(--line);border-radius:9px;padding:8px 12px;font:inherit;font-size:12.5px;font-weight:600;color:var(--accent);cursor:pointer}
@@ -2072,18 +2072,18 @@
     if (Array.isArray(raw.serviceGroups) && raw.serviceGroups.length) {
       return raw.serviceGroups.map(function(g) {
         return { name: g.name || '', items: (g.items || []).map(function(it) {
-          return Array.isArray(it) ? { name: it[0] || '', price: it[1] || '' } : { name: it.name || '', price: it.price || '' };
+          return Array.isArray(it) ? { name: it[0] || '', price: it[1] || '', time: it[2] || '' } : { name: it.name || '', price: it.price || '', time: it.time || '' };
         })};
       });
     }
     if (Array.isArray(raw.services) && raw.services.length) {
-      return [{ name: '', items: raw.services.map(function(s) { return { name: s.name || s, price: s.price || '' }; }) }];
+      return [{ name: '', items: raw.services.map(function(s) { return { name: s.name || s, price: s.price || '', time: s.time || '' }; }) }];
     }
-    return [{ name: '', items: [{ name: '', price: '' }] }];
+    return [{ name: '', items: [{ name: '', price: '', time: '' }] }];
   }
 
   function servicesToRaw(svcs) {
-    return { serviceGroups: svcs.map(function(g) { return { name: g.name, items: g.items.map(function(it) { return [it.name, it.price]; }) }; }) };
+    return { serviceGroups: svcs.map(function(g) { return { name: g.name, items: g.items.map(function(it) { return [it.name, it.price, it.time || '']; }) }; }) };
   }
 
   function renderServices() {
@@ -2096,7 +2096,7 @@
       var head = document.createElement('div');
       head.className = 'svc-group-head';
       var nameInp = document.createElement('input');
-      nameInp.type = 'text'; nameInp.placeholder = 'Section name (optional)'; nameInp.value = group.name;
+      nameInp.type = 'text'; nameInp.placeholder = 'Section name'; nameInp.value = group.name;
       nameInp.addEventListener('input', function() { services[gi].name = nameInp.value; scheduleAutoSave(); });
       var remGrp = document.createElement('button');
       remGrp.className = 'svc-remove'; remGrp.textContent = '×'; remGrp.title = 'Remove section';
@@ -2109,27 +2109,28 @@
         var nInp = document.createElement('input');
         nInp.type = 'text'; nInp.className = 'svc-name'; nInp.placeholder = 'Service name'; nInp.value = item.name;
         nInp.addEventListener('input', function() { services[gi].items[ii].name = nInp.value; updateSectionChecks(); scheduleAutoSave(); });
-        var meta = document.createElement('div'); meta.className = 'svc-meta';
         var pInp = document.createElement('input');
-        pInp.type = 'text'; pInp.placeholder = '£'; pInp.value = item.price;
+        pInp.type = 'text'; pInp.className = 'svc-price'; pInp.placeholder = '£'; pInp.value = item.price;
         pInp.addEventListener('input', function() { services[gi].items[ii].price = pInp.value; scheduleAutoSave(); });
+        var tInp = document.createElement('input');
+        tInp.type = 'text'; tInp.className = 'svc-time'; tInp.placeholder = 'Time'; tInp.value = item.time || '';
+        tInp.addEventListener('input', function() { services[gi].items[ii].time = tInp.value; scheduleAutoSave(); });
         var rem = document.createElement('button');
         rem.className = 'svc-remove'; rem.textContent = '×';
         rem.addEventListener('click', function() { services[gi].items.splice(ii, 1); renderServices(); scheduleAutoSave(); });
-        meta.appendChild(pInp); meta.appendChild(rem);
-        row.appendChild(nInp); row.appendChild(meta);
+        row.appendChild(nInp); row.appendChild(pInp); row.appendChild(tInp); row.appendChild(rem);
         gDiv.appendChild(row);
       });
       var addItem = document.createElement('button');
       addItem.className = 'dash-add'; addItem.textContent = '+ Add item';
-      addItem.addEventListener('click', function() { services[gi].items.push({ name: '', price: '' }); renderServices(); });
+      addItem.addEventListener('click', function() { services[gi].items.push({ name: '', price: '', time: '' }); renderServices(); });
       gDiv.appendChild(addItem);
       container.appendChild(gDiv);
     });
   }
 
   document.getElementById('svcGroupAdd').addEventListener('click', function() {
-    services.push({ name: '', items: [{ name: '', price: '' }] });
+    services.push({ name: '', items: [{ name: '', price: '', time: '' }] });
     renderServices();
   });
 
