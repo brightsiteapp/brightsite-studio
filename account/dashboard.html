@@ -436,16 +436,18 @@
   /* notes section: textarea fixed height so Done always visible */
   body.mode-edit [data-section-panel="notes"] #developerNote{height:160px;resize:none}
   body.mode-edit [data-section-panel="notes"] .builder-done[data-back]{display:block;margin-top:12px;width:100%;text-align:center;border-radius:12px;min-height:46px;font-size:14px;line-height:46px;padding:0}
-  /* media: compact horizontal upload cards */
+  /* media: square tap-to-upload cards on mobile */
   @media(max-width:860px){
   .media-intro{display:none}
-  .media-upload-grid{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
-  .media-upload-card{min-height:0;padding:10px;gap:6px;flex-direction:row;align-items:center}
-  .media-upload-card .media-thumb{width:44px;height:44px;flex:none}
-  .media-upload-card>span{flex:1;min-width:0}
-  .media-upload-title{font-size:12px}
+  .media-upload-grid{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+  .media-upload-card{min-height:0;padding:0;gap:0;border-radius:16px;overflow:hidden;position:relative;aspect-ratio:1;background:#f3efe8}
+  .media-upload-card .media-thumb{position:absolute;inset:0;width:100%;height:100%;border-radius:0;border:0}
+  .media-upload-card>span{position:absolute;bottom:0;left:0;right:0;padding:10px 12px 10px;background:linear-gradient(to top,rgba(0,0,0,.55) 0%,transparent 100%);display:flex;flex-direction:column;gap:2px}
+  .media-upload-title{font-size:12px;font-weight:700;color:#fff}
   .media-upload-copy{display:none}
-  .media-upload-action{margin-top:4px;padding:5px 8px;font-size:11px}
+  .media-upload-action{display:inline-flex;align-items:center;gap:5px;margin-top:6px;padding:6px 12px;border-radius:999px;border:0;background:rgba(255,255,255,.92);color:var(--ink);font-size:11.5px;font-weight:700;backdrop-filter:blur(8px)}
+  .media-upload-action::before{content:'+';font-size:14px;font-weight:400;line-height:1}
+  .media-thumb.empty{background:#edeae4;position:absolute;inset:0;width:100%;height:100%}
   }
   #lsb{position:fixed;right:2px;top:0;bottom:0;width:3px;pointer-events:none;z-index:9999}
   #lsb-thumb{position:absolute;right:0;width:3px;background:rgba(0,0,0,.22);border-radius:3px;min-height:24px}
