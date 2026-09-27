@@ -433,14 +433,20 @@
   .left-panel #domainCard h2{display:flex;align-items:center;justify-content:space-between;margin-bottom:0}
   .left-panel #domainCard h2::after{content:'›';font-size:18px;font-weight:400;color:var(--muted);margin-left:6px}
   .left-panel #domainCard .info-hint,.left-panel #domainCard>div,.left-panel #domainCard #domainTldPicker,.left-panel #domainCard #domainResult{display:none !important}
-  /* notes section: fills left-panel, Done pinned above safe area */
-  body.mode-edit [data-section-panel="notes"]:not([hidden]){position:absolute;inset:0;z-index:10;background:var(--bg);display:flex;flex-direction:column;padding:18px 18px calc(18px + env(safe-area-inset-bottom,34px))}
-  body.mode-edit [data-section-panel="notes"] .section-head{flex:none}
-  body.mode-edit [data-section-panel="notes"] h3{flex:none}
-  body.mode-edit [data-section-panel="notes"] .info-hint{flex:none}
-  body.mode-edit [data-section-panel="notes"] .acct-field{flex:1;display:flex;flex-direction:column;min-height:0;margin-bottom:0}
-  body.mode-edit [data-section-panel="notes"] #developerNote{flex:1;resize:none;min-height:0}
-  body.mode-edit [data-section-panel="notes"] .builder-done[data-back]{flex:none;margin-top:12px;width:100%;justify-content:center;border-radius:12px;min-height:46px;font-size:14px}
+  /* notes section: textarea fixed height so Done always visible */
+  body.mode-edit [data-section-panel="notes"] #developerNote{height:160px;resize:none}
+  body.mode-edit [data-section-panel="notes"] .builder-done[data-back]{display:block;margin-top:12px;width:100%;text-align:center;border-radius:12px;min-height:46px;font-size:14px;line-height:46px;padding:0}
+  /* media: compact horizontal upload cards */
+  @media(max-width:860px){
+  .media-intro{display:none}
+  .media-upload-grid{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+  .media-upload-card{min-height:0;padding:10px;gap:6px;flex-direction:row;align-items:center}
+  .media-upload-card .media-thumb{width:44px;height:44px;flex:none}
+  .media-upload-card>span{flex:1;min-width:0}
+  .media-upload-title{font-size:12px}
+  .media-upload-copy{display:none}
+  .media-upload-action{margin-top:4px;padding:5px 8px;font-size:11px}
+  }
   #lsb{position:fixed;right:2px;top:0;bottom:0;width:3px;pointer-events:none;z-index:9999}
   #lsb-thumb{position:absolute;right:0;width:3px;background:rgba(0,0,0,.22);border-radius:3px;min-height:24px}
   /* Messages: left-panel scrolls naturally; heading+input stay sticky */
@@ -3471,8 +3477,8 @@
 
   if (upgradeBtn) {
     upgradeBtn.addEventListener('click', function () {
-      var plan = upgradeBtn.dataset.plan;
-      var billing = upgradeBtn.dataset.billing;
+      var plan = upgradeBtn.dataset.plan || 'starter';
+      var billing = upgradeBtn.dataset.billing || 'monthly';
       if (!plan || !billing) return;
 
       upgradeBtn.disabled = true;
