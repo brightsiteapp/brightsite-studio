@@ -43,6 +43,12 @@
   .desk-preview-bar{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--bg);}
   .desk-preview-status{font-size:12px;font-weight:600;color:var(--muted);}
   .desk-preview-link{font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;}
+  .desk-preview-toggle{display:flex;align-items:center;gap:2px;padding:3px;border:1px solid var(--line);border-radius:9px;background:var(--bg);margin-left:auto}
+  .dvt-btn{border:0;border-radius:6px;background:transparent;color:var(--muted);font:700 12px/1 Inter,sans-serif;padding:5px 11px;cursor:pointer;transition:background .12s,color .12s}
+  .dvt-btn.active{background:var(--accent);color:#fff}
+  #deskPreview.mobile-view #deskPreviewFrame{max-width:390px;margin:0 auto;border-radius:28px;border:6px solid #222;box-shadow:0 8px 32px rgba(0,0,0,.35);height:calc(100% - 48px);flex:none;display:block!important}
+  #deskPreview.mobile-view{background:#e8e8e6;align-items:center;justify-content:center;}
+  #deskPreview.mobile-view .desk-preview-bar{align-self:stretch;}
   @media(min-width:800px){
     #dashWrap{flex-direction:row;}
     #leftCol{width:360px;flex:none;overflow:hidden;}
@@ -755,6 +761,10 @@
   <div class="desk-preview-bar">
     <span class="desk-preview-status" id="deskPreviewStatus">Not live</span>
     <a class="desk-preview-link" id="deskPreviewLink" href="#" target="_blank" hidden>View live site ↗</a>
+    <div class="desk-preview-toggle" id="deskViewToggle" hidden>
+      <button type="button" class="dvt-btn active" id="dvtDesktop" aria-pressed="true">Desktop</button>
+      <button type="button" class="dvt-btn" id="dvtMobile" aria-pressed="false">Mobile</button>
+    </div>
   </div>
   <div id="deskPreviewPlaceholder" class="preview-placeholder">
     <div class="preview-placeholder-biz" id="deskPreviewBizName">Your business</div>
@@ -1190,6 +1200,21 @@
       if (deskPlaceholder) deskPlaceholder.style.display = 'none';
       deskFrame.style.display = 'block';
       if (deskFrame.src === 'about:blank') deskFrame.src = liveUrl;
+      var dvt = document.getElementById('deskViewToggle');
+      if (dvt) dvt.hidden = false;
+    }
+    // mobile preview card: link to live site when available
+    var mpc = document.getElementById('mobilePreviewCard');
+    if (mpc) {
+      if (liveUrl) {
+        mpc.style.cursor = 'pointer';
+        mpc.onclick = function() { window.open(liveUrl, '_blank'); };
+        var sub = mpc.querySelector('.preview-placeholder-sub');
+        if (sub) sub.textContent = 'Tap to view your website preview ↗';
+      } else {
+        mpc.style.cursor = '';
+        mpc.onclick = null;
+      }
     }
   }
 
@@ -2518,6 +2543,24 @@
   }
 
   backBtn.addEventListener('click', closeCard);
+
+  // desktop/mobile preview toggle
+  (function() {
+    var dvtDesktop = document.getElementById('dvtDesktop');
+    var dvtMobile = document.getElementById('dvtMobile');
+    var deskPreview = document.getElementById('deskPreview');
+    if (!dvtDesktop || !dvtMobile || !deskPreview) return;
+    dvtDesktop.addEventListener('click', function() {
+      deskPreview.classList.remove('mobile-view');
+      dvtDesktop.classList.add('active'); dvtDesktop.setAttribute('aria-pressed','true');
+      dvtMobile.classList.remove('active'); dvtMobile.setAttribute('aria-pressed','false');
+    });
+    dvtMobile.addEventListener('click', function() {
+      deskPreview.classList.add('mobile-view');
+      dvtMobile.classList.add('active'); dvtMobile.setAttribute('aria-pressed','true');
+      dvtDesktop.classList.remove('active'); dvtDesktop.setAttribute('aria-pressed','false');
+    });
+  })();
 
   // domain card collapse toggle
   (function() {
