@@ -369,12 +369,6 @@
   .website-progress{margin:0 0 14px;font-size:12px;font-weight:700;color:var(--muted)}.website-progress b{color:var(--accent)}
   .builder-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
   .builder-head h2{font-family:var(--display);font-size:16px;font-weight:700;margin:0}
-  .builder-view-website{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:0 13px;border:1px solid rgba(59,130,246,.2);border-radius:999px;background:#edf5ff;color:var(--accent);font:700 12px/1 Inter,sans-serif;cursor:pointer}
-  .builder-view-website.pvw-pending{background:#fee2e2;color:#dc2626;border-color:rgba(220,38,38,.25)}
-  .builder-view-website.pvw-designing{background:#fef3c7;color:#b45309;border-color:rgba(180,83,9,.25)}
-  .builder-view-website.pvw-ready{background:#e6f6ec;color:#1f9d55;border-color:rgba(31,157,85,.25)}
-  .builder-view-website .pvw-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none;animation:none}
-  .builder-view-website.pvw-designing .pvw-dot{animation:pvwPulse 1.2s ease-in-out infinite}
   @keyframes pvwPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
   .sec-btn{width:100%;border:1px solid var(--line);border-radius:14px;background:var(--card);margin-bottom:0;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;font:inherit;font-size:13.5px;font-weight:700;color:var(--ink);text-align:left;box-sizing:border-box}
   .sec-btn:hover{border-color:var(--accent)}
@@ -682,7 +676,6 @@
       <div id="builderList">
         <div class="builder-head">
           <h2 id="builderHeading">Edit your website</h2>
-          <button type="button" class="builder-view-website pvw-pending" id="viewWebsiteButton"><span class="pvw-dot"></span><span id="viewWebsiteLabel">Enter details</span></button>
         </div>
         <button type="button" class="sec-btn" data-section="name"><span class="sec-title"><span class="section-tick"></span>Business Info</span><span class="chev">›</span></button>
         <button type="button" class="sec-btn" data-section="contact"><span class="sec-title"><span class="section-tick"></span>Contact Info</span><span class="chev">›</span></button>
@@ -2129,11 +2122,6 @@
         progEl.innerHTML = 'Your website details: <b>' + added + ' of ' + Object.keys(complete).length + ' added</b>';
       }
     }
-    var pvwState = allDone ? 'designing' : 'pending';
-    var pvwBtn = document.getElementById('viewWebsiteButton');
-    var pvwLbl = document.getElementById('viewWebsiteLabel');
-    if (pvwBtn) pvwBtn.className = 'builder-view-website pvw-' + pvwState;
-    if (pvwLbl) pvwLbl.textContent = allDone ? 'Building preview' : 'Enter details';
     if (allDone && !_prevAllDone) sendStageEmail('all_details_complete');
     _prevAllDone = allDone;
     updatePreviewCard(allDone);
