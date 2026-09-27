@@ -128,7 +128,7 @@
     padding:8px 14px calc(24px + env(safe-area-inset-bottom,0px));
   }
   .website-panel .panel-inner{width:min(820px,100%)}
-  .messages-panel{display:flex;flex-direction:column;overflow:hidden!important}
+  .messages-panel{display:flex;flex-direction:column;overflow:hidden!important;height:100%;}
   .messages-panel .panel-inner{width:100%;padding:0;display:flex;flex-direction:column;flex:1;min-height:0}
 
   .info-card{padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 4px 12px rgba(23,32,31,.06);margin:8px 0 12px}
@@ -246,7 +246,7 @@
   .msgs-menu.open{display:block}
   .msgs-menu button{display:block;width:100%;padding:10px 14px;border:0;background:none;font:inherit;font-size:13px;font-weight:600;color:var(--ink);text-align:left;cursor:pointer}
   .msgs-menu button.del{color:#b23b2c}
-  .msgs-edit-bar{display:none;align-items:center;gap:8px;padding:6px 14px;background:#fff3cd;border-top:1px solid #f0d060;position:sticky;bottom:57px;z-index:4}
+  .msgs-edit-bar{display:none;align-items:center;gap:8px;padding:6px 14px;background:#fff3cd;border-top:1px solid #f0d060;flex:none;}
   .msgs-edit-bar.active{display:flex}
   .msgs-edit-bar input{flex:1;border:0;background:none;font:inherit;font-size:14px;color:var(--ink);outline:none}
   .msgs-edit-bar button{border:0;border-radius:8px;padding:5px 12px;font:700 12px/1 Inter,sans-serif;cursor:pointer}
