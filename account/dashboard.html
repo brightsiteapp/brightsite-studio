@@ -1506,13 +1506,14 @@
       ml.style.flex = 'none';
     }
     // iOS Safari: block touchmove on body, allow only within #msgsList
-    document.addEventListener('touchmove', _msgsTouchBlock, {passive: false});
+    document.addEventListener('touchmove', _msgsTouchBlock, {passive:false, capture:false});
     var bname = (business && business.data && business.data.raw && business.data.raw.name) || (business && business.business_name) || '';
     var welcomeEl = document.getElementById('msgsWelcome');
     if (welcomeEl) welcomeEl.textContent = bname ? 'Hey ' + bname + '!' : 'Hey!';
     msgsInit();
   }
   function _msgsTouchBlock(e) {
+    if (!document.body.classList.contains('msgs-active')) return;
     var el = e.target;
     while (el && el !== document.body) {
       if (el.id === 'msgsList') return;
@@ -1521,7 +1522,7 @@
     e.preventDefault();
   }
   function hideMessagesPanel() {
-    document.removeEventListener('touchmove', _msgsTouchBlock, {passive: false});
+    document.removeEventListener('touchmove', _msgsTouchBlock, false);
     document.body.classList.remove('msgs-active');
     var mp = document.getElementById('msgsPanel');
     if (mp) { mp.hidden = true; mp.style.display = 'none'; }
