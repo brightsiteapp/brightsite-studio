@@ -2525,7 +2525,24 @@
     var body = document.getElementById('domainBody');
     var chevron = document.getElementById('domainChevron');
     if (!toggle || !body) return;
+    // on desktop always expand; only collapsible on mobile
+    function applyDomainLayout() {
+      var isDesktop = window.innerWidth >= 800;
+      if (isDesktop) {
+        body.hidden = false;
+        if (chevron) chevron.style.display = 'none';
+        toggle.style.cursor = 'default';
+        toggle.style.pointerEvents = 'none';
+      } else {
+        if (chevron) chevron.style.display = '';
+        toggle.style.cursor = '';
+        toggle.style.pointerEvents = '';
+      }
+    }
+    applyDomainLayout();
+    window.addEventListener('resize', applyDomainLayout);
     toggle.addEventListener('click', function() {
+      if (window.innerWidth >= 800) return;
       var open = !body.hidden;
       body.hidden = open;
       chevron.style.transform = open ? '' : 'rotate(180deg)';
