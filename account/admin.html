@@ -96,7 +96,7 @@ body { background: var(--bg); min-height: 100vh; }
 .account-info { flex: 1; min-width: 0; }
 .account-name-row { display: flex; align-items: center; gap: 8px; }
 .account-name { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
-.row-actions-inline { display: none; flex-shrink: 0; }
+.row-actions-inline { display: none !important; }
 .account-meta { display: flex; align-items: center; gap: 10px; margin-top: 3px; flex-wrap: wrap; }
 .account-slug { font-size: 12px; color: var(--muted); font-weight: 500; }
 .account-email { font-size: 12px; color: var(--muted); }
@@ -114,8 +114,6 @@ body { background: var(--bg); min-height: 100vh; }
   .app-header img { height: 18px; }
   .app-header-right { gap: 6px; }
   .page-body { padding: 16px 14px; }
-  .row-actions-inline { display: flex; }
-  .row-actions-desktop { display: none; }
   .btn-label { display: none; }
   .action-btn { padding: 7px; justify-content: center; }
   .status-tag { display: none; }
