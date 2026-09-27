@@ -990,7 +990,7 @@
         <span class="plan-domain-box"></span>
         <span class="plan-domain-info">
           <span class="plan-domain-name" id="planDomainAddonName"></span>
-          <span class="plan-domain-sub">One-off payment, billed at checkout</span>
+          <span class="plan-domain-sub" id="planDomainAddonSub">One-off payment, billed at checkout</span>
         </span>
         <span class="plan-domain-price" id="planDomainAddonPrice"></span>
       </label>
@@ -1594,14 +1594,17 @@
       document.getElementById('planDomainAddonName').textContent = pendingDomain;
       var isFree = isDomainFreeForPlan();
       var priceEl = document.getElementById('planDomainAddonPrice');
+      var subEl = document.getElementById('planDomainAddonSub');
       if (isFree) {
-        priceEl.innerHTML = '<span style="text-decoration:line-through;opacity:.5;margin-right:5px">' + (pendingDomainPrice || '') + '</span><span>£0</span>';
+        priceEl.innerHTML = '<span style="text-decoration:line-through;opacity:.5;margin-right:5px">' + (pendingDomainPrice || '') + '</span><span>Free</span>';
         priceEl.style.background = '#e6f6ec';
         priceEl.style.color = '#1f9d55';
+        if (subEl) subEl.textContent = 'Included free with Pro & Prestige plans';
       } else {
         priceEl.textContent = pendingDomainPrice || '';
         priceEl.style.background = '';
         priceEl.style.color = '';
+        if (subEl) subEl.textContent = 'One-off payment, billed at checkout';
       }
       document.getElementById('planDomainAddonCheck').checked = true;
       domainAddon.hidden = false;
@@ -1716,6 +1719,9 @@
 
     // expose for renderDashboard to call
     window._bsRestoreSavedPlan = restoreSavedPlan;
+    // expose so domain search can trigger addon row refresh
+    window._bsUpdateDomainAddon = updateDomainAddonRow;
+    window._bsIsDomainFree = isDomainFreeForPlan;
   })();
 
   // ---------------- account persistence ----------------
@@ -1821,16 +1827,20 @@
         pendingDomainPrice = price;
         pendingDomainPence = pricePence;
         pendingDomainTld = selectedTld;
-        var domainIsFree = ['pro','prestige'].includes(selectedPlan) && (pricePence === 0 || pricePence <= 1200);
-        var domainSubline = domainIsFree
-          ? 'Added to your plan — <span style="text-decoration:line-through;opacity:.5;margin-right:3px">' + price + '</span><span style="font-weight:700">Free</span>'
-          : 'Added to your plan — ' + price;
-        resultEl.innerHTML = '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid #c6dfc8;border-radius:12px;background:#f2faf3">'
-          + '<span style="font-size:18px">✓</span>'
-          + '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14px;color:var(--ink)">' + fullDomain + '</div>'
-          + '<div style="font-size:12px;color:#1f9d55;margin-top:1px">' + domainSubline + '</div></div>'
-          + '<button type="button" onclick="document.getElementById(\'domainResult\').hidden=true;document.getElementById(\'domainSearchInput\').value=\'\';pendingDomain=null;pendingDomainPrice=null;pendingDomainPence=null;pendingDomainTld=null;" style="font:inherit;font-size:12px;font-weight:600;color:var(--muted);background:none;border:0;cursor:pointer;padding:0;white-space:nowrap">Change</button>'
-          + '</div>';
+        function renderDomainResult() {
+          var isFree = typeof window._bsIsDomainFree === 'function' && window._bsIsDomainFree();
+          var subline = isFree
+            ? 'Selected — <span style="text-decoration:line-through;opacity:.5;margin-right:3px">' + price + '</span><span style="font-weight:700;color:#1f9d55">Free with your plan</span>'
+            : 'Selected — ' + price;
+          resultEl.innerHTML = '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid #c6dfc8;border-radius:12px;background:#f2faf3">'
+            + '<span style="font-size:18px">✓</span>'
+            + '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14px;color:var(--ink)">' + fullDomain + '</div>'
+            + '<div style="font-size:12px;color:#1f9d55;margin-top:1px">' + subline + '</div></div>'
+            + '<button type="button" onclick="pendingDomain=null;pendingDomainPrice=null;pendingDomainPence=null;pendingDomainTld=null;document.getElementById(\'domainResult\').hidden=true;document.getElementById(\'domainSearchInput\').value=\'\';if(window._bsUpdateDomainAddon)window._bsUpdateDomainAddon();" style="font:inherit;font-size:12px;font-weight:600;color:var(--muted);background:none;border:0;cursor:pointer;padding:0;white-space:nowrap">Change</button>'
+            + '</div>';
+        }
+        renderDomainResult();
+        if (window._bsUpdateDomainAddon) window._bsUpdateDomainAddon();
       } else {
         pendingDomain = null; pendingDomainPrice = null; pendingDomainPence = null; pendingDomainTld = null;
         resultEl.innerHTML = '<p style="margin:0;font-size:13px;color:var(--muted)">That domain isn\'t available. Try a different name or extension.</p>';
