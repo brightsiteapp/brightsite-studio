@@ -401,7 +401,7 @@
     .app-body{grid-template-columns:1fr;position:relative}
     .left-panel,.right-panel{position:absolute;inset:0;width:100%;border-right:0;padding-bottom:env(safe-area-inset-bottom)}
     .left-panel{z-index:5;overflow-y:auto;overscroll-behavior-y:contain}
-    body.mode-view .left-panel,body.mode-edit .left-panel{display:flex}
+    body.mode-view .left-panel,body.mode-edit .left-panel{display:block}
     body.mode-view .right-panel{display:none}
     body.mode-edit .right-panel{display:none}
     body.mobile-show-site .left-panel{display:none}
@@ -420,10 +420,18 @@
     .blueprint-site{border-radius:12px}.blueprint-inner{padding:22px}.blueprint-top{align-items:flex-start}.blueprint-nav{gap:10px;justify-content:flex-end}.blueprint-hero{min-height:430px;padding:18px}.blueprint-hero-copy{padding:18px}.blueprint-illustration{min-height:190px}.blueprint-services,.blueprint-contact-grid{grid-template-columns:1fr}.blueprint-gallery{grid-template-columns:1fr}.loading-grid{grid-template-columns:1fr}.loading-grid .blueprint-site{height:380px}.loading-steps{padding:16px}
   }
   @media(max-width:860px){
-  /* make info-cards tappable on mobile */
+  /* account cards: 2-column grid */
+  #viewPanel{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px}
+  #viewPanel .info-card{margin-bottom:0;display:flex;flex-direction:column}
   #viewPanel .info-card:not(#pwdCard){cursor:pointer;position:relative}
   #viewPanel .info-card:not(#pwdCard) h2{display:flex;align-items:center;justify-content:space-between}
   #viewPanel .info-card:not(#pwdCard) h2::after{content:'›';font-size:18px;font-weight:400;color:var(--muted);margin-left:6px}
+  /* notes section: fill height, Done pinned to bottom */
+  [data-section-panel="notes"]{display:flex;flex-direction:column;min-height:calc(100dvh - 120px)}
+  [data-section-panel="notes"]:not([hidden]){display:flex}
+  [data-section-panel="notes"] .acct-field{flex:1}
+  [data-section-panel="notes"] #developerNote{height:100%;min-height:120px;resize:none}
+  [data-section-panel="notes"] .builder-done[data-back]{margin-top:auto;margin-bottom:0;width:100%;justify-content:center;border-radius:12px;min-height:46px;font-size:14px}
   #lsb{position:fixed;right:2px;top:0;bottom:0;width:3px;pointer-events:none;z-index:9999}
   #lsb-thumb{position:absolute;right:0;width:3px;background:rgba(0,0,0,.22);border-radius:3px;min-height:24px}
   /* Messages: left-panel scrolls naturally; heading+input stay sticky */
@@ -3522,13 +3530,10 @@
     if (h2) h2.remove();
     overlayBody.appendChild(clone);
     overlay.classList.add('is-open');
-    document.body.style.overflow = 'hidden';
   }
 
   function closeCard() {
     overlay.classList.remove('is-open');
-    document.body.style.overflow = '';
-    // re-sync any inputs that were changed back to original card
   }
 
   backBtn.addEventListener('click', closeCard);
