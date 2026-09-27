@@ -88,7 +88,7 @@
   .preview-device-toggle{display:flex;align-items:center;padding:3px;border:1px solid var(--line);border-radius:11px;background:#fff}
   .preview-device-toggle button{border:0;border-radius:8px;background:transparent;color:var(--muted);height:28px;padding:0 9px;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
   .preview-device-toggle button[aria-pressed="true"]{background:var(--accent);color:#fff}
-  .mobile-view-tabs{display:flex;width:380px;gap:6px;padding:8px 14px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--bg);flex:none;position:relative;z-index:20}
+  .mobile-view-tabs{display:flex;width:380px;gap:6px;padding:8px 14px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--bg);flex:none;position:sticky;top:0;z-index:20}
   .mobile-view-tabs button{flex:1;min-height:36px;border:0;border-radius:10px;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
   .mobile-view-tabs button[aria-selected="true"]{background:var(--accent);color:#fff}
   .mobile-view-tabs button:disabled{opacity:.42;cursor:not-allowed}
@@ -637,7 +637,7 @@
 
       <!-- ---------------- messages panel ---------------- -->
       <div id="msgsPanel" hidden style="display:none;flex-direction:column;flex:1;min-height:0">
-        <div style="padding:16px 18px 10px;border-bottom:1px solid var(--line);flex:none"><h2 style="margin:0;font-size:16px;font-weight:700">Messages</h2></div>
+        <div style="padding:16px 18px 10px;border-bottom:1px solid var(--line);flex:none;position:sticky;top:0;background:var(--bg);z-index:1"><h2 style="margin:0;font-size:16px;font-weight:700">Messages</h2></div>
         <div class="msgs-list" id="msgsList">
           <div class="msgs-empty" id="msgsEmpty" style="display:flex;flex-direction:column;gap:6px;text-align:center;padding:24px">
             <span id="msgsWelcome" style="font-size:15px;font-weight:700;color:var(--ink)">Hey!</span>
