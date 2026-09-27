@@ -3473,9 +3473,16 @@
 
   if (upgradeBtn) {
     upgradeBtn.addEventListener('click', function () {
-      var plan = upgradeBtn.dataset.plan || 'starter';
+      var plan = upgradeBtn.dataset.plan || 'essential';
       var billing = upgradeBtn.dataset.billing || 'monthly';
       if (!plan || !billing) return;
+
+      // On mobile, redirect to hosted Stripe checkout (embedded checkout has iframe issues on mobile Safari)
+      if (window.innerWidth <= 860) {
+        var cfg = PLAN_CONFIG && PLAN_CONFIG[plan];
+        var hostedUrl = cfg ? (billing === 'annual' ? cfg.stripeAnnual : cfg.stripeMonthly) : null;
+        if (hostedUrl) { window.location.href = hostedUrl + '?prefilled_email=' + encodeURIComponent(getSessionEmail()); return; }
+      }
 
       upgradeBtn.disabled = true;
       upgradeBtn.textContent = 'Loading…';
