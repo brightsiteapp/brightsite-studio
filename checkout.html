@@ -165,9 +165,9 @@
   var selectedAnnual = (params.get('billing') || 'annual') !== 'monthly';
 
   var PLAN_INFO = {
-    essential: { name: 'Essential', setupMonthly: '£0 setup · £19/mo', setupAnnual: '£0 setup · £17/mo (annual)' },
-    pro:       { name: 'Pro',       setupMonthly: '£199 setup · £19/mo', setupAnnual: '£99 setup · £19/mo (annual)' },
-    prestige:  { name: 'Prestige',  setupMonthly: '£299 setup · £19/mo', setupAnnual: '£149 setup · £19/mo (annual)' },
+    essential: { name: 'Free plan', setupMonthly: '£0 setup · £19/mo', setupAnnual: '£0 setup · £17/mo (annual)' },
+    pro:       { name: 'Pro plan',       setupMonthly: '£199 setup · £19/mo', setupAnnual: '£99 setup · £19/mo (annual)' },
+    prestige:  { name: 'Prestige plan',  setupMonthly: '£299 setup · £19/mo', setupAnnual: '£149 setup · £19/mo (annual)' },
   };
 
   var info = PLAN_INFO[plan] || PLAN_INFO.essential;

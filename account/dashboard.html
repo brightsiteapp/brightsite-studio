@@ -319,7 +319,7 @@
   .plan-modal-billing-toggle button{border:0;border-radius:7px;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:700;padding:7px 14px;cursor:pointer}
   .plan-modal-billing-toggle button[aria-pressed="true"]{background:var(--accent);color:#fff}
   .plan-cards-grid{display:grid;grid-template-columns:1fr;gap:12px}
-  @media(min-width:520px){.plan-cards-grid{grid-template-columns:repeat(3,1fr);align-items:stretch}}
+  @media(max-width:519px){.plan-cards-grid{grid-template-columns:repeat(2,1fr)}}
   .plan-choice-card{border:2px solid var(--line);border-radius:16px;padding:18px 16px;cursor:pointer;position:relative;background:#fff;display:flex;flex-direction:column}
   .plan-choice-card.featured{background:#f5f8ff}
   .plan-featured-badge{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:3px 10px;border-radius:999px;white-space:nowrap}
@@ -647,7 +647,7 @@
             </div>
             <div class="plan-chosen-info">
               <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-                <div class="plan-chosen-name" id="planChosenName">Free</div>
+                <div class="plan-chosen-name" id="planChosenName">Free plan</div>
                 <button type="button" class="plan-chosen-change" id="choosePlanBtn">Change plan</button>
               </div>
               <div class="plan-chosen-price" id="planChosenPrice">Free · £19/mo hosting</div>
@@ -924,7 +924,7 @@
 
       <!-- Free -->
       <div class="plan-choice-card" data-plan="essential" id="planCardEssential">
-        <div class="plan-choice-name">Free</div>
+        <div class="plan-choice-name">Free plan</div>
         <div class="plan-choice-desc">Your website built for free — just pay £19/mo hosting to go live.</div>
         <div class="plan-choice-price-row">
           <span class="plan-choice-setup" data-monthly="Free" data-annual="Free">Free</span>
@@ -938,13 +938,13 @@
           <li>Mobile optimisation</li>
           <li>1–3 pages with contact &amp; enquiry forms</li>
         </ul>
-        <button type="button" class="plan-select-btn" data-select="essential" style="margin-top:14px">Select Free</button>
+        <button type="button" class="plan-select-btn" data-select="essential" style="margin-top:14px">Select Free plan</button>
       </div>
 
       <!-- Pro -->
       <div class="plan-choice-card featured" data-plan="pro" id="planCardPro">
         <span class="plan-featured-badge">MOST POPULAR</span>
-        <div class="plan-choice-name">Pro</div>
+        <div class="plan-choice-name">Pro plan</div>
         <div class="plan-choice-desc">Best for businesses that need a website with lots of info.</div>
         <div class="plan-choice-price-row">
           <span class="plan-choice-was" id="proWas">£199</span>
@@ -959,12 +959,12 @@
           <li>Interactions &amp; animations</li>
           <li>Free domain included <span style="font-size:10px;font-weight:600;color:var(--muted)">(under £12/yr)</span></li>
         </ul>
-        <button type="button" class="plan-select-btn" data-select="pro" style="margin-top:14px">Select Pro</button>
+        <button type="button" class="plan-select-btn" data-select="pro" style="margin-top:14px">Select Pro plan</button>
       </div>
 
       <!-- Prestige -->
       <div class="plan-choice-card" data-plan="prestige" id="planCardPrestige">
-        <div class="plan-choice-name">Prestige</div>
+        <div class="plan-choice-name">Prestige plan</div>
         <div class="plan-choice-desc">Best for corporate needs and multi-location brands.</div>
         <div class="plan-choice-price-row">
           <span class="plan-choice-was" id="prestigeWas">£299</span>
@@ -979,7 +979,7 @@
           <li>Priority same-day support</li>
           <li>Free domain included <span style="font-size:10px;font-weight:600;color:var(--muted)">(under £12/yr)</span></li>
         </ul>
-        <button type="button" class="plan-select-btn" data-select="prestige" style="margin-top:14px">Select Prestige</button>
+        <button type="button" class="plan-select-btn" data-select="prestige" style="margin-top:14px">Select Prestige plan</button>
       </div>
 
     </div>
@@ -1475,7 +1475,7 @@
 
   var PLAN_CONFIG = {
     essential: {
-      label: 'Free',
+      label: 'Free plan',
       monthly: { setup: 'Free', hosting: '£19/mo hosting', note: '£19/mo hosting — cancel any time' },
       annual:  { setup: 'Free', hosting: '£17/mo hosting', note: 'Billed £204/yr — save £24 a year' },
       stripeMonthly: 'https://buy.stripe.com/14A14n87jcE4dfJbxX3gk00',
@@ -1483,7 +1483,7 @@
       iconColor: '#2563eb'
     },
     pro: {
-      label: 'Pro',
+      label: 'Pro plan',
       monthly: { setup: '£199', hosting: '£19/mo', note: 'One-off build, then £19/mo' },
       annual:  { setup: '£99', hosting: '£228/yr', note: 'One-off build, then £228/yr' },
       stripeMonthly: 'https://buy.stripe.com/00wdR99bnavW6Rl31r3gk03',
@@ -1491,7 +1491,7 @@
       iconColor: '#6366f1'
     },
     prestige: {
-      label: 'Prestige',
+      label: 'Prestige plan',
       monthly: { setup: '£299', hosting: '£19/mo', note: 'One-off build, then £19/mo' },
       annual:  { setup: '£149', hosting: '£228/yr', note: 'One-off build, then £228/yr' },
       stripeMonthly: 'https://buy.stripe.com/bJefZh87jdI8b7BbxX3gk05',
