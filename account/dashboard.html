@@ -3310,7 +3310,7 @@
           }
         });
         msgsLoaded = true;
-        document.getElementById('msgsEmpty').style.display = 'none';
+        var msgsEmptyEl = document.getElementById('msgsEmpty'); if (msgsEmptyEl) msgsEmptyEl.style.display = 'none';
         list.scrollTop = list.scrollHeight;
       })
       .catch(function(e){
