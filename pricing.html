@@ -32,10 +32,10 @@
   footer{padding:20px 24px!important}
 
   /* All cards same fixed size */
-  #pricing .plans{display:grid;grid-template-columns:repeat(3,1fr);align-items:stretch;grid-auto-rows:1fr}
-  #pricing .plan{border-color:var(--accent);position:relative;box-sizing:border-box;width:100%;display:flex;flex-direction:column;height:100%}
-  #pricing .plan ul{flex:1}
-  @media(max-width:900px){#pricing .plans{grid-template-columns:1fr;grid-auto-rows:auto}}
+  #pricing .plans{display:grid;grid-template-columns:repeat(3,1fr)}
+  #pricing .plan{border-color:var(--accent);position:relative;box-sizing:border-box;width:100%;display:flex;flex-direction:column}
+  #pricing .plan ul{flex:1;margin-bottom:0}
+  @media(max-width:900px){#pricing .plans{grid-template-columns:1fr}}
 
   /* Toggle: absolute top-right so h4 never wraps */
   .plan-header{margin-bottom:6px}
@@ -59,11 +59,11 @@
   #pricing .plan h4{font-size:29px;margin-bottom:0}
   #pricing .plan .desc{margin-bottom:13px}
   #pricing .plan .price{display:flex;align-items:baseline;gap:6px;flex-wrap:nowrap;white-space:nowrap;font-size:48px;font-weight:800;color:#111;letter-spacing:-0.03em}
-  #pricing .plan .price .setup-price{font-size:48px;font-weight:800;color:var(--accent)}
+  #pricing .plan .price .setup-price{font-size:48px;font-weight:800;color:#111}
   #pricing .plan .price .price-was{font-size:18px;color:#bbb;text-decoration:line-through;margin-right:2px;font-weight:600}
   #pricing .plan .price small{font-size:13px;margin-left:4px;color:var(--accent);font-weight:600;letter-spacing:0}
   #pricing .price-save{margin-left:0}
-  #pricing .plan .price-note{font-size:12px;color:#999;margin-top:2px;margin-bottom:14px}
+  #pricing .plan .price-note{font-size:12px;color:#999;margin-top:2px;margin-bottom:14px;min-height:16px}
   #pricing .plan .price-addon{margin-bottom:17px}
   #pricing .plan ul{gap:8px;margin-bottom:19px}
   #pricing .plan li{font-size:14px}
@@ -93,7 +93,7 @@
 <div class="top">
   <a href="/" class="brand"><img src="img/brightsite-logo.png" alt="BrightSite" width="515" height="72"></a>
   <nav class="tabs" id="navTabs">
-    <a href="/#included">What we do</a>
+    <a href="/#how">What we do</a>
     <a href="ourwork.html">Our work</a>
     <a href="pricing.html">Pricing</a>
   </nav>
@@ -248,7 +248,7 @@
       } else {
         if (setupEl) {
           setupEl.textContent = '£' + (isAnnual ? annualSetup : monthlySetup);
-          setupEl.style.color = 'var(--accent)';
+          setupEl.style.color = isAnnual ? '#111' : 'var(--accent)';
         }
         if (wasEl)   wasEl.style.visibility = isAnnual ? 'visible' : 'hidden';
         if (saveEl)  saveEl.style.visibility = isAnnual ? 'visible' : 'hidden';
