@@ -434,7 +434,7 @@
   #builderList{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   #builderList .builder-head{grid-column:1/-1;margin-bottom:0}
   #builderList .builder-guidance{grid-column:1/-1}
-  #builderList .mobile-preview-card{grid-column:1/-1}
+  #builderList .mobile-preview-wrap{grid-column:1/-1}
   #builderList .sec-btn{margin-bottom:0;height:56px;padding:12px 14px;overflow:hidden}
 
   /* preview placeholder — desktop panel + mobile card */
@@ -529,15 +529,13 @@
   }
   @keyframes spin{to{transform:rotate(360deg)}}
   /* mobile card: shown inline below cards, hidden on desktop */
-  .mobile-preview-card{
-    border-radius:18px;
-    flex:none;
-    min-height:200px;
-    margin-top:8px;
-  }
-  @media(min-width:800px){
-    .mobile-preview-card{display:none;}
-  }
+  .mobile-preview-wrap{margin-top:8px;}
+  @media(min-width:800px){.mobile-preview-wrap{display:none;}}
+  .mobile-pvw-toggle{display:flex;gap:2px;padding:3px;background:#e8e4df;border-radius:10px;width:fit-content;margin:0 auto 10px;}
+  .mobile-pvw-btn{border:0;border-radius:7px;background:transparent;color:var(--muted);font:700 12px/1 Inter,sans-serif;padding:6px 14px;cursor:pointer;}
+  .mobile-pvw-btn.active{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.1);}
+  .mobile-preview-card{border-radius:18px;flex:none;min-height:200px;}
+  .mobile-preview-wrap.mobile-view .mobile-preview-card{min-height:340px;border-radius:28px;}
 
 </style>
 
@@ -691,11 +689,17 @@
         <button type="button" class="sec-btn" data-section="notes"><span class="sec-title">Notes</span><span class="chev">›</span></button>
       </div>
 
-      <!-- mobile preview card (hidden on desktop) -->
-      <div class="preview-placeholder mobile-preview-card" id="mobilePreviewCard">
-        <div class="preview-placeholder-biz" id="mobilePreviewBizName">Your business</div>
-        <div class="preview-placeholder-title">Fill in your<br>details</div>
-        <div class="preview-placeholder-sub">Complete all sections — add info until all ticks are green</div>
+      <!-- mobile preview card + toggle (hidden on desktop) -->
+      <div class="mobile-preview-wrap" id="mobilePreviewWrap">
+        <div class="mobile-pvw-toggle">
+          <button type="button" class="mobile-pvw-btn active" id="mobilePvwDesktop">Desktop</button>
+          <button type="button" class="mobile-pvw-btn" id="mobilePvwMobile">Mobile</button>
+        </div>
+        <div class="preview-placeholder mobile-preview-card" id="mobilePreviewCard">
+          <div class="preview-placeholder-biz" id="mobilePreviewBizName">Your business</div>
+          <div class="preview-placeholder-title">Fill in your<br>details</div>
+          <div class="preview-placeholder-sub">Complete all sections — add info until all ticks are green</div>
+        </div>
       </div>
 
       <!-- section detail panels (only one shown at a time) -->
@@ -2070,7 +2074,7 @@
   function openSection(id) {
     activeSection = id;
     document.getElementById('builderList').hidden = !!id;
-    var mpc = document.getElementById('mobilePreviewCard');
+    var mpc = document.getElementById('mobilePreviewWrap');
     if (mpc) mpc.hidden = !!id;
     document.querySelectorAll('.builder-section').forEach(function(el) {
       el.hidden = el.dataset.sectionPanel !== id;
@@ -2654,23 +2658,29 @@
 
   backBtn.addEventListener('click', closeCard);
 
+  // mobile website tab preview toggle
+  document.getElementById('mobilePvwDesktop').onclick = function() {
+    document.getElementById('mobilePreviewWrap').classList.remove('mobile-view');
+    document.getElementById('mobilePvwDesktop').classList.add('active');
+    document.getElementById('mobilePvwMobile').classList.remove('active');
+  };
+  document.getElementById('mobilePvwMobile').onclick = function() {
+    document.getElementById('mobilePreviewWrap').classList.add('mobile-view');
+    document.getElementById('mobilePvwMobile').classList.add('active');
+    document.getElementById('mobilePvwDesktop').classList.remove('active');
+  };
+
   // desktop/mobile preview toggle
-  (function() {
-    var dvtDesktop = document.getElementById('dvtDesktop');
-    var dvtMobile = document.getElementById('dvtMobile');
-    var deskPreview = document.getElementById('deskPreview');
-    if (!dvtDesktop || !dvtMobile || !deskPreview) return;
-    dvtDesktop.addEventListener('click', function() {
-      deskPreview.classList.remove('mobile-view');
-      dvtDesktop.classList.add('active'); dvtDesktop.setAttribute('aria-pressed','true');
-      dvtMobile.classList.remove('active'); dvtMobile.setAttribute('aria-pressed','false');
-    });
-    dvtMobile.addEventListener('click', function() {
-      deskPreview.classList.add('mobile-view');
-      dvtMobile.classList.add('active'); dvtMobile.setAttribute('aria-pressed','true');
-      dvtDesktop.classList.remove('active'); dvtDesktop.setAttribute('aria-pressed','false');
-    });
-  })();
+  document.getElementById('dvtDesktop').onclick = function() {
+    document.getElementById('deskPreview').classList.remove('mobile-view');
+    document.getElementById('dvtDesktop').classList.add('active'); document.getElementById('dvtDesktop').setAttribute('aria-pressed','true');
+    document.getElementById('dvtMobile').classList.remove('active'); document.getElementById('dvtMobile').setAttribute('aria-pressed','false');
+  };
+  document.getElementById('dvtMobile').onclick = function() {
+    document.getElementById('deskPreview').classList.add('mobile-view');
+    document.getElementById('dvtMobile').classList.add('active'); document.getElementById('dvtMobile').setAttribute('aria-pressed','true');
+    document.getElementById('dvtDesktop').classList.remove('active'); document.getElementById('dvtDesktop').setAttribute('aria-pressed','false');
+  };
 
   // domain card collapse toggle
   (function() {
