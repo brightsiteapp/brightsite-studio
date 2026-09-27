@@ -2657,30 +2657,35 @@
   }
 
   backBtn.addEventListener('click', closeCard);
+})();
 
+// preview toggle buttons — outside the mobile-only IIFE so they run on all screen sizes
+(function(){
   // mobile website tab preview toggle
-  document.getElementById('mobilePvwDesktop').onclick = function() {
-    document.getElementById('mobilePreviewWrap').classList.remove('mobile-view');
-    document.getElementById('mobilePvwDesktop').classList.add('active');
-    document.getElementById('mobilePvwMobile').classList.remove('active');
-  };
-  document.getElementById('mobilePvwMobile').onclick = function() {
-    document.getElementById('mobilePreviewWrap').classList.add('mobile-view');
-    document.getElementById('mobilePvwMobile').classList.add('active');
-    document.getElementById('mobilePvwDesktop').classList.remove('active');
-  };
+  var mpd = document.getElementById('mobilePvwDesktop');
+  var mpm = document.getElementById('mobilePvwMobile');
+  var mpw = document.getElementById('mobilePreviewWrap');
+  if (mpd && mpm && mpw) {
+    mpd.onclick = function() { mpw.classList.remove('mobile-view'); mpd.classList.add('active'); mpm.classList.remove('active'); };
+    mpm.onclick = function() { mpw.classList.add('mobile-view'); mpm.classList.add('active'); mpd.classList.remove('active'); };
+  }
 
   // desktop/mobile preview toggle
-  document.getElementById('dvtDesktop').onclick = function() {
-    document.getElementById('deskPreview').classList.remove('mobile-view');
-    document.getElementById('dvtDesktop').classList.add('active'); document.getElementById('dvtDesktop').setAttribute('aria-pressed','true');
-    document.getElementById('dvtMobile').classList.remove('active'); document.getElementById('dvtMobile').setAttribute('aria-pressed','false');
-  };
-  document.getElementById('dvtMobile').onclick = function() {
-    document.getElementById('deskPreview').classList.add('mobile-view');
-    document.getElementById('dvtMobile').classList.add('active'); document.getElementById('dvtMobile').setAttribute('aria-pressed','true');
-    document.getElementById('dvtDesktop').classList.remove('active'); document.getElementById('dvtDesktop').setAttribute('aria-pressed','false');
-  };
+  var dvtD = document.getElementById('dvtDesktop');
+  var dvtM = document.getElementById('dvtMobile');
+  var deskPv = document.getElementById('deskPreview');
+  if (dvtD && dvtM && deskPv) {
+    dvtD.onclick = function() {
+      deskPv.classList.remove('mobile-view');
+      dvtD.classList.add('active'); dvtD.setAttribute('aria-pressed','true');
+      dvtM.classList.remove('active'); dvtM.setAttribute('aria-pressed','false');
+    };
+    dvtM.onclick = function() {
+      deskPv.classList.add('mobile-view');
+      dvtM.classList.add('active'); dvtM.setAttribute('aria-pressed','true');
+      dvtD.classList.remove('active'); dvtD.setAttribute('aria-pressed','false');
+    };
+  }
 
   // domain card collapse toggle
   (function() {
@@ -2714,6 +2719,7 @@
   })();
 })();
 </script>
+
 
 
 </body>
