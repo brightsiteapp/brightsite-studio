@@ -528,14 +528,35 @@
   .mobile-pvw-toggle{display:flex;gap:2px;padding:3px;background:#e8e4df;border-radius:10px;width:fit-content;margin:0 auto 10px;}
   .mobile-pvw-btn{border:0;border-radius:7px;background:transparent;color:var(--muted);font:700 12px/1 Inter,sans-serif;padding:6px 14px;cursor:pointer;}
   .mobile-pvw-btn.active{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.1);}
-  .mobile-preview-card{border-radius:18px;flex:none;min-height:200px;}
-  /* mobile view: show card inside a phone shell */
-  .mobile-preview-wrap.mobile-view{display:flex;flex-direction:column;align-items:center;background:#e8e8e6;border-radius:18px;padding:16px 12px;}
-  .mobile-preview-wrap.mobile-view .mobile-pvw-toggle{margin-bottom:14px;}
-  .mobile-preview-wrap.mobile-view .mobile-preview-card{
-    width:min(260px,78%);min-height:420px;border-radius:28px;
-    box-shadow:0 0 0 10px #111,0 0 0 12px #333,0 16px 40px rgba(0,0,0,.4);
+  .mobile-preview-card{flex:1;border-radius:0;}
+  /* browser frame (desktop toggle) */
+  .mob-pvw-browser{border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.15);border:1px solid rgba(0,0,0,.12);}
+  .mob-pvw-browser-bar{display:flex;align-items:center;gap:8px;padding:0 10px;height:30px;background:#2a2a2a;}
+  .mob-pvw-browser-bar .fake-browser-dots{display:flex;gap:5px;}
+  .mob-pvw-browser-bar .fake-browser-dots span{width:9px;height:9px;border-radius:50%;}
+  .mob-pvw-browser-bar .fake-browser-dots span:nth-child(1){background:#ff5f57}
+  .mob-pvw-browser-bar .fake-browser-dots span:nth-child(2){background:#febc2e}
+  .mob-pvw-browser-bar .fake-browser-dots span:nth-child(3){background:#28c840}
+  .mob-pvw-browser-url{flex:1;height:18px;background:rgba(255,255,255,.1);border-radius:4px;}
+  .mob-pvw-browser-content{display:flex;flex-direction:column;}
+  .mob-pvw-browser-content .mobile-preview-card{min-height:180px;border-radius:0;}
+  /* phone frame (mobile toggle) — hidden by default */
+  .mob-pvw-phone{display:none;align-items:center;justify-content:center;padding:8px 0;}
+  .mob-pvw-phone-shell{
+    width:min(200px,60vw);
+    aspect-ratio:9/19.5;
+    background:#111;border-radius:36px;
+    padding:10px 8px;
+    box-shadow:0 0 0 2px #333,0 10px 40px rgba(0,0,0,.5);
+    display:flex;flex-direction:column;box-sizing:border-box;
   }
+  .mob-pvw-phone-notch{width:70px;height:16px;background:#111;border-radius:0 0 10px 10px;margin:0 auto 4px;flex:none;position:relative;}
+  .mob-pvw-phone-notch::before{content:'';position:absolute;top:4px;left:50%;transform:translateX(-50%);width:8px;height:8px;border-radius:50%;background:#222;}
+  .mob-pvw-phone-screen{flex:1;border-radius:24px;overflow:hidden;background:#0f0f1a;display:flex;flex-direction:column;}
+  .mob-pvw-phone-screen .mobile-preview-card{flex:1;border-radius:0;}
+  /* toggle states */
+  .mobile-preview-wrap.mobile-view .mob-pvw-browser{display:none;}
+  .mobile-preview-wrap.mobile-view .mob-pvw-phone{display:flex;}
 
 </style>
 
@@ -694,10 +715,32 @@
           <button type="button" class="mobile-pvw-btn active" id="mobilePvwDesktop">Desktop</button>
           <button type="button" class="mobile-pvw-btn" id="mobilePvwMobile">Mobile</button>
         </div>
-        <div class="preview-placeholder mobile-preview-card" id="mobilePreviewCard">
-          <div class="preview-placeholder-biz" id="mobilePreviewBizName">Your business</div>
-          <div class="preview-placeholder-title">Fill in your<br>details</div>
-          <div class="preview-placeholder-sub">Complete all sections — add info until all ticks are green</div>
+        <!-- desktop frame -->
+        <div class="mob-pvw-browser">
+          <div class="mob-pvw-browser-bar">
+            <div class="fake-browser-dots"><span></span><span></span><span></span></div>
+            <div class="mob-pvw-browser-url"></div>
+          </div>
+          <div class="mob-pvw-browser-content">
+            <div class="preview-placeholder mobile-preview-card" id="mobilePreviewCard">
+              <div class="preview-placeholder-biz" id="mobilePreviewBizName">Your business</div>
+              <div class="preview-placeholder-title">Fill in your<br>details</div>
+              <div class="preview-placeholder-sub">Complete all sections — add info until all ticks are green</div>
+            </div>
+          </div>
+        </div>
+        <!-- phone frame -->
+        <div class="mob-pvw-phone">
+          <div class="mob-pvw-phone-shell">
+            <div class="mob-pvw-phone-notch"></div>
+            <div class="mob-pvw-phone-screen">
+              <div class="preview-placeholder mobile-preview-card" id="mobilePreviewCardMob">
+                <div class="preview-placeholder-biz" id="mobilePreviewBizNameMob">Your business</div>
+                <div class="preview-placeholder-title">Fill in your<br>details</div>
+                <div class="preview-placeholder-sub">Complete all sections — add info until all ticks are green</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1283,6 +1326,8 @@
     if (deskBizNameMob) deskBizNameMob.textContent = bizLabel;
     var mobileBizName = document.getElementById('mobilePreviewBizName');
     if (mobileBizName) mobileBizName.textContent = bizLabel;
+    var mobileBizNameMob = document.getElementById('mobilePreviewBizNameMob');
+    if (mobileBizNameMob) mobileBizNameMob.textContent = bizLabel;
     var dvt = document.getElementById('deskViewToggle');
     if (dvt) dvt.hidden = false;
     if (liveUrl && deskFrame) {
@@ -2131,7 +2176,8 @@
     var placeholders = [
       document.getElementById('deskPreviewPlaceholder'),
       document.getElementById('deskPreviewPlaceholderMob'),
-      document.getElementById('mobilePreviewCard')
+      document.getElementById('mobilePreviewCard'),
+      document.getElementById('mobilePreviewCardMob')
     ];
     placeholders.forEach(function(el) {
       if (!el) return;
