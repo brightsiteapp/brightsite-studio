@@ -22,7 +22,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#F7F2EC">
 <link rel="canonical" href="https://brightsite.app/pricing">
-<link rel="stylesheet" href="styles.css?v=20260927-3">
+<link rel="stylesheet" href="styles.css?v=20260927-4">
 <style>
   .page{padding-top:20px}
   .page-hero{margin-bottom:0}
@@ -31,10 +31,11 @@
   #pricing{padding-top:12px!important;padding-bottom:14px}
   footer{padding:20px 24px!important}
 
-  /* All cards same width + blue outline */
-  #pricing .plans{display:grid;grid-template-columns:repeat(3,1fr);align-items:stretch}
-  #pricing .plan{border-color:var(--accent);position:relative;box-sizing:border-box;width:100%}
-  @media(max-width:900px){#pricing .plans{grid-template-columns:1fr}}
+  /* All cards same fixed size */
+  #pricing .plans{display:grid;grid-template-columns:repeat(3,1fr);align-items:stretch;grid-auto-rows:1fr}
+  #pricing .plan{border-color:var(--accent);position:relative;box-sizing:border-box;width:100%;display:flex;flex-direction:column;height:100%}
+  #pricing .plan ul{flex:1}
+  @media(max-width:900px){#pricing .plans{grid-template-columns:1fr;grid-auto-rows:auto}}
 
   /* Toggle: absolute top-right so h4 never wraps */
   .plan-header{margin-bottom:6px}
@@ -58,9 +59,9 @@
   #pricing .plan h4{font-size:29px;margin-bottom:0}
   #pricing .plan .desc{margin-bottom:13px}
   #pricing .plan .price{display:flex;align-items:baseline;gap:6px;flex-wrap:nowrap;white-space:nowrap;font-size:48px;font-weight:800;color:#111;letter-spacing:-0.03em}
-  #pricing .plan .price .setup-price{font-size:48px;font-weight:800}
+  #pricing .plan .price .setup-price{font-size:48px;font-weight:800;color:var(--accent)}
   #pricing .plan .price .price-was{font-size:18px;color:#bbb;text-decoration:line-through;margin-right:2px;font-weight:600}
-  #pricing .plan .price small{font-size:13px;margin-left:4px;color:#888;font-weight:500;letter-spacing:0}
+  #pricing .plan .price small{font-size:13px;margin-left:4px;color:var(--accent);font-weight:600;letter-spacing:0}
   #pricing .price-save{margin-left:0}
   #pricing .plan .price-note{font-size:12px;color:#999;margin-top:2px;margin-bottom:14px}
   #pricing .plan .price-addon{margin-bottom:17px}
@@ -247,7 +248,7 @@
       } else {
         if (setupEl) {
           setupEl.textContent = '£' + (isAnnual ? annualSetup : monthlySetup);
-          setupEl.style.color = isAnnual ? '' : 'var(--accent)';
+          setupEl.style.color = 'var(--accent)';
         }
         if (wasEl)   wasEl.style.visibility = isAnnual ? 'visible' : 'hidden';
         if (saveEl)  saveEl.style.visibility = isAnnual ? 'visible' : 'hidden';
