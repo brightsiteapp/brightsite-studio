@@ -170,9 +170,9 @@
   .info-card{padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 8px 20px rgba(23,32,31,.04);margin-bottom:16px}
   .info-card h2{font-family:var(--display);font-size:15px;font-weight:700;margin-bottom:12px}
   /* mobile accordion overlay */
-  .info-card-overlay{display:none;position:fixed;inset:0;z-index:100;background:var(--bg);flex-direction:column;overflow-y:auto;overscroll-behavior-y:contain}
+  .info-card-overlay{display:none;position:absolute;inset:0;z-index:100;background:var(--bg);flex-direction:column;overflow-y:auto;overscroll-behavior-y:contain}
   .info-card-overlay.is-open{display:flex}
-  .info-card-overlay-head{display:flex;align-items:center;gap:10px;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top,0px));border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0;z-index:1;flex:none}
+  .info-card-overlay-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0;z-index:1;flex:none}
   .info-card-overlay-back{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border:0;border-radius:10px;background:var(--surface,#f3f4f6);cursor:pointer;flex:none}
   .info-card-overlay-back svg{display:block}
   .info-card-overlay-title{font-size:15px;font-weight:700;color:var(--ink)}
@@ -420,24 +420,27 @@
     .blueprint-site{border-radius:12px}.blueprint-inner{padding:22px}.blueprint-top{align-items:flex-start}.blueprint-nav{gap:10px;justify-content:flex-end}.blueprint-hero{min-height:430px;padding:18px}.blueprint-hero-copy{padding:18px}.blueprint-illustration{min-height:190px}.blueprint-services,.blueprint-contact-grid{grid-template-columns:1fr}.blueprint-gallery{grid-template-columns:1fr}.loading-grid{grid-template-columns:1fr}.loading-grid .blueprint-site{height:380px}.loading-steps{padding:16px}
   }
   @media(max-width:860px){
-  /* website section buttons: 2-col equal-height grid */
-  #builderList{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:stretch}
+  /* website section buttons: 2-col fixed-height grid — all cards same size */
+  #builderList{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   #builderList .builder-head{grid-column:1/-1;margin-bottom:0}
   #builderList .builder-guidance{grid-column:1/-1}
-  #builderList .sec-btn{margin-bottom:0;height:100%;flex-direction:row;align-items:center;justify-content:space-between;gap:6px;padding:14px 14px}
-  #builderList .sec-btn .sec-title{display:flex;align-items:center;gap:8px}
-  #builderList .sec-btn .section-tick{flex:none;align-self:center}
+  #builderList .sec-btn{margin-bottom:0;height:56px;flex-direction:row;align-items:center;justify-content:space-between;gap:6px;padding:12px 14px;overflow:hidden}
+  #builderList .sec-btn .sec-title{display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden}
+  #builderList .sec-btn .sec-title>span:not(.section-tick){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #builderList .sec-btn .section-tick{flex:none}
   /* domain card collapsed in left-panel — tap opens overlay */
   .left-panel #domainCard{cursor:pointer}
   .left-panel #domainCard h2{display:flex;align-items:center;justify-content:space-between;margin-bottom:0}
   .left-panel #domainCard h2::after{content:'›';font-size:18px;font-weight:400;color:var(--muted);margin-left:6px}
   .left-panel #domainCard .info-hint,.left-panel #domainCard>div,.left-panel #domainCard #domainTldPicker,.left-panel #domainCard #domainResult{display:none !important}
-  /* notes section: fill height, Done pinned to bottom */
-  [data-section-panel="notes"]{display:flex;flex-direction:column;min-height:calc(100dvh - 120px)}
-  [data-section-panel="notes"]:not([hidden]){display:flex}
-  [data-section-panel="notes"] .acct-field{flex:1}
-  [data-section-panel="notes"] #developerNote{height:100%;min-height:120px;resize:none}
-  [data-section-panel="notes"] .builder-done[data-back]{margin-top:auto;margin-bottom:0;width:100%;justify-content:center;border-radius:12px;min-height:46px;font-size:14px}
+  /* notes section: fills left-panel, Done pinned above safe area */
+  body.mode-edit [data-section-panel="notes"]:not([hidden]){position:absolute;inset:0;z-index:10;background:var(--bg);display:flex;flex-direction:column;padding:18px 18px calc(18px + env(safe-area-inset-bottom,34px))}
+  body.mode-edit [data-section-panel="notes"] .section-head{flex:none}
+  body.mode-edit [data-section-panel="notes"] h3{flex:none}
+  body.mode-edit [data-section-panel="notes"] .info-hint{flex:none}
+  body.mode-edit [data-section-panel="notes"] .acct-field{flex:1;display:flex;flex-direction:column;min-height:0;margin-bottom:0}
+  body.mode-edit [data-section-panel="notes"] #developerNote{flex:1;resize:none;min-height:0}
+  body.mode-edit [data-section-panel="notes"] .builder-done[data-back]{flex:none;margin-top:12px;width:100%;justify-content:center;border-radius:12px;min-height:46px;font-size:14px}
   #lsb{position:fixed;right:2px;top:0;bottom:0;width:3px;pointer-events:none;z-index:9999}
   #lsb-thumb{position:absolute;right:0;width:3px;background:rgba(0,0,0,.22);border-radius:3px;min-height:24px}
   /* Messages: left-panel scrolls naturally; heading+input stay sticky */
@@ -570,7 +573,7 @@
           <button type="button" class="sec-btn" data-section="reviews"><span class="sec-title"><span class="section-tick"></span>Reviews</span><span class="chev">&#8250;</span></button>
           <button type="button" class="sec-btn" data-section="media"><span class="sec-title"><span class="section-tick"></span>Media</span><span class="chev">&#8250;</span></button>
           <p class="builder-guidance" id="builderGuidance" hidden></p>
-          <button type="button" class="sec-btn" data-section="notes" style="margin-top:16px"><span class="sec-title">Notes</span><span class="chev">&#8250;</span></button>
+          <button type="button" class="sec-btn" data-section="notes"><span class="sec-title">Notes</span><span class="chev">&#8250;</span></button>
         </div>
 
         <div class="builder-section" data-section-panel="name" hidden>
@@ -699,6 +702,17 @@
       <iframe id="sitePreview" title="Your website"></iframe>
     </div>
     <button type="button" class="mobile-preview-edit" id="mobilePreviewEdit" aria-label="Done viewing website"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Done</button>
+  </div>
+
+  <!-- Mobile overlay for Account info-cards (inside appBody so header stays visible) -->
+  <div class="info-card-overlay" id="acctCardOverlay">
+    <div class="info-card-overlay-head">
+      <button class="info-card-overlay-back" id="acctCardBack" aria-label="Back">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 14L6 9l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <span class="info-card-overlay-title" id="acctCardOverlayTitle"></span>
+    </div>
+    <div class="info-card-overlay-body" id="acctCardOverlayBody"></div>
   </div>
 
 </div>
@@ -3507,16 +3521,6 @@
 })();
 </script>
 
-<!-- Mobile accordion overlay for Account info-cards -->
-<div class="info-card-overlay" id="acctCardOverlay">
-  <div class="info-card-overlay-head">
-    <button class="info-card-overlay-back" id="acctCardBack" aria-label="Back">
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 14L6 9l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </button>
-    <span class="info-card-overlay-title" id="acctCardOverlayTitle"></span>
-  </div>
-  <div class="info-card-overlay-body" id="acctCardOverlayBody"></div>
-</div>
 <script>
 (function(){
   if (window.innerWidth > 860) return;
