@@ -31,27 +31,27 @@
   #pricing{padding-top:12px!important;padding-bottom:14px}
   footer{padding:20px 24px!important}
 
-  /* All cards get blue outline */
-  #pricing .plan{border-color:var(--accent)}
+  /* All cards same width + blue outline */
+  #pricing .plans{align-items:stretch}
+  #pricing .plan{border-color:var(--accent);position:relative}
 
-  /* Card header row: name + toggle */
-  .plan-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:5px}
-  .plan-header h4{margin:0}
-
-  /* Per-card billing toggle */
-  .card-billing{display:flex;align-items:center;gap:0;border:1.5px solid var(--line);border-radius:8px;overflow:hidden;flex-shrink:0;margin-top:3px}
-  .card-billing button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:11px;font-weight:700;padding:5px 9px;cursor:pointer;line-height:1;transition:background .15s,color .15s;white-space:nowrap}
+  /* Toggle: absolute top-right so h4 never wraps */
+  .plan-header{margin-bottom:6px}
+  .plan-header h4{margin:0;padding-right:110px} /* reserve space for toggle */
+  .card-billing{position:absolute;top:22px;right:20px;display:flex;align-items:stretch;gap:0;border:1.5px solid var(--line);border-radius:9px;overflow:hidden}
+  .card-billing button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:11px;font-weight:700;padding:6px 10px;cursor:pointer;line-height:1.2;transition:background .15s,color .15s;white-space:nowrap;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
   .card-billing button.active{background:var(--accent);color:#fff}
-  .card-save-badge{font-size:10px;font-weight:700;color:var(--accent);background:#eaf0fe;padding:1px 5px;border-radius:20px;margin-left:3px;letter-spacing:-.01em}
+  .card-save-badge{font-size:9px;font-weight:700;color:inherit;opacity:.85;letter-spacing:-.01em}
 
   /* Best value badge on Pro */
-  #pricing .plan.feature{position:relative}
   .best-value-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:3px 12px;border-radius:999px;white-space:nowrap}
 
   .price-was { font-size: 15px; color: #999; text-decoration: line-through; margin-right: 4px; display: none; }
   .price-save { font-size: 11px; font-weight: 700; color: var(--accent); background: #EAF0FE; padding: 2px 7px; border-radius: 20px; margin-left: 8px; vertical-align: middle; letter-spacing: -0.02em; display: none; }
   .plan[data-annual-active][data-annual-discount] .price-was,
   .plan[data-annual-active][data-annual-discount] .price-save { display: inline-block; }
+  /* spacer keeps price rows aligned across all cards */
+  .price-spacer{display:block;height:22px}
 
   #pricing .plan{padding:26px 24px}
   #pricing .plan h4{font-size:29px;margin-bottom:0}
@@ -68,12 +68,17 @@
   #pricing .pricing-note{margin-top:20px}
   #pricing .plan ul{margin-bottom:0}
   #pricing .plan li.addon{color:var(--accent);font-weight:700}
+  @media(max-width:900px){
+    .card-billing{top:16px;right:14px}
+    #pricing .plan h4{padding-right:100px}
+  }
   @media(max-width:600px){
     #pricing .plan{padding:18px 16px}
-    #pricing .plan h4{font-size:22px}
+    #pricing .plan h4{font-size:22px;padding-right:90px}
     #pricing .plan .price{font-size:32px;white-space:normal;flex-wrap:wrap}
     #pricing .plan .price .setup-price{font-size:32px}
-    .card-billing button{font-size:10px;padding:4px 7px}
+    .card-billing{top:14px;right:12px}
+    .card-billing button{font-size:10px;padding:6px 9px}
   }
 </style>
 <script src="reveal.js?v=20260902-3" defer></script>
@@ -125,6 +130,7 @@
           </div>
           <div class="desc">Your website built for free — just pay £19/mo hosting to go live.</div>
           <div class="price-row">
+            <span class="price-spacer"></span>
             <span class="price"><span class="setup-price">Free</span><small class="hosting-price">£17/mo hosting</small></span>
           </div>
           <div class="price-note">Billed £204/yr — save £24 a year</div>
