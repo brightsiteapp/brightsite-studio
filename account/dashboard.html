@@ -420,17 +420,18 @@
     .blueprint-site{border-radius:12px}.blueprint-inner{padding:22px}.blueprint-top{align-items:flex-start}.blueprint-nav{gap:10px;justify-content:flex-end}.blueprint-hero{min-height:430px;padding:18px}.blueprint-hero-copy{padding:18px}.blueprint-illustration{min-height:190px}.blueprint-services,.blueprint-contact-grid{grid-template-columns:1fr}.blueprint-gallery{grid-template-columns:1fr}.loading-grid{grid-template-columns:1fr}.loading-grid .blueprint-site{height:380px}.loading-steps{padding:16px}
   }
   @media(max-width:860px){
-  /* website section buttons: 2-col grid so all 8 fit without scrolling */
-  #builderList{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  /* website section buttons: 2-col equal-height grid */
+  #builderList{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:stretch}
   #builderList .builder-head{grid-column:1/-1;margin-bottom:0}
   #builderList .builder-guidance{grid-column:1/-1}
-  #builderList .sec-btn{margin-bottom:0;flex-direction:column;align-items:flex-start;gap:6px;padding:12px 14px}
-  #builderList .sec-btn .chev{display:none}
-  /* domain card collapsed by default on mobile — tap opens overlay */
-  #domainCard{cursor:pointer}
-  #domainCard h2{display:flex;align-items:center;justify-content:space-between;margin-bottom:0}
-  #domainCard h2::after{content:'›';font-size:18px;font-weight:400;color:var(--muted);margin-left:6px}
-  #domainCard .info-hint,#domainCard>div,#domainCard #domainTldPicker,#domainCard #domainResult{display:none !important}
+  #builderList .sec-btn{margin-bottom:0;height:100%;flex-direction:row;align-items:center;justify-content:space-between;gap:6px;padding:14px 14px}
+  #builderList .sec-btn .sec-title{display:flex;align-items:center;gap:8px}
+  #builderList .sec-btn .section-tick{flex:none;align-self:center}
+  /* domain card collapsed in left-panel — tap opens overlay */
+  .left-panel #domainCard{cursor:pointer}
+  .left-panel #domainCard h2{display:flex;align-items:center;justify-content:space-between;margin-bottom:0}
+  .left-panel #domainCard h2::after{content:'›';font-size:18px;font-weight:400;color:var(--muted);margin-left:6px}
+  .left-panel #domainCard .info-hint,.left-panel #domainCard>div,.left-panel #domainCard #domainTldPicker,.left-panel #domainCard #domainResult{display:none !important}
   /* notes section: fill height, Done pinned to bottom */
   [data-section-panel="notes"]{display:flex;flex-direction:column;min-height:calc(100dvh - 120px)}
   [data-section-panel="notes"]:not([hidden]){display:flex}
@@ -3529,12 +3530,11 @@
     var title = card.querySelector('h2') ? card.querySelector('h2').textContent.replace('›','').trim() : '';
     overlayTitle.textContent = title;
     overlayBody.innerHTML = '';
-    // clone card content (everything after h2), force-show all children
+    // clone card — CSS hiding is scoped to .left-panel so won't apply here
     var clone = card.cloneNode(true);
     var h2 = clone.querySelector('h2');
     if (h2) h2.remove();
     clone.style.cssText = 'border:0;border-radius:0;box-shadow:none;background:transparent;padding:0;margin:0';
-    clone.querySelectorAll('*').forEach(function(el){ el.style.removeProperty('display'); });
     overlayBody.appendChild(clone);
     overlay.classList.add('is-open');
   }
