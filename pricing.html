@@ -22,7 +22,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#F7F2EC">
 <link rel="canonical" href="https://brightsite.app/pricing">
-<link rel="stylesheet" href="styles.css?v=20260927-2">
+<link rel="stylesheet" href="styles.css?v=20260927-3">
 <style>
   .page{padding-top:20px}
   .page-hero{margin-bottom:0}
@@ -47,10 +47,10 @@
   /* Best value badge on Pro */
   .best-value-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:3px 12px;border-radius:999px;white-space:nowrap}
 
-  .price-was { font-size: 15px; color: #999; text-decoration: line-through; margin-right: 4px; display: none; }
-  .price-save { font-size: 11px; font-weight: 700; color: var(--accent); background: #EAF0FE; padding: 2px 7px; border-radius: 20px; margin-left: 8px; vertical-align: middle; letter-spacing: -0.02em; display: none; }
+  .price-was { font-size: 15px; color: #999; text-decoration: line-through; margin-right: 4px; display: inline-block; visibility: hidden; }
+  .price-save { font-size: 11px; font-weight: 700; color: var(--accent); background: #EAF0FE; padding: 2px 7px; border-radius: 20px; margin-left: 8px; vertical-align: middle; letter-spacing: -0.02em; display: inline-block; visibility: hidden; }
   .plan[data-annual-active][data-annual-discount] .price-was,
-  .plan[data-annual-active][data-annual-discount] .price-save { display: inline-block; }
+  .plan[data-annual-active][data-annual-discount] .price-save { visibility: visible; }
   /* spacer keeps price rows aligned across all cards */
   .price-spacer{display:block;height:22px}
 
@@ -235,6 +235,8 @@
     var monthlySetup = plan.dataset.setupMonthly;
     var annualSetup  = plan.dataset.setupAnnual;
 
+    var saveEl = plan.querySelector('.price-save');
+
     function update(isAnnual) {
       btnMonthly.classList.toggle('active', !isAnnual);
       btnAnnual.classList.toggle('active', isAnnual);
@@ -243,9 +245,13 @@
         if (hostingEl) hostingEl.textContent = isAnnual ? '£17/mo hosting' : '£19/mo hosting';
         if (noteEl) noteEl.textContent = isAnnual ? 'Billed £204/yr — save £24 a year' : '£19/mo hosting — cancel any time';
       } else {
-        if (setupEl) setupEl.textContent = '£' + (isAnnual ? annualSetup : monthlySetup);
-        if (wasEl)   wasEl.style.display = isAnnual ? 'inline' : 'none';
-        if (hostingEl) hostingEl.textContent = isAnnual ? '£19/mo hosting' : '+ £19/mo';
+        if (setupEl) {
+          setupEl.textContent = '£' + (isAnnual ? annualSetup : monthlySetup);
+          setupEl.style.color = isAnnual ? '' : 'var(--accent)';
+        }
+        if (wasEl)   wasEl.style.visibility = isAnnual ? 'visible' : 'hidden';
+        if (saveEl)  saveEl.style.visibility = isAnnual ? 'visible' : 'hidden';
+        if (hostingEl) hostingEl.textContent = '£19/mo hosting';
         if (noteEl) noteEl.textContent = isAnnual ? 'One-off build, then £228/yr' : 'One-off build, then £19/mo';
         if (isAnnual) {
           plan.setAttribute('data-annual-active', '');
