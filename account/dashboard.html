@@ -421,14 +421,16 @@
     .blueprint-site{border-radius:12px}.blueprint-inner{padding:22px}.blueprint-top{align-items:flex-start}.blueprint-nav{gap:10px;justify-content:flex-end}.blueprint-hero{min-height:430px;padding:18px}.blueprint-hero-copy{padding:18px}.blueprint-illustration{min-height:190px}.blueprint-services,.blueprint-contact-grid{grid-template-columns:1fr}.blueprint-gallery{grid-template-columns:1fr}.loading-grid{grid-template-columns:1fr}.loading-grid .blueprint-site{height:380px}.loading-steps{padding:16px}
   }
   @media(max-width:860px){
-  body.msgs-active{overflow:hidden;height:100%;position:relative}
-  body.msgs-active .left-panel{position:fixed !important;top:var(--msgs-panel-top,0px);left:0;right:0;bottom:0;width:100%;height:var(--msgs-panel-height,100dvh);overflow:hidden;padding-bottom:0;z-index:10;display:flex;flex-direction:column;min-height:0}
+  /* Visible scrollbar on left-panel for all tabs */
+  .left-panel::-webkit-scrollbar{width:4px}
+  .left-panel::-webkit-scrollbar-track{background:transparent}
+  .left-panel::-webkit-scrollbar-thumb{background:rgba(0,0,0,.18);border-radius:4px}
+  /* Messages: left-panel scrolls naturally; heading+input stay sticky */
   body.msgs-active .right-panel{display:none !important}
-  body.msgs-active .left-inner{position:absolute !important;inset:0;padding:0;overflow:hidden;display:flex !important;flex-direction:column;min-height:0;height:100%}
   body.msgs-active #viewPanel,body.msgs-active #builderPanel{display:none !important}
-  body.msgs-active #msgsPanel{display:flex !important;flex:1 1 0% !important;min-height:0;flex-direction:column;overflow:hidden;height:100%}
-  body.msgs-active #msgsPanel>*:not(#msgsList){flex:0 0 auto}
-  body.msgs-active #msgsList{flex:1 1 0% !important;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;will-change:scroll-position}
+  body.msgs-active #msgsPanel{display:flex !important;flex-direction:column;min-height:100%}
+  body.msgs-active #msgsPanel .msgs-heading-wrap{position:sticky;top:0;background:var(--bg);z-index:2}
+  body.msgs-active .msgs-input-bar{position:sticky;bottom:0;background:var(--bg)}
   }
 </style>
 </head>
@@ -641,16 +643,13 @@
 
       <!-- ---------------- messages panel ---------------- -->
       <div id="msgsPanel" hidden style="display:none;flex-direction:column;flex:1;min-height:0">
-        <div style="padding:16px 18px 10px;border-bottom:1px solid var(--line);flex:none;position:sticky;top:0;background:var(--bg);z-index:1"><h2 style="margin:0;font-size:16px;font-weight:700">Messages</h2></div>
-        <div style="position:relative;flex:1 1 0%;min-height:0;overflow:hidden">
-          <div class="msgs-list" id="msgsList" style="position:absolute;inset:0;overflow:hidden">
-            <div class="msgs-empty" id="msgsEmpty" style="display:flex;flex-direction:column;gap:6px;text-align:center;padding:24px">
-              <span id="msgsWelcome" style="font-size:15px;font-weight:700;color:var(--ink)">Hey!</span>
-              <span style="font-size:13px;color:var(--muted)">Send a message to get started.</span>
-            </div>
-            <div id="msgsError" hidden style="margin:16px;padding:10px 14px;border-radius:10px;background:#fde8e8;color:#b23b2c;font-size:12.5px;font-weight:600;text-align:center"></div>
+        <div class="msgs-heading-wrap" style="padding:16px 18px 10px;border-bottom:1px solid var(--line);"><h2 style="margin:0;font-size:16px;font-weight:700">Messages</h2></div>
+        <div class="msgs-list" id="msgsList">
+          <div class="msgs-empty" id="msgsEmpty" style="display:flex;flex-direction:column;gap:6px;text-align:center;padding:24px">
+            <span id="msgsWelcome" style="font-size:15px;font-weight:700;color:var(--ink)">Hey!</span>
+            <span style="font-size:13px;color:var(--muted)">Send a message to get started.</span>
           </div>
-          <div id="msgsScrollBar" style="position:absolute;right:3px;top:0;width:3px;background:rgba(0,0,0,.25);border-radius:3px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:2"></div>
+          <div id="msgsError" hidden style="margin:16px;padding:10px 14px;border-radius:10px;background:#fde8e8;color:#b23b2c;font-size:12.5px;font-weight:600;text-align:center"></div>
         </div>
         <div class="msgs-edit-bar" id="msgsEditBar">
           <input type="text" id="msgsEditInput" placeholder="Edit message…">
@@ -1479,75 +1478,17 @@
     var bp = document.getElementById('builderPanel'); if (bp) bp.hidden = true;
     var sb = document.getElementById('saveBar'); if (sb) sb.hidden = true;
     var mp = document.getElementById('msgsPanel');
-    if (mp) {
-      mp.hidden = false;
-      mp.style.display = 'flex';
-    }
+    if (mp) { mp.hidden = false; mp.style.display = 'flex'; }
     document.body.classList.add('msgs-active');
-    void document.body.offsetHeight; // force reflow before measuring
-    // iOS Safari: set explicit pixel height on the scroll container
-    // so it doesn't depend on flex chain propagation
-    var ab = document.getElementById('appBody');
-    var panelTop = ab ? Math.round(ab.getBoundingClientRect().top) : 0;
-    var panelH = window.innerHeight - panelTop;
-    var root = document.documentElement;
-    root.style.setProperty('--msgs-panel-top', panelTop + 'px');
-    root.style.setProperty('--msgs-panel-height', panelH + 'px');
-    var ml = document.getElementById('msgsList');
-    // Custom scroll: block all page touchmove, drive msgsList scrollTop manually
-    document.addEventListener('touchmove', _msgsTouchBlock, {passive:false, capture:false});
-    if (ml) {
-      ml.addEventListener('touchstart', _msgsListTouchStart, {passive:true});
-      ml.addEventListener('touchmove', _msgsListTouchMove, {passive:false});
-      ml.addEventListener('touchend', _msgsListTouchEnd, {passive:true});
-    }
     var bname = (business && business.data && business.data.raw && business.data.raw.name) || (business && business.business_name) || '';
     var welcomeEl = document.getElementById('msgsWelcome');
     if (welcomeEl) welcomeEl.textContent = bname ? 'Hey ' + bname + '!' : 'Hey!';
     msgsInit();
   }
-  function _msgsTouchBlock(e) {
-    if (!document.body.classList.contains('msgs-active')) return;
-    e.preventDefault();
-  }
-  var _msgsTouch = null;
-  function _msgsListTouchStart(e) {
-    _msgsTouch = {y: e.touches[0].clientY, top: this.scrollTop};
-  }
-  function _msgsListTouchMove(e) {
-    if (!_msgsTouch) return;
-    e.stopPropagation();
-    var dy = e.touches[0].clientY - _msgsTouch.y;
-    this.scrollTop = _msgsTouch.top - dy;
-    _msgsUpdateBar(this);
-  }
-  function _msgsListTouchEnd() { _msgsTouch = null; }
-  function _msgsUpdateBar(ml) {
-    var bar = document.getElementById('msgsScrollBar');
-    if (!bar || ml.scrollHeight <= ml.clientHeight) { if (bar) bar.style.opacity='0'; return; }
-    var ratio = ml.clientHeight / ml.scrollHeight;
-    var trackH = ml.clientHeight;
-    var thumbH = Math.max(30, ratio * trackH);
-    var thumbTop = (ml.scrollTop / (ml.scrollHeight - ml.clientHeight)) * (trackH - thumbH);
-    bar.style.height = thumbH + 'px';
-    bar.style.top = thumbTop + 'px';
-    bar.style.opacity = '1';
-    clearTimeout(bar._hide);
-    bar._hide = setTimeout(function(){ bar.style.opacity='0'; }, 1200);
-  }
   function hideMessagesPanel() {
-    document.removeEventListener('touchmove', _msgsTouchBlock, false);
-    var ml = document.getElementById('msgsList');
-    if (ml) {
-      ml.removeEventListener('touchstart', _msgsListTouchStart);
-      ml.removeEventListener('touchmove', _msgsListTouchMove);
-      ml.removeEventListener('touchend', _msgsListTouchEnd);
-    }
     document.body.classList.remove('msgs-active');
     var mp = document.getElementById('msgsPanel');
     if (mp) { mp.hidden = true; mp.style.display = 'none'; }
-    var ml = document.getElementById('msgsList');
-    if (ml) { ml.style.height = ''; ml.style.overflowY = ''; ml.style.flex = ''; ml.scrollTop = 0; }
     msgsStopPolling();
   }
   document.getElementById('mobileAccountTab').addEventListener('click', function () {
