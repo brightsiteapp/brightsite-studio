@@ -620,7 +620,7 @@
           <div id="domainBody" style="margin-top:12px">
             <p class="info-hint" style="margin-bottom:12px">Register your own domain name and we'll connect it to your website.</p>
             <div style="display:flex;gap:8px;margin-bottom:8px">
-              <input type="text" id="domainSearchInput" placeholder="yourbusiness" autocomplete="off" autocapitalize="none" style="flex:1;min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px;background:var(--card);color:var(--text)">
+              <input type="text" id="domainSearchInput" placeholder="yourbusiness" autocomplete="off" autocapitalize="none" style="flex:1;min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:16px;background:var(--card);color:var(--text)">
               <button type="button" id="domainTldBtn" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap">.com ▾</button>
               <button type="button" id="domainCheckBtn" style="padding:10px 16px;border:0;border-radius:10px;background:#2563EB;color:#fff;font:inherit;font-size:14px;font-weight:700;cursor:pointer">Check</button>
             </div>
@@ -652,13 +652,13 @@
             </div>
             <div class="plan-chosen-info">
               <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-                <div class="plan-chosen-name" id="planChosenName">Free plan</div>
+                <div class="plan-chosen-name" id="planChosenName">Free Plan</div>
                 <button type="button" class="plan-chosen-change" id="choosePlanBtn">Change plan</button>
               </div>
               <div class="plan-chosen-price" id="planChosenPrice">Free · £19/mo hosting</div>
             </div>
           </div>
-          <p class="info-hint" id="billingHint">Your Free plan is selected. Add features now; you'll manage billing once your account is active.</p>
+          <p class="info-hint" id="billingHint">Your Free Plan is selected. Add features now; you'll manage billing once your account is active.</p>
           <div id="domainIncludedNote" hidden style="display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:10px;background:#f2faf3;margin-bottom:8px;font-size:12px;color:#1f9d55;font-weight:600"><span>✓</span><span id="domainIncludedText"></span></div>
           <button type="button" class="upgrade-btn" id="upgradeBtn">Pay for your site</button>
           <button type="button" class="billing-btn" id="billingBtn" hidden>Manage billing</button>
@@ -931,7 +931,7 @@
       <!-- Free -->
       <div class="plan-choice-card all-blue" data-plan="essential" id="planCardEssential">
         <div class="plan-choice-header">
-          <div class="plan-choice-name">Free plan</div>
+          <div class="plan-choice-name">Free Plan</div>
           <div class="card-billing-mini">
             <button type="button" class="cbm-monthly">Monthly</button>
             <button type="button" class="cbm-annual active">Annual <span class="cbm-save">Save £24</span></button>
@@ -950,14 +950,14 @@
           <li>Mobile optimisation</li>
           <li>1–3 pages with contact &amp; enquiry forms</li>
         </ul>
-        <button type="button" class="plan-select-btn" data-select="essential" style="margin-top:14px">Select Free plan</button>
+        <button type="button" class="plan-select-btn" data-select="essential" style="margin-top:14px">Select Free Plan</button>
       </div>
 
       <!-- Pro -->
       <div class="plan-choice-card all-blue" data-plan="pro" id="planCardPro">
         <span class="plan-featured-badge">BEST VALUE</span>
         <div class="plan-choice-header">
-          <div class="plan-choice-name">Pro plan</div>
+          <div class="plan-choice-name">Pro Plan</div>
           <div class="card-billing-mini">
             <button type="button" class="cbm-monthly">Monthly</button>
             <button type="button" class="cbm-annual active">Annual <span class="cbm-save">Save 50%</span></button>
@@ -977,13 +977,13 @@
           <li>Interactions &amp; animations</li>
           <li>Free domain included <span style="font-size:10px;font-weight:600;color:var(--muted)">(under £12/yr)</span></li>
         </ul>
-        <button type="button" class="plan-select-btn" data-select="pro" style="margin-top:14px">Select Pro plan</button>
+        <button type="button" class="plan-select-btn" data-select="pro" style="margin-top:14px">Select Pro Plan</button>
       </div>
 
       <!-- Prestige -->
       <div class="plan-choice-card all-blue" data-plan="prestige" id="planCardPrestige">
         <div class="plan-choice-header">
-          <div class="plan-choice-name">Prestige plan</div>
+          <div class="plan-choice-name">Prestige Plan</div>
           <div class="card-billing-mini">
             <button type="button" class="cbm-monthly">Monthly</button>
             <button type="button" class="cbm-annual active">Annual <span class="cbm-save">Save 50%</span></button>
@@ -1003,7 +1003,7 @@
           <li>Priority same-day support</li>
           <li>Free domain included <span style="font-size:10px;font-weight:600;color:var(--muted)">(under £12/yr)</span></li>
         </ul>
-        <button type="button" class="plan-select-btn" data-select="prestige" style="margin-top:14px">Select Prestige plan</button>
+        <button type="button" class="plan-select-btn" data-select="prestige" style="margin-top:14px">Select Prestige Plan</button>
       </div>
 
     </div>
@@ -1499,7 +1499,7 @@
 
   var PLAN_CONFIG = {
     essential: {
-      label: 'Free plan',
+      label: 'Free Plan',
       monthly: { setup: 'Free', hosting: '£19/mo hosting', note: '£19/mo hosting — cancel any time' },
       annual:  { setup: 'Free', hosting: '£17/mo hosting', note: 'Billed £204/yr — save £24 a year' },
       stripeMonthly: 'https://buy.stripe.com/14A14n87jcE4dfJbxX3gk00',
@@ -1507,7 +1507,7 @@
       iconColor: '#2563eb'
     },
     pro: {
-      label: 'Pro plan',
+      label: 'Pro Plan',
       monthly: { setup: '£199', hosting: '£19/mo', note: 'One-off build, then £19/mo' },
       annual:  { setup: '£99', hosting: '£228/yr', note: 'One-off build, then £228/yr' },
       stripeMonthly: 'https://buy.stripe.com/00wdR99bnavW6Rl31r3gk03',
@@ -1515,7 +1515,7 @@
       iconColor: '#6366f1'
     },
     prestige: {
-      label: 'Prestige plan',
+      label: 'Prestige Plan',
       monthly: { setup: '£299', hosting: '£19/mo', note: 'One-off build, then £19/mo' },
       annual:  { setup: '£149', hosting: '£228/yr', note: 'One-off build, then £228/yr' },
       stripeMonthly: 'https://buy.stripe.com/bJefZh87jdI8b7BbxX3gk05',
@@ -1626,7 +1626,7 @@
         priceEl.innerHTML = '<span style="text-decoration:line-through;opacity:.5;margin-right:5px">' + (pendingDomainPrice || '') + '</span><span>Free</span>';
         priceEl.style.background = '#e6f6ec';
         priceEl.style.color = '#1f9d55';
-        if (subEl) subEl.textContent = 'Included free with Pro & Prestige plans';
+        if (subEl) subEl.textContent = 'Included free with Pro & Prestige Plans';
       } else {
         priceEl.textContent = pendingDomainPrice || '';
         priceEl.style.background = '';
@@ -1649,6 +1649,14 @@
     closeBtn.addEventListener('click', closePlanModal);
     veil.addEventListener('click', function (e) { if (e.target === veil) closePlanModal(); });
     document.addEventListener('keydown', function (e) { if (!veil.hidden && e.key === 'Escape') closePlanModal(); });
+
+    // auto-save when domain checkbox toggled
+    var domainAddonCheck = document.getElementById('planDomainAddonCheck');
+    if (domainAddonCheck) {
+      domainAddonCheck.addEventListener('change', function() {
+        if (business && business.data && business.data.raw) saveBusiness();
+      });
+    }
 
     function syncModalState() {
       // billing toggle
@@ -1761,6 +1769,16 @@
       var raw = business.data.raw;
       if (raw.chosenPlan && PLAN_CONFIG[raw.chosenPlan]) selectedPlan = raw.chosenPlan;
       if (typeof raw.chosenAnnual === 'boolean') selectedAnnual = raw.chosenAnnual;
+      // restore domain selection
+      if (raw.chosenDomain) {
+        pendingDomain = raw.chosenDomain;
+        pendingDomainPrice = raw.chosenDomainPrice || null;
+        pendingDomainPence = raw.chosenDomainPence || 0;
+        // populate the search input so it looks correct
+        var inp = document.getElementById('domainSearchInput');
+        if (inp) inp.value = raw.chosenDomain.replace(/\.[^.]+(\.[^.]+)?$/, '');
+        if (window._bsUpdateDomainAddon) window._bsUpdateDomainAddon();
+      }
       renderPlanUI();
     }
 
@@ -1781,6 +1799,17 @@
     var raw = Object.assign({}, previous.raw || {});
     raw.chosenPlan = selectedPlan;
     raw.chosenAnnual = selectedAnnual;
+    // persist domain selection
+    var domainCheck = document.getElementById('planDomainAddonCheck');
+    if (pendingDomain && domainCheck && domainCheck.checked) {
+      raw.chosenDomain = pendingDomain;
+      raw.chosenDomainPrice = pendingDomainPrice || '';
+      raw.chosenDomainPence = pendingDomainPence || 0;
+    } else {
+      raw.chosenDomain = null;
+      raw.chosenDomainPrice = null;
+      raw.chosenDomainPence = null;
+    }
 
     var record = Object.assign({}, previous, {
       slug: slug,
@@ -2713,10 +2742,21 @@
 
   if (upgradeBtn) {
     upgradeBtn.addEventListener('click', function () {
-      var hostedUrl = upgradeBtn.dataset.stripeUrl;
-      if (hostedUrl) {
-        window.location.href = hostedUrl + '?prefilled_email=' + encodeURIComponent(getSessionEmail());
-      }
+      var plan = upgradeBtn.dataset.plan || 'essential';
+      var billing = upgradeBtn.dataset.billing || 'annual';
+      var email = getSessionEmail();
+      var slug = getSlug();
+      var domain = (typeof pendingDomain !== 'undefined' && pendingDomain) || '';
+      var domainCheck = document.getElementById('planDomainAddonCheck');
+      var includeDomain = domain && domainCheck && domainCheck.checked;
+
+      var url = '/checkout.html?plan=' + encodeURIComponent(plan)
+        + '&billing=' + encodeURIComponent(billing)
+        + '&email=' + encodeURIComponent(email)
+        + '&slug=' + encodeURIComponent(slug);
+      if (includeDomain) url += '&addon_domain=' + encodeURIComponent(domain);
+
+      window.location.href = url;
     });
   }
 
