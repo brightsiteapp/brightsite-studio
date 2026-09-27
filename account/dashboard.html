@@ -422,7 +422,7 @@
   }
   /* msgs-active: outside media query so it applies regardless of viewport width */
   body.msgs-active{overflow:hidden;height:100%;position:relative}
-  body.msgs-active .left-panel{position:fixed !important;top:var(--msgs-panel-top,0px);left:0;right:0;bottom:0;width:100%;height:calc(100% - var(--msgs-panel-top,0px));overflow:hidden;padding-bottom:0;z-index:10;display:flex;flex-direction:column;min-height:0}
+  body.msgs-active .left-panel{position:fixed !important;top:var(--msgs-panel-top,0px);left:0;right:0;bottom:0;width:100%;height:var(--msgs-panel-height,100dvh);overflow:hidden;padding-bottom:0;z-index:10;display:flex;flex-direction:column;min-height:0}
   body.msgs-active .right-panel{display:none !important}
   body.msgs-active .left-inner{position:absolute !important;inset:0;padding:0;overflow:hidden;display:flex !important;flex-direction:column;min-height:0;height:100%}
   body.msgs-active #viewPanel,body.msgs-active #builderPanel{display:none !important}
@@ -1473,7 +1473,11 @@
     document.body.classList.remove('mobile-show-site');
     // measure where app-body starts so the fixed panel sits below header+tabs
     var ab = document.getElementById('appBody');
-    if (ab) document.documentElement.style.setProperty('--msgs-panel-top', Math.round(ab.getBoundingClientRect().top) + 'px');
+    var panelTop = ab ? Math.round(ab.getBoundingClientRect().top) : 0;
+    var panelH = window.innerHeight - panelTop;
+    var root = document.documentElement;
+    root.style.setProperty('--msgs-panel-top', panelTop + 'px');
+    root.style.setProperty('--msgs-panel-height', panelH + 'px');
     document.body.classList.add('msgs-active');
     var vp = document.getElementById('viewPanel'); if (vp) vp.hidden = true;
     var bp = document.getElementById('builderPanel'); if (bp) bp.hidden = true;
