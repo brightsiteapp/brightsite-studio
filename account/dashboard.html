@@ -45,9 +45,10 @@
     #leftCol{width:360px;flex:none;overflow:hidden;}
     #deskPreview{display:flex;flex:1;min-width:0;}
     .mobile-view-tabs{border-bottom:1px solid var(--line);}
-    #builderList{grid-template-columns:1fr;}
+    #builderList{grid-template-columns:1fr;gap:10px;}
     #builderList .builder-head{grid-column:1;}
     #builderList .builder-guidance{grid-column:1;}
+    #builderList .sec-btn{height:auto;padding:14px 16px;}
     .panel-inner{padding-left:18px;padding-right:18px;}
   }
   button,a,[role="button"]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
@@ -343,7 +344,7 @@
   .builder-view-website .pvw-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none;animation:none}
   .builder-view-website.pvw-designing .pvw-dot{animation:pvwPulse 1.2s ease-in-out infinite}
   @keyframes pvwPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
-  .sec-btn{width:100%;border:1px solid var(--line);border-radius:14px;background:var(--card);margin-bottom:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;font:inherit;font-size:13.5px;font-weight:700;color:var(--ink);text-align:left;box-sizing:border-box}
+  .sec-btn{width:100%;border:1px solid var(--line);border-radius:14px;background:var(--card);margin-bottom:0;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;font:inherit;font-size:13.5px;font-weight:700;color:var(--ink);text-align:left;box-sizing:border-box}
   .sec-btn:hover{border-color:var(--accent)}
   .sec-btn .chev{font-size:13px;color:var(--muted);flex:none}
   .sec-title{display:flex;align-items:center;gap:9px}
