@@ -1910,8 +1910,7 @@
   var pendingDomainTld = null;
   // expose for Stripe block (separate script scope)
   function _exposeDomain() {
-    var check = document.getElementById('planDomainAddonCheck');
-    window._bsPendingDomain = (pendingDomain && check && check.checked) ? pendingDomain : null;
+    window._bsPendingDomain = pendingDomain || null;
   }
   var domainTldBtn = document.getElementById('domainTldBtn');
   var domainTldPicker = document.getElementById('domainTldPicker');
