@@ -451,12 +451,12 @@
   }
   #lsb{position:fixed;right:2px;top:0;bottom:0;width:3px;pointer-events:none;z-index:9999}
   #lsb-thumb{position:absolute;right:0;width:3px;background:rgba(0,0,0,.22);border-radius:3px;min-height:24px}
-  /* Messages: left-panel scrolls naturally; heading+input stay sticky */
+  /* Messages: only msgs-list scrolls; header + input bar are fixed */
   body.msgs-active .right-panel{display:none !important}
   body.msgs-active #viewPanel,body.msgs-active #builderPanel{display:none !important}
-  body.msgs-active #msgsPanel{display:flex !important;flex-direction:column;min-height:100%}
-  body.msgs-active #msgsPanel .msgs-heading-wrap{position:sticky;top:0;background:var(--bg);z-index:2}
-  body.msgs-active .msgs-input-bar{position:sticky;bottom:0;background:var(--bg)}
+  body.msgs-active .left-panel{overflow:hidden !important}
+  body.msgs-active #msgsPanel{display:flex !important;flex-direction:column;height:100%}
+  body.msgs-active #msgsPanel .msgs-list{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
   }
 </style>
 </head>
