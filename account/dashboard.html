@@ -405,8 +405,8 @@
     .mobile-edit-menu button:hover{background:var(--surface)}
     .app-body{grid-template-columns:1fr;position:relative}
     .left-panel,.right-panel{position:absolute;inset:0;width:100%;border-right:0;padding-bottom:env(safe-area-inset-bottom)}
-    .left-panel{z-index:5;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
-    body.msgs-active .left-panel{display:flex;flex-direction:column;overflow:hidden;-webkit-overflow-scrolling:auto}
+    .left-panel{z-index:5;overflow-y:auto;overscroll-behavior-y:contain}
+    body.msgs-active .left-panel{display:flex;flex-direction:column;overflow:hidden}
     body.msgs-active .left-inner{flex:1;min-height:0;display:flex;flex-direction:column}
     body.msgs-active #msgsPanel{position:static !important;flex:1;min-height:0;display:flex !important;flex-direction:column;overflow:hidden;padding-top:0}
     body.msgs-active #msgsList{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
@@ -1478,12 +1478,6 @@
     if (mp) {
       mp.hidden = false;
       mp.style.display = 'flex';
-      if (window.innerWidth <= 860) {
-        var tabs = document.getElementById('mobileViewTabs');
-        var offset = tabs ? tabs.getBoundingClientRect().bottom : 94;
-        document.documentElement.style.setProperty('--msgs-offset', (offset || 94) + 'px');
-        mp.style.top = '';
-      }
     }
     // personalise welcome greeting with business name
     var bname = (business && business.data && business.data.raw && business.data.raw.name) || (business && business.business_name) || '';
@@ -1494,7 +1488,7 @@
   function hideMessagesPanel() {
     document.body.classList.remove('msgs-active');
     var mp = document.getElementById('msgsPanel');
-    if (mp) { mp.hidden = true; mp.style.display = 'none'; mp.style.top = ''; }
+    if (mp) { mp.hidden = true; mp.style.display = 'none'; }
     msgsStopPolling();
   }
   document.getElementById('mobileAccountTab').addEventListener('click', function () {
