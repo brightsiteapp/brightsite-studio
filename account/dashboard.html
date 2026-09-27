@@ -22,8 +22,8 @@
 <meta name="theme-color" content="#F7F2EC">
 <link rel="stylesheet" href="../styles.css">
 <style>
-  html{height:100%;overflow:hidden}
-  body{padding:0;display:flex;flex-direction:column;position:fixed;top:0;left:0;width:100%;height:100vh;height:100dvh;overflow:hidden}
+  html{height:100dvh;overflow:hidden}
+  body{height:100%;margin:0;padding:0;display:flex;flex-direction:column}
   button,a,[role="button"]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 
   /* ---------------- header ---------------- */
@@ -398,9 +398,9 @@
     .mobile-edit-menu h2{margin:6px 8px 8px;font-family:var(--display);font-size:14px}
     .mobile-edit-menu button{display:block;width:100%;padding:12px 10px;border:0;border-radius:9px;background:transparent;color:var(--ink);font:inherit;font-size:13px;font-weight:700;text-align:left;cursor:pointer}
     .mobile-edit-menu button:hover{background:var(--surface)}
-    .app-body{grid-template-columns:1fr;position:relative}
-    .left-panel,.right-panel{position:absolute;inset:0;width:100%;border-right:0;padding-bottom:env(safe-area-inset-bottom)}
-    .left-panel{z-index:5;overflow-y:scroll;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+    .app-body{grid-template-columns:1fr;overflow:hidden}
+    .left-panel,.right-panel{position:static;width:100%;height:100%;border-right:0;padding-bottom:env(safe-area-inset-bottom)}
+    .left-panel{z-index:5;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
     body.mode-view .left-panel,body.mode-edit .left-panel{display:block}
     body.mode-view .right-panel{display:none}
     body.mode-edit .right-panel{display:none}
