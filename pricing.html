@@ -59,7 +59,7 @@
   #pricing .plan h4{font-size:29px;margin-bottom:0}
   #pricing .plan .desc{margin-bottom:13px}
   #pricing .plan .price{display:flex;align-items:baseline;gap:6px;flex-wrap:nowrap;white-space:nowrap;font-size:48px;font-weight:800;color:#111;letter-spacing:-0.03em}
-  #pricing .plan .price .setup-price{font-size:48px;font-weight:800;color:#111}
+  #pricing .plan .price .setup-price{font-size:48px;font-weight:800;color:#111!important}
   #pricing .plan .price .price-was{font-size:18px;color:#bbb;text-decoration:line-through;margin-right:2px;font-weight:600}
   #pricing .plan .price small{font-size:13px;margin-left:4px;color:var(--accent);font-weight:600;letter-spacing:0}
   #pricing .price-save{margin-left:0}
@@ -248,7 +248,6 @@
       } else {
         if (setupEl) {
           setupEl.textContent = '£' + (isAnnual ? annualSetup : monthlySetup);
-          setupEl.style.color = isAnnual ? '#111' : 'var(--accent)';
         }
         if (wasEl)   wasEl.style.visibility = isAnnual ? 'visible' : 'hidden';
         if (saveEl)  saveEl.style.visibility = isAnnual ? 'visible' : 'hidden';
@@ -268,6 +267,26 @@
     // Init: annual
     update(true);
   });
+
+  // Lock all cards to the same fixed height across every toggle state
+  function lockHeights() {
+    var allPlans = document.querySelectorAll('#pricing .plan');
+    allPlans.forEach(function(p){ p.style.minHeight = ''; });
+
+    document.querySelectorAll('.card-bill-annual').forEach(function(b){ b.click(); });
+    var h1 = Math.max.apply(null, [...allPlans].map(function(p){ return p.offsetHeight; }));
+
+    document.querySelectorAll('.card-bill-monthly').forEach(function(b){ b.click(); });
+    var h2 = Math.max.apply(null, [...allPlans].map(function(p){ return p.offsetHeight; }));
+
+    document.querySelectorAll('.card-bill-annual').forEach(function(b){ b.click(); });
+
+    var maxH = Math.max(h1, h2);
+    allPlans.forEach(function(p){ p.style.minHeight = maxH + 'px'; });
+  }
+
+  setTimeout(lockHeights, 100);
+  window.addEventListener('resize', function(){ lockHeights(); });
 })();
 </script>
 </body>
