@@ -1471,14 +1471,6 @@
   function showMessagesTab() {
     setActiveTab('mobileMessagesTab');
     document.body.classList.remove('mobile-show-site');
-    // measure where app-body starts so the fixed panel sits below header+tabs
-    var ab = document.getElementById('appBody');
-    var panelTop = ab ? Math.round(ab.getBoundingClientRect().top) : 0;
-    var panelH = window.innerHeight - panelTop;
-    var root = document.documentElement;
-    root.style.setProperty('--msgs-panel-top', panelTop + 'px');
-    root.style.setProperty('--msgs-panel-height', panelH + 'px');
-    document.body.classList.add('msgs-active');
     var vp = document.getElementById('viewPanel'); if (vp) vp.hidden = true;
     var bp = document.getElementById('builderPanel'); if (bp) bp.hidden = true;
     var sb = document.getElementById('saveBar'); if (sb) sb.hidden = true;
@@ -1486,7 +1478,31 @@
     if (mp) {
       mp.hidden = false;
       mp.style.display = 'flex';
-      void mp.offsetHeight; // force layout reflow (helps iOS)
+    }
+    document.body.classList.add('msgs-active');
+    void document.body.offsetHeight; // force reflow before measuring
+    // iOS Safari: set explicit pixel height on the scroll container
+    // so it doesn't depend on flex chain propagation
+    var ab = document.getElementById('appBody');
+    var panelTop = ab ? Math.round(ab.getBoundingClientRect().top) : 0;
+    var panelH = window.innerHeight - panelTop;
+    var root = document.documentElement;
+    root.style.setProperty('--msgs-panel-top', panelTop + 'px');
+    root.style.setProperty('--msgs-panel-height', panelH + 'px');
+    var ml = document.getElementById('msgsList');
+    if (ml && mp) {
+      // measure heading and input bar, give remainder to list
+      var msgsHeading = mp.firstElementChild;
+      var msgsInput = mp.querySelector('.msgs-input-bar');
+      var msgsEditBar = document.getElementById('msgsEditBar');
+      var headingH = msgsHeading ? msgsHeading.offsetHeight : 48;
+      var inputH = msgsInput ? msgsInput.offsetHeight : 60;
+      var editH = (msgsEditBar && !msgsEditBar.hidden) ? msgsEditBar.offsetHeight : 0;
+      var listH = panelH - headingH - inputH - editH;
+      ml.style.height = listH + 'px';
+      ml.style.overflowY = 'scroll';
+      ml.style.webkitOverflowScrolling = 'touch';
+      ml.style.flex = 'none';
     }
     // personalise welcome greeting with business name
     var bname = (business && business.data && business.data.raw && business.data.raw.name) || (business && business.business_name) || '';
@@ -1498,6 +1514,8 @@
     document.body.classList.remove('msgs-active');
     var mp = document.getElementById('msgsPanel');
     if (mp) { mp.hidden = true; mp.style.display = 'none'; }
+    var ml = document.getElementById('msgsList');
+    if (ml) { ml.style.height = ''; ml.style.overflowY = ''; ml.style.flex = ''; }
     msgsStopPolling();
   }
   document.getElementById('mobileAccountTab').addEventListener('click', function () {
