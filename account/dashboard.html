@@ -88,7 +88,7 @@
   .preview-device-toggle{display:flex;align-items:center;padding:3px;border:1px solid var(--line);border-radius:11px;background:#fff}
   .preview-device-toggle button{border:0;border-radius:8px;background:transparent;color:var(--muted);height:28px;padding:0 9px;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
   .preview-device-toggle button[aria-pressed="true"]{background:var(--accent);color:#fff}
-  .mobile-view-tabs{display:flex;width:380px;gap:6px;padding:8px 14px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--bg);flex:none;position:sticky;top:0;z-index:20}
+  .mobile-view-tabs{display:flex;width:380px;gap:6px;padding:8px 14px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--bg);flex:none;position:relative;z-index:20}
   .mobile-view-tabs button{flex:1;min-height:36px;border:0;border-radius:10px;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
   .mobile-view-tabs button[aria-selected="true"]{background:var(--accent);color:#fff}
   .mobile-view-tabs button:disabled{opacity:.42;cursor:not-allowed}
@@ -406,7 +406,9 @@
     .app-body{grid-template-columns:1fr;position:relative}
     .left-panel,.right-panel{position:absolute;inset:0;width:100%;border-right:0;padding-bottom:env(safe-area-inset-bottom)}
     .left-panel{z-index:5;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
-    body.msgs-active #msgsPanel{position:fixed;top:0;left:0;right:0;bottom:0;z-index:15;display:flex !important;flex-direction:column;background:var(--bg);overflow:hidden;padding-top:var(--msgs-offset,94px)}
+    body.msgs-active .left-panel{display:flex;flex-direction:column;overflow:hidden;-webkit-overflow-scrolling:auto}
+    body.msgs-active .left-inner{flex:1;min-height:0;display:flex;flex-direction:column}
+    body.msgs-active #msgsPanel{position:static !important;flex:1;min-height:0;display:flex !important;flex-direction:column;overflow:hidden;padding-top:0}
     body.msgs-active #msgsList{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
     body.mode-view .left-panel,body.mode-edit .left-panel{display:flex}
     body.mode-view .right-panel{display:none}
