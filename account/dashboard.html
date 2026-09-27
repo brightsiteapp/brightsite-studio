@@ -321,9 +321,14 @@
   .plan-cards-grid{display:grid;grid-template-columns:1fr;gap:12px}
   @media(max-width:519px){.plan-cards-grid{grid-template-columns:repeat(2,1fr)}}
   .plan-choice-card{border:2px solid var(--line);border-radius:16px;padding:18px 16px;cursor:pointer;position:relative;background:#fff;display:flex;flex-direction:column}
-  .plan-choice-card.featured{background:#f5f8ff}
+  .plan-choice-card.all-blue{border-color:var(--accent)}
   .plan-featured-badge{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:3px 10px;border-radius:999px;white-space:nowrap}
-  .plan-choice-name{font-size:15px;font-weight:800;margin-bottom:2px}
+  .plan-choice-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:2px}
+  .plan-choice-name{font-size:15px;font-weight:800}
+  .card-billing-mini{display:flex;align-items:center;gap:0;border:1.5px solid var(--line);border-radius:7px;overflow:hidden;flex-shrink:0;margin-top:1px}
+  .card-billing-mini button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:10px;font-weight:700;padding:4px 8px;cursor:pointer;line-height:1;white-space:nowrap}
+  .card-billing-mini button.active{background:var(--accent);color:#fff}
+  .cbm-save{font-size:9px;font-weight:700;background:rgba(255,255,255,.25);padding:1px 4px;border-radius:10px;margin-left:2px}
   .plan-choice-desc{font-size:11.5px;color:var(--muted);margin-bottom:10px;line-height:1.4}
   .plan-choice-price-row{display:flex;align-items:baseline;gap:5px;margin-bottom:4px}
   .plan-choice-setup{font-size:22px;font-weight:800;color:var(--ink)}
@@ -916,15 +921,22 @@
       </div>
       <button type="button" class="plan-modal-close" id="planModalClose" aria-label="Close">&times;</button>
     </div>
-    <div class="plan-modal-billing-toggle" role="group" aria-label="Billing period">
+    <!-- hidden billing state buttons (still drive JS state) -->
+    <div hidden>
       <button type="button" id="billingMonthly" aria-pressed="false">Monthly</button>
-      <button type="button" id="billingAnnual" aria-pressed="true">Annual <span style="font-size:11px;font-weight:700;background:#eaf0fe;color:var(--accent);padding:2px 7px;border-radius:20px;margin-left:4px;letter-spacing:-.02em">Save 50%</span></button>
+      <button type="button" id="billingAnnual" aria-pressed="true">Annual</button>
     </div>
     <div class="plan-cards-grid" id="planCardsGrid">
 
       <!-- Free -->
-      <div class="plan-choice-card" data-plan="essential" id="planCardEssential">
-        <div class="plan-choice-name">Free plan</div>
+      <div class="plan-choice-card all-blue" data-plan="essential" id="planCardEssential">
+        <div class="plan-choice-header">
+          <div class="plan-choice-name">Free plan</div>
+          <div class="card-billing-mini">
+            <button type="button" class="cbm-monthly">Monthly</button>
+            <button type="button" class="cbm-annual active">Annual <span class="cbm-save">Save £24</span></button>
+          </div>
+        </div>
         <div class="plan-choice-desc">Your website built for free — just pay £19/mo hosting to go live.</div>
         <div class="plan-choice-price-row">
           <span class="plan-choice-setup" data-monthly="Free" data-annual="Free">Free</span>
@@ -942,9 +954,15 @@
       </div>
 
       <!-- Pro -->
-      <div class="plan-choice-card featured" data-plan="pro" id="planCardPro">
-        <span class="plan-featured-badge">MOST POPULAR</span>
-        <div class="plan-choice-name">Pro plan</div>
+      <div class="plan-choice-card all-blue" data-plan="pro" id="planCardPro">
+        <span class="plan-featured-badge">BEST VALUE</span>
+        <div class="plan-choice-header">
+          <div class="plan-choice-name">Pro plan</div>
+          <div class="card-billing-mini">
+            <button type="button" class="cbm-monthly">Monthly</button>
+            <button type="button" class="cbm-annual active">Annual <span class="cbm-save">Save 50%</span></button>
+          </div>
+        </div>
         <div class="plan-choice-desc">Best for businesses that need a website with lots of info.</div>
         <div class="plan-choice-price-row">
           <span class="plan-choice-was" id="proWas">£199</span>
@@ -963,8 +981,14 @@
       </div>
 
       <!-- Prestige -->
-      <div class="plan-choice-card" data-plan="prestige" id="planCardPrestige">
-        <div class="plan-choice-name">Prestige plan</div>
+      <div class="plan-choice-card all-blue" data-plan="prestige" id="planCardPrestige">
+        <div class="plan-choice-header">
+          <div class="plan-choice-name">Prestige plan</div>
+          <div class="card-billing-mini">
+            <button type="button" class="cbm-monthly">Monthly</button>
+            <button type="button" class="cbm-annual active">Annual <span class="cbm-save">Save 50%</span></button>
+          </div>
+        </div>
         <div class="plan-choice-desc">Best for corporate needs and multi-location brands.</div>
         <div class="plan-choice-price-row">
           <span class="plan-choice-was" id="prestigeWas">£299</span>
@@ -1631,6 +1655,7 @@
       monthlyBtn.setAttribute('aria-pressed', String(!selectedAnnual));
       annualBtn.setAttribute('aria-pressed', String(selectedAnnual));
       updatePriceDisplay();
+      syncCardToggles(selectedAnnual);
 
       // selected card highlight
       ['essential', 'pro', 'prestige'].forEach(function (p) {
@@ -1667,18 +1692,37 @@
       });
     }
 
-    // billing toggle
+    // hidden billing state buttons
     monthlyBtn.addEventListener('click', function () {
       selectedAnnual = false;
       monthlyBtn.setAttribute('aria-pressed', 'true');
       annualBtn.setAttribute('aria-pressed', 'false');
       updatePriceDisplay();
+      syncCardToggles(false);
     });
     annualBtn.addEventListener('click', function () {
       selectedAnnual = true;
       monthlyBtn.setAttribute('aria-pressed', 'false');
       annualBtn.setAttribute('aria-pressed', 'true');
       updatePriceDisplay();
+      syncCardToggles(true);
+    });
+
+    // per-card mini billing toggles
+    function syncCardToggles(isAnnual) {
+      document.querySelectorAll('.card-billing-mini .cbm-monthly').forEach(function(b){ b.classList.toggle('active', !isAnnual); });
+      document.querySelectorAll('.card-billing-mini .cbm-annual').forEach(function(b){ b.classList.toggle('active', isAnnual); });
+    }
+    document.getElementById('planCardsGrid').addEventListener('click', function(e) {
+      var btn = e.target.closest('.cbm-monthly, .cbm-annual');
+      if (!btn) return;
+      e.stopPropagation();
+      var isAnnual = btn.classList.contains('cbm-annual');
+      selectedAnnual = isAnnual;
+      monthlyBtn.setAttribute('aria-pressed', String(!isAnnual));
+      annualBtn.setAttribute('aria-pressed', String(isAnnual));
+      updatePriceDisplay();
+      syncCardToggles(isAnnual);
     });
 
     // card clicks select the plan (clicking the card background, not a button/label)
