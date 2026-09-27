@@ -362,6 +362,12 @@
     .sub-card{grid-template-columns:1fr;padding:30px 24px}
     .sub-list{grid-template-columns:1fr}
   }
+  @media(max-width:600px){
+    .plan{padding:22px 18px}
+    .plan h4{font-size:22px}
+    .plan .price{font-size:28px}
+    .plan .price small{font-size:12px}
+  }
 
   /* why-us / AI advantage */
   #why{border-top:1px solid var(--line)}
