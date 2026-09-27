@@ -761,7 +761,7 @@
   <div class="desk-preview-bar">
     <span class="desk-preview-status" id="deskPreviewStatus">Not live</span>
     <a class="desk-preview-link" id="deskPreviewLink" href="#" target="_blank" hidden>View live site ↗</a>
-    <div class="desk-preview-toggle" id="deskViewToggle" hidden>
+    <div class="desk-preview-toggle" id="deskViewToggle">
       <button type="button" class="dvt-btn active" id="dvtDesktop" aria-pressed="true">Desktop</button>
       <button type="button" class="dvt-btn" id="dvtMobile" aria-pressed="false">Mobile</button>
     </div>
@@ -1196,12 +1196,12 @@
     if (deskBizName) deskBizName.textContent = bizLabel;
     var mobileBizName = document.getElementById('mobilePreviewBizName');
     if (mobileBizName) mobileBizName.textContent = bizLabel;
+    var dvt = document.getElementById('deskViewToggle');
+    if (dvt) dvt.hidden = false;
     if (liveUrl && deskFrame) {
       if (deskPlaceholder) deskPlaceholder.style.display = 'none';
       deskFrame.style.display = 'block';
       if (deskFrame.src === 'about:blank') deskFrame.src = liveUrl;
-      var dvt = document.getElementById('deskViewToggle');
-      if (dvt) dvt.hidden = false;
     }
     // mobile preview card: link to live site when available
     var mpc = document.getElementById('mobilePreviewCard');
