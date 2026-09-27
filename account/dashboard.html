@@ -38,16 +38,38 @@
   }
   #dashWrap{flex:1;min-height:0;display:flex;flex-direction:column;}
   #leftCol{flex:1;min-height:0;display:flex;flex-direction:column;}
-  #deskPreview{display:none;flex-direction:column;border-left:1px solid var(--line);background:#f5f5f3;}
-  #deskPreviewFrame{flex:1;border:0;width:100%;display:block;}
+  #deskPreview{display:none;flex-direction:column;border-left:1px solid var(--line);background:#e8e8e6;}
   .desk-preview-bar{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--bg);}
   .desk-preview-status{font-size:12px;font-weight:600;color:var(--muted);}
   .desk-preview-link{font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;}
+  /* frame wrapper */
+  .preview-frame-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:28px 32px;box-sizing:border-box;}
+  /* fake browser */
+  .fake-browser{display:flex;flex-direction:column;width:100%;height:100%;border-radius:12px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.22);border:1px solid rgba(0,0,0,.15);}
+  .fake-browser-bar{flex:none;display:flex;align-items:center;gap:10px;padding:0 14px;height:36px;background:#2a2a2a;}
+  .fake-browser-dots{display:flex;gap:6px;align-items:center}
+  .fake-browser-dots span{width:11px;height:11px;border-radius:50%;background:#555}
+  .fake-browser-dots span:nth-child(1){background:#ff5f57}
+  .fake-browser-dots span:nth-child(2){background:#febc2e}
+  .fake-browser-dots span:nth-child(3){background:#28c840}
+  .fake-browser-url{flex:1;background:#3a3a3a;border-radius:5px;height:20px;font-size:11px;color:rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-family:monospace;letter-spacing:.01em}
+  .fake-browser-content{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+  .fake-browser-content .preview-placeholder{border-radius:0;}
+  .fake-browser-content iframe{flex:1;border:0;width:100%;height:100%;}
+  /* fake phone (mobile view) */
+  .fake-phone{display:none;align-items:center;justify-content:center;width:100%;height:100%;}
+  .fake-phone-shell{width:min(300px,55%);height:min(580px,90%);background:#111;border-radius:42px;padding:14px 10px;box-shadow:0 0 0 2px #333,0 12px 50px rgba(0,0,0,.55);display:flex;flex-direction:column;box-sizing:border-box;}
+  .fake-phone-notch{width:90px;height:22px;background:#111;border-radius:0 0 14px 14px;margin:0 auto 6px;flex:none;position:relative}
+  .fake-phone-notch::before{content:'';position:absolute;top:6px;left:50%;transform:translateX(-50%);width:10px;height:10px;border-radius:50%;background:#222}
+  .fake-phone-screen{flex:1;border-radius:28px;overflow:hidden;background:#0f0f1a;display:flex;flex-direction:column;}
+  .fake-phone-screen .preview-placeholder{border-radius:0;flex:1;}
+  .fake-phone-screen iframe{flex:1;border:0;width:100%;height:100%;}
+  /* toggle states */
+  #deskPreview.mobile-view .fake-browser{display:none;}
+  #deskPreview.mobile-view .fake-phone{display:flex;}
   .desk-preview-toggle{display:flex;align-items:center;gap:2px;padding:3px;border:1px solid var(--line);border-radius:9px;background:var(--bg);margin-left:auto}
   .dvt-btn{border:0;border-radius:6px;background:transparent;color:var(--muted);font:700 12px/1 Inter,sans-serif;padding:5px 11px;cursor:pointer;transition:background .12s,color .12s}
   .dvt-btn.active{background:var(--accent);color:#fff}
-  #deskPreview.mobile-view #deskPreviewFrame[src]:not([src="about:blank"]){max-width:390px;margin:0 auto;border-radius:28px;border:6px solid #222;box-shadow:0 8px 32px rgba(0,0,0,.35);height:calc(100% - 48px);flex:none;display:block!important}
-  #deskPreview.mobile-view{background:#e8e8e6;align-items:center;justify-content:center;}
   #deskPreview.mobile-view .desk-preview-bar{align-self:stretch;}
   @media(min-width:800px){
     #dashWrap{flex-direction:row;}
@@ -798,12 +820,37 @@
       <button type="button" class="dvt-btn" id="dvtMobile" aria-pressed="false">Mobile</button>
     </div>
   </div>
-  <div id="deskPreviewPlaceholder" class="preview-placeholder">
-    <div class="preview-placeholder-biz" id="deskPreviewBizName">Your business</div>
-    <div class="preview-placeholder-title">Fill in your<br>details</div>
-    <div class="preview-placeholder-sub">Complete all sections — add info until all ticks are green</div>
+  <div class="preview-frame-wrap" id="previewFrameWrap">
+    <!-- desktop: fake browser chrome -->
+    <div class="fake-browser">
+      <div class="fake-browser-bar">
+        <span class="fake-browser-dots"><span></span><span></span><span></span></span>
+        <span class="fake-browser-url">brightsite.app</span>
+      </div>
+      <div class="fake-browser-content">
+        <div id="deskPreviewPlaceholder" class="preview-placeholder">
+          <div class="preview-placeholder-biz" id="deskPreviewBizName">Your business</div>
+          <div class="preview-placeholder-title">Fill in your<br>details</div>
+          <div class="preview-placeholder-sub">Complete all sections — add info until all ticks are green</div>
+        </div>
+        <iframe id="deskPreviewFrame" src="about:blank" title="Website preview" style="display:none;width:100%;height:100%;border:0;flex:1;display:block"></iframe>
+      </div>
+    </div>
+    <!-- mobile: phone shell -->
+    <div class="fake-phone">
+      <div class="fake-phone-shell">
+        <div class="fake-phone-notch"></div>
+        <div class="fake-phone-screen">
+          <div id="deskPreviewPlaceholderMob" class="preview-placeholder">
+            <div class="preview-placeholder-biz" id="deskPreviewBizNameMob"></div>
+            <div class="preview-placeholder-title">Fill in your<br>details</div>
+            <div class="preview-placeholder-sub">Complete all sections — add info until all ticks are green</div>
+          </div>
+          <iframe id="deskPreviewFrameMob" src="about:blank" title="Website preview mobile" style="display:none;width:100%;height:100%;border:0"></iframe>
+        </div>
+      </div>
+    </div>
   </div>
-  <iframe id="deskPreviewFrame" src="about:blank" title="Website preview" style="display:none;flex:1;border:0;width:100%"></iframe>
 </div>
 
 </div><!-- /dashWrap -->
@@ -1220,20 +1267,26 @@
     var deskStatus = document.getElementById('deskPreviewStatus');
     var deskLink = document.getElementById('deskPreviewLink');
     var deskFrame = document.getElementById('deskPreviewFrame');
+    var deskFrameMob = document.getElementById('deskPreviewFrameMob');
     var deskPlaceholder = document.getElementById('deskPreviewPlaceholder');
+    var deskPlaceholderMob = document.getElementById('deskPreviewPlaceholderMob');
     var deskBizName = document.getElementById('deskPreviewBizName');
     if (deskStatus) { deskStatus.textContent = isLive ? '● Live' : '● Not live'; deskStatus.style.color = isLive ? '#1f9d55' : '#b45309'; }
     if (deskLink) { deskLink.hidden = !liveUrl; if (liveUrl) deskLink.href = liveUrl; }
     var bizLabel = (raw.name || business.name || '').toUpperCase();
     if (deskBizName) deskBizName.textContent = bizLabel;
+    var deskBizNameMob = document.getElementById('deskPreviewBizNameMob');
+    if (deskBizNameMob) deskBizNameMob.textContent = bizLabel;
     var mobileBizName = document.getElementById('mobilePreviewBizName');
     if (mobileBizName) mobileBizName.textContent = bizLabel;
     var dvt = document.getElementById('deskViewToggle');
     if (dvt) dvt.hidden = false;
     if (liveUrl && deskFrame) {
       if (deskPlaceholder) deskPlaceholder.style.display = 'none';
+      if (deskPlaceholderMob) deskPlaceholderMob.style.display = 'none';
       deskFrame.style.display = 'block';
       if (deskFrame.src === 'about:blank') deskFrame.src = liveUrl;
+      if (deskFrameMob) { deskFrameMob.style.display = 'block'; if (deskFrameMob.src === 'about:blank') deskFrameMob.src = liveUrl; }
     }
     // mobile preview card: link to live site when available
     var mpc = document.getElementById('mobilePreviewCard');
@@ -2078,6 +2131,7 @@
   function updatePreviewCard(allDone) {
     var placeholders = [
       document.getElementById('deskPreviewPlaceholder'),
+      document.getElementById('deskPreviewPlaceholderMob'),
       document.getElementById('mobilePreviewCard')
     ];
     placeholders.forEach(function(el) {
