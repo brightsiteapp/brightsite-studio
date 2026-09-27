@@ -401,14 +401,17 @@
     .mobile-edit-menu button:hover{background:var(--surface)}
     .app-body{grid-template-columns:1fr;position:relative}
     .left-panel,.right-panel{position:absolute;inset:0;width:100%;border-right:0;padding-bottom:env(safe-area-inset-bottom)}
-    .left-panel{z-index:5;overflow-y:auto;min-height:0;overscroll-behavior-y:contain}
-    body.msgs-active .left-panel{overflow:hidden;padding-bottom:0;height:100dvh}
+    .left-panel{z-index:5;overflow-y:auto;overscroll-behavior-y:contain}
+    /* msgs-active: take panel out of flow with fixed positioning offset to below header+tabs */
+    body.msgs-active .left-panel{
+      position:fixed;top:var(--msgs-panel-top,0px);left:0;right:0;bottom:0;
+      width:100%;height:auto;overflow:hidden;padding-bottom:0;z-index:10}
     body.msgs-active .right-panel{display:none !important}
     body.msgs-active .left-inner{position:absolute;inset:0;padding:0;overflow:hidden;display:flex;flex-direction:column;min-height:0}
     body.msgs-active #viewPanel,body.msgs-active #builderPanel{display:none !important}
     body.msgs-active #msgsPanel{display:flex !important;flex:1 1 auto;min-height:0;flex-direction:column;overflow:hidden}
-    body.msgs-active #msgsPanel>*{flex:0 0 auto}
-    body.msgs-active #msgsList{flex:1 1 auto;min-height:0;height:0;overflow-y:auto;overscroll-behavior-y:contain;touch-action:pan-y}
+    body.msgs-active #msgsPanel>*:not(#msgsList){flex:0 0 auto}
+    body.msgs-active #msgsList{flex:1 1 0;min-height:0;overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}
     body.mode-view .left-panel,body.mode-edit .left-panel{display:flex}
     body.mode-view .right-panel{display:none}
     body.mode-edit .right-panel{display:none}
@@ -1469,6 +1472,9 @@
   function showMessagesTab() {
     setActiveTab('mobileMessagesTab');
     document.body.classList.remove('mobile-show-site');
+    // measure where app-body starts so the fixed panel sits below header+tabs
+    var ab = document.getElementById('appBody');
+    if (ab) document.documentElement.style.setProperty('--msgs-panel-top', Math.round(ab.getBoundingClientRect().top) + 'px');
     document.body.classList.add('msgs-active');
     var vp = document.getElementById('viewPanel'); if (vp) vp.hidden = true;
     var bp = document.getElementById('builderPanel'); if (bp) bp.hidden = true;
