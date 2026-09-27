@@ -91,15 +91,6 @@
   .mobile-view-tabs button[aria-selected="true"]{background:var(--accent);color:#fff}
   .mobile-view-tabs button:disabled{opacity:.42;cursor:not-allowed}
 
-  /* notes accordion */
-  .notes-accordion{border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
-  .notes-accordion[open]{background:var(--card)}
-  .notes-summary{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;font-size:14px;font-weight:700;cursor:pointer;list-style:none;user-select:none}
-  .notes-summary::-webkit-details-marker{display:none}
-  .notes-summary .chev{transition:transform .2s;font-size:16px;color:var(--muted)}
-  .notes-accordion[open] .notes-summary .chev{transform:rotate(90deg)}
-  .notes-body{padding:0 16px 16px}
-
   /* messages panel */
   .msgs-list{flex:1;min-height:0;overflow-y:auto;overflow-x:visible;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:16px;display:flex;flex-direction:column;gap:4px}
   .msgs-date-divider{text-align:center;margin:10px 0;font-size:11px;color:var(--muted)}
@@ -565,16 +556,7 @@
           <button type="button" class="sec-btn" data-section="reviews"><span class="sec-title"><span class="section-tick"></span>Reviews</span><span class="chev">&#8250;</span></button>
           <button type="button" class="sec-btn" data-section="media"><span class="sec-title"><span class="section-tick"></span>Media</span><span class="chev">&#8250;</span></button>
           <p class="builder-guidance" id="builderGuidance" hidden></p>
-          <details class="notes-accordion" id="notesAccordion" style="margin-top:16px">
-            <summary class="notes-summary">Notes<span class="chev">&#8250;</span></summary>
-            <div class="notes-body">
-              <p class="info-hint">Tell us anything useful about your business, website, or what you'd like us to focus on.</p>
-              <div class="acct-field" style="margin-top:10px">
-                <label for="developerNote">Your note</label>
-                <textarea id="developerNote" placeholder="e.g. We'd love to highlight our new treatment menu, and please use calming colours..."></textarea>
-              </div>
-            </div>
-          </details>
+          <button type="button" class="sec-btn" data-section="notes" style="margin-top:16px"><span class="sec-title">Notes</span><span class="chev">&#8250;</span></button>
         </div>
 
         <div class="builder-section" data-section-panel="name" hidden>
@@ -646,6 +628,17 @@
           <p class="info-hint" style="margin-bottom:14px">Add a few customer quotes yourself, or link us to your Google or Trustpilot reviews.</p>
           <div class="acct-field"><label>Customer review quotes</label><div id="reviewEntries"></div><button type="button" class="dash-add" id="reviewAdd">+ Add review</button></div>
           <div class="acct-field"><label for="fReviewLink">Google or Trustpilot review link</label><input type="url" id="fReviewLink" placeholder="https://www.google.com/... or trustpilot.com/review/..."></div>
+          <button type="button" class="builder-done" data-back style="margin-top:8px">Done</button>
+        </div>
+
+        <div class="builder-section" data-section-panel="notes" hidden>
+          <div class="section-head"><button type="button" class="section-back" data-back>&#8249; Edit your website</button></div>
+          <h3>Notes</h3>
+          <p class="info-hint">Tell us anything useful about your business, website, or what you'd like us to focus on.</p>
+          <div class="acct-field" style="margin-top:10px">
+            <label for="developerNote">Your note</label>
+            <textarea id="developerNote" placeholder="e.g. We'd love to highlight our new treatment menu, and please use calming colours..."></textarea>
+          </div>
           <button type="button" class="builder-done" data-back style="margin-top:8px">Done</button>
         </div>
 
