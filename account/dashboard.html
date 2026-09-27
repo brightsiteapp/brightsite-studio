@@ -41,8 +41,7 @@
   #deskPreview{display:none;flex-direction:column;border-left:1px solid var(--line);background:var(--bg);}
   #deskPreview.mobile-view{background:#e8e8e6;}
   .desk-preview-bar{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--bg);}
-  .pvw-ready-note{flex:none;padding:9px 16px;background:#fef9ec;border-bottom:1px solid #fde68a;font-size:12px;color:#92400e;line-height:1.5;text-align:center;}
-  .desk-preview-status{font-size:12px;font-weight:600;color:var(--muted);}
+.desk-preview-status{font-size:12px;font-weight:600;color:var(--muted);}
   .desk-preview-link{font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;}
   /* frame wrapper */
   .preview-frame-wrap{flex:1;min-height:0;position:relative;overflow:hidden;}
@@ -871,13 +870,13 @@
       <button type="button" class="dvt-btn" id="dvtMobile" aria-pressed="false">Mobile</button>
     </div>
   </div>
-  <div class="pvw-ready-note" id="pvwReadyNote" hidden>Once your site is live, click <b>View live site ↗</b> above to open it in a new tab.</div>
   <div class="preview-frame-wrap" id="previewFrameWrap">
     <!-- desktop: fake browser chrome -->
     <div class="fake-browser">
       <div class="fake-browser-bar">
         <span class="fake-browser-dots"><span></span><span></span><span></span></span>
-        <span class="fake-browser-url">brightsite.app</span>
+        <span class="fake-browser-url" id="fakeBrowserUrl">brightsite.app</span>
+        <a id="fakeBrowserViewBtn" href="#" target="_blank" hidden style="font:600 11px/1 Inter,sans-serif;color:#fff;background:rgba(255,255,255,.15);border-radius:5px;padding:4px 9px;text-decoration:none;white-space:nowrap;flex:none">View ↗</a>
       </div>
       <div class="fake-browser-content">
         <div id="deskPreviewPlaceholder" class="preview-placeholder">
@@ -1318,6 +1317,8 @@
     // Desktop preview panel
     var deskStatus = document.getElementById('deskPreviewStatus');
     var deskLink = document.getElementById('deskPreviewLink');
+    var fakeBrowserViewBtn = document.getElementById('fakeBrowserViewBtn');
+    var fakeBrowserUrl = document.getElementById('fakeBrowserUrl');
     var deskFrame = document.getElementById('deskPreviewFrame');
     var deskFrameMob = document.getElementById('deskPreviewFrameMob');
     var deskPlaceholder = document.getElementById('deskPreviewPlaceholder');
@@ -1325,6 +1326,8 @@
     var deskBizName = document.getElementById('deskPreviewBizName');
     if (deskStatus) { deskStatus.textContent = isLive ? '● Live' : '● Not live'; deskStatus.style.color = isLive ? '#1f9d55' : '#b45309'; }
     if (deskLink) { deskLink.hidden = !liveUrl; if (liveUrl) deskLink.href = liveUrl; }
+    if (fakeBrowserViewBtn) { fakeBrowserViewBtn.hidden = !liveUrl; if (liveUrl) fakeBrowserViewBtn.href = liveUrl; }
+    if (fakeBrowserUrl && liveUrl) { fakeBrowserUrl.textContent = liveUrl.replace(/^https?:\/\//, ''); }
     var bizLabel = (raw.name || business.name || '').toUpperCase();
     if (deskBizName) deskBizName.textContent = bizLabel;
     var deskBizNameMob = document.getElementById('deskPreviewBizNameMob');
@@ -2208,8 +2211,6 @@
         if (sub) sub.textContent = 'Complete all sections — add info until all ticks are green';
       }
     });
-    var note = document.getElementById('pvwReadyNote');
-    if (note) note.hidden = !allDone;
   }
 
   function sendStageEmail(stage) {
