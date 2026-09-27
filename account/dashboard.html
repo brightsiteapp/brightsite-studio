@@ -421,10 +421,8 @@
     .blueprint-site{border-radius:12px}.blueprint-inner{padding:22px}.blueprint-top{align-items:flex-start}.blueprint-nav{gap:10px;justify-content:flex-end}.blueprint-hero{min-height:430px;padding:18px}.blueprint-hero-copy{padding:18px}.blueprint-illustration{min-height:190px}.blueprint-services,.blueprint-contact-grid{grid-template-columns:1fr}.blueprint-gallery{grid-template-columns:1fr}.loading-grid{grid-template-columns:1fr}.loading-grid .blueprint-site{height:380px}.loading-steps{padding:16px}
   }
   @media(max-width:860px){
-  /* Visible scrollbar on left-panel for all tabs */
-  .left-panel::-webkit-scrollbar{width:4px}
-  .left-panel::-webkit-scrollbar-track{background:transparent}
-  .left-panel::-webkit-scrollbar-thumb{background:rgba(0,0,0,.18);border-radius:4px}
+  #lsb{position:fixed;right:2px;top:0;bottom:0;width:3px;pointer-events:none;z-index:9999}
+  #lsb-thumb{position:absolute;right:0;width:3px;background:rgba(0,0,0,.22);border-radius:3px;min-height:24px}
   /* Messages: left-panel scrolls naturally; heading+input stay sticky */
   body.msgs-active .right-panel{display:none !important}
   body.msgs-active #viewPanel,body.msgs-active #builderPanel{display:none !important}
@@ -3486,6 +3484,33 @@
       upgradeBtn.hidden = false;
     });
   }
+})();
+</script>
+
+<!-- Custom scrollbar for iOS Safari (doesn't support ::-webkit-scrollbar) -->
+<div id="lsb"><div id="lsb-thumb"></div></div>
+<script>
+(function(){
+  if (window.innerWidth > 860) return;
+  var lp = document.querySelector('.left-panel');
+  var thumb = document.getElementById('lsb-thumb');
+  if (!lp || !thumb) return;
+  function updateBar() {
+    var sh = lp.scrollHeight, ch = lp.clientHeight;
+    if (sh <= ch) { thumb.style.display='none'; return; }
+    thumb.style.display = 'block';
+    var rect = lp.getBoundingClientRect();
+    var ratio = lp.scrollTop / (sh - ch);
+    var thumbH = Math.max(24, (ch / sh) * rect.height);
+    var thumbTop = rect.top + ratio * (rect.height - thumbH);
+    thumb.style.height = thumbH + 'px';
+    thumb.style.top = thumbTop + 'px';
+  }
+  lp.addEventListener('scroll', updateBar, {passive:true});
+  window.addEventListener('resize', updateBar, {passive:true});
+  // re-run after content loads
+  setTimeout(updateBar, 500);
+  setTimeout(updateBar, 1500);
 })();
 </script>
 
