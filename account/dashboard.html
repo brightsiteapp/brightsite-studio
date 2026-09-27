@@ -3511,17 +3511,6 @@
   setTimeout(updateBar, 500);
   setTimeout(updateBar, 1500);
 
-  // Keep msgs input bar above keyboard on iOS
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', function() {
-      var bar = document.querySelector('.msgs-input-bar');
-      if (!bar || !document.body.classList.contains('msgs-active')) return;
-      var kb = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
-      bar.style.transform = kb > 0 ? 'translateY(-' + Math.round(kb) + 'px)' : '';
-      // scroll list to bottom so latest message stays visible
-      if (kb > 0) { lp.scrollTop = lp.scrollHeight; }
-    });
-  }
 })();
 </script>
 
