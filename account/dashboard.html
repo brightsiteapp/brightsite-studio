@@ -478,8 +478,8 @@
 </div>
 
 <nav class="mobile-view-tabs" id="mobileViewTabs" aria-label="Account sections" hidden>
-  <button type="button" id="mobileAccountTab" aria-selected="true">Account</button>
-  <button type="button" id="mobileWebsiteTab" aria-selected="false">Website</button>
+  <button type="button" id="mobileAccountTab" aria-selected="false">Account</button>
+  <button type="button" id="mobileWebsiteTab" aria-selected="true">Website</button>
   <button type="button" id="mobileMessagesTab" aria-selected="false">Messages</button>
 </nav>
 
@@ -2222,13 +2222,9 @@
     openEditorAfterSetup = false;
     updateSectionChecks();
     // First visit → open Messages tab so they can talk to their developer.
-    // Mobile repeat visits → Account tab. Desktop → keep editor open so icons are visible.
-    var firstVisitKey = 'bs_first_visit_' + (session.user_id || session.email || 'u');
-    if (!localStorage.getItem(firstVisitKey)) {
-      localStorage.setItem(firstVisitKey, '1');
-      showMessagesTab();
-    } else if (isMobileDashboard()) {
-      setEditing(false);
+    // Mobile → always open on Website tab. Desktop → keep editor open.
+    if (isMobileDashboard()) {
+      showWebsiteEditor();
     } else {
       setEditing(true);
     }
