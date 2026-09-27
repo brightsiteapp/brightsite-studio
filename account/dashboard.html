@@ -420,7 +420,7 @@
     body.mobile-show-site .mobile-preview-edit{display:flex}
     .blueprint-site{border-radius:12px}.blueprint-inner{padding:22px}.blueprint-top{align-items:flex-start}.blueprint-nav{gap:10px;justify-content:flex-end}.blueprint-hero{min-height:430px;padding:18px}.blueprint-hero-copy{padding:18px}.blueprint-illustration{min-height:190px}.blueprint-services,.blueprint-contact-grid{grid-template-columns:1fr}.blueprint-gallery{grid-template-columns:1fr}.loading-grid{grid-template-columns:1fr}.loading-grid .blueprint-site{height:380px}.loading-steps{padding:16px}
   }
-  /* msgs-active: outside media query so it applies regardless of viewport width */
+  @media(max-width:860px){
   body.msgs-active{overflow:hidden;height:100%;position:relative}
   body.msgs-active .left-panel{position:fixed !important;top:var(--msgs-panel-top,0px);left:0;right:0;bottom:0;width:100%;height:var(--msgs-panel-height,100dvh);overflow:hidden;padding-bottom:0;z-index:10;display:flex;flex-direction:column;min-height:0}
   body.msgs-active .right-panel{display:none !important}
@@ -429,6 +429,7 @@
   body.msgs-active #msgsPanel{display:flex !important;flex:1 1 0% !important;min-height:0;flex-direction:column;overflow:hidden;height:100%}
   body.msgs-active #msgsPanel>*:not(#msgsList){flex:0 0 auto}
   body.msgs-active #msgsList{flex:1 1 0% !important;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;will-change:scroll-position}
+  }
 </style>
 </head>
 <body class="mode-view">
