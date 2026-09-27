@@ -33,6 +33,19 @@
     background:var(--bg);
     color:var(--ink);
   }
+  #dashWrap{flex:1;min-height:0;display:flex;flex-direction:column;}
+  #leftCol{flex:1;min-height:0;display:flex;flex-direction:column;}
+  #deskPreview{display:none;flex-direction:column;border-left:1px solid var(--line);background:#f5f5f3;}
+  #deskPreviewFrame{flex:1;border:0;width:100%;display:block;}
+  .desk-preview-bar{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--bg);}
+  .desk-preview-status{font-size:12px;font-weight:600;color:var(--muted);}
+  .desk-preview-link{font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;}
+  @media(min-width:800px){
+    #dashWrap{flex-direction:row;}
+    #leftCol{width:300px;flex:none;overflow:hidden;}
+    #deskPreview{display:flex;flex:1;min-width:0;}
+    .mobile-view-tabs{border-bottom:1px solid var(--line);}
+  }
   button,a,[role="button"]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
   [hidden]{display:none!important}
 
@@ -90,6 +103,7 @@
     min-height:0;
     display:flex;
     position:relative;
+    overflow:hidden;
   }
   .tab-content{
     flex:1 1 auto;
@@ -106,13 +120,13 @@
     width:min(760px,100%);
     box-sizing:border-box;
     margin:0 auto;
-    padding:4px 14px calc(24px + env(safe-area-inset-bottom,0px));
+    padding:0 14px calc(24px + env(safe-area-inset-bottom,0px));
   }
   .website-panel .panel-inner{width:min(820px,100%)}
   .messages-panel{display:flex;flex-direction:column;overflow:hidden!important}
   .messages-panel .panel-inner{width:100%;padding:0;display:flex;flex-direction:column;flex:1;min-height:0}
 
-  .info-card{padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 4px 12px rgba(23,32,31,.06);margin-bottom:12px}
+  .info-card{padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 4px 12px rgba(23,32,31,.06);margin:8px 0 12px}
   .info-card h2{font-family:var(--display);font-size:15px;font-weight:700;margin:0 0 12px}
   .info-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
   .info-row:last-child{border-bottom:0}
@@ -179,7 +193,7 @@
 
   .msgs-heading-wrap{
     flex:none;
-    padding:12px 18px 10px;
+    padding:8px 18px 8px;
     border-bottom:1px solid var(--line);
     background:var(--bg);
   }
@@ -408,6 +422,8 @@
   </div>
 </div>
 
+<div id="dashWrap">
+<div id="leftCol">
 <nav class="mobile-view-tabs" id="mobileViewTabs" aria-label="Account sections" hidden>
   <button type="button" id="mobileAccountTab" aria-selected="false">Account</button>
   <button type="button" id="mobileWebsiteTab" aria-selected="true">Website</button>
@@ -646,6 +662,17 @@
   </section>
 
 </main>
+</div><!-- /leftCol -->
+
+<div id="deskPreview">
+  <div class="desk-preview-bar">
+    <span class="desk-preview-status" id="deskPreviewStatus">Not live</span>
+    <a class="desk-preview-link" id="deskPreviewLink" href="#" target="_blank" hidden>View live site ↗</a>
+  </div>
+  <iframe id="deskPreviewFrame" src="about:blank" title="Website preview"></iframe>
+</div>
+
+</div><!-- /dashWrap -->
 
 <!-- Plan chooser modal -->
 <div class="plan-modal-veil" id="planModalVeil" hidden>
@@ -1054,6 +1081,15 @@
       viewBtn.hidden = !liveUrl;
       viewBtn.onclick = liveUrl ? function() { window.open(liveUrl, '_blank', 'noopener'); } : null;
     }
+
+    // Desktop preview panel
+    var deskStatus = document.getElementById('deskPreviewStatus');
+    var deskLink = document.getElementById('deskPreviewLink');
+    var deskFrame = document.getElementById('deskPreviewFrame');
+    if (deskStatus) deskStatus.textContent = isLive ? '● Live' : '● Not live';
+    if (deskStatus) deskStatus.style.color = isLive ? '#1f9d55' : '#b45309';
+    if (deskLink) { deskLink.hidden = !liveUrl; if (liveUrl) deskLink.href = liveUrl; }
+    if (deskFrame && deskFrame.src === 'about:blank' && liveUrl) deskFrame.src = liveUrl;
   }
 
   function renderDashboard() {
