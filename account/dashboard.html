@@ -115,7 +115,7 @@
   .msgs-time.them{color:#aaa}
   .msgs-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px}
   .msgs-input-bar{flex:none;display:flex;align-items:flex-end;gap:8px;padding:10px 14px;padding-bottom:max(8px,env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line)}
-  .msgs-input{flex:1;background:var(--bg);border:0;border-radius:20px;padding:9px 14px;font:inherit;font-size:14px;color:var(--ink);resize:none;max-height:120px;outline:none;line-height:1.45}
+  .msgs-input{flex:1;background:var(--bg);border:0;border-radius:20px;padding:9px 14px;font:inherit;font-size:16px;color:var(--ink);resize:none;max-height:120px;outline:none;line-height:1.45}
   .msgs-send{width:36px;height:36px;border-radius:50%;border:0;background:#2F7DED;color:#fff;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;transition:background .15s,opacity .15s}
   .msgs-send:disabled{background:#c5d8f7;cursor:not-allowed;opacity:.6}
   .msgs-send img{pointer-events:none}
@@ -3508,9 +3508,20 @@
   }
   lp.addEventListener('scroll', updateBar, {passive:true});
   window.addEventListener('resize', updateBar, {passive:true});
-  // re-run after content loads
   setTimeout(updateBar, 500);
   setTimeout(updateBar, 1500);
+
+  // Keep msgs input bar above keyboard on iOS
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', function() {
+      var bar = document.querySelector('.msgs-input-bar');
+      if (!bar || !document.body.classList.contains('msgs-active')) return;
+      var kb = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
+      bar.style.transform = kb > 0 ? 'translateY(-' + Math.round(kb) + 'px)' : '';
+      // scroll list to bottom so latest message stays visible
+      if (kb > 0) { lp.scrollTop = lp.scrollHeight; }
+    });
+  }
 })();
 </script>
 
