@@ -1595,6 +1595,116 @@
   })();
   // ========== END MESSAGES ==========
 
+  // ---------------- business loading ----------------
+  function loadBusiness() {
+    console.log('[loadBusiness] session.user_id:', session.user_id);
+    if (isAdminView) {
+      var adminSlug = params.get('bs_admin_slug');
+      return fetch(SUPABASE_URL + '/rest/v1/businesses?select=*&id=eq.' + encodeURIComponent(adminSlug), { headers: authHeaders() })
+        .then(function(res) { return res.json(); })
+        .then(function(rows) {
+          if (rows && rows.length) { business = rows[0]; slug = business.id; renderDashboard(); }
+          else { document.getElementById('loadingScreen').hidden = true; }
+        });
+    }
+    var url = SUPABASE_URL + '/rest/v1/businesses?select=*&user_id=eq.' + encodeURIComponent(session.user_id);
+    return authenticatedFetch(url, { headers: authHeaders() })
+      .then(function(res) { return res.json(); })
+      .then(function(rows) {
+        var realRow = rows && Array.isArray(rows) && (rows.find(function(r) { return !(r.data && r.data.stub); }) || rows[0]);
+        if (realRow) {
+          business = realRow;
+          slug = business.id;
+          renderDashboard();
+        } else {
+          var pendingSlug = localStorage.getItem('bs_pending_slug') || params.get('slug');
+          if (!pendingSlug) { showSetup(); return; }
+          return authenticatedFetch(SUPABASE_URL + '/rest/v1/businesses?select=*&id=eq.' + encodeURIComponent(pendingSlug), { headers: authHeaders() })
+            .then(function(r) { return r.json(); })
+            .then(function(r2) {
+              if (r2 && r2.length) { business = r2[0]; slug = business.id; renderDashboard(); }
+              else { showSetup(); }
+            });
+        }
+      })
+      .catch(function(err) { console.error('[loadBusiness] error:', err); showSetup(); });
+  }
+
+  function showSetup() {
+    openEditorAfterSetup = true;
+    createSetupBusiness(
+      params.get('name') || localStorage.getItem('bs_pending_business_name') || (session.email || '').split('@')[0],
+      params.get('slug') || localStorage.getItem('bs_pending_slug') || ''
+    );
+  }
+
+  function slugify(s) {
+    return (s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+  }
+
+  function createSetupBusiness(pendingName, pendingSlug) {
+    var name = (pendingName || '').trim();
+    var chosenSlug = slugify(pendingSlug || name);
+    var pendingType = params.get('type') || localStorage.getItem('bs_pending_business_type') || 'Professional Services';
+    if (!name || !chosenSlug) { location.replace('../'); return; }
+
+    fetch(SUPABASE_URL + '/rest/v1/businesses?select=*&id=eq.' + encodeURIComponent(chosenSlug), { headers: authHeaders() })
+      .then(function(res) { return res.ok ? res.json() : []; })
+      .then(function(rows) {
+        var existing = rows && rows[0];
+        if (existing && existing.user_id && existing.user_id !== session.user_id) {
+          throw new Error('That web address is already taken — choose another.');
+        }
+        if (existing) {
+          var claimRecord = Object.assign({}, existing.data || {}, { slug: chosenSlug, name: existing.name || name, updatedAt: new Date().toISOString() });
+          return authenticatedFetch(SUPABASE_URL + '/rest/v1/rpc/upsert_business', {
+            method: 'POST',
+            headers: authHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ p_id: chosenSlug, p_name: existing.name || name, p_user_id: session.user_id, p_data: claimRecord, p_updated_at: claimRecord.updatedAt })
+          }).then(function(res) {
+            if (!res.ok) return res.json().then(function(d) { throw new Error(d.message || d.msg || ('Failed (' + res.status + ')')); });
+            return res.json();
+          });
+        }
+        var record = { slug: chosenSlug, name: name, raw: { name: name, email: session.email || '', tagline: pendingType, services: [], gallery: [] }, updatedAt: new Date().toISOString() };
+        return fetch(SUPABASE_URL + '/rest/v1/businesses', {
+          method: 'POST',
+          headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation,resolution=merge-duplicates' }),
+          body: JSON.stringify({ id: chosenSlug, name: name, user_id: session.user_id, data: record, updated_at: record.updatedAt })
+        }).then(function(res) {
+          if (!res.ok) return res.json().then(function(d) { throw new Error(d.message || d.msg || ('Failed (' + res.status + ')')); });
+          var fd = new FormData(); fd.append('Stage', 'new_signup'); fd.append('Business', name); fd.append('Email', session.email || ''); fd.append('Slug', chosenSlug); fd.append('Type', pendingType);
+          fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/', { method: 'POST', body: fd, keepalive: true }).catch(function(){});
+          return res.json();
+        });
+      })
+      .then(function(rows) {
+        localStorage.removeItem('bs_pending_business_name');
+        localStorage.removeItem('bs_pending_slug');
+        var created = Array.isArray(rows) ? rows[0] : rows;
+        if (created) business = created;
+        slug = chosenSlug;
+        if (business) renderDashboard();
+      })
+      .catch(function(err) {
+        console.error('[createSetupBusiness] error:', err);
+        var provisional = { slug: chosenSlug, name: name, raw: { name: name, email: session.email || '', tagline: pendingType, services: [], gallery: [] }, updatedAt: new Date().toISOString() };
+        business = { id: chosenSlug, name: name, user_id: session.user_id, data: provisional };
+        slug = chosenSlug;
+        localStorage.setItem('bs_pending_business_name', name);
+        localStorage.setItem('bs_pending_slug', chosenSlug);
+        renderDashboard();
+      });
+  }
+
+  loadBusiness();
+
+  // Fallback: hide loading screen after 5s if renderDashboard hasn't fired
+  setTimeout(function() {
+    var loading = document.getElementById('loadingScreen');
+    if (loading && !loading.hidden) loading.hidden = true;
+  }, 5000);
+
 })();
 
 </script>
