@@ -2196,7 +2196,6 @@
         var errEl = document.getElementById('msgsError');
         if (errEl) errEl.hidden = true;
         if (!Array.isArray(rows) || rows.length === 0) {
-          if (initial) sendWelcomeMessage();
           return;
         }
         if (initial) {
@@ -2350,24 +2349,12 @@
     return systemMessageQueue;
   }
 
-  function sendWelcomeMessage() {
-    var name = businessFirstName();
-    return sendSystemMessageOnce(
-      'welcomeMessageSent',
-      'Welcome to BrightSite, ' + name + '! I’m Tom and I’ll be designing your new website. Add your business details in the Website tab, then I’ll get started on your first preview. If you need a hand with anything, just drop me a message here.'
-    );
-  }
-
   function sendAllDetailsReceivedMessage() {
     var name = businessFirstName();
-    var raw = business && business.data && business.data.raw;
-    var welcomeFirst = raw && !raw.welcomeMessageSent ? sendWelcomeMessage() : Promise.resolve();
-    return welcomeFirst.then(function() {
-      return sendSystemMessageOnce(
-        'allDetailsMessageSent',
-        'Thanks, ' + name + ' — I’ve got everything I need now. I’m getting started on your first preview and should have it ready in the next day or two. I’ll message you here as soon as it’s ready.'
-      );
-    });
+    return sendSystemMessageOnce(
+      'allDetailsMessageSent',
+      'Thanks, ' + name + ' — I’ve got everything I need now. I’m getting started on your first preview and should have it ready in the next day or two. I’ll message you here as soon as it’s ready.'
+    );
   }
 
   function msgsSend() {
