@@ -265,6 +265,9 @@
     padding:16px;
     box-sizing:border-box;
   }
+  /* This flexible spacer keeps a short conversation resting above the composer,
+     while messages still render oldest-to-newest as the thread grows. */
+  .msgs-list::before{content:"";flex:1 0 auto}
   .msgs-row{display:flex;flex-direction:column;align-items:flex-end;position:relative;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
   .msgs-row.them{align-items:flex-start}
   .msgs-sender{font-size:11px;font-weight:600;color:var(--muted);margin-top:3px;padding:0 4px}
