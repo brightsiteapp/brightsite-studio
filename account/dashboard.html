@@ -265,9 +265,6 @@
     padding:16px;
     box-sizing:border-box;
   }
-  /* This flexible spacer keeps a short conversation resting above the composer,
-     while messages still render oldest-to-newest as the thread grows. */
-  .msgs-list::before{content:"";flex:1 0 auto}
   .msgs-row{display:flex;flex-direction:column;align-items:flex-end;position:relative;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
   .msgs-row.them{align-items:flex-start}
   .msgs-sender{font-size:11px;font-weight:600;color:var(--muted);margin-top:3px;padding:0 4px}
@@ -2363,10 +2360,14 @@
 
   function sendAllDetailsReceivedMessage() {
     var name = businessFirstName();
-    return sendSystemMessageOnce(
-      'allDetailsMessageSent',
-      'Thanks, ' + name + ' — I’ve got everything I need now. I’m getting started on your first preview and should have it ready in the next day or two. I’ll message you here as soon as it’s ready.'
-    );
+    var raw = business && business.data && business.data.raw;
+    var welcomeFirst = raw && !raw.welcomeMessageSent ? sendWelcomeMessage() : Promise.resolve();
+    return welcomeFirst.then(function() {
+      return sendSystemMessageOnce(
+        'allDetailsMessageSent',
+        'Thanks, ' + name + ' — I’ve got everything I need now. I’m getting started on your first preview and should have it ready in the next day or two. I’ll message you here as soon as it’s ready.'
+      );
+    });
   }
 
   function msgsSend() {
