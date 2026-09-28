@@ -579,14 +579,14 @@
   .mob-pvw-browser-bar .fake-browser-dots span:nth-child(1){background:#ff5f57}
   .mob-pvw-browser-bar .fake-browser-dots span:nth-child(2){background:#febc2e}
   .mob-pvw-browser-bar .fake-browser-dots span:nth-child(3){background:#28c840}
-  .mob-pvw-browser-url{flex:1;height:18px;background:rgba(255,255,255,.1);border-radius:4px;}
-  .mob-pvw-browser-content{display:flex;flex-direction:column;height:340px;overflow:hidden;overscroll-behavior-x:none;touch-action:pan-y;}
+  .mob-pvw-browser-url{flex:1;height:18px;background:rgba(255,255,255,.1);border-radius:4px;color:rgba(255,255,255,.68);font:500 9px/18px Inter,sans-serif;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .mob-pvw-browser-content{display:flex;flex-direction:column;aspect-ratio:16/10;overflow:hidden;overscroll-behavior-x:none;touch-action:pan-y;}
   .mob-pvw-browser-content .mobile-preview-card{min-height:180px;border-radius:0;}
-  .mob-pvw-browser-content iframe{flex:none;width:1280px;transform-origin:top left;}
+  .mob-pvw-browser-content iframe{flex:none;width:1440px;transform-origin:top left;}
   /* phone frame (mobile toggle) — hidden by default */
   .mob-pvw-phone{display:none;align-items:center;justify-content:center;background:#dddbd8;border-radius:14px;padding:16px 0 20px;}
   .mob-pvw-phone-shell{
-    width:210px;
+    width:min(240px,68vw);
     aspect-ratio:9/19.5;
     background:#111;border-radius:30px;
     padding:8px 7px;
@@ -597,7 +597,7 @@
   .mob-pvw-phone-notch::before{content:'';position:absolute;top:3px;left:50%;transform:translateX(-50%);width:6px;height:6px;border-radius:50%;background:#1e1e1e;}
   .mob-pvw-phone-screen{flex:1;border-radius:20px;overflow:hidden;background:#0f0f1a;display:flex;flex-direction:column;overscroll-behavior-x:none;touch-action:pan-y;}
   .mob-pvw-phone-screen .mobile-preview-card{flex:1;border-radius:0;}
-  .mob-pvw-phone-screen iframe{touch-action:pan-y;overscroll-behavior-x:none;}
+  .mob-pvw-phone-screen iframe{flex:none;width:390px;transform-origin:top left;touch-action:pan-y;overscroll-behavior-x:none;}
   /* toggle states */
   .mobile-preview-wrap.mobile-view .mob-pvw-browser{display:none;}
   .mobile-preview-wrap.mobile-view .mob-pvw-phone{display:flex;}
@@ -1474,17 +1474,22 @@
       var src = previewUrl || 'about:blank';
       if (frame.getAttribute('src') !== src) frame.src = src;
     });
-    sizeMobileDesktopPreview();
+    sizeMobilePreviewFrames();
   }
 
-  function sizeMobileDesktopPreview() {
-    var frame = document.getElementById('mobPreviewFrame');
-    var viewport = frame && frame.closest('.mob-pvw-browser-content');
+  function sizePreviewFrame(frameId, viewportSelector, virtualWidth) {
+    var frame = document.getElementById(frameId);
+    var viewport = frame && frame.closest(viewportSelector);
     if (!frame || !viewport || frame.style.display === 'none' || !viewport.clientWidth) return;
-    var scale = viewport.clientWidth / 1280;
-    frame.style.width = '1280px';
+    var scale = viewport.clientWidth / virtualWidth;
+    frame.style.width = virtualWidth + 'px';
     frame.style.height = (viewport.clientHeight / scale) + 'px';
     frame.style.transform = 'scale(' + scale + ')';
+  }
+
+  function sizeMobilePreviewFrames() {
+    sizePreviewFrame('mobPreviewFrame', '.mob-pvw-browser-content', 1440);
+    sizePreviewFrame('mobPreviewFrameMob', '.mob-pvw-phone-screen', 390);
   }
 
   function renderDashboard() {
@@ -2997,18 +3002,6 @@
 
 // preview toggle buttons — outside the mobile-only IIFE so they run on all screen sizes
 (function(){
-  // Scale the desktop browser iframe to fill its container at 1200px virtual width
-  function scaleMobBrowserFrame() {
-    var content = document.querySelector('.mob-pvw-browser-content');
-    var frame = document.getElementById('mobPreviewFrame');
-    if (!content || !frame) return;
-    var scale = content.offsetWidth / 1200;
-    frame.style.transform = 'scale(' + scale + ')';
-    frame.style.height = Math.round(340 / scale) + 'px';
-  }
-  scaleMobBrowserFrame();
-  window.addEventListener('resize', scaleMobBrowserFrame);
-
   // mobile website tab preview toggle
   var mpd = document.getElementById('mobilePvwDesktop');
   var mpm = document.getElementById('mobilePvwMobile');
@@ -3017,12 +3010,16 @@
     mpd.onclick = function() {
       mpw.classList.remove('mobile-view');
       mpd.classList.add('active'); mpm.classList.remove('active');
-      requestAnimationFrame(sizeMobileDesktopPreview);
+      requestAnimationFrame(sizeMobilePreviewFrames);
     };
-    mpm.onclick = function() { mpw.classList.add('mobile-view'); mpm.classList.add('active'); mpd.classList.remove('active'); };
+    mpm.onclick = function() {
+      mpw.classList.add('mobile-view');
+      mpm.classList.add('active'); mpd.classList.remove('active');
+      requestAnimationFrame(sizeMobilePreviewFrames);
+    };
   }
 
-  window.addEventListener('resize', sizeMobileDesktopPreview);
+  window.addEventListener('resize', sizeMobilePreviewFrames);
 
   // desktop/mobile preview toggle
   var dvtD = document.getElementById('dvtDesktop');
