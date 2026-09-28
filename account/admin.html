@@ -370,6 +370,14 @@ function authHeaders(extra) {
   return Object.assign(h, extra || {});
 }
 
+function sendBusinessMessage(businessId, body) {
+  return fetch(SUPABASE_URL + '/rest/v1/messages', {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+    body: JSON.stringify({ business_id: businessId, sender: 'admin', body: body })
+  }).catch(function(err) { console.warn('[messages] notification failed', err); });
+}
+
 function loadBusinesses() {
   document.getElementById('accountsList').innerHTML = '<div class="loading-row"><span class="spinner"></span> Loading accounts…</div>';
 
@@ -784,6 +792,7 @@ function patchBusinessAfterUpload(demoUrl, failed, btn, status, progressWrap) {
   .then(function(r) { return r.json(); })
   .then(function(rows) {
     var existing = (rows && rows[0]) || {};
+    var hadPreview = !!(existing.data && (existing.data.demoUploaded || existing.data.demoUrl));
     var patch = { demoUploaded: true, previewSent: true, demoReady: true };
     if (demoUrl) patch.demoUrl = demoUrl;
     var newData = Object.assign({}, existing.data || {}, patch);
@@ -791,11 +800,15 @@ function patchBusinessAfterUpload(demoUrl, failed, btn, status, progressWrap) {
       method: 'PATCH',
       headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
       body: JSON.stringify({ data: newData })
+    }).then(function(response) {
+      return { response: response, notification: hadPreview ? 'We\'ve updated your website preview — please take another look.' : 'Your website preview is ready to review.' };
     });
   })
-  .then(function(r) {
+  .then(function(result) {
+    var r = result.response;
     btn.textContent = 'Upload files'; progressWrap.style.display = 'none';
     if (r.ok) {
+      sendBusinessMessage(uploadTargetSlug, result.notification);
       var msg = failed.length ? 'Uploaded — ' + failed.length + ' file(s) failed: ' + failed.join(', ') : 'Uploaded successfully!';
       status.textContent = msg; status.className = failed.length ? 'modal-status err' : 'modal-status ok';
       setTimeout(function() { document.getElementById('uploadModal').classList.add('hidden'); loadBusinesses(); }, 1800);
@@ -849,6 +862,7 @@ document.getElementById('goLiveConfirm').addEventListener('click', function() {
   .then(function(r) {
     btn.textContent = 'Mark as live ✓'; btn.disabled = false;
     if (r.ok) {
+      sendBusinessMessage(goLiveTargetSlug, 'Your website is now live. Take a look and let us know what you think.');
       status.textContent = 'Site marked as live!'; status.className = 'modal-status ok';
       // Also add Vercel domain if token is set
       if (liveUrl) tryAddVercelDomain(liveUrl, status);

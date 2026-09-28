@@ -137,8 +137,10 @@
     font-size:12px;
     font-weight:700;
     cursor:pointer;
+    position:relative;
   }
   .mobile-view-tabs button[aria-selected="true"]{background:var(--accent);color:#fff}
+  .msgs-notification{position:absolute;top:7px;right:11px;width:7px;height:7px;border-radius:50%;background:#dc2626;box-shadow:0 0 0 2px var(--bg);}
   @media(max-width:799px){
     .mobile-view-tabs{border-bottom:1px solid #d8d1c8;box-shadow:0 1px 0 rgba(23,32,31,.04);}
   }
@@ -451,6 +453,7 @@
   #builderList .builder-guidance{grid-column:1/-1}
   #builderList .mobile-preview-wrap{grid-column:1/-1}
   #builderList .sec-btn{margin-bottom:0;height:56px;padding:12px 14px;overflow:hidden}
+  @media(max-width:799px){#builderList{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:16px;}}
   @media(min-width:800px){
     #builderList{grid-template-columns:1fr;gap:10px}
     #builderList .builder-head,#builderList .builder-guidance,#builderList .mobile-preview-wrap{grid-column:1}
@@ -628,7 +631,7 @@
 <nav class="mobile-view-tabs" id="mobileViewTabs" aria-label="Account sections" hidden>
   <button type="button" id="mobileAccountTab" aria-selected="false">Account</button>
   <button type="button" id="mobileWebsiteTab" aria-selected="true">Website</button>
-  <button type="button" id="mobileMessagesTab" aria-selected="false">Messages</button>
+  <button type="button" id="mobileMessagesTab" aria-selected="false">Messages<span class="msgs-notification" id="msgsNotification" hidden aria-label="New message"></span></button>
 </nav>
 
 <main id="appBody" hidden>
@@ -1545,6 +1548,8 @@
     populateBuilderFields(raw);
     renderWebsiteStatus();
     showWebsiteTab();
+    msgsLoad(true);
+    msgsStartPolling();
   }
 
   function populateBuilderFields(raw) {
@@ -2098,6 +2103,21 @@
   var msgsPollTimer = null;
   var msgsSending = false;
 
+  function msgsReadKey() { return 'brightsite:messages-read:' + (slug || ''); }
+  function msgsUpdateNotification(rows) {
+    var badge = document.getElementById('msgsNotification');
+    if (!badge || !rows || !rows.length) return;
+    var lastRead = localStorage.getItem(msgsReadKey()) || '';
+    var hasUnread = rows.some(function(msg) { return msg.sender !== 'customer' && msg.created_at > lastRead; });
+    if (hasUnread) badge.hidden = false;
+  }
+  function msgsMarkRead() {
+    if (!msgsLastTs) return;
+    localStorage.setItem(msgsReadKey(), msgsLastTs);
+    var badge = document.getElementById('msgsNotification');
+    if (badge) badge.hidden = true;
+  }
+
   function msgsInit() {
     if (!business) return;
     if (!msgsLoaded) { msgsLoad(true); }
@@ -2224,6 +2244,8 @@
         msgsLoaded = true;
         var msgsEmptyEl = document.getElementById('msgsEmpty'); if (msgsEmptyEl) msgsEmptyEl.style.display = 'none';
         list.scrollTop = list.scrollHeight;
+        msgsUpdateNotification(rows);
+        if (document.getElementById('mobileMessagesTab').getAttribute('aria-selected') === 'true') msgsMarkRead();
       })
       .catch(function(e){
         console.warn('[msgs] load error', e);
@@ -2233,27 +2255,37 @@
       });
   }
 
+  function msgsPost(body, sender) {
+    if (!body || msgsSending || !business) return Promise.resolve(false);
+    msgsSending = true;
+    var sendBtn = document.getElementById('msgsSend');
+    if (sendBtn) sendBtn.disabled = true;
+    return fetch(SUPABASE_URL + '/rest/v1/messages', {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+      body: JSON.stringify({ business_id: slug, sender: sender || 'customer', body: body })
+    }).then(function(res) {
+      msgsSending = false;
+      if (sendBtn) sendBtn.disabled = false;
+      if (!res.ok) throw new Error('Message could not be sent.');
+      msgsLoad(false);
+      return true;
+    }).catch(function(e) {
+      console.warn('[msgs] send error', e);
+      msgsSending = false;
+      if (sendBtn) sendBtn.disabled = false;
+      return false;
+    });
+  }
+
   function msgsSend() {
     var input = document.getElementById('msgsInput');
     var body = input.value.trim();
-    if (!body || msgsSending || !business) return;
-    msgsSending = true;
-    document.getElementById('msgsSend').disabled = true;
-    fetch(SUPABASE_URL + '/rest/v1/messages', {
-      method: 'POST',
-      headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
-      body: JSON.stringify({ business_id: slug, sender: 'customer', body: body })
-    }).then(function(res){
-      msgsSending = false;
-      document.getElementById('msgsSend').disabled = false;
-      if (!res.ok) { console.warn('[msgs] send failed', res.status); return; }
+    if (!body) return;
+    msgsPost(body, 'customer').then(function(sent) {
+      if (!sent) return;
       input.value = '';
       input.style.height = '';
-      msgsLoad(false);
-    }).catch(function(e){
-      console.warn('[msgs] send error', e);
-      msgsSending = false;
-      document.getElementById('msgsSend').disabled = false;
     });
   }
 
@@ -2760,8 +2792,14 @@
     function requestChanges() {
       requestChangesBtns.forEach(function(button) { button.disabled = true; });
       sendStageEmail('changes_requested');
-      approveStatus.textContent = 'Got it — send us a message with the changes you\'d like.';
-      approveStatus.hidden = false;
+      msgsPost("I'd like to make changes.", 'customer').then(function(sent) {
+        requestChangesBtns.forEach(function(button) { button.disabled = false; });
+        showMessagesTab();
+        var input = document.getElementById('msgsInput');
+        if (input) input.focus();
+        approveStatus.textContent = sent ? 'Your request has been sent.' : 'Could not send your request. Please try again.';
+        approveStatus.hidden = false;
+      });
     }
     approveBtns.forEach(function(button) { button.addEventListener('click', approveDesign); });
     requestChangesBtns.forEach(function(button) { button.addEventListener('click', requestChanges); });
