@@ -742,6 +742,7 @@
               <div class="preview-placeholder-title">Fill in your<br>details</div>
               <div class="preview-placeholder-sub">Complete all sections — add info until all ticks are green</div>
             </div>
+            <iframe id="mobPreviewFrame" src="about:blank" title="Website preview" style="display:none;width:100%;height:100%;border:0"></iframe>
           </div>
         </div>
         <!-- phone frame -->
@@ -754,6 +755,7 @@
                 <div class="preview-placeholder-title">Fill in your<br>details</div>
                 <div class="preview-placeholder-sub">Complete all sections — add info until all ticks are green</div>
               </div>
+              <iframe id="mobPreviewFrameMob" src="about:blank" title="Website preview mobile" style="display:none;width:100%;height:100%;border:0"></iframe>
             </div>
           </div>
         </div>
@@ -1373,7 +1375,6 @@
 
     // Uploaded previews are available before the website is published.
     var previewUrl = getPreviewUrl();
-    console.log('[renderWebsiteStatus] previewUrl=', previewUrl, 'demoUrl=', (business && business.data && business.data.demoUrl));
 
     // Desktop preview panel
     var deskStatus = document.getElementById('deskPreviewStatus');
@@ -1416,8 +1417,16 @@
     ['mobilePreviewCard', 'mobilePreviewCardMob'].forEach(function(id) {
       var card = document.getElementById(id);
       if (!card) return;
-      card.style.cursor = previewUrl ? 'pointer' : '';
-      card.onclick = previewUrl ? function() { window.open(previewUrl, '_blank', 'noopener'); } : null;
+      card.style.display = previewUrl ? 'none' : '';
+      card.style.cursor = '';
+      card.onclick = null;
+    });
+    [['mobPreviewFrame', 'mobilePreviewCard'], ['mobPreviewFrameMob', 'mobilePreviewCardMob']].forEach(function(pair) {
+      var frame = document.getElementById(pair[0]);
+      if (!frame) return;
+      frame.style.display = previewUrl ? 'block' : 'none';
+      var src = previewUrl || 'about:blank';
+      if (frame.getAttribute('src') !== src) frame.src = src;
     });
   }
 
@@ -2347,6 +2356,7 @@
       var sub = el.querySelector('.preview-placeholder-sub');
       if (getPreviewUrl()) {
         el.dataset.state = 'ready';
+        el.style.display = 'none';
         if (title) title.innerHTML = isLive ? 'Website<br>Live' : 'Preview<br>Ready';
         if (sub) sub.textContent = 'Tap to view your website preview ↗';
       } else if (allDone) {
