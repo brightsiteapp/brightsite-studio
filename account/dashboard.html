@@ -933,8 +933,8 @@
       <button type="button" class="desk-preview-action approve" id="deskApproveBtn" hidden>Approve design</button>
     </div>
     <div class="desk-preview-toggle" id="deskViewToggle">
-      <button type="button" class="dvt-btn active" id="dvtDesktop" aria-pressed="true">Desktop</button>
-      <button type="button" class="dvt-btn" id="dvtMobile" aria-pressed="false">Mobile</button>
+      <button type="button" class="dvt-btn active" id="dvtDesktop" aria-pressed="true" onclick="var p=document.getElementById('deskPreview'),b=p.querySelector('.fake-browser'),m=p.querySelector('.fake-phone');p.classList.remove('mobile-view');b.hidden=false;m.hidden=true;b.style.display='flex';m.style.display='none';this.classList.add('active');this.setAttribute('aria-pressed','true');document.getElementById('dvtMobile').classList.remove('active');document.getElementById('dvtMobile').setAttribute('aria-pressed','false');">Desktop</button>
+      <button type="button" class="dvt-btn" id="dvtMobile" aria-pressed="false" onclick="var p=document.getElementById('deskPreview'),b=p.querySelector('.fake-browser'),m=p.querySelector('.fake-phone');p.classList.add('mobile-view');b.hidden=true;m.hidden=false;b.style.display='none';m.style.display='flex';this.classList.add('active');this.setAttribute('aria-pressed','true');document.getElementById('dvtDesktop').classList.remove('active');document.getElementById('dvtDesktop').setAttribute('aria-pressed','false');">Mobile</button>
     </div>
   </div>
   <div class="preview-frame-wrap" id="previewFrameWrap">
