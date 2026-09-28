@@ -391,6 +391,9 @@
   .website-progress{margin:0 0 14px;font-size:12px;font-weight:700;color:var(--muted)}.website-progress b{color:var(--accent)}
   .builder-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
   .builder-head h2{font-family:var(--display);font-size:16px;font-weight:700;margin:0}
+  .website-editor-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
+  .website-editor-header h2{margin:0;font-family:var(--display);font-size:16px;font-weight:800;color:var(--ink)}
+  .website-editor-header .builder-done{min-height:34px;margin:0;padding:0 16px}
   @keyframes pvwPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
   .sec-btn{width:100%;border:1px solid var(--line);border-radius:14px;background:#fff4f2;margin-bottom:0;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;font:inherit;font-size:13.5px;font-weight:700;color:var(--ink);text-align:left;box-sizing:border-box}
   .sec-btn:hover{border-color:#cfb8b3;box-shadow:0 3px 10px rgba(65,45,40,.04)}
@@ -417,6 +420,7 @@
   .section-head{display:flex;align-items:center;gap:8px;margin-bottom:16px}
   .section-back{background:none;border:0;color:var(--accent);font:inherit;font-size:13px;font-weight:700;cursor:pointer;padding:4px 0}
   .builder-done{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:0 16px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:700 12px/1 'Nunito Sans',sans-serif;cursor:pointer}
+  .builder-section .section-head,.builder-section .builder-done{display:none}
   .builder-section h3{font-family:var(--display);font-size:15px;font-weight:700;margin-bottom:14px}
   .svc-group{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;background:#faf7f2}
   .svc-group-head{display:flex;align-items:center;gap:6px;margin-bottom:8px}
@@ -745,11 +749,13 @@
 
       <p class="website-progress" id="websiteProgress">Your website details: <b>0 of 7 added</b></p>
 
+      <div class="website-editor-header">
+        <h2 id="builderHeading">Edit your website</h2>
+        <button type="button" class="builder-done" id="editorDone" data-back hidden>Done</button>
+      </div>
+
       <!-- section list -->
       <div id="builderList">
-        <div class="builder-head">
-          <h2 id="builderHeading">Edit your website</h2>
-        </div>
         <button type="button" class="sec-btn" data-section="name"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="14" rx="3"/><path d="M8 7V4h8v3M9 21v-6h6v6"/></svg></span><span class="sec-title">Business Info</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
         <button type="button" class="sec-btn" data-section="contact"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3h4l2 5-3 2a15 15 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2C10 21 3 14 3 5a2 2 0 0 1 2-2Z"/></svg></span><span class="sec-title">Contact Info</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
         <button type="button" class="sec-btn" data-section="hours"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg></span><span class="sec-title">Opening Hours</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
@@ -2398,6 +2404,8 @@
   function openSection(id) {
     activeSection = id;
     document.getElementById('builderList').hidden = !!id;
+    var editorDone = document.getElementById('editorDone');
+    if (editorDone) editorDone.hidden = !id;
     var mpc = document.getElementById('mobilePreviewWrap');
     if (mpc) mpc.hidden = !!id;
     document.querySelectorAll('.builder-section').forEach(function(el) {
