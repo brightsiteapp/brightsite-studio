@@ -31,11 +31,20 @@
   #pricing{padding-top:12px!important;padding-bottom:14px}
   footer{padding:20px 24px!important}
 
+  #pricing > .wrap{max-width:1320px}
+
   /* Zero-minimum tracks keep content and billing state from changing card widths. */
   #pricing .plans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
   #pricing .plan{border-color:var(--accent);position:relative;box-sizing:border-box;width:100%;min-width:0;display:flex;flex-direction:column}
   #pricing .plan ul{flex:1;margin-bottom:0}
   @media(max-width:900px){#pricing .plans{grid-template-columns:minmax(0,1fr)}}
+
+  @media(min-width:901px){
+    #pricing .plan{display:grid;grid-template-rows:subgrid;grid-row:span 6;row-gap:0}
+    #pricing .plan .price-spacer{display:none}
+    #pricing .plan .price-row{align-items:flex-start}
+    #pricing .plan .go{justify-self:start}
+  }
 
   /* Toggle: flex row with h4 so they never overlap */
   .plan-header{margin-bottom:6px;display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:10px}
@@ -114,7 +123,7 @@
   <section id="pricing" style="padding-top:0">
     <div class="wrap">
 
-      <div class="plans" style="max-width:1180px;margin:0 auto">
+      <div class="plans">
 
         <!-- Free Plan -->
         <div class="plan feature" data-setup-monthly="0" data-setup-annual="0" data-essential>
