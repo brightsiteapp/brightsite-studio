@@ -1319,6 +1319,12 @@
     return /^https?:\/\//i.test(value) ? value : 'https://' + value;
   }
 
+  function getPreviewUrl() {
+    var data = (business && business.data) || {};
+    var liveUrl = isLive && (toSiteUrl(data.customDomain) || toSiteUrl(data.domain) || toSiteUrl(data.liveUrl));
+    return liveUrl || toSiteUrl(data.demoUrl) || toSiteUrl(data.previewUrl) || toSiteUrl(data.liveUrl);
+  }
+
   function renderWebsiteStatus() {
     var data = (business && business.data) || {};
     var raw = data.raw || {};
@@ -1365,6 +1371,10 @@
       viewBtn.onclick = liveUrl ? function() { window.open(liveUrl, '_blank', 'noopener'); } : null;
     }
 
+    // Uploaded previews are available before the website is published.
+    var previewUrl = getPreviewUrl();
+    console.log('[renderWebsiteStatus] previewUrl=', previewUrl, 'demoUrl=', (business && business.data && business.data.demoUrl));
+
     // Desktop preview panel
     var deskStatus = document.getElementById('deskPreviewStatus');
     var deskLink = document.getElementById('deskPreviewLink');
@@ -1375,40 +1385,40 @@
     var deskPlaceholder = document.getElementById('deskPreviewPlaceholder');
     var deskPlaceholderMob = document.getElementById('deskPreviewPlaceholderMob');
     var deskBizName = document.getElementById('deskPreviewBizName');
-    if (deskStatus) { deskStatus.textContent = isLive ? '● Live' : '● Not live'; deskStatus.style.color = isLive ? '#1f9d55' : '#b45309'; }
-    if (deskLink) { deskLink.hidden = !liveUrl; if (liveUrl) deskLink.href = liveUrl; }
-    if (fakeBrowserViewBtn) { fakeBrowserViewBtn.hidden = !liveUrl; if (liveUrl) fakeBrowserViewBtn.href = liveUrl; }
-    if (fakeBrowserUrl && liveUrl) { fakeBrowserUrl.textContent = liveUrl.replace(/^https?:\/\//, ''); }
+    if (deskStatus) {
+      deskStatus.textContent = isLive ? '● Live' : (previewUrl ? '● Preview ready' : '● Not live');
+      deskStatus.style.color = previewUrl ? '#1f9d55' : '#b45309';
+    }
+    [deskLink, fakeBrowserViewBtn].forEach(function(link) {
+      if (!link) return;
+      link.hidden = !previewUrl;
+      if (previewUrl) link.href = previewUrl;
+      else link.removeAttribute('href');
+      link.textContent = isLive ? 'View live site ↗' : 'View preview ↗';
+    });
+    if (fakeBrowserUrl) fakeBrowserUrl.textContent = previewUrl ? previewUrl.replace(/^https?:\/\//, '') : '';
     var bizLabel = (raw.name || business.name || '').toUpperCase();
-    if (deskBizName) deskBizName.textContent = bizLabel;
-    var deskBizNameMob = document.getElementById('deskPreviewBizNameMob');
-    if (deskBizNameMob) deskBizNameMob.textContent = bizLabel;
-    var mobileBizName = document.getElementById('mobilePreviewBizName');
-    if (mobileBizName) mobileBizName.textContent = bizLabel;
-    var mobileBizNameMob = document.getElementById('mobilePreviewBizNameMob');
-    if (mobileBizNameMob) mobileBizNameMob.textContent = bizLabel;
+    ['deskPreviewBizName', 'deskPreviewBizNameMob', 'mobilePreviewBizName', 'mobilePreviewBizNameMob'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = bizLabel;
+    });
     var dvt = document.getElementById('deskViewToggle');
     if (dvt) dvt.hidden = false;
-    if (liveUrl && deskFrame) {
-      if (deskPlaceholder) deskPlaceholder.style.display = 'none';
-      if (deskPlaceholderMob) deskPlaceholderMob.style.display = 'none';
-      deskFrame.style.display = 'block';
-      if (deskFrame.src === 'about:blank') deskFrame.src = liveUrl;
-      if (deskFrameMob) { deskFrameMob.style.display = 'block'; if (deskFrameMob.src === 'about:blank') deskFrameMob.src = liveUrl; }
-    }
-    // mobile preview card: link to live site when available
-    var mpc = document.getElementById('mobilePreviewCard');
-    if (mpc) {
-      if (liveUrl) {
-        mpc.style.cursor = 'pointer';
-        mpc.onclick = function() { window.open(liveUrl, '_blank'); };
-        var sub = mpc.querySelector('.preview-placeholder-sub');
-        if (sub) sub.textContent = 'Tap to view your website preview ↗';
-      } else {
-        mpc.style.cursor = '';
-        mpc.onclick = null;
-      }
-    }
+    [deskPlaceholder, deskPlaceholderMob].forEach(function(el) {
+      if (el) el.style.display = previewUrl ? 'none' : '';
+    });
+    [deskFrame, deskFrameMob].forEach(function(frame) {
+      if (!frame) return;
+      frame.style.display = previewUrl ? 'block' : 'none';
+      var src = previewUrl || 'about:blank';
+      if (frame.getAttribute('src') !== src) frame.src = src;
+    });
+    ['mobilePreviewCard', 'mobilePreviewCardMob'].forEach(function(id) {
+      var card = document.getElementById(id);
+      if (!card) return;
+      card.style.cursor = previewUrl ? 'pointer' : '';
+      card.onclick = previewUrl ? function() { window.open(previewUrl, '_blank', 'noopener'); } : null;
+    });
   }
 
   function renderDashboard() {
@@ -2311,7 +2321,9 @@
     var allDone = added >= Object.keys(complete).length;
     var progEl = document.getElementById('websiteProgress');
     if (progEl) {
-      if (allDone) {
+      if (getPreviewUrl()) {
+        progEl.textContent = isLive ? 'Your website is live.' : 'Your website preview is ready to review.';
+      } else if (allDone) {
         progEl.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309"><span style="width:8px;height:8px;border-radius:50%;background:#b45309;display:inline-block"></span><b>All details added — we\'re designing your preview!</b></span>';
       } else {
         progEl.innerHTML = 'Your website details: <b>' + added + ' of ' + Object.keys(complete).length + ' added</b>';
@@ -2333,7 +2345,11 @@
       if (!el) return;
       var title = el.querySelector('.preview-placeholder-title');
       var sub = el.querySelector('.preview-placeholder-sub');
-      if (allDone) {
+      if (getPreviewUrl()) {
+        el.dataset.state = 'ready';
+        if (title) title.innerHTML = isLive ? 'Website<br>Live' : 'Preview<br>Ready';
+        if (sub) sub.textContent = 'Tap to view your website preview ↗';
+      } else if (allDone) {
         el.dataset.state = 'building';
         if (title) title.innerHTML = 'Building<br>Preview';
         if (sub) sub.innerHTML = '1–2 days<span class="pvw-spinner"></span>';
