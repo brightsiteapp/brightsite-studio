@@ -31,14 +31,14 @@
   #pricing{padding-top:12px!important;padding-bottom:14px}
   footer{padding:20px 24px!important}
 
-  /* All cards same fixed size */
-  #pricing .plans{display:grid;grid-template-columns:repeat(3,1fr)}
-  #pricing .plan{border-color:var(--accent);position:relative;box-sizing:border-box;width:100%;display:flex;flex-direction:column}
+  /* Zero-minimum tracks keep content and billing state from changing card widths. */
+  #pricing .plans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+  #pricing .plan{border-color:var(--accent);position:relative;box-sizing:border-box;width:100%;min-width:0;display:flex;flex-direction:column}
   #pricing .plan ul{flex:1;margin-bottom:0}
-  @media(max-width:900px){#pricing .plans{grid-template-columns:1fr}}
+  @media(max-width:900px){#pricing .plans{grid-template-columns:minmax(0,1fr)}}
 
   /* Toggle: flex row with h4 so they never overlap */
-  .plan-header{margin-bottom:6px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .plan-header{margin-bottom:6px;display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:10px}
   .plan-header h4{margin:0;min-width:0}
   .card-billing{position:static;display:flex;align-items:stretch;gap:0;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;flex-shrink:0;margin-top:4px}
   .card-billing button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:11px;font-weight:700;padding:6px 10px;cursor:pointer;line-height:1.2;transition:background .15s,color .15s;white-space:nowrap;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
@@ -58,7 +58,7 @@
   #pricing .plan{padding:26px 24px}
   #pricing .plan h4{font-size:29px;margin-bottom:0}
   #pricing .plan .desc{margin-bottom:13px}
-  #pricing .plan .price{display:flex;align-items:baseline;gap:6px;flex-wrap:nowrap;white-space:nowrap;font-size:48px;font-weight:800;color:#111;letter-spacing:-0.03em}
+  #pricing .plan .price{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;white-space:normal;font-size:48px;font-weight:800;color:#111;letter-spacing:-0.03em}
   #pricing .plan .price .setup-price{font-size:48px;font-weight:800;color:#111!important}
   #pricing .plan .price .price-was{font-size:18px;color:#bbb;text-decoration:line-through;margin-right:2px;font-weight:600}
   #pricing .plan .price small{font-size:13px;margin-left:4px;color:var(--accent);font-weight:600;letter-spacing:0}
