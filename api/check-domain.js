@@ -1,5 +1,5 @@
 const ALLOWED_ORIGINS = ['https://brightsite.app'];
-const CF_MARKUP_PENCE = 0;
+import { quoteDomainInGbp } from './lib/domain-pricing.js';
 
 // Authoritative RDAP servers per TLD — bypasses rdap.org which rate-limits server requests
 const RDAP_SERVERS = {
@@ -25,30 +25,6 @@ function getRdapUrl(domain) {
   return 'https://rdap.org/domain/' + encodeURIComponent(domain);
 }
 
-async function getCloudflareDomainPrice(domain) {
-  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-  const token     = process.env.CLOUDFLARE_API_TOKEN;
-  if (!accountId || !token) return null;
-  try {
-    const res = await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${accountId}/registrar/domains/${encodeURIComponent(domain)}/available`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        signal: AbortSignal.timeout(5000),
-      }
-    );
-    if (!res.ok) return null;
-    const json = await res.json();
-    if (!json.success || !json.result?.price) return null;
-    const EXCHANGE_RATE = 0.79; // USD → GBP (update periodically)
-    const costPence = Math.round(json.result.price * EXCHANGE_RATE * 100);
-    return costPence + CF_MARKUP_PENCE;
-  } catch (err) {
-    console.warn('CF price lookup failed:', err.message);
-    return null;
-  }
-}
-
 export default async function handler(req, res) {
   const origin = req.headers.origin || '';
   const allowOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
@@ -66,31 +42,16 @@ export default async function handler(req, res) {
   const clean = domain.toLowerCase().trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
 
   try {
-    const rdapUrl = getRdapUrl(clean);
-    const rdapRes = await fetch(rdapUrl, {
-      headers: { Accept: 'application/rdap+json' },
-      signal: AbortSignal.timeout(6000),
+    const quote = await quoteDomainInGbp(clean);
+    return res.status(200).json({
+      domain: quote.domain,
+      available: true,
+      pricePence: quote.amountPence,
+      priceLabel: `£${(quote.amountPence / 100).toFixed(2)}/yr`,
+      cloudflarePrice: { amount: quote.registrationCost, currency: quote.currency },
     });
-
-    if (rdapRes.ok) {
-      return res.status(200).json({ domain: clean, available: false });
-    }
-
-    if (rdapRes.status === 404) {
-      // Domain is available — fetch real price from Cloudflare
-      const pricePence = await getCloudflareDomainPrice(clean);
-      return res.status(200).json({
-        domain: clean,
-        available: true,
-        pricePence: pricePence ?? null,
-        // human-readable fallback label if Cloudflare price unavailable
-        priceLabel: pricePence ? `£${(pricePence / 100).toFixed(0)}/yr` : null,
-      });
-    }
-
-    return res.status(200).json({ domain: clean, available: false, rdapStatus: rdapRes.status });
   } catch (err) {
-    console.error('Domain check error:', err.message);
-    return res.status(500).json({ error: 'Domain check failed', detail: err.message });
+    const unavailable = /no longer available|cannot be registered/i.test(err.message);
+    return res.status(unavailable ? 200 : 503).json({ domain: clean, available: false, error: err.message });
   }
 }

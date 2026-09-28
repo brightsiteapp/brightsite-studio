@@ -161,6 +161,7 @@
   var addonBooking = params.get('addon_booking') === '1';
   var addonStore   = params.get('addon_store') === '1';
   var addonDomain  = params.get('addon_domain') || '';
+  var publishOnPayment = params.get('publish_on_payment') === '1';
 
   // billing state
   var selectedAnnual = (params.get('billing') || 'annual') !== 'monthly';
@@ -225,7 +226,7 @@
     fetch('https://api.brightsite.app/api/create-checkout-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan: plan, billing: billing, email: email, slug: slug, return_url: returnUrl, addon_booking: addonBooking, addon_store: addonStore, addon_domain: addonDomain })
+      body: JSON.stringify({ plan: plan, billing: billing, email: email, slug: slug, return_url: returnUrl, addon_booking: addonBooking, addon_store: addonStore, addon_domain: addonDomain, publish_on_payment: publishOnPayment })
     })
       .then(function (r) { return r.json(); })
       .then(function (data) {

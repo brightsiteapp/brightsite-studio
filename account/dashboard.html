@@ -2783,16 +2783,49 @@
     var approveBtns = ['approveBtn', 'deskApproveBtn'].map(function(id) { return document.getElementById(id); }).filter(Boolean);
     var requestChangesBtns = ['requestChangesBtn', 'deskRequestChangesBtn'].map(function(id) { return document.getElementById(id); }).filter(Boolean);
     var approveStatus = document.getElementById('approveStatus');
+    function selectedDomainForApproval() {
+      var data = (business && business.data) || {};
+      var raw = data.raw || {};
+      return pendingDomain || raw.chosenDomain || data.customDomain || data.domain || '';
+    }
+    function showDomainChooser() {
+      showAccountTab();
+      var card = document.getElementById('domainCard');
+      var body = document.getElementById('domainBody');
+      var toggle = document.getElementById('domainToggle');
+      if (body && body.hidden && toggle) toggle.click();
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(function() {
+        var input = document.getElementById('domainSearchInput');
+        if (input) input.focus();
+      }, 350);
+    }
     function approveDesign() {
+      var domain = selectedDomainForApproval();
+      if (!domain) {
+        approveStatus.textContent = 'Choose a domain before approving your website.';
+        approveStatus.hidden = false;
+        showDomainChooser();
+        return;
+      }
       approveBtns.forEach(function(button) { button.disabled = true; });
-      approveStatus.textContent = 'Saving…';
-      sendStageEmail('design_approved');
-      if (business && business.data) { business.data.demoApproved = true; saveBusiness(); }
-      approveStatus.textContent = 'Thanks! We\'ll get it live soon.';
+      approveStatus.textContent = 'Opening secure checkout…';
       approveStatus.hidden = false;
-      approveBtns.concat(requestChangesBtns).forEach(function(button) { button.hidden = true; });
-      var approveDesc = document.getElementById('approveDesc');
-      if (approveDesc) approveDesc.hidden = true;
+      sendStageEmail('design_approved');
+      if (business && business.data) business.data.demoApproved = true;
+      saveBusiness().then(function() {
+        var email = (business && business.data && business.data.raw && business.data.raw.email) || (session && session.user && session.user.email) || '';
+        var url = '/checkout.html?plan=' + encodeURIComponent(selectedPlan)
+          + '&billing=' + encodeURIComponent(selectedAnnual ? 'annual' : 'monthly')
+          + '&email=' + encodeURIComponent(email)
+          + '&slug=' + encodeURIComponent(slug || '')
+          + '&addon_domain=' + encodeURIComponent(domain)
+          + '&publish_on_payment=1';
+        window.location.assign(url);
+      }).catch(function() {
+        approveBtns.forEach(function(button) { button.disabled = false; });
+        approveStatus.textContent = 'Could not save your approval. Please try again.';
+      });
     }
     function requestChanges() {
       requestChangesBtns.forEach(function(button) { button.disabled = true; });
