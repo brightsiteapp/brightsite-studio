@@ -784,7 +784,7 @@ function patchBusinessAfterUpload(demoUrl, failed, btn, status, progressWrap) {
   .then(function(r) { return r.json(); })
   .then(function(rows) {
     var existing = (rows && rows[0]) || {};
-    var patch = { demoUploaded: true, previewSent: true };
+    var patch = { demoUploaded: true, previewSent: true, demoReady: true };
     if (demoUrl) patch.demoUrl = demoUrl;
     var newData = Object.assign({}, existing.data || {}, patch);
     return fetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(uploadTargetSlug), {
