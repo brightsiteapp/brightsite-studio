@@ -540,7 +540,13 @@
   /* mobile card: shown inline below cards, hidden on desktop */
   .mobile-preview-wrap{margin-top:8px;}
   @media(min-width:800px){.mobile-preview-wrap{display:none;}}
-  .mobile-pvw-toggle{display:flex;gap:2px;padding:3px;background:#e8e4df;border-radius:10px;width:fit-content;margin:0 auto 10px;}
+  .preview-actions{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:6px;align-items:center;margin:0 0 8px;}
+  .preview-action{min-width:0;border-radius:8px;padding:8px 7px;font:700 11px/1 Inter,sans-serif;cursor:pointer;white-space:nowrap;}
+  .preview-action-change{border:1px solid #c2e0cc;background:#fff;color:#1d6c3d;}
+  .preview-action-approve{border:0;background:#1f9d55;color:#fff;}
+  .preview-action-description{margin:0 0 8px;font-size:12px;line-height:1.4;color:var(--muted);text-align:center;}
+  .preview-action-status{margin:0 0 8px;min-height:0;font-size:12px;color:#1f9d55;font-weight:600;text-align:center;}
+  .mobile-pvw-toggle{display:flex;gap:2px;padding:3px;background:#e8e4df;border-radius:10px;width:fit-content;margin:0;}
   .mobile-pvw-btn{border:0;border-radius:7px;background:transparent;color:var(--muted);font:700 12px/1 Inter,sans-serif;padding:6px 14px;cursor:pointer;}
   .mobile-pvw-btn.active{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.1);}
   .mobile-preview-card{flex:1;border-radius:0;}
@@ -553,8 +559,9 @@
   .mob-pvw-browser-bar .fake-browser-dots span:nth-child(2){background:#febc2e}
   .mob-pvw-browser-bar .fake-browser-dots span:nth-child(3){background:#28c840}
   .mob-pvw-browser-url{flex:1;height:18px;background:rgba(255,255,255,.1);border-radius:4px;}
-  .mob-pvw-browser-content{display:flex;flex-direction:column;}
+  .mob-pvw-browser-content{display:flex;flex-direction:column;height:340px;}
   .mob-pvw-browser-content .mobile-preview-card{min-height:180px;border-radius:0;}
+  .mob-pvw-browser-content iframe{flex:1;}
   /* phone frame (mobile toggle) — hidden by default */
   .mob-pvw-phone{display:none;align-items:center;justify-content:center;background:#dddbd8;border-radius:14px;padding:16px 0 20px;}
   .mob-pvw-phone-shell{
@@ -695,17 +702,6 @@
   <section id="websitePanel" class="tab-content website-panel" aria-labelledby="mobileWebsiteTab">
     <div class="panel-inner">
 
-      <!-- approve banner (shown when preview/live site is ready to review) -->
-      <div id="approveSection" hidden style="margin:0 0 16px;padding:14px 15px;border:1px solid #b7e5c8;border-radius:12px;background:#edfbf3">
-        <p style="margin:0 0 10px;font-size:13px;font-weight:700;color:#1d6c3d">Your website preview is ready to review.</p>
-        <p style="margin:0 0 12px;font-size:13px;color:#2d6a4f;line-height:1.5" id="approveDesc">Take a look at the preview and let us know if you’re happy with it.</p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button type="button" id="approveBtn" style="border:0;border-radius:9px;background:#1f9d55;color:#fff;padding:9px 18px;font:inherit;font-size:13px;font-weight:700;cursor:pointer">✓ Approve design</button>
-          <button type="button" id="requestChangesBtn" style="border:1px solid #c2e0cc;border-radius:9px;background:#fff;color:#1d6c3d;padding:9px 16px;font:inherit;font-size:13px;font-weight:600;cursor:pointer">Request changes</button>
-        </div>
-        <p id="approveStatus" style="margin:8px 0 0;font-size:12px;color:#1f9d55;font-weight:600;min-height:16px"></p>
-      </div>
-
       <p class="website-progress" id="websiteProgress">Your website details: <b>0 of 7 added</b></p>
 
       <!-- section list -->
@@ -726,10 +722,16 @@
 
       <!-- mobile preview card + toggle (hidden on desktop) -->
       <div class="mobile-preview-wrap" id="mobilePreviewWrap">
-        <div class="mobile-pvw-toggle">
-          <button type="button" class="mobile-pvw-btn active" id="mobilePvwDesktop">Desktop</button>
-          <button type="button" class="mobile-pvw-btn" id="mobilePvwMobile">Mobile</button>
+        <div id="approveSection" class="preview-actions">
+          <button type="button" id="requestChangesBtn" hidden class="preview-action preview-action-change">Request changes</button>
+          <div class="mobile-pvw-toggle">
+            <button type="button" class="mobile-pvw-btn active" id="mobilePvwDesktop">Desktop</button>
+            <button type="button" class="mobile-pvw-btn" id="mobilePvwMobile">Mobile</button>
+          </div>
+          <button type="button" id="approveBtn" hidden class="preview-action preview-action-approve">Approve</button>
         </div>
+        <p id="approveDesc" hidden class="preview-action-description">Take a look at the preview and let us know if you’re happy with it.</p>
+        <p id="approveStatus" hidden class="preview-action-status"></p>
         <!-- desktop frame -->
         <div class="mob-pvw-browser">
           <div class="mob-pvw-browser-bar">
@@ -1532,10 +1534,11 @@
     renderGallery();
 
     // Approve section
-    var approveSection = document.getElementById('approveSection');
-    if (approveSection) {
-      approveSection.hidden = !(business.data && business.data.demoReady && !business.data.demoApproved);
-    }
+    var readyForReview = !!(business.data && business.data.demoReady && !business.data.demoApproved);
+    ['approveBtn', 'requestChangesBtn', 'approveDesc'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.hidden = !readyForReview;
+    });
 
     // Restore sectionDoneClicked
     if (raw.sectionDoneClicked) sectionDoneClicked = Object.assign({}, raw.sectionDoneClicked);
@@ -2694,12 +2697,17 @@
       sendStageEmail('design_approved');
       if (business && business.data) { business.data.demoApproved = true; saveBusiness(); }
       approveStatus.textContent = 'Thanks! We\'ll get it live soon.';
-      document.getElementById('approveSection').hidden = true;
+      approveStatus.hidden = false;
+      approveBtn.hidden = true;
+      requestChangesBtn.hidden = true;
+      var approveDesc = document.getElementById('approveDesc');
+      if (approveDesc) approveDesc.hidden = true;
     });
     if (requestChangesBtn) requestChangesBtn.addEventListener('click', function() {
       requestChangesBtn.disabled = true;
       sendStageEmail('changes_requested');
       approveStatus.textContent = 'Got it — send us a message with the changes you\'d like.';
+      approveStatus.hidden = false;
     });
   })();
 
