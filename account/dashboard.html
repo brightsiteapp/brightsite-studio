@@ -540,7 +540,8 @@
   /* mobile card: shown inline below cards, hidden on desktop */
   .mobile-preview-wrap{margin-top:8px;}
   @media(min-width:800px){.mobile-preview-wrap{display:none;}}
-  .preview-actions{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:6px;align-items:center;margin:0 0 8px;}
+  .preview-actions{display:flex;gap:6px;align-items:center;margin:0 0 8px;}
+  .preview-actions .mobile-pvw-toggle{margin-left:auto;}
   .preview-action{min-width:0;border-radius:8px;padding:8px 7px;font:700 11px/1 Inter,sans-serif;cursor:pointer;white-space:nowrap;}
   .preview-action-change{border:1px solid #c2e0cc;background:#fff;color:#1d6c3d;}
   .preview-action-approve{border:0;background:#1f9d55;color:#fff;}
@@ -724,11 +725,11 @@
       <div class="mobile-preview-wrap" id="mobilePreviewWrap">
         <div id="approveSection" class="preview-actions">
           <button type="button" id="requestChangesBtn" hidden class="preview-action preview-action-change">Request changes</button>
+          <button type="button" id="approveBtn" hidden class="preview-action preview-action-approve">Approve</button>
           <div class="mobile-pvw-toggle">
             <button type="button" class="mobile-pvw-btn active" id="mobilePvwDesktop">Desktop</button>
             <button type="button" class="mobile-pvw-btn" id="mobilePvwMobile">Mobile</button>
           </div>
-          <button type="button" id="approveBtn" hidden class="preview-action preview-action-approve">Approve</button>
         </div>
         <p id="approveDesc" hidden class="preview-action-description">Take a look at the preview and let us know if you’re happy with it.</p>
         <p id="approveStatus" hidden class="preview-action-status"></p>
