@@ -17,7 +17,7 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="../favicon.png" type="image/png">
 <meta name="theme-color" content="#F7F2EC">
 <link rel="stylesheet" href="../styles.css">
@@ -90,6 +90,32 @@
   }
   button,a,[role="button"]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
   [hidden]{display:none!important}
+
+  /* Customer dashboard refresh */
+  body{background:#F7F8FC;font-family:'Nunito Sans',Inter,sans-serif}
+  .app-header,.mobile-view-tabs,.desk-preview-bar{background:rgba(255,255,255,.82);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-color:#E6EAF1}
+  .info-card{border-color:#E4E9F0;border-radius:15px;box-shadow:0 4px 14px rgba(35,47,62,.035)}
+  .info-card h2,.builder-head h2,.builder-section h3{font-family:'Nunito Sans',Inter,sans-serif;color:#303946}
+  .website-progress{color:#718096}.website-progress b{color:#3C82F6}
+  #viewPanel{display:flex;flex-direction:column}
+  #viewPanel>.info-card:nth-of-type(1){order:3}
+  #domainCard{order:2}
+  #pwdCard{order:4}
+  #viewPanel>.info-card:nth-of-type(4){order:1;background:#F7FAFF;border-color:#D8E6FE}
+  #viewPanel>.info-card:nth-of-type(1)>.info-row:first-of-type{display:none}
+  .plan-chosen-card{border-color:#DCE8FE!important;background:#fff!important;border-radius:13px!important}
+  .plan-chosen-icon{background:#3C82F6!important}
+  .upgrade-btn{background:#3C82F6!important;box-shadow:0 5px 14px rgba(60,130,246,.18)}
+  .sec-btn{border-color:#F4D8D4;background:#FFF6F4;transition:background-color .25s ease,border-color .25s ease,transform .16s ease}
+  .sec-btn:hover{border-color:#EAB2AA;transform:translateY(-1px)}
+  .sec-btn.is-complete{background:#F1FBF5;border-color:#CBEAD7}
+  .sec-btn .section-tick{border-color:#D65B58;background:#FFE4E0;color:#D65B58;transition:background-color .25s ease,border-color .25s ease}
+  .sec-btn.is-complete .section-tick{border-color:#238653;background:#238653}
+  .sec-btn .chev{color:#A0A8B8;font-size:18px}
+  .msgs-empty{padding:28px!important}.msgs-empty>div{max-width:340px!important}
+  .msgs-empty::before{content:'✦';display:grid;place-items:center;width:52px;height:52px;margin:0 auto 14px;border-radius:17px;background:#EAF2FF;color:#3C82F6;font-size:24px;font-weight:800}
+  .msgs-input{background:#F1F5FA!important;border-color:#E4E9F0!important;border-radius:20px!important}
+  .msgs-send{background:#4A8AF4!important;border-radius:50%!important}
 
   .app-header{
     flex:none;
@@ -902,8 +928,8 @@
     <div class="msgs-list" id="msgsList">
       <div class="msgs-empty" id="msgsEmpty">
         <div style="text-align:center;max-width:280px">
-          <div id="msgsWelcome" style="font-size:17px;font-weight:700;color:var(--ink);margin-bottom:7px">Hey!</div>
-          <div style="font-size:14px;color:var(--muted);line-height:1.55">Have a question or need a change? Send us a message and we'll get back to you.</div>
+          <div id="msgsWelcome" style="font-size:17px;font-weight:700;color:var(--ink);margin-bottom:7px">Welcome to BrightSite!</div>
+          <div style="font-size:14px;color:var(--muted);line-height:1.55">I’m Tom, and I’ll be designing your new website. Once you’ve added your business details in the Website tab, I’ll get started on your first preview. If you need a hand, just drop me a message here.</div>
         </div>
       </div>
       <div class="msgs-error" id="msgsError" hidden></div>
