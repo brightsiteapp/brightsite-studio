@@ -43,6 +43,10 @@
   .desk-preview-bar{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--bg);}
 .desk-preview-status{font-size:12px;font-weight:600;color:var(--muted);}
   .desk-preview-link{font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;}
+  .desk-preview-actions{display:flex;align-items:center;gap:7px;margin-left:auto;}
+  .desk-preview-action{border:0;border-radius:7px;padding:7px 10px;font:700 11px/1 Inter,sans-serif;cursor:pointer;white-space:nowrap;}
+  .desk-preview-action.change{background:#171717;color:#fff;}
+  .desk-preview-action.approve{background:var(--accent);color:#fff;}
   /* frame wrapper */
   .preview-frame-wrap{flex:1;min-height:0;position:relative;overflow:hidden;}
   .fake-browser,.fake-phone{position:absolute;inset:0;}
@@ -77,7 +81,7 @@
     #dashWrap{flex-direction:row;}
     #leftCol{width:360px;flex:none;overflow:hidden;}
     #deskPreview{display:flex;flex:1;min-width:0;}
-    .mobile-view-tabs{border-bottom:1px solid var(--line);}
+    .mobile-view-tabs{border-bottom:1px solid #d8d1c8;box-shadow:0 1px 0 rgba(23,32,31,.04);}
     #builderList{grid-template-columns:1fr;gap:10px;}
     #builderList .builder-head{grid-column:1;}
     #builderList .builder-guidance{grid-column:1;}
@@ -135,6 +139,9 @@
     cursor:pointer;
   }
   .mobile-view-tabs button[aria-selected="true"]{background:var(--accent);color:#fff}
+  @media(max-width:799px){
+    .mobile-view-tabs{border-bottom:1px solid #d8d1c8;box-shadow:0 1px 0 rgba(23,32,31,.04);}
+  }
 
   #appBody{
     flex:1;
@@ -552,8 +559,8 @@
   .preview-control-row .mobile-pvw-toggle{grid-column:2;}
   .preview-control-row .mob-preview-view{grid-column:3;justify-self:end;}
   .preview-action{min-width:0;border-radius:8px;padding:8px 7px;font:700 11px/1 Inter,sans-serif;cursor:pointer;white-space:nowrap;}
-  .preview-action-change{border:1px solid #c2e0cc;background:#fff;color:#1d6c3d;}
-  .preview-action-approve{border:0;background:#1f9d55;color:#fff;}
+  .preview-action-change{border:0;background:#171717;color:#fff;}
+  .preview-action-approve{border:0;background:var(--accent);color:#fff;}
   .preview-action-description{margin:0 0 8px;font-size:12px;line-height:1.4;color:var(--muted);text-align:center;}
   .preview-action-status{margin:0 0 8px;min-height:0;font-size:12px;color:#1f9d55;font-weight:600;text-align:center;}
   .mobile-pvw-toggle{display:flex;gap:2px;padding:3px;background:#e8e4df;border-radius:10px;width:fit-content;margin:0;}
@@ -569,7 +576,7 @@
   .mob-pvw-browser-bar .fake-browser-dots span:nth-child(2){background:#febc2e}
   .mob-pvw-browser-bar .fake-browser-dots span:nth-child(3){background:#28c840}
   .mob-pvw-browser-url{flex:1;height:18px;background:rgba(255,255,255,.1);border-radius:4px;}
-  .mob-pvw-browser-content{display:flex;flex-direction:column;height:340px;overflow:hidden;}
+  .mob-pvw-browser-content{display:flex;flex-direction:column;height:340px;overflow:hidden;overscroll-behavior-x:none;touch-action:pan-y;}
   .mob-pvw-browser-content .mobile-preview-card{min-height:180px;border-radius:0;}
   .mob-pvw-browser-content iframe{flex:none;width:1280px;transform-origin:top left;}
   /* phone frame (mobile toggle) — hidden by default */
@@ -584,8 +591,9 @@
   }
   .mob-pvw-phone-notch{width:52px;height:12px;background:#111;border-radius:0 0 8px 8px;margin:0 auto 3px;flex:none;position:relative;}
   .mob-pvw-phone-notch::before{content:'';position:absolute;top:3px;left:50%;transform:translateX(-50%);width:6px;height:6px;border-radius:50%;background:#1e1e1e;}
-  .mob-pvw-phone-screen{flex:1;border-radius:20px;overflow:hidden;background:#0f0f1a;display:flex;flex-direction:column;}
+  .mob-pvw-phone-screen{flex:1;border-radius:20px;overflow:hidden;background:#0f0f1a;display:flex;flex-direction:column;overscroll-behavior-x:none;touch-action:pan-y;}
   .mob-pvw-phone-screen .mobile-preview-card{flex:1;border-radius:0;}
+  .mob-pvw-phone-screen iframe{touch-action:pan-y;overscroll-behavior-x:none;}
   /* toggle states */
   .mobile-preview-wrap.mobile-view .mob-pvw-browser{display:none;}
   .mobile-preview-wrap.mobile-view .mob-pvw-phone{display:flex;}
@@ -742,7 +750,7 @@
               <button type="button" class="mobile-pvw-btn active" id="mobilePvwDesktop">Desktop</button>
               <button type="button" class="mobile-pvw-btn" id="mobilePvwMobile">Mobile</button>
             </div>
-            <a id="mobPreviewViewBtn" class="mob-preview-view" href="#" target="_blank" rel="noopener" hidden style="display:none;align-items:center;gap:4px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);font:700 11px/1 Inter,sans-serif;text-decoration:none;white-space:nowrap">View ↗</a>
+            <a id="mobPreviewViewBtn" class="mob-preview-view" href="#" target="_blank" rel="noopener" hidden style="display:none;align-items:center;gap:5px;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);font:700 11px/1 Inter,sans-serif;text-decoration:none;white-space:nowrap">Open<svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2h6v6M10 2 4.5 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
           </div>
         </div>
         <p id="approveDesc" hidden class="preview-action-description">Take a look at the preview and let us know if you’re happy with it.</p>
@@ -751,7 +759,7 @@
         <div class="mob-pvw-browser">
           <div class="mob-pvw-browser-bar">
             <div class="fake-browser-dots"><span></span><span></span><span></span></div>
-            <div class="mob-pvw-browser-url"></div>
+            <div class="mob-pvw-browser-url" id="mobPreviewUrl">preview.brightsite.app</div>
           </div>
           <div class="mob-pvw-browser-content">
             <div class="preview-placeholder mobile-preview-card" id="mobilePreviewCard">
@@ -915,7 +923,11 @@
 <div id="deskPreview">
   <div class="desk-preview-bar">
     <span class="desk-preview-status" id="deskPreviewStatus">Not live</span>
-    <a class="desk-preview-link" id="deskPreviewLink" href="#" target="_blank" hidden>View live site ↗</a>
+    <a class="desk-preview-link" id="deskPreviewLink" href="#" target="_blank" hidden>Open preview</a>
+    <div class="desk-preview-actions" id="deskPreviewActions">
+      <button type="button" class="desk-preview-action change" id="deskRequestChangesBtn" hidden>Request changes</button>
+      <button type="button" class="desk-preview-action approve" id="deskApproveBtn" hidden>Approve design</button>
+    </div>
     <div class="desk-preview-toggle" id="deskViewToggle">
       <button type="button" class="dvt-btn active" id="dvtDesktop" aria-pressed="true">Desktop</button>
       <button type="button" class="dvt-btn" id="dvtMobile" aria-pressed="false">Mobile</button>
@@ -927,7 +939,7 @@
       <div class="fake-browser-bar">
         <span class="fake-browser-dots"><span></span><span></span><span></span></span>
         <span class="fake-browser-url" id="fakeBrowserUrl">brightsite.app</span>
-        <a id="fakeBrowserViewBtn" href="#" target="_blank" hidden style="font:600 11px/1 Inter,sans-serif;color:#fff;background:rgba(255,255,255,.15);border-radius:5px;padding:4px 9px;text-decoration:none;white-space:nowrap;flex:none">View ↗</a>
+        <a id="fakeBrowserViewBtn" href="#" target="_blank" hidden style="font:600 11px/1 Inter,sans-serif;color:#fff;background:rgba(255,255,255,.15);border-radius:5px;padding:4px 9px;text-decoration:none;white-space:nowrap;flex:none">Open preview</a>
       </div>
       <div class="fake-browser-content">
         <div id="deskPreviewPlaceholder" class="preview-placeholder">
@@ -1392,6 +1404,7 @@
 
     // Uploaded previews are available before the website is published.
     var previewUrl = getPreviewUrl();
+    var reviewReady = !!(previewUrl && !data.demoApproved);
 
     // Desktop preview panel
     var deskStatus = document.getElementById('deskPreviewStatus');
@@ -1412,9 +1425,15 @@
       link.hidden = !previewUrl;
       if (previewUrl) link.href = previewUrl;
       else link.removeAttribute('href');
-      link.textContent = isLive ? 'View live site ↗' : 'View preview ↗';
+      link.textContent = isLive ? 'Open website' : 'Open preview';
     });
-    if (fakeBrowserUrl) fakeBrowserUrl.textContent = previewUrl ? previewUrl.replace(/^https?:\/\//, '') : '';
+    if (fakeBrowserUrl) fakeBrowserUrl.textContent = previewUrl ? (isLive ? 'your website' : 'preview.brightsite.app') : '';
+    var mobPreviewUrl = document.getElementById('mobPreviewUrl');
+    if (mobPreviewUrl) mobPreviewUrl.textContent = previewUrl ? (isLive ? 'your website' : 'preview.brightsite.app') : '';
+    ['approveBtn', 'requestChangesBtn', 'deskApproveBtn', 'deskRequestChangesBtn'].forEach(function(id) {
+      var button = document.getElementById(id);
+      if (button) button.hidden = !reviewReady;
+    });
     var bizLabel = (raw.name || business.name || '').toUpperCase();
     ['deskPreviewBizName', 'deskPreviewBizNameMob', 'mobilePreviewBizName', 'mobilePreviewBizNameMob'].forEach(function(id) {
       var el = document.getElementById(id);
@@ -2357,9 +2376,10 @@
       reviews: reviewQuotes.some(function(q) { return q.trim(); }) || !!document.getElementById('fReviewLink').value.trim() || !!sectionDoneClicked.reviews,
       media: !!media.logoImage || !!media.heroImage || media.gallery.length > 0 || !!pendingUploads.logo || !!pendingUploads.hero || pendingUploads.gallery.length > 0 || !!sectionDoneClicked.media
     };
+    var previewReady = !!getPreviewUrl();
     Object.keys(complete).forEach(function(s) {
       var btn = document.querySelector('[data-section="' + s + '"]');
-      if (btn) btn.classList.toggle('is-complete', complete[s]);
+      if (btn) btn.classList.toggle('is-complete', complete[s] && !previewReady);
     });
     var added = Object.values(complete).filter(Boolean).length;
     var allDone = added >= Object.keys(complete).length;
@@ -2720,27 +2740,28 @@
 
   // Approve / request changes buttons
   (function() {
-    var approveBtn = document.getElementById('approveBtn');
-    var requestChangesBtn = document.getElementById('requestChangesBtn');
+    var approveBtns = ['approveBtn', 'deskApproveBtn'].map(function(id) { return document.getElementById(id); }).filter(Boolean);
+    var requestChangesBtns = ['requestChangesBtn', 'deskRequestChangesBtn'].map(function(id) { return document.getElementById(id); }).filter(Boolean);
     var approveStatus = document.getElementById('approveStatus');
-    if (approveBtn) approveBtn.addEventListener('click', function() {
-      approveBtn.disabled = true;
+    function approveDesign() {
+      approveBtns.forEach(function(button) { button.disabled = true; });
       approveStatus.textContent = 'Saving…';
       sendStageEmail('design_approved');
       if (business && business.data) { business.data.demoApproved = true; saveBusiness(); }
       approveStatus.textContent = 'Thanks! We\'ll get it live soon.';
       approveStatus.hidden = false;
-      approveBtn.hidden = true;
-      requestChangesBtn.hidden = true;
+      approveBtns.concat(requestChangesBtns).forEach(function(button) { button.hidden = true; });
       var approveDesc = document.getElementById('approveDesc');
       if (approveDesc) approveDesc.hidden = true;
-    });
-    if (requestChangesBtn) requestChangesBtn.addEventListener('click', function() {
-      requestChangesBtn.disabled = true;
+    }
+    function requestChanges() {
+      requestChangesBtns.forEach(function(button) { button.disabled = true; });
       sendStageEmail('changes_requested');
       approveStatus.textContent = 'Got it — send us a message with the changes you\'d like.';
       approveStatus.hidden = false;
-    });
+    }
+    approveBtns.forEach(function(button) { button.addEventListener('click', approveDesign); });
+    requestChangesBtns.forEach(function(button) { button.addEventListener('click', requestChanges); });
   })();
 
   // ---------------- business loading ----------------
