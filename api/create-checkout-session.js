@@ -75,7 +75,8 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { plan, billing, email, slug, domain } = req.body || {};
+  const { plan, billing, email, slug, domain, addon_domain: addonDomain } = req.body || {};
+  const selectedDomain = domain || addonDomain || '';
 
   if (!plan || !billing) return res.status(400).json({ error: 'Missing plan or billing' });
 
@@ -90,16 +91,16 @@ export default async function handler(req, res) {
     if (prices.setup) lineItems.push({ price: prices.setup, quantity: 1 });
 
     // optional domain registration (one-off)
-    if (domain) {
-      const cfPrice = await getCloudflareDomainPrice(domain);
-      const domainPence = cfPrice ?? getDomainFallbackPrice(domain);
+    if (selectedDomain) {
+      const cfPrice = await getCloudflareDomainPrice(selectedDomain);
+      const domainPence = cfPrice ?? getDomainFallbackPrice(selectedDomain);
       const freeDomainPlans = ['pro', 'prestige'];
       const domainIsFree = freeDomainPlans.includes(plan) && domainPence <= 1200;
       lineItems.push({
         price_data: {
           currency: 'gbp',
           product_data: {
-            name: 'Domain: ' + domain,
+            name: 'Domain: ' + selectedDomain,
             description: domainIsFree ? 'Included free with your plan' : '1-year registration',
           },
           unit_amount: domainIsFree ? 0 : domainPence,
@@ -116,7 +117,7 @@ export default async function handler(req, res) {
       line_items: lineItems,
       return_url: returnUrl,
       customer_email: email || undefined,
-      metadata: { plan, billing, slug: slug || '', domain: domain || '' },
+      metadata: { plan, billing, slug: slug || '', domain: selectedDomain },
     });
 
     res.status(200).json({ clientSecret: session.client_secret });
