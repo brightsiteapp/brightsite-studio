@@ -3059,16 +3059,23 @@
   var dvtM = document.getElementById('dvtMobile');
   var deskPv = document.getElementById('deskPreview');
   if (dvtD && dvtM && deskPv) {
-    dvtD.onclick = function() {
-      deskPv.classList.remove('mobile-view');
-      dvtD.classList.add('active'); dvtD.setAttribute('aria-pressed','true');
-      dvtM.classList.remove('active'); dvtM.setAttribute('aria-pressed','false');
-    };
-    dvtM.onclick = function() {
-      deskPv.classList.add('mobile-view');
-      dvtM.classList.add('active'); dvtM.setAttribute('aria-pressed','true');
-      dvtD.classList.remove('active'); dvtD.setAttribute('aria-pressed','false');
-    };
+    var deskBrowser = deskPv.querySelector('.fake-browser');
+    var deskPhone = deskPv.querySelector('.fake-phone');
+    function setDeskPreviewMode(mode) {
+      var mobile = mode === 'mobile';
+      deskPv.classList.toggle('mobile-view', mobile);
+      // Explicitly show the selected shell as well as changing the class.
+      // This keeps the toggle reliable if another preview style is loaded.
+      if (deskBrowser) deskBrowser.hidden = mobile;
+      if (deskPhone) deskPhone.hidden = !mobile;
+      dvtD.classList.toggle('active', !mobile);
+      dvtD.setAttribute('aria-pressed', String(!mobile));
+      dvtM.classList.toggle('active', mobile);
+      dvtM.setAttribute('aria-pressed', String(mobile));
+    }
+    dvtD.addEventListener('click', function() { setDeskPreviewMode('desktop'); });
+    dvtM.addEventListener('click', function() { setDeskPreviewMode('mobile'); });
+    setDeskPreviewMode('desktop');
   }
 
   // domain card collapse toggle
