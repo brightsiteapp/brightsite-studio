@@ -392,8 +392,18 @@
   .builder-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
   .builder-head h2{font-family:var(--display);font-size:16px;font-weight:700;margin:0}
   @keyframes pvwPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
-  .sec-btn{width:100%;border:1px solid var(--line);border-radius:14px;background:var(--card);margin-bottom:0;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;font:inherit;font-size:13.5px;font-weight:700;color:var(--ink);text-align:left;box-sizing:border-box}
-  .sec-btn:hover{border-color:var(--accent)}
+  .sec-btn{width:100%;border:1px solid var(--line);border-radius:14px;background:#fff4f2;margin-bottom:0;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;font:inherit;font-size:13.5px;font-weight:700;color:var(--ink);text-align:left;box-sizing:border-box}
+  .sec-btn:hover{border-color:#cfb8b3;box-shadow:0 3px 10px rgba(65,45,40,.04)}
+  .sec-btn{border-color:#f1dcd7;transition:background-color .25s ease,border-color .25s ease,box-shadow .18s ease}
+  .sec-btn.is-complete{background:#f0faf4;border-color:#d2e9dc}
+  .sec-btn[data-section="notes"],.preview-sent .sec-btn{background:var(--card);border-color:var(--line)}
+  .section-icon{width:32px;height:32px;display:grid;place-items:center;border-radius:11px;background:rgba(255,255,255,.8);color:#b75e52;flex:none}
+  .section-icon svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .is-complete .section-icon{color:#298559}
+  [data-section="notes"] .section-icon,.preview-sent .section-icon{color:#5275a5}
+  .sec-title{flex:1;min-width:0}
+  .section-tick{margin-left:auto}
+  .sec-btn .chev{width:6px;height:6px;border-right:1.6px solid currentColor;border-top:1.6px solid currentColor;transform:rotate(45deg);font-size:0!important;margin-left:3px}
   .sec-btn .chev{font-size:13px;color:var(--muted);flex:none}
   .sec-title{display:flex;align-items:center;gap:9px}
   .section-tick{width:18px;height:18px;border:2px solid #d55b5b;border-radius:50%;display:grid;place-items:center;color:#d55b5b;font-size:11px;line-height:1;flex:none}
@@ -738,15 +748,15 @@
         <div class="builder-head">
           <h2 id="builderHeading">Edit your website</h2>
         </div>
-        <button type="button" class="sec-btn" data-section="name"><span class="sec-title"><span class="section-tick"></span>Business Info</span><span class="chev">›</span></button>
-        <button type="button" class="sec-btn" data-section="contact"><span class="sec-title"><span class="section-tick"></span>Contact Info</span><span class="chev">›</span></button>
-        <button type="button" class="sec-btn" data-section="hours"><span class="sec-title"><span class="section-tick"></span>Opening Hours</span><span class="chev">›</span></button>
-        <button type="button" class="sec-btn" data-section="address"><span class="sec-title"><span class="section-tick"></span>Location / Address</span><span class="chev">›</span></button>
-        <button type="button" class="sec-btn" data-section="prices"><span class="sec-title"><span class="section-tick"></span>Prices &amp; Timetable</span><span class="chev">›</span></button>
-        <button type="button" class="sec-btn" data-section="reviews"><span class="sec-title"><span class="section-tick"></span>Reviews</span><span class="chev">›</span></button>
-        <button type="button" class="sec-btn" data-section="media"><span class="sec-title"><span class="section-tick"></span>Media</span><span class="chev">›</span></button>
+        <button type="button" class="sec-btn" data-section="name"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="14" rx="3"/><path d="M8 7V4h8v3M9 21v-6h6v6"/></svg></span><span class="sec-title">Business Info</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
+        <button type="button" class="sec-btn" data-section="contact"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3h4l2 5-3 2a15 15 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2C10 21 3 14 3 5a2 2 0 0 1 2-2Z"/></svg></span><span class="sec-title">Contact Info</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
+        <button type="button" class="sec-btn" data-section="hours"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg></span><span class="sec-title">Opening Hours</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
+        <button type="button" class="sec-btn" data-section="address"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2"/></svg></span><span class="sec-title">Location / Address</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
+        <button type="button" class="sec-btn" data-section="prices"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 4h9l9 9-8 8-10-10Z"/><circle cx="8" cy="8" r="1"/></svg></span><span class="sec-title">Prices &amp; Timetable</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
+        <button type="button" class="sec-btn" data-section="reviews"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z"/></svg></span><span class="sec-title">Reviews</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
+        <button type="button" class="sec-btn" data-section="media"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8" cy="8" r="2"/><path d="m3 17 6-5 4 4 3-3 5 5"/></svg></span><span class="sec-title">Media</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
         <p class="builder-guidance" id="builderGuidance" hidden></p>
-        <button type="button" class="sec-btn" data-section="notes"><span class="sec-title">Notes</span><span class="chev">›</span></button>
+        <button type="button" class="sec-btn" data-section="notes"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h4"/></svg></span><span class="sec-title">Notes</span><span class="chev">›</span></button>
       </div>
 
       <!-- mobile preview card + toggle (hidden on desktop) -->
@@ -2426,7 +2436,7 @@
     if (builderList) builderList.classList.toggle('preview-sent', previewReady);
     Object.keys(complete).forEach(function(s) {
       var btn = document.querySelector('[data-section="' + s + '"]');
-      if (btn) btn.classList.toggle('is-complete', complete[s] && !previewReady);
+      if (btn) { btn.classList.toggle('is-complete', complete[s] && !previewReady); btn.setAttribute('aria-label', btn.querySelector('.sec-title').textContent + (complete[s] ? ', complete' : ', to do')); }
     });
     var added = Object.values(complete).filter(Boolean).length;
     var allDone = added >= Object.keys(complete).length;
