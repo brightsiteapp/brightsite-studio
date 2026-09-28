@@ -560,9 +560,9 @@
   .mob-pvw-browser-bar .fake-browser-dots span:nth-child(2){background:#febc2e}
   .mob-pvw-browser-bar .fake-browser-dots span:nth-child(3){background:#28c840}
   .mob-pvw-browser-url{flex:1;height:18px;background:rgba(255,255,255,.1);border-radius:4px;}
-  .mob-pvw-browser-content{display:flex;flex-direction:column;height:340px;}
+  .mob-pvw-browser-content{display:flex;flex-direction:column;height:340px;overflow:hidden;}
   .mob-pvw-browser-content .mobile-preview-card{min-height:180px;border-radius:0;}
-  .mob-pvw-browser-content iframe{flex:1;}
+  .mob-pvw-browser-content iframe{flex:none;width:1200px;height:340px;transform-origin:top left;}
   /* phone frame (mobile toggle) — hidden by default */
   .mob-pvw-phone{display:none;align-items:center;justify-content:center;background:#dddbd8;border-radius:14px;padding:16px 0 20px;}
   .mob-pvw-phone-shell{
@@ -2904,6 +2904,18 @@
 
 // preview toggle buttons — outside the mobile-only IIFE so they run on all screen sizes
 (function(){
+  // Scale the desktop browser iframe to fill its container at 1200px virtual width
+  function scaleMobBrowserFrame() {
+    var content = document.querySelector('.mob-pvw-browser-content');
+    var frame = document.getElementById('mobPreviewFrame');
+    if (!content || !frame) return;
+    var scale = content.offsetWidth / 1200;
+    frame.style.transform = 'scale(' + scale + ')';
+    frame.style.height = Math.round(340 / scale) + 'px';
+  }
+  scaleMobBrowserFrame();
+  window.addEventListener('resize', scaleMobBrowserFrame);
+
   // mobile website tab preview toggle
   var mpd = document.getElementById('mobilePvwDesktop');
   var mpm = document.getElementById('mobilePvwMobile');
