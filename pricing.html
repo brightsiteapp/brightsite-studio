@@ -78,6 +78,8 @@
   #pricing .plan li{font-size:14px}
   #pricing .pricing-note{margin-top:20px}
   #pricing .plan ul{margin-bottom:0}
+  #pricing .plan .go{margin-top:24px}
+  #pricing .annual-saving{color:var(--accent);font-weight:700}
   #pricing .plan li.addon{color:var(--accent);font-weight:700}
   @media(max-width:600px){
     #pricing .plan{padding:18px 16px}
@@ -139,7 +141,7 @@
             <span class="price-spacer"></span>
             <span class="price"><span class="setup-price">Free</span><small class="hosting-price">£17/mo hosting</small></span>
           </div>
-          <div class="price-note">Billed £204/yr — save £24 a year</div>
+          <div class="price-note">Billed £204/yr — <span class="annual-saving">save £24 a year</span></div>
           <ul>
             <li>Website built for you at no cost</li>
             <li>Hosting, security &amp; maintenance</li>
@@ -254,7 +256,7 @@
 
       if (isEssential) {
         if (hostingEl) hostingEl.textContent = isAnnual ? '£17/mo hosting' : '£19/mo hosting';
-        if (noteEl) noteEl.textContent = isAnnual ? 'Billed £204/yr — save £24 a year' : '£19/mo hosting — cancel any time';
+        if (noteEl) noteEl.innerHTML = isAnnual ? 'Billed £204/yr — <span class="annual-saving">save £24 a year</span>' : '£19/mo hosting — cancel any time';
       } else {
         if (setupEl) {
           setupEl.textContent = '£' + (isAnnual ? annualSetup : monthlySetup);
