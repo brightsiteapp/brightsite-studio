@@ -439,19 +439,20 @@
   .hours-times input{flex:1;min-width:0;min-height:36px;padding:0 10px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:12.5px;box-sizing:border-box}
   .hours-closed{flex:1;color:var(--muted);font-size:12.5px}
   .media-intro{margin:-4px 0 14px;color:var(--muted);font-size:12.5px;line-height:1.5}
-  /* Hero & Logo: wide rectangle upload areas */
-  .media-upload-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+  /* Compact, side-by-side media upload cards */
+  .media-upload-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}
   .media-upload-rect{position:relative;border-radius:14px;overflow:hidden;cursor:pointer;display:block;width:100%}
   .media-upload-rect input[type=file]{display:none}
-  .media-upload-rect-inner{aspect-ratio:16/7;background:#f3efe8;border:1.5px solid var(--line);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;transition:border-color .15s,background .15s;overflow:hidden}
-  .media-upload-rect:hover .media-upload-rect-inner{border-color:var(--accent);background:#eef3ff}
-  .media-upload-rect-inner svg{flex:none;color:var(--accent)}
-  .media-upload-label{font-size:13px;font-weight:700;color:var(--ink)}
-  .media-upload-sub{font-size:11px;color:var(--muted)}
+  .media-upload-rect-inner{min-height:108px;background:#f8fafc;border:1.5px dashed #cbd8e7;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:border-color .15s,background .15s,transform .15s;overflow:hidden}
+  .media-upload-rect:hover .media-upload-rect-inner{border-color:var(--accent);background:#f1f6ff;transform:translateY(-1px)}
+  .media-upload-rect-inner svg{flex:none;color:var(--accent);padding:6px;border-radius:10px;background:#eaf2ff}
+  .media-upload-label{font-size:12px;font-weight:800;color:var(--ink)}
+  .media-upload-sub{font-size:10px;color:var(--muted);text-align:center;padding:0 8px;line-height:1.25}
   .media-upload-rect-inner img.media-rect-thumb{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;border-radius:14px}
   .media-upload-rect-inner.has-image{padding:0}
   .media-upload-rect-inner.has-image svg,.media-upload-rect-inner.has-image .media-upload-label,.media-upload-rect-inner.has-image .media-upload-sub{display:none}
   .media-upload-rect-inner.has-image img.media-rect-thumb{display:block}
+  @media(max-width:360px){.media-upload-grid{grid-template-columns:1fr}.media-upload-rect-inner{min-height:94px}}
   /* Gallery */
   .media-gallery-card{padding:13px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
   .media-gallery-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
@@ -2638,10 +2639,27 @@
     var heroThumb = document.getElementById('heroThumb');
     var logoInner = document.getElementById('logoRectInner');
     var heroInner = document.getElementById('heroRectInner');
-    if (logoThumb) { logoThumb.src = media.logoImage || ''; }
-    if (logoInner) logoInner.classList.toggle('has-image', !!media.logoImage);
-    if (heroThumb) { heroThumb.src = media.heroImage || ''; }
-    if (heroInner) heroInner.classList.toggle('has-image', !!media.heroImage);
+    function validUrl(value) {
+      return typeof value === 'string' && value.trim() && value !== 'null' && value !== 'undefined';
+    }
+    function updateThumb(thumb, inner, value) {
+      var usable = validUrl(value);
+      if (inner) inner.classList.toggle('has-image', usable);
+      if (!thumb) return;
+      thumb.onload = null;
+      thumb.onerror = null;
+      if (!usable) {
+        thumb.removeAttribute('src');
+        return;
+      }
+      thumb.onerror = function() {
+        if (inner) inner.classList.remove('has-image');
+        thumb.removeAttribute('src');
+      };
+      thumb.src = value;
+    }
+    updateThumb(logoThumb, logoInner, media.logoImage);
+    updateThumb(heroThumb, heroInner, media.heroImage);
   }
 
   function renderGallery() {
