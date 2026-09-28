@@ -376,6 +376,9 @@
     .website-hero{padding:18px;flex-direction:column}
     .website-hero .status-pill{align-self:flex-start}
     .plan-chosen-change{margin-left:auto}
+    .sec-btn{min-height:50px;padding:10px 14px;font-size:13px}
+    .section-icon{width:28px;height:28px;border-radius:9px}
+    .section-icon svg{width:18px;height:18px}
   }
 
   .loading-screen{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:#fff;color:var(--ink)}
@@ -388,7 +391,6 @@
   @keyframes loadingSpin{to{transform:rotate(360deg)}}
 
   /* ---------------- website builder ---------------- */
-  .website-progress{margin:0 0 14px;font-size:12px;font-weight:700;color:var(--muted)}.website-progress b{color:var(--accent)}
   .builder-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
   .builder-head h2{font-family:var(--display);font-size:16px;font-weight:700;margin:0}
   .website-editor-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
@@ -747,8 +749,6 @@
   <section id="websitePanel" class="tab-content website-panel" aria-labelledby="mobileWebsiteTab">
     <div class="panel-inner">
 
-      <p class="website-progress" id="websiteProgress">Your website details: <b>0 of 7 added</b></p>
-
       <div class="website-editor-header">
         <h2 id="builderHeading">Edit your website</h2>
         <button type="button" class="builder-done" id="editorDone" data-back hidden>Done</button>
@@ -760,7 +760,7 @@
         <button type="button" class="sec-btn" data-section="contact"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3h4l2 5-3 2a15 15 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2C10 21 3 14 3 5a2 2 0 0 1 2-2Z"/></svg></span><span class="sec-title">Contact Info</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
         <button type="button" class="sec-btn" data-section="hours"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg></span><span class="sec-title">Opening Hours</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
         <button type="button" class="sec-btn" data-section="address"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2"/></svg></span><span class="sec-title">Location / Address</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
-        <button type="button" class="sec-btn" data-section="prices"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 4h9l9 9-8 8-10-10Z"/><circle cx="8" cy="8" r="1"/></svg></span><span class="sec-title">Prices &amp; Timetable</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
+        <button type="button" class="sec-btn" data-section="prices"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 4h9l9 9-8 8-10-10Z"/><circle cx="8" cy="8" r="1"/></svg></span><span class="sec-title">Services &amp; Details</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
         <button type="button" class="sec-btn" data-section="reviews"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z"/></svg></span><span class="sec-title">Reviews</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
         <button type="button" class="sec-btn" data-section="media"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8" cy="8" r="2"/><path d="m3 17 6-5 4 4 3-3 5 5"/></svg></span><span class="sec-title">Media</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
         <p class="builder-guidance" id="builderGuidance" hidden></p>
@@ -861,7 +861,7 @@
 
       <div class="builder-section" data-section-panel="prices" hidden>
         <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button></div>
-        <h3>Prices &amp; timetable</h3>
+        <h3>Services &amp; details</h3>
         <div id="svcGroups"></div>
         <button type="button" class="dash-add" id="svcGroupAdd">+ Add section</button>
         <button type="button" class="builder-done" data-back style="margin-top:14px">Done</button>
@@ -2497,18 +2497,7 @@
       var btn = document.querySelector('[data-section="' + s + '"]');
       if (btn) { btn.classList.toggle('is-complete', complete[s] && !previewReady); btn.setAttribute('aria-label', btn.querySelector('.sec-title').textContent + (complete[s] ? ', complete' : ', to do')); }
     });
-    var added = Object.values(complete).filter(Boolean).length;
-    var allDone = added >= Object.keys(complete).length;
-    var progEl = document.getElementById('websiteProgress');
-    if (progEl) {
-      if (getPreviewUrl()) {
-        progEl.textContent = isLive ? 'Your website is live.' : 'Your website preview is ready to review.';
-      } else if (allDone) {
-        progEl.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309"><span style="width:8px;height:8px;border-radius:50%;background:#b45309;display:inline-block"></span><b>All details added — we\'re designing your preview!</b></span>';
-      } else {
-        progEl.innerHTML = 'Your website details: <b>' + added + ' of ' + Object.keys(complete).length + ' added</b>';
-      }
-    }
+    var allDone = Object.values(complete).filter(Boolean).length >= Object.keys(complete).length;
     if (allDone && !_prevAllDone) {
       sendStageEmail('all_details_complete');
       sendAllDetailsReceivedMessage();
