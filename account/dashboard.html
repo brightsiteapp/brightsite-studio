@@ -391,6 +391,7 @@
   .section-tick::before{content:'!'}
   .sec-btn.is-complete .section-tick{border-color:#249b58;background:#249b58;color:#fff}
   .sec-btn.is-complete .section-tick::before{content:'✓'}
+  .preview-sent .section-tick{display:none}
   .builder-guidance{margin:14px 0 0;padding:12px 14px;border:1px solid #f0d5d5;border-radius:12px;background:#fff8f8;color:#8d4444;font-size:12.5px;line-height:1.45}
   .builder-section{animation:sectionIn .16s ease}
   @keyframes sectionIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
@@ -2377,6 +2378,8 @@
       media: !!media.logoImage || !!media.heroImage || media.gallery.length > 0 || !!pendingUploads.logo || !!pendingUploads.hero || pendingUploads.gallery.length > 0 || !!sectionDoneClicked.media
     };
     var previewReady = !!getPreviewUrl();
+    var builderList = document.getElementById('builderList');
+    if (builderList) builderList.classList.toggle('preview-sent', previewReady);
     Object.keys(complete).forEach(function(s) {
       var btn = document.querySelector('[data-section="' + s + '"]');
       if (btn) btn.classList.toggle('is-complete', complete[s] && !previewReady);
