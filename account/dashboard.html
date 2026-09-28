@@ -730,6 +730,7 @@
             <button type="button" class="mobile-pvw-btn active" id="mobilePvwDesktop">Desktop</button>
             <button type="button" class="mobile-pvw-btn" id="mobilePvwMobile">Mobile</button>
           </div>
+          <a id="mobPreviewViewBtn" href="#" target="_blank" rel="noopener" hidden style="display:none;align-items:center;gap:4px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);font:700 11px/1 Inter,sans-serif;text-decoration:none;white-space:nowrap">View ↗</a>
         </div>
         <p id="approveDesc" hidden class="preview-action-description">Take a look at the preview and let us know if you’re happy with it.</p>
         <p id="approveStatus" hidden class="preview-action-status"></p>
@@ -1424,6 +1425,12 @@
       card.style.cursor = '';
       card.onclick = null;
     });
+    var mobViewBtn = document.getElementById('mobPreviewViewBtn');
+    if (mobViewBtn) {
+      mobViewBtn.style.display = previewUrl ? 'flex' : 'none';
+      mobViewBtn.removeAttribute('hidden');
+      if (previewUrl) mobViewBtn.href = previewUrl;
+    }
     [['mobPreviewFrame', 'mobilePreviewCard'], ['mobPreviewFrameMob', 'mobilePreviewCardMob']].forEach(function(pair) {
       var frame = document.getElementById(pair[0]);
       if (!frame) return;
