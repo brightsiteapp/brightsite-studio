@@ -925,12 +925,7 @@
   <section id="msgsPanel" class="tab-content messages-panel" hidden aria-labelledby="mobileMessagesTab">
     <div class="msgs-heading-wrap"><h2>Messages</h2></div>
     <div class="msgs-list" id="msgsList">
-      <div class="msgs-empty" id="msgsEmpty">
-        <div style="text-align:center;max-width:280px">
-          <div id="msgsWelcome" style="font-size:17px;font-weight:700;color:var(--ink);margin-bottom:7px">Welcome to BrightSite!</div>
-          <div style="font-size:14px;color:var(--muted);line-height:1.55"><p>I’m Tom, and I’ll be designing your new website. When you’ve added your business details in the Website tab, I’ll get started on your first preview.</p><p>If you need a hand with anything, just drop me a message here.</p></div>
-        </div>
-      </div>
+      <div class="msgs-empty" id="msgsEmpty" aria-live="polite">Loading messages…</div>
       <div class="msgs-error" id="msgsError" hidden></div>
     </div>
 
@@ -1356,10 +1351,6 @@
 
   function showMessagesTab() {
     setActiveTab('mobileMessagesTab');
-    var bname = (business && business.data && business.data.raw && business.data.raw.name) ||
-      (business && business.name) || '';
-    var welcomeEl = document.getElementById('msgsWelcome');
-    if (welcomeEl) welcomeEl.textContent = bname ? 'Welcome to BrightSite, ' + bname + '!' : 'Welcome to BrightSite!';
     msgsInit();
   }
 
@@ -1577,9 +1568,7 @@
     else renderPlanUI();
     populateBuilderFields(raw);
     renderWebsiteStatus();
-    showWebsiteTab();
-    msgsLoad(true);
-    msgsStartPolling();
+    showMessagesTab();
   }
 
   function populateBuilderFields(raw) {
@@ -2206,7 +2195,10 @@
       .then(function(rows){
         var errEl = document.getElementById('msgsError');
         if (errEl) errEl.hidden = true;
-        if (!Array.isArray(rows) || rows.length === 0) return;
+        if (!Array.isArray(rows) || rows.length === 0) {
+          if (initial) sendWelcomeMessage();
+          return;
+        }
         if (initial) {
           document.getElementById('msgsList').innerHTML = '';
         }
@@ -2335,6 +2327,43 @@
       if (sendBtn) sendBtn.disabled = false;
       return false;
     });
+  }
+
+  var systemMessageQueue = Promise.resolve();
+
+  function businessFirstName() {
+    var raw = business && business.data && business.data.raw;
+    return (raw && (raw.name || raw.fullName)) || (business && business.name) || 'there';
+  }
+
+  function sendSystemMessageOnce(flag, body) {
+    var raw = business && business.data && business.data.raw;
+    if (!raw || raw[flag]) return Promise.resolve(false);
+    systemMessageQueue = systemMessageQueue.then(function() {
+      if (raw[flag]) return false;
+      return msgsPost(body, 'admin').then(function(sent) {
+        if (!sent) return false;
+        raw[flag] = true;
+        return saveBusiness().catch(function() { return true; });
+      });
+    });
+    return systemMessageQueue;
+  }
+
+  function sendWelcomeMessage() {
+    var name = businessFirstName();
+    return sendSystemMessageOnce(
+      'welcomeMessageSent',
+      'Welcome to BrightSite, ' + name + '! I’m Tom and I’ll be designing your new website. Add your business details in the Website tab, then I’ll get started on your first preview. If you need a hand with anything, just drop me a message here.'
+    );
+  }
+
+  function sendAllDetailsReceivedMessage() {
+    var name = businessFirstName();
+    return sendSystemMessageOnce(
+      'allDetailsMessageSent',
+      'Thanks, ' + name + ' — I’ve got everything I need now. I’m getting started on your first preview and should have it ready in the next day or two. I’ll message you here as soon as it’s ready.'
+    );
   }
 
   function msgsSend() {
@@ -2489,7 +2518,10 @@
         progEl.innerHTML = 'Your website details: <b>' + added + ' of ' + Object.keys(complete).length + ' added</b>';
       }
     }
-    if (allDone && !_prevAllDone) sendStageEmail('all_details_complete');
+    if (allDone && !_prevAllDone) {
+      sendStageEmail('all_details_complete');
+      sendAllDetailsReceivedMessage();
+    }
     _prevAllDone = allDone;
     updatePreviewCard(allDone);
   }
