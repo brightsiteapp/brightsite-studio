@@ -1917,8 +1917,9 @@
         // show the green ✓ result box
         var resultEl = document.getElementById('domainResult');
         if (resultEl) {
-          var price = raw.chosenDomainPrice || '';
-          var subline = price ? 'Selected — ' + price : 'Selected';
+          // Prices are quoted live by Cloudflare. Do not show a saved estimate
+          // while the current quote is being refreshed.
+          var subline = 'Checking live price…';
           resultEl.innerHTML = '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid #c6dfc8;border-radius:12px;background:#f2faf3">'
             + '<span style="font-size:18px">✓</span>'
             + '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14px;color:var(--ink)">' + raw.chosenDomain + '</div>'
@@ -1929,6 +1930,7 @@
         }
         if (typeof _exposeDomain === 'function') _exposeDomain();
         if (window._bsUpdateDomainAddon) window._bsUpdateDomainAddon();
+        if (window._bsRefreshDomainPrice) window._bsRefreshDomainPrice(raw.chosenDomain);
       }
       renderPlanUI();
     }
@@ -2011,12 +2013,52 @@
 
   // ---------------- domain search ----------------
   var DOMAIN_TLDS = ['.com', '.co.uk', '.net', '.org', '.io', '.co', '.uk', '.app'];
-  var DOMAIN_TLD_PRICES = { '.com': '£15/yr', '.co.uk': '£10/yr', '.uk': '£10/yr', '.net': '£15/yr', '.org': '£15/yr', '.io': '£40/yr', '.app': '£20/yr', '.co': '£15/yr' };
   var selectedTld = '.com';
   var pendingDomain = null;
   var pendingDomainPrice = null;
   var pendingDomainPence = null;
   var pendingDomainTld = null;
+
+  function liveDomainPrice(json) {
+    var pence = Number(json && json.pricePence);
+    if (!Number.isFinite(pence) || pence <= 0) return null;
+    return {
+      pence: Math.round(pence),
+      label: '£' + (pence / 100).toFixed(2) + '/yr'
+    };
+  }
+
+  function showSelectedDomain(domain, price) {
+    var resultEl = document.getElementById('domainResult');
+    if (!resultEl) return;
+    var isFree = typeof window._bsIsDomainFree === 'function' && window._bsIsDomainFree();
+    var subline = isFree
+      ? 'Selected — <span style="text-decoration:line-through;opacity:.5;margin-right:3px">' + price + '</span><span style="font-weight:700;color:#1f9d55">Free with your plan</span>'
+      : 'Selected — ' + price;
+    resultEl.innerHTML = '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid #c6dfc8;border-radius:12px;background:#f2faf3">'
+      + '<span style="font-size:18px">✓</span>'
+      + '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14px;color:var(--ink)">' + domain + '</div>'
+      + '<div style="font-size:12px;color:#1f9d55;margin-top:1px">' + subline + '</div></div>'
+      + '<button type="button" onclick="if(window._bsClearDomain)window._bsClearDomain();" style="font:inherit;font-size:12px;font-weight:600;color:var(--muted);background:none;border:0;cursor:pointer;padding:0;white-space:nowrap">Change</button>'
+      + '</div>';
+    resultEl.hidden = false;
+  }
+
+  window._bsRefreshDomainPrice = async function(domain) {
+    if (!domain || domain !== pendingDomain) return;
+    try {
+      var resp = await fetch('https://api.brightsite.app/api/check-domain?domain=' + encodeURIComponent(domain));
+      var json = await resp.json();
+      var quote = liveDomainPrice(json);
+      if (!resp.ok || !json.available || !quote || domain !== pendingDomain) return;
+      pendingDomainPrice = quote.label;
+      pendingDomainPence = quote.pence;
+      showSelectedDomain(domain, quote.label);
+      if (business && business.data && business.data.raw) saveBusiness();
+    } catch (e) {
+      // Keep the existing selection but never replace it with a made-up price.
+    }
+  };
   // expose for Stripe block (separate script scope)
   function _exposeDomain() {
     window._bsPendingDomain = pendingDomain || null;
@@ -2058,32 +2100,19 @@
     try {
       var resp = await fetch('https://api.brightsite.app/api/check-domain?domain=' + encodeURIComponent(fullDomain));
       var json = await resp.json();
-      // fall back to hardcoded pence if CF didn't return a price
-      var DOMAIN_TLD_PENCE_FALLBACK = {'.com':800,'.co.uk':500,'.uk':500,'.net':800,'.org':800,'.io':3200,'.app':1200,'.co':800};
-      var price = json.priceLabel || (DOMAIN_TLD_PRICES[selectedTld] || '£?/yr');
-      var pricePence = json.pricePence || DOMAIN_TLD_PENCE_FALLBACK[selectedTld] || 800;
-      if (json.available) {
+      var quote = liveDomainPrice(json);
+      if (resp.ok && json.available && quote) {
         pendingDomain = fullDomain;
-        pendingDomainPrice = price;
-        pendingDomainPence = pricePence;
+        pendingDomainPrice = quote.label;
+        pendingDomainPence = quote.pence;
         pendingDomainTld = selectedTld;
-        function renderDomainResult() {
-          var isFree = typeof window._bsIsDomainFree === 'function' && window._bsIsDomainFree();
-          var subline = isFree
-            ? 'Selected — <span style="text-decoration:line-through;opacity:.5;margin-right:3px">' + price + '</span><span style="font-weight:700;color:#1f9d55">Free with your plan</span>'
-            : 'Selected — ' + price;
-          resultEl.innerHTML = '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid #c6dfc8;border-radius:12px;background:#f2faf3">'
-            + '<span style="font-size:18px">✓</span>'
-            + '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14px;color:var(--ink)">' + fullDomain + '</div>'
-            + '<div style="font-size:12px;color:#1f9d55;margin-top:1px">' + subline + '</div></div>'
-            + '<button type="button" onclick="if(window._bsClearDomain)window._bsClearDomain();" style="font:inherit;font-size:12px;font-weight:600;color:var(--muted);background:none;border:0;cursor:pointer;padding:0;white-space:nowrap">Change</button>'
-            + '</div>';
-        }
-        renderDomainResult();
+        showSelectedDomain(fullDomain, quote.label);
         _exposeDomain();
         if (window._bsUpdateDomainAddon) window._bsUpdateDomainAddon();
         // Persist domain to Supabase immediately so it survives refresh
         if (business && business.data && business.data.raw) saveBusiness();
+      } else if (resp.ok && json.available) {
+        resultEl.innerHTML = '<p style="margin:0;font-size:13px;color:var(--muted)">We couldn\'t get the live registration price. Please try again.</p>';
       } else {
         pendingDomain = null; pendingDomainPrice = null; pendingDomainPence = null; pendingDomainTld = null;
         _exposeDomain();
