@@ -6,11 +6,11 @@ import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator, Animated, Dimensions, Easing, Image, ImageBackground, Keyboard, LayoutAnimation, PanResponder,
-  Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View,
+  Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View,
 } from 'react-native';
 import { supabase } from './lib/supabase';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const CARD_TOP = Platform.OS === 'ios' ? 54 : 28;
 const CARD_BOTTOM = 72;
 const CARD_TRAVEL = SCREEN_HEIGHT - 190;
@@ -19,7 +19,7 @@ const BRAND = '#E2E8EB';
 const DOMAIN_TLDS = ['.com', '.co.uk', '.net', '.org', '.io', '.co', '.uk', '.app'];
 const DOMAIN_API = 'https://api.brightsite.app/api/check-domain';
 // A deep, softened sheet rather than a conventional outlined app panel.
-const CARD = 'rgba(54,59,65,.55)';
+const CARD = 'rgba(37,42,47,.20)';
 
 type Step = { id: string; title: string; icon: keyof typeof Ionicons.glyphMap };
 const steps: Step[] = [
@@ -147,6 +147,27 @@ function Tutorial({ close }: any) {
   </BlurView>;
 }
 
+function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, template, onEdit }: any) {
+  const siteUrl = data.website?.trim() || `https://${domain}${suffix}`;
+  return <LinearGradient colors={['#FFF9EF', '#F8F0E4', '#EFE4D5']} style={{ flex: 1 }}>
+    <StatusBar style="dark" />
+    <View style={s.dashboardScreen}>
+      <View style={s.dashboardBrandRow}><Text style={s.dashboardBrand}>BRIGHTSITE</Text><Text style={s.dashboardLive}>● LIVE</Text></View>
+      <View style={s.dashboardTabsTop}>{['Account', 'Website', 'Messages'].map(name => <Pressable key={name} onPress={() => setTab(name)} style={[s.dashboardTab, tab === name && s.dashboardTabOn]}><Text style={[s.dashboardTabText, tab === name && s.dashboardTabTextOn]}>{name}</Text></Pressable>)}</View>
+      <ScrollView contentContainerStyle={s.dashboardContent} showsVerticalScrollIndicator={false}>
+        {tab === 'Account' && <><Text style={s.dashboardTitle}>Your account</Text><Text style={s.dashboardIntro}>Everything for {data.businessName || 'your business'} in one place.</Text>
+          <View style={s.dashboardInfoCard}><Text style={s.dashboardCardLabel}>YOUR PLAN</Text><Text style={s.dashboardCardTitle}>Free website plan</Text><Text style={s.dashboardCardText}>£19/month hosting</Text></View>
+          <View style={s.dashboardInfoCard}><Text style={s.dashboardCardLabel}>YOUR DOMAIN</Text><Text style={s.dashboardCardTitle}>{domain}{suffix}</Text><Text style={s.dashboardCardText}>Connected to your website</Text></View>
+          <View style={s.dashboardInfoCard}><Text style={s.dashboardCardLabel}>ACCOUNT EMAIL</Text><Text style={s.dashboardCardTitle}>{data.email || data.contactEmail || 'Add an email address'}</Text></View></>}
+        {tab === 'Website' && <><View style={s.dashboardWebsiteHead}><View><Text style={s.dashboardLive}>● LIVE</Text><Text style={s.dashboardTitle}>Your website</Text></View><Pressable onPress={onEdit} style={s.dashboardEdit}><Ionicons name="create-outline" size={15} color="#fff" /><Text style={s.dashboardEditText}>Edit</Text></Pressable></View>
+          <Text style={s.dashboardIntro}>Tap your homepage to open it, or edit its design and content.</Text>
+          <Pressable onPress={() => void Linking.openURL(siteUrl)} style={s.phoneFrame}><View pointerEvents="none" style={s.phoneScale}><SitePreview palette={palette} font={font} template={template} editing={false} /></View></Pressable></>}
+        {tab === 'Messages' && <><Text style={s.dashboardTitle}>Messages</Text><View style={s.messageBubble}><Text style={s.messageSender}>Tom · BrightSite</Text><Text style={s.messageText}>Welcome to BrightSite, {data.businessName || 'there'}! I’m Tom. Your website is live, and you can message me here whenever you need a hand.</Text></View><View style={s.messageInput}><Text style={s.messagePlaceholder}>Message BrightSite…</Text><Ionicons name="arrow-up-circle" size={24} color="#2878FF" /></View></>}
+      </ScrollView>
+    </View>
+  </LinearGradient>;
+}
+
 export default function App() {
   const [index, setIndex] = useState(0);
   const [authMode, setAuthMode] = useState<'signup' | 'login'>('signup');
@@ -176,12 +197,14 @@ export default function App() {
   const [domainQuote, setDomainQuote] = useState<{ domain: string; priceLabel: string } | null>(null);
   const [domainError, setDomainError] = useState('');
   const [annual, setAnnual] = useState(false);
+  const [paymentComplete, setPaymentComplete] = useState(false);
   const [contactForm, setContactForm] = useState(true);
   const [tab, setTab] = useState('Website');
   const [data, setData] = useState({ email: '', password: '', businessName: 'Sisko Hairdressing', category: 'Hair & Beauty', fullName: '', contactEmail: '', phone: '', website: '', instagram: '', facebook: '', address: '', services: 'Cut & finish', price: '£45', reviews: '', reviewLink: '' });
   const [showFullName, setShowFullName] = useState(false);
   const [hours, setHours] = useState(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((label, i) => ({ label, start: '9:00', end: i === 3 ? '19:00' : '17:30', enabled: i < 6 })));
   const [services, setServices] = useState([{ section: 'Cutting & styling', name: 'Cut & finish', duration: '45 mins', price: '£45' }]);
+  const [reviewsList, setReviewsList] = useState([{ title: '', description: '', name: '' }]);
   const motion = useRef(new Animated.Value(0)).current;
   const templateMotion = useRef(new Animated.Value(0)).current;
   const loadingProgress = useRef(new Animated.Value(0)).current;
@@ -414,12 +437,28 @@ export default function App() {
       case 'hours': return <><View style={s.hoursIntro}><Intro>Switch off days you’re closed. Times can be changed later.</Intro></View><Hours rows={hours} setRows={setHours} /></>;
       case 'prices': return <><Intro>Add your sections and services. Anything left blank will stay off your website.</Intro><Services items={services} setItems={setServices} /></>;
       case 'media': return <><Intro>Add the images you want to use. Everything here is optional and can be changed later.</Intro><View style={s.uploadGrid}>
-        <Upload icon="add" title="Logo" subtitle={media.logo ? 'Tap to change' : 'PNG or JPG'} value={media.logo} onChange={(logo: string) => setMedia(current => ({ ...current, logo }))} />
-        <Upload icon="add" title="Hero image" subtitle={media.hero ? 'Tap to change' : 'Your main photo'} value={media.hero} onChange={(hero: string) => setMedia(current => ({ ...current, hero }))} /></View>
-        <Upload icon="images-outline" title="Gallery" subtitle={media.gallery.length ? `${media.gallery.length} selected` : 'Add up to 20 photos'} value={media.gallery} multiple onChange={(gallery: string[]) => setMedia(current => ({ ...current, gallery }))} /></>;
-      case 'reviews': return <><Intro>Add a customer review for your website. This is optional, so you can leave it blank and swipe on.</Intro>
-        <Field label="Customer review (optional)" value={data.reviews} onChangeText={(v: string) => setData({ ...data, reviews: v })} multiline />
-        <Field label="Review page link (optional)" value={data.reviewLink} onChangeText={(v: string) => setData({ ...data, reviewLink: v })} placeholder="https://…" /></>;
+        <Upload icon="image-outline" title="Logo" subtitle={media.logo ? 'Tap to change' : 'PNG or JPG'} value={media.logo} onChange={(logo: string) => setMedia(current => ({ ...current, logo }))} fill />
+        <Upload icon="add" title="Hero image" subtitle={media.hero ? 'Tap to change' : 'Your main photo'} value={media.hero} onChange={(hero: string) => setMedia(current => ({ ...current, hero }))} fill /></View>
+        <Text style={s.fieldLabel}>Gallery</Text>
+        <View style={s.galleryGrid}>
+          {media.gallery.map((uri, i) => <View key={i} style={s.galleryItem}><Image source={{ uri }} style={s.galleryThumb} /></View>)}
+          {media.gallery.length < 20 && <Pressable style={s.galleryAdd} onPress={async () => {
+            const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (!permission.granted) return;
+            const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, quality: .82 });
+            if (!result.canceled) setMedia(current => ({ ...current, gallery: [...current.gallery, ...result.assets.map(a => a.uri)].slice(0, 20) }));
+          }}><Ionicons name="add" size={26} color="rgba(218,232,244,.5)" /></Pressable>}
+        </View></>;
+      case 'reviews': return <><Intro>Add customer reviews for your website. Each is optional — leave blank and swipe on, or add more below.</Intro>
+        {reviewsList.map((review, i) => <View key={i} style={s.reviewCard}>
+          <Field label="Review title (optional)" value={review.title} onChangeText={(v: string) => setReviewsList(reviewsList.map((r, n) => n === i ? { ...r, title: v } : r))} placeholder="e.g. Amazing service" />
+          <Field label="Review (optional)" value={review.description} onChangeText={(v: string) => setReviewsList(reviewsList.map((r, n) => n === i ? { ...r, description: v } : r))} multiline />
+          <Field label="Customer name (optional)" value={review.name} onChangeText={(v: string) => setReviewsList(reviewsList.map((r, n) => n === i ? { ...r, name: v } : r))} placeholder="e.g. Jane Smith" />
+        </View>)}
+        <Pressable onPress={() => setReviewsList([...reviewsList, { title: '', description: '', name: '' }])} style={s.addReviewBtn}>
+          <Ionicons name="add" size={16} color={BRAND} /><Text style={s.addReviewText}>Add another review</Text>
+        </Pressable>
+        <Pressable onPress={() => setContactForm(!contactForm)} style={[s.formChoice, contactForm && s.formChoiceOn]}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color={contactForm ? '#fff' : BRAND} /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: '#324254', true: BRAND }} thumbColor="#F7FCFF" /></Pressable></>;
       case 'design': return <View style={s.design}>
         <Animated.View pointerEvents={designReady ? 'auto' : 'none'} style={[s.designPreview, { opacity: designReveal }]}><Animated.View style={{ transform: [{ translateX: templateMotion }] }}><SitePreview palette={palette} font={font} template={template} editing={editing} /></Animated.View>
           <View style={s.templateDots}><View style={[s.templateDot, template === 0 && s.templateDotOn]} /><View style={[s.templateDot, template === 1 && s.templateDotOn]} /></View>
@@ -451,13 +490,10 @@ export default function App() {
           {!!domainError && <Text style={s.domainError}>{domainError}</Text>}
           {domainReady && domainQuote && <Animated.View style={s.domainResult}><Ionicons name="checkmark-circle" size={24} color={BRAND} /><View style={{ flex: 1 }}><Text style={s.domainName}>{domainQuote.domain}</Text><Text style={s.domainPrice}>Available — {domainQuote.priceLabel}</Text></View></Animated.View>}</>;
       }
-      case 'form': return <><Intro>Add a simple contact form so customers can send you a message directly from your new website.</Intro>
-        <Pressable onPress={() => setContactForm(!contactForm)} style={[s.formChoice, contactForm && s.formChoiceOn]}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color={contactForm ? '#fff' : BRAND} /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: '#324254', true: BRAND }} thumbColor="#F7FCFF" /></Pressable>
-        <Text style={s.formNote}>You can change this later at any time.</Text></>;
-      case 'plan': return <><Intro>Your website is free. You only pay for hosting.</Intro>
+      case 'plan': return paymentComplete ? <View style={s.paymentSuccess}><Ionicons name="checkmark-circle" size={48} color="#79D7A2" /><Text style={s.paymentSuccessTitle}>Your website is ready</Text><Text style={s.paymentSuccessText}>Payment is complete. Swipe up to open your BrightSite dashboard.</Text></View> : <><Intro>Your website is free. You only pay for hosting.</Intro>
         <Pressable onPress={() => setAnnual(false)} style={[s.plan, !annual && s.planOn]}><View><Text style={s.planName}>Monthly</Text><Text style={s.planNote}>Cancel any time</Text></View><Text style={s.planPrice}>£19<Text style={s.planSmall}>/month</Text></Text></Pressable>
         <Pressable onPress={() => setAnnual(true)} style={[s.plan, annual && s.planOn]}><View><Text style={s.save}>SAVE £24</Text><Text style={s.planName}>Annual</Text><Text style={s.planNote}>Billed £204 yearly</Text></View><Text style={s.planPrice}>£17<Text style={s.planSmall}>/month</Text></Text></Pressable>
-        <View style={s.secure}><Ionicons name="lock-closed" size={18} color={BRAND} /><Text style={s.secureText}>Secure payment opens after this step</Text></View></>;
+        <Pressable onPress={() => setPaymentComplete(true)} style={s.payButton}><Ionicons name="lock-closed" size={16} color="#1B2226" /><Text style={s.payButtonText}>Continue to secure payment</Text></Pressable></>;
       case 'dashboard': return <><View style={s.dashHead}><View><Text style={s.live}>PUBLISHING</Text><Text style={s.dashTitle}>Your website is nearly live</Text></View>
         <Pressable style={s.editPill}><Ionicons name="create-outline" size={16} color="#DFF8FF" /><Text style={s.editPillText}>Edit</Text></Pressable></View>
         <View style={s.browser}><View style={s.browserBar}><View style={s.browserDot} /><View style={s.browserDot} /><View style={s.browserDot} /></View>
@@ -468,6 +504,7 @@ export default function App() {
 
   if (index === 0) return <LinearGradient colors={['#FFF9EF', '#F8F0E4', '#EFE4D5']} style={{ flex: 1 }}>
     <StatusBar style="dark" />
+    <Image source={require('./assets/background.webp')} style={[StyleSheet.absoluteFill, { opacity: 0.12 }]} resizeMode="cover" />
     <View style={s.loginStage}>
       <View style={[s.card, s.loginCard]}>
         <BlurView intensity={42} tint="dark" style={StyleSheet.absoluteFill} />
@@ -479,8 +516,16 @@ export default function App() {
     </View>
   </LinearGradient>;
 
+  if (index === steps.length - 1) return <DashboardHome tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} template={template} onEdit={() => {
+    const designIndex = steps.findIndex(item => item.id === 'design');
+    setIndex(designIndex);
+    motion.setValue(designIndex * CARD_TRAVEL);
+  }} />;
+
   return <LinearGradient colors={['#FFF9EF', '#F8F0E4', '#EFE4D5']} style={{ flex: 1 }}>
-    <StatusBar style="dark" /><View style={{ flex: 1 }}>
+    <StatusBar style="dark" />
+    <Image source={require('./assets/background.webp')} style={[StyleSheet.absoluteFill, { opacity: 0.12 }]} resizeMode="cover" />
+    <View style={{ flex: 1 }}>
       <View style={s.stage}>
         {steps.filter((deckStep, deckIndex) => deckStep.id !== 'login' && Math.abs(deckIndex - index) <= 2).map((deckStep) => {
           const deckIndex = steps.findIndex(stepItem => stepItem.id === deckStep.id);
@@ -508,8 +553,13 @@ export default function App() {
       </View>
       <View style={s.rail} {...railPan.panHandlers}>{setupStepIndexes.map((actual) => {
         const item = steps[actual], active = actual === index, done = complete.has(actual);
+        const dotScale = motion.interpolate({
+          inputRange: [Math.max(0, actual - 1) * CARD_TRAVEL, actual * CARD_TRAVEL, (actual + 1) * CARD_TRAVEL],
+          outputRange: [1, 1.75, 1],
+          extrapolate: 'clamp',
+        });
         return <View key={item.id} style={s.railButton}>
-          <View style={[s.railDot, done && s.railDotOn]} />
+          <Animated.View style={[s.railDot, done && s.railDotOn, { transform: [{ scale: dotScale }] }]} />
           {active && <View style={s.railActive}><Ionicons name={item.icon} size={15} color="#fff" /></View>}
         </View>;
       })}</View>
@@ -555,7 +605,7 @@ const s = StyleSheet.create({
   continue: { marginTop: 24, gap: 16 }, skip: { fontFamily: FONT, fontSize: 12, color: 'rgba(219,235,245,.5)', textAlign: 'center' }, loginSwipe: { marginTop: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 }, designSwipe: { paddingVertical: 22, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 }, swipeHint: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: 'rgba(235,243,247,.76)', textAlign: 'center' },
   fixedPrompt: { position: 'absolute', left: 18, right: 18, bottom: 14, zIndex: 120, elevation: 120, alignItems: 'center', gap: 7 }, swipeRow: { minHeight: 31, paddingHorizontal: 13, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(25,29,33,.72)' }, validationText: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: '#FFD1D1', textAlign: 'center', paddingHorizontal: 12 },
   serviceRow: { flexDirection: 'row', gap: 7, marginTop: 5 }, serviceInput: { height: 48, borderRadius: 14, paddingHorizontal: 10, fontFamily: FONT, fontSize: 12, color: '#F7FCFF', backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(255,255,255,.30)', outlineWidth: 0 }, serviceActions: { flexDirection: 'row', gap: 8 }, addService: { flex: 1, marginTop: 13, height: 42, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(226,232,235,.42)', backgroundColor: 'rgba(255,255,255,.08)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, addServiceText: { fontFamily: FONT, fontWeight: '800', fontSize: 12, color: '#F2F6F8' },
-  loading: { position: 'absolute', inset: 0, minHeight: SCREEN_HEIGHT * .65, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 44 }, loadingWordmark: { flexDirection: 'row', position: 'relative', marginBottom: 26 }, loadingBrand: { fontFamily: FONT, letterSpacing: 1.6, fontWeight: '900', fontSize: 17, color: '#F7FCFF' }, loadingBrandDot: { position: 'absolute', width: 5, height: 5, borderRadius: 3, backgroundColor: BRAND, right: 32, top: -1 },
+  loading: { position: 'absolute', inset: 0, minHeight: SCREEN_HEIGHT * .65, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 44 }, loadingWordmark: { flexDirection: 'row', position: 'relative', marginBottom: 26 }, loadingBrand: { fontFamily: FONT, letterSpacing: 1.6, fontWeight: '900', fontSize: 17, color: '#F7FCFF' }, loadingBrandDot: { position: 'absolute', width: 5, height: 5, borderRadius: 3, backgroundColor: '#4B9BFF', right: 32, top: -1 },
   loadingTitle: { fontFamily: FONT, fontSize: 25, lineHeight: 31, fontWeight: '800', color: '#F5FBFE', textAlign: 'center' }, loadingText: { fontFamily: FONT, fontSize: 13, lineHeight: 19, color: 'rgba(221,237,246,.58)', textAlign: 'center', marginTop: 10 }, loadingSteps: { alignSelf: 'stretch', gap: 10, marginTop: 27 }, loadingStep: { flexDirection: 'row', alignItems: 'center', gap: 9, opacity: .36 }, loadingStepOn: { opacity: 1 }, loadingStepText: { fontFamily: FONT, fontSize: 12, color: 'rgba(222,238,247,.6)' }, loadingStepTextOn: { color: '#EAF9FE', fontWeight: '700' },
   track: { width: '100%', height: 5, borderRadius: 5, backgroundColor: 'rgba(255,255,255,.1)', marginTop: 28, overflow: 'hidden' }, fill: { height: 5, backgroundColor: BRAND, borderRadius: 5 },
   design: { minHeight: SCREEN_HEIGHT * .76, position: 'relative' }, designPreview: { minHeight: SCREEN_HEIGHT * .76 }, site: { overflow: 'hidden', minHeight: SCREEN_HEIGHT * .76 }, previewBrowser: { height: 29, paddingHorizontal: 11, backgroundColor: 'rgba(8,15,20,.9)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }, previewDots: { position: 'absolute', left: 11, flexDirection: 'row', gap: 4 }, previewDot: { width: 6, height: 6, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.35)' }, previewAddress: { fontFamily: FONT, fontSize: 8, color: 'rgba(255,255,255,.54)' }, siteHero: { height: SCREEN_HEIGHT * .49, padding: 20, justifyContent: 'space-between' },
@@ -591,4 +641,11 @@ const s = StyleSheet.create({
   nextPeekTap: { paddingHorizontal: 22, paddingTop: 48, flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   nextLabel: { fontFamily: FONT, fontSize: 8, fontWeight: '900', color: BRAND, marginTop: 5 }, nextTitle: { flex: 1, fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#EFF9FC' },
   rail: { position: 'absolute', left: 8, top: '25%', bottom: '25%', justifyContent: 'space-between', alignItems: 'center', zIndex: 140, elevation: 140 }, railHidden: { opacity: 0 }, railButton: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }, railNear: { width: 18, height: 18, borderRadius: 9 }, railFar: { width: 18, height: 18, borderRadius: 9 }, railDone: {}, railActive: { position: 'absolute', width: 27, height: 27, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#111315', borderWidth: 1, borderColor: 'rgba(255,255,255,.82)', shadowColor: '#000', shadowOpacity: .34, shadowRadius: 8, elevation: 8 }, railDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#15191D', borderWidth: 1, borderColor: 'rgba(0,0,0,.32)', shadowColor: '#000', shadowOpacity: .2, shadowRadius: 2 }, railDotOn: { backgroundColor: '#79D7A2', borderColor: '#A9F0C6', shadowColor: '#52BD81', shadowOpacity: .45, shadowRadius: 5 },
+  reviewCard: { marginBottom: 8, paddingBottom: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(255,255,255,.12)' },
+  addReviewBtn: { height: 44, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(226,232,235,.42)', backgroundColor: 'rgba(255,255,255,.08)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 18 },
+  addReviewText: { fontFamily: FONT, fontWeight: '800', fontSize: 12, color: '#F2F6F8' },
+  galleryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8, marginBottom: 12 },
+  galleryItem: { width: (SCREEN_WIDTH - 96) / 2, height: (SCREEN_WIDTH - 96) / 2, borderRadius: 14, overflow: 'hidden' },
+  galleryThumb: { width: '100%', height: '100%' },
+  galleryAdd: { width: (SCREEN_WIDTH - 96) / 2, height: (SCREEN_WIDTH - 96) / 2, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', alignItems: 'center', justifyContent: 'center' },
 });
