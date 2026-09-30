@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "BrightSite",
+    "slug": "brightsite",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/brightsite-icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "app.brightsite.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/brightsite-icon.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "app.brightsite.mobile"
+    },
+    "web": {
+      "favicon": "./assets/brightsite-icon.png"
+    },
+    "plugins": [
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow BrightSite to use the photos you choose for your website."
+        }
+      ]
+    ]
+  }
+}
