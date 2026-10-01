@@ -94,7 +94,7 @@ function Services({ items, setItems }: any) {
   </View>;
 }
 
-function Upload({ icon, title, subtitle, value, onChange, multiple = false, fill = false }: any) {
+function Upload({ icon, title, subtitle, value, onChange, multiple = false, fill = false, h = 160 }: any) {
   const chooseImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) return;
@@ -102,8 +102,8 @@ function Upload({ icon, title, subtitle, value, onChange, multiple = false, fill
     if (!result.canceled) onChange(multiple ? result.assets.map(asset => asset.uri) : result.assets[0]?.uri);
   };
   const preview = Array.isArray(value) ? value[0] : value;
-  return <Pressable onPress={chooseImage} style={({ pressed }) => [s.upload, fill && s.uploadFill, pressed && s.pressed]}>
-    {preview ? <Image source={{ uri: preview }} style={fill ? s.uploadPreviewFill : s.uploadPreview} /> : <><View style={s.uploadIcon}><Ionicons name={icon} size={22} color={BRAND} /></View><Text style={s.uploadTitle}>{title}</Text><Text style={s.uploadSub}>{subtitle}</Text></>}
+  return <Pressable onPress={chooseImage} style={({ pressed }) => [s.upload, fill && { padding: 0, height: h }, pressed && s.pressed]}>
+    {preview ? <Image source={{ uri: preview }} style={fill ? s.uploadPreviewFill : s.uploadPreview} resizeMode="cover" /> : <><View style={s.uploadIcon}><Ionicons name={icon} size={22} color={BRAND} /></View><Text style={s.uploadTitle}>{title}</Text><Text style={s.uploadSub}>{subtitle}</Text></>}
   </Pressable>;
 }
 
@@ -468,9 +468,11 @@ export default function App() {
         <Field label="Facebook (optional)" value={data.facebook} onChangeText={(v: string) => setData({ ...data, facebook: v })} placeholder="facebook.com/yourbusiness" /></>;
       case 'hours': return <><View style={s.hoursIntro}><Intro>Switch off days you’re closed. Times can be changed later.</Intro></View><Hours rows={hours} setRows={setHours} /></>;
       case 'prices': return <><Intro>Add your sections and services. Anything left blank will stay off your website.</Intro><Services items={services} setItems={setServices} /></>;
-      case 'media': return <><Intro>Add the images you want to use. Everything here is optional and can be changed later.</Intro><View style={s.uploadGrid}>
-        <Upload icon="image-outline" title="Logo" subtitle={media.logo ? 'Tap to change' : 'PNG or JPG'} value={media.logo} onChange={(logo: string) => setMedia(current => ({ ...current, logo }))} fill />
-        <Upload icon="add" title="Hero image" subtitle={media.hero ? 'Tap to change' : 'Your main photo'} value={media.hero} onChange={(hero: string) => setMedia(current => ({ ...current, hero }))} fill /></View>
+      case 'media': return <><Intro>Add the images you want to use. Everything here is optional and can be changed later.</Intro>
+        <Text style={s.fieldLabel}>Logo</Text>
+        <Upload icon="image-outline" title="Logo" subtitle={media.logo ? 'Tap to change' : 'PNG or JPG'} value={media.logo} onChange={(logo: string) => setMedia(current => ({ ...current, logo }))} fill h={130} />
+        <Text style={[s.fieldLabel, { marginTop: 14 }]}>Hero image</Text>
+        <Upload icon="add" title="Hero image" subtitle={media.hero ? 'Tap to change' : 'Your main photo'} value={media.hero} onChange={(hero: string) => setMedia(current => ({ ...current, hero }))} fill h={200} />
         <Text style={s.fieldLabel}>Gallery</Text>
         <View style={s.galleryGrid}>
           {media.gallery.map((uri, i) => <View key={i} style={s.galleryItem}><Image source={{ uri }} style={s.galleryThumb} /></View>)}
@@ -634,8 +636,8 @@ const s = StyleSheet.create({
   rowsCard: { borderRadius: 20, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,.055)', borderWidth: 1, borderColor: 'rgba(255,255,255,.1)' }, hoursContent: { padding: 0 }, hoursIntro: { paddingHorizontal: 24, paddingTop: 24 }, hoursCard: { minHeight: SCREEN_HEIGHT * .57, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,.045)', borderTopWidth: 1, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,.18)' },
   hoursRow: { flex: 1, minHeight: 58, paddingHorizontal: 17, flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(255,255,255,.14)' }, hoursRowLast: { borderBottomWidth: 0 }, hoursDay: { width: 43, fontFamily: FONT, fontSize: 14, fontWeight: '700', color: '#ECF6FA' }, hoursTimes: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, timeInput: { width: 63, height: 34, borderRadius: 10, paddingHorizontal: 8, backgroundColor: 'transparent', color: '#F7FCFF', fontFamily: FONT, fontSize: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', outlineWidth: 0 }, timeInputOff: { width: 63, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)' }, timeOffText: { fontFamily: FONT, color: 'rgba(235,243,247,.30)', fontSize: 13 }, timeDash: { fontFamily: FONT, fontSize: 13, color: 'rgba(220,236,245,.58)' }, hoursSwitch: { width: 52, alignItems: 'flex-end' }, closedText: { flex: 1, fontFamily: FONT, fontSize: 12, color: 'rgba(220,236,245,.48)' },
   toggleLabel: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: '#ECF6FA' }, toggleValue: { fontFamily: FONT, fontSize: 12, color: 'rgba(219,235,245,.55)', marginTop: 2 },
-  inline: { flexDirection: 'row', gap: 10 }, uploadGrid: { flexDirection: 'row', gap: 12, marginBottom: 12 },
-  upload: { flex: 1, minHeight: 130, alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.055)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)', overflow: 'hidden' }, uploadFill: { height: 188, padding: 0, flex: 0 },
+  inline: { flexDirection: 'row', gap: 10 },
+  upload: { alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.055)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)', overflow: 'hidden', marginBottom: 4 },
   uploadPreview: { width: 52, height: 52, borderRadius: 15, marginBottom: 9 }, uploadPreviewFill: { width: '100%', height: '100%' },
   uploadIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(34,188,231,.12)', marginBottom: 10 },
   uploadTitle: { fontFamily: FONT, fontWeight: '800', fontSize: 14, color: '#F0F8FC' }, uploadSub: { fontFamily: FONT, fontSize: 11, color: 'rgba(222,238,247,.5)', marginTop: 3 },
