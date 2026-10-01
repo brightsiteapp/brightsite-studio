@@ -417,7 +417,7 @@ export default function App() {
   const pan = useMemo(() => PanResponder.create({
     // Keep the card still while the keyboard is up so the inner ScrollView can
     // bring a focused field above it.
-    onMoveShouldSetPanResponder: (_, g) => !keyboardVisible && (Math.abs(g.dy) > 16 || step.id === 'design' && Math.abs(g.dx) > 16),
+    onMoveShouldSetPanResponder: (_, g) => !keyboardVisible && (Math.abs(g.dy) > 16 && !(step.id === 'design' && tool) || step.id === 'design' && Math.abs(g.dx) > 16),
     onPanResponderGrant: revealRail,
     onPanResponderMove: (_, g) => {
       if (step.id === 'design' && Math.abs(g.dx) > Math.abs(g.dy)) templateMotion.setValue(g.dx);
@@ -433,7 +433,7 @@ export default function App() {
       hideRailSoon();
     },
     onPanResponderTerminate: () => Animated.spring(motion, { toValue: index * CARD_TRAVEL, damping: 20, stiffness: 210, useNativeDriver: true }).start(() => setDeckDirection(0)),
-  }), [index, step.id, data, hours, services, domainReady, designReady, keyboardVisible]);
+  }), [index, step.id, data, hours, services, domainReady, designReady, keyboardVisible, tool]);
 
   const railPan = useMemo(() => PanResponder.create({
     onStartShouldSetPanResponder: () => true, onMoveShouldSetPanResponder: () => true, onPanResponderGrant: revealRail,
@@ -516,8 +516,13 @@ export default function App() {
           finally { setDomainChecking(false); }
         };
         return <><Intro>Find the right home for your website. The live registration price comes straight from the registry before payment.</Intro><View style={s.domainSearch}>
-          <TextInput style={s.domainInput} value={domain} onChangeText={(value) => { setDomain(value); clearDomainQuote(); }} autoCapitalize="none" /><Pressable onPress={() => setShowSuffixes(!showSuffixes)} style={s.suffixButton}><Text style={s.domainSuffix}>{suffix}</Text><Ionicons name="chevron-down" size={14} color="#C7E4F0" /></Pressable></View>
-          {showSuffixes && <View style={s.suffixes}>{DOMAIN_TLDS.map(item => <Pressable key={item} onPress={() => { setSuffix(item); setShowSuffixes(false); clearDomainQuote(); }} style={[s.suffixOption, suffix === item && s.suffixOptionOn]}><Text style={s.suffixOptionText}>{item}</Text></Pressable>)}</View>}
+          <TextInput style={s.domainInput} value={domain} onChangeText={(value) => { setDomain(value); clearDomainQuote(); }} autoCapitalize="none" /><View style={{ position: 'relative' }}><Pressable onPress={() => setShowSuffixes(!showSuffixes)} style={s.suffixButton}><Text style={s.domainSuffix}>{suffix}</Text><Ionicons name={showSuffixes ? 'chevron-up' : 'chevron-down'} size={14} color="#C7E4F0" /></Pressable>
+          {showSuffixes && <View style={s.suffixDropdown}>
+            {DOMAIN_TLDS.map((item, i) => <Pressable key={item} onPress={() => { setSuffix(item); setShowSuffixes(false); clearDomainQuote(); }} style={[s.suffixDropdownItem, i < DOMAIN_TLDS.length - 1 && s.suffixDropdownDivider, suffix === item && s.suffixDropdownItemOn]}>
+              <Text style={s.suffixDropdownText}>{item}</Text>
+              {suffix === item && <Ionicons name="checkmark" size={14} color={BRAND} />}
+            </Pressable>)}
+          </View>}</View></View>
           <Pressable disabled={domainChecking} onPress={checkDomain} style={[s.check, domainChecking && s.checkDisabled]}><Text style={s.checkText}>{domainChecking ? 'Checking live price…' : 'Check availability'}</Text></Pressable>
           {!!domainError && <Text style={s.domainError}>{domainError}</Text>}
           {domainReady && domainQuote && <Animated.View style={s.domainResult}><Ionicons name="checkmark-circle" size={24} color={BRAND} /><View style={{ flex: 1 }}><Text style={s.domainName}>{domainQuote.domain}</Text><Text style={s.domainPrice}>Available — {domainQuote.priceLabel}</Text></View></Animated.View>}</>;
@@ -531,7 +536,7 @@ export default function App() {
         <Pressable style={s.editPill}><Ionicons name="create-outline" size={16} color="#DFF8FF" /><Text style={s.editPillText}>Edit</Text></Pressable></View>
         <View style={s.browser}><View style={s.browserBar}><View style={s.browserDot} /><View style={s.browserDot} /><View style={s.browserDot} /></View>
         <Image source={require('./assets/sisko-preview.webp')} resizeMode="cover" style={s.dashImage} /><View style={s.publishOverlay}><View style={s.spinner} /><Text style={s.publishText}>Publishing your website…</Text></View></View>
-        <View style={s.tabs}>{['Account', 'Website', 'Messages'].map(x => <Pressable key={x} onPress={() => setTab(x)} style={[s.tab, tab === x && s.tabOn]}><Text style={[s.tabText, tab === x && s.tabTextOn]}>{x}</Text></Pressable>)}</View></>;
+        </>;
     }
   };
 
@@ -656,7 +661,7 @@ const s = StyleSheet.create({
   toolTitle: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#28495B', textAlign: 'center', marginBottom: 9 }, option: { minHeight: 39, borderRadius: 16, paddingHorizontal: 9, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' },
   dot: { width: 20, height: 20, borderRadius: 10 }, selected: { borderColor: BRAND, backgroundColor: 'rgba(34,188,231,.12)' }, fontOption: { paddingVertical: 10, borderRadius: 14, marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' }, fontOptionText: { fontFamily: FONT, fontSize: 11, fontWeight: '700', textAlign: 'center', color: '#345568' },
   sectionOption: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(66,104,125,.18)' }, sectionText: { flex: 1, fontFamily: FONT, fontSize: 10, color: '#345568' },
-  domainSearch: { flexDirection: 'row', alignItems: 'center', borderRadius: 18, backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(255,255,255,.32)' }, domainInput: { flex: 1, minHeight: 54, paddingHorizontal: 16, fontFamily: FONT, fontSize: 16, color: '#fff', outlineWidth: 0 }, suffixButton: { height: 54, paddingLeft: 8, paddingRight: 13, flexDirection: 'row', alignItems: 'center', gap: 3 }, domainSuffix: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: '#E5EBEE' }, suffixes: { flexDirection: 'row', gap: 6, marginTop: 9 }, suffixOption: { paddingVertical: 8, paddingHorizontal: 10, borderRadius: 12, backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(255,255,255,.25)' }, suffixOptionOn: { borderColor: '#FFFFFF', backgroundColor: 'rgba(255,255,255,.16)' }, suffixOptionText: { fontFamily: FONT, fontSize: 11, fontWeight: '800', color: '#F0F5F7' },
+  domainSearch: { flexDirection: 'row', alignItems: 'center', borderRadius: 18, backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(255,255,255,.32)' }, domainInput: { flex: 1, minHeight: 54, paddingHorizontal: 16, fontFamily: FONT, fontSize: 16, color: '#fff', outlineWidth: 0 }, suffixButton: { height: 54, paddingLeft: 8, paddingRight: 13, flexDirection: 'row', alignItems: 'center', gap: 3 }, domainSuffix: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: '#E5EBEE' }, suffixDropdown: { position: 'absolute', top: 58, right: 0, zIndex: 99, minWidth: 120, backgroundColor: '#1A2128', borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,.14)', shadowColor: '#000', shadowOpacity: .4, shadowRadius: 12, elevation: 10, overflow: 'hidden' }, suffixDropdownItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13, paddingHorizontal: 16 }, suffixDropdownDivider: { borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.08)' }, suffixDropdownItemOn: { backgroundColor: 'rgba(75,155,255,.12)' }, suffixDropdownText: { fontFamily: FONT, fontSize: 15, fontWeight: '600', color: '#E5EBEE' },
   check: { marginTop: 12, paddingVertical: 15, borderRadius: 17, alignItems: 'center', backgroundColor: 'rgba(34,188,231,.15)', borderWidth: 1, borderColor: 'rgba(34,188,231,.35)' }, checkText: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#DDF8FF' },
   checkDisabled: { opacity: .58 }, domainError: { marginTop: 10, fontFamily: FONT, fontSize: 12, lineHeight: 17, color: '#FFB6B6' }, domainResult: { marginTop: 14, padding: 15, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: 'rgba(34,188,231,.09)', borderWidth: 1, borderColor: 'rgba(34,188,231,.3)' }, domainName: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#F0FBFF' }, domainPrice: { fontFamily: FONT, fontSize: 11, color: '#76D8F2', marginTop: 2 },
   formChoice: { padding: 17, borderRadius: 23, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: 'rgba(255,255,255,.055)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)' }, formChoiceOn: { borderColor: BRAND, backgroundColor: 'rgba(34,188,231,.1)' }, formChoiceIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(34,188,231,.14)' }, formChoiceTitle: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#F3FAFD' }, formChoiceText: { fontFamily: FONT, fontSize: 11, color: 'rgba(220,236,245,.58)', marginTop: 3, lineHeight: 16 }, formNote: { fontFamily: FONT, fontSize: 12, color: 'rgba(220,236,245,.52)', textAlign: 'center', marginTop: 18 },
