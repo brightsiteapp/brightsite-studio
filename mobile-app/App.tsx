@@ -19,7 +19,7 @@ const BRAND = '#E2E8EB';
 const DOMAIN_TLDS = ['.com', '.co.uk', '.net', '.org', '.io', '.co', '.uk', '.app'];
 const DOMAIN_API = 'https://api.brightsite.app/api/check-domain';
 // A deep, softened sheet rather than a conventional outlined app panel.
-const CARD = 'rgba(22,30,40,.82)';
+const CARD = 'rgba(195,202,210,.88)';
 
 type Step = { id: string; title: string; icon: keyof typeof Ionicons.glyphMap };
 const steps: Step[] = [
