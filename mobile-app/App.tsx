@@ -161,9 +161,20 @@ function Tutorial({ close }: any) {
 }
 
 function FlowBackdrop({ children }: any) {
-  return <LinearGradient colors={['#061759', '#1236A3', '#F8FAFF']} locations={[0, .54, 1]} style={{ flex: 1 }}>
-    <LinearGradient pointerEvents="none" colors={['rgba(255,255,255,.76)', 'rgba(255,255,255,0)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.backdropGlowTop} />
-    <LinearGradient pointerEvents="none" colors={['rgba(255,255,255,.58)', 'rgba(255,255,255,0)']} start={{ x: 1, y: 1 }} end={{ x: 0, y: 0 }} style={s.backdropGlowBottom} />
+  const drift = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const animation = Animated.loop(Animated.sequence([
+      Animated.timing(drift, { toValue: 1, duration: 11500, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      Animated.timing(drift, { toValue: 0, duration: 11500, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+    ]));
+    animation.start();
+    return () => animation.stop();
+  }, [drift]);
+  const topMove = { transform: [{ translateX: drift.interpolate({ inputRange: [0, 1], outputRange: [-34, 38] }) }, { translateY: drift.interpolate({ inputRange: [0, 1], outputRange: [-18, 26] }) }] };
+  const bottomMove = { transform: [{ translateX: drift.interpolate({ inputRange: [0, 1], outputRange: [28, -36] }) }, { translateY: drift.interpolate({ inputRange: [0, 1], outputRange: [24, -18] }) }] };
+  return <LinearGradient colors={['#04091E', '#0A1E59', '#061340']} locations={[0, .54, 1]} style={{ flex: 1 }}>
+    <Animated.View pointerEvents="none" style={[s.backdropGlowTop, topMove]}><LinearGradient colors={['rgba(255,255,255,.24)', 'rgba(255,255,255,0)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} /></Animated.View>
+    <Animated.View pointerEvents="none" style={[s.backdropGlowBottom, bottomMove]}><LinearGradient colors={['rgba(255,255,255,.16)', 'rgba(255,255,255,0)']} start={{ x: 1, y: 1 }} end={{ x: 0, y: 0 }} style={StyleSheet.absoluteFill} /></Animated.View>
     {children}
   </LinearGradient>;
 }
@@ -588,7 +599,7 @@ export default function App() {
 }
 
 const s = StyleSheet.create({
-  backdropGlowTop: { position: 'absolute', width: '88%', height: '42%', top: '-9%', left: '-18%', borderRadius: 400, opacity: .86 }, backdropGlowBottom: { position: 'absolute', width: '94%', height: '46%', bottom: '-12%', right: '-24%', borderRadius: 440, opacity: .74 },
+  backdropGlowTop: { position: 'absolute', width: '88%', height: '42%', top: '-9%', left: '-18%', borderRadius: 400, opacity: .86, overflow: 'hidden' }, backdropGlowBottom: { position: 'absolute', width: '94%', height: '46%', bottom: '-12%', right: '-24%', borderRadius: 440, opacity: .74, overflow: 'hidden' },
   stage: { flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28, paddingBottom: 72, paddingHorizontal: 18 },
   loginStage: { flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28, paddingBottom: 20, paddingHorizontal: 18 }, loginCard: { flex: 1 },
   loginHeader: { minHeight: 78, paddingLeft: 26, paddingRight: 18, paddingTop: 15, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, loginAppIcon: { width: 48, height: 48, borderRadius: 15, shadowColor: '#1C69E8', shadowOpacity: .28, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } },
