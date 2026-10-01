@@ -173,7 +173,7 @@ function FlowBackdrop({ children }: any) {
   const topMove = { transform: [{ translateX: drift.interpolate({ inputRange: [0, 1], outputRange: [-34, 38] }) }, { translateY: drift.interpolate({ inputRange: [0, 1], outputRange: [-18, 26] }) }] };
   const bottomMove = { transform: [{ translateX: drift.interpolate({ inputRange: [0, 1], outputRange: [28, -36] }) }, { translateY: drift.interpolate({ inputRange: [0, 1], outputRange: [24, -18] }) }] };
   return <LinearGradient colors={['#04091E', '#0A1E59', '#061340']} locations={[0, .54, 1]} style={{ flex: 1 }}>
-    <Image source={require('./assets/background.webp')} style={[StyleSheet.absoluteFill, { opacity: 0.10 }]} resizeMode="cover" />
+    <Image source={require('./assets/background.webp')} style={[StyleSheet.absoluteFill, { opacity: 0.22 }]} resizeMode="contain" />
     <Animated.View pointerEvents="none" style={[s.backdropGlowTop, topMove]}><LinearGradient colors={['rgba(255,255,255,.24)', 'rgba(255,255,255,0)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} /></Animated.View>
     <Animated.View pointerEvents="none" style={[s.backdropGlowBottom, bottomMove]}><LinearGradient colors={['rgba(255,255,255,.16)', 'rgba(255,255,255,0)']} start={{ x: 1, y: 1 }} end={{ x: 0, y: 0 }} style={StyleSheet.absoluteFill} /></Animated.View>
     {children}
