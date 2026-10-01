@@ -19,7 +19,7 @@ const BRAND = '#E2E8EB';
 const DOMAIN_TLDS = ['.com', '.co.uk', '.net', '.org', '.io', '.co', '.uk', '.app'];
 const DOMAIN_API = 'https://api.brightsite.app/api/check-domain';
 // A deep, softened sheet rather than a conventional outlined app panel.
-const CARD = 'rgba(37,42,47,.20)';
+const CARD = 'rgba(255,255,255,.07)';
 
 type Step = { id: string; title: string; icon: keyof typeof Ionicons.glyphMap };
 const steps: Step[] = [
@@ -606,8 +606,8 @@ const s = StyleSheet.create({
   stage: { flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28, paddingBottom: 72, paddingHorizontal: 18 },
   loginStage: { flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28, paddingBottom: 20, paddingHorizontal: 18 }, loginCard: { flex: 1 },
   loginHeader: { minHeight: 78, paddingLeft: 26, paddingRight: 18, paddingTop: 15, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, loginAppIcon: { width: 48, height: 48, borderRadius: 15, shadowColor: '#1C69E8', shadowOpacity: .28, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } },
-  previousPeek: { position: 'absolute', top: -34, left: 34, right: 34, height: 98, borderRadius: 30, backgroundColor: 'rgba(8,18,28,.35)', shadowColor: '#18364A', shadowOpacity: .16, shadowRadius: 24, shadowOffset: { width: 0, height: 12 } },
-  previousCard: { position: 'absolute', zIndex: 1, top: -(SCREEN_HEIGHT - 216), left: 34, right: 34, height: SCREEN_HEIGHT - 126, borderRadius: 26, backgroundColor: 'rgba(8,18,28,.54)', shadowColor: '#020A10', shadowOpacity: .34, shadowRadius: 28, shadowOffset: { width: 0, height: 16 }, overflow: 'hidden' },
+  previousPeek: { position: 'absolute', top: -34, left: 34, right: 34, height: 98, borderRadius: 30, backgroundColor: 'rgba(255,255,255,.05)', shadowColor: '#000', shadowOpacity: .16, shadowRadius: 24, shadowOffset: { width: 0, height: 12 } },
+  previousCard: { position: 'absolute', zIndex: 1, top: -(SCREEN_HEIGHT - 216), left: 34, right: 34, height: SCREEN_HEIGHT - 126, borderRadius: 26, backgroundColor: 'rgba(255,255,255,.06)', shadowColor: '#000', shadowOpacity: .34, shadowRadius: 28, shadowOffset: { width: 0, height: 16 }, overflow: 'hidden' },
   card: { flex: 1, zIndex: 2, borderRadius: 30, backgroundColor: CARD, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.20)', shadowColor: '#000', shadowOpacity: .62, shadowRadius: 31, shadowOffset: { width: 0, height: 18 }, elevation: 18 },
   deckCard: { position: 'absolute', top: CARD_TOP, bottom: CARD_BOTTOM, left: 18, right: 18 },
   deckCardActive: { shadowColor: '#01070B', shadowOpacity: .7, shadowRadius: 38, shadowOffset: { width: 0, height: 22 }, elevation: 26 }, deckCardBehind: { shadowOpacity: .3, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 4 },
