@@ -180,7 +180,7 @@ function SectionDragList({ sections, setSections, sectionVisible, onToggle }: an
     // Animated.event links gesture.dy directly to itemDys[name] — moves immediately, no re-render needed
     onPanResponderMove: Animated.event([null, { dy: itemDys[name] }], {
       useNativeDriver: false,
-      listener: (_: any, g: any) => {
+      listener: ((_: any, g: any) => {
         const fromIdx = currentIdxRef.current[name];
         const secs = sectionsRef.current;
         const newHover = Math.max(0, Math.min(secs.length - 1, fromIdx + Math.round(g.dy / ITEM_H)));
@@ -194,7 +194,7 @@ function SectionDragList({ sections, setSections, sectionVisible, onToggle }: an
             Animated.spring(itemDys[sName], { toValue: target, useNativeDriver: false, damping: 20, stiffness: 220 }).start();
           });
         }
-      },
+      }) as any,
     }),
     onPanResponderRelease: (_, g) => {
       const secs = sectionsRef.current;
