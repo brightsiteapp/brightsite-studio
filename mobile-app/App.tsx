@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Animated, Dimensions, Easing, Image, ImageBackground, Keyboard, LayoutAnimation, PanResponder,
+  ActivityIndicator, Animated, Dimensions, Easing, Image, ImageBackground, Keyboard, LayoutAnimation, Modal, PanResponder,
   Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View,
 } from 'react-native';
 import { supabase } from './lib/supabase';
@@ -41,9 +41,13 @@ const paletteGroups = [
   { name: 'Dark', options: [['#D6A56B', '#15110E', '#F3EADF'], ['#78BDCF', '#0C2028', '#E7F8FC'], ['#B2C798', '#142016', '#F2F6ED'], ['#CE8471', '#261412', '#FAEDEA'], ['#A19BDB', '#171529', '#F2F1FF'], ['#D7B179', '#211A11', '#FBF1DF']] },
   { name: 'Neon', options: [['#E8FF38', '#10140D', '#F4F8E8'], ['#5BEEFF', '#091A20', '#E8FCFF'], ['#FE77BF', '#21101D', '#FFEAF7'], ['#A8FF75', '#10200C', '#EFFFE7'], ['#FF8E4F', '#24140B', '#FFF0E7'], ['#A990FF', '#171126', '#F5F0FF']] },
   { name: 'Monotone', options: [['#B8B8B8', '#F1F1F1', '#1B1B1B'], ['#B9AFA6', '#F3F0ED', '#27221E'], ['#9EADB2', '#EFF2F3', '#1A2428'], ['#A9B19C', '#F1F3EE', '#20241C'], ['#B0A4A2', '#F4EFEE', '#29201F'], ['#9EA4AE', '#F0F2F5', '#1B2029']] },
+  { name: 'Blush', options: [['#C4768A', '#FDF0F3', '#2A1419'], ['#D4879B', '#FEF5F7', '#311920'], ['#E29BB0', '#FFF0F5', '#301528'], ['#B87190', '#F9EEF3', '#281122'], ['#CF9FAF', '#FDF4F7', '#2E1821'], ['#A6637E', '#F6EBF0', '#241018']] },
+  { name: 'Earthy', options: [['#B5704E', '#F7F0E8', '#2C1A0F'], ['#A8835E', '#F5EDE0', '#281609'], ['#9C8B6E', '#F4EDDE', '#241A0D'], ['#B99060', '#F8F1E4', '#2E1C0C'], ['#8E7A5E', '#F2EBD8', '#201508'], ['#C08262', '#F9EFE5', '#321B0D']] },
+  { name: 'Jewel', options: [['#5B8DB8', '#EEF5FB', '#0D2035'], ['#7B6FAE', '#F2F0FA', '#1A1230'], ['#3D8E6C', '#EBF6F1', '#0C2A1E'], ['#B85C5C', '#FBF0F0', '#300F0F'], ['#8A6B2E', '#F9F4E8', '#2A1E08'], ['#4E8B8B', '#EBF6F6', '#0D2828']] },
 ];
 const palettes = paletteGroups.flatMap(group => group.options);
-const fonts = ['Editorial', 'Rounded', 'Modern'];
+const fonts = ['Editorial', 'Rounded', 'Modern', 'Thin', 'Classic'];
+const SITE_SECTIONS = ['Hero', 'About', 'Services', 'Reviews', 'Gallery', 'Contact'];
 
 function Field({ label, value, onChangeText, placeholder, keyboardType = 'default', multiline = false, ...inputProps }: any) {
   return <View style={s.fieldWrap}>
@@ -107,27 +111,86 @@ function Upload({ icon, title, subtitle, value, onChange, multiple = false, fill
   </Pressable>;
 }
 
-function SitePreview({ palette, font, template, editing }: any) {
+function SitePreview({ palette, font, template, editing, siteTexts = {}, onEditText }: any) {
   const colors = palettes[palette];
+  const [accent, bg, textColor] = colors;
   const hero = template === 0 ? require('./assets/hair-beauty-hero.jpg') : require('./assets/sisko-preview.webp');
-  return <View style={[s.site, { backgroundColor: colors[1] }]}>
+
+  const titleFamily = font === 0 ? Platform.select({ ios: 'Didot', android: 'serif', default: 'serif' }) : FONT;
+  const fw: any = font === 1 ? '800' : font === 2 ? '300' : font === 3 ? '200' : font === 4 ? '900' : undefined;
+  const fo: any = { fontFamily: FONT, ...(fw && { fontWeight: fw }), ...(font === 2 && { letterSpacing: 1.2 }), ...(font === 3 && { letterSpacing: 1.8 }), ...(font === 4 && { letterSpacing: -0.5 }) };
+  const tf: any = { ...fo, fontFamily: titleFamily };
+
+  const tx = (key: string, fallback: string) => (siteTexts as any)[key] || fallback;
+  const ep = (key: string) => editing ? () => onEditText?.(key) : undefined;
+
+  return <View style={[s.site, { backgroundColor: bg }]}>
     <View style={s.previewBrowser}><View style={s.previewDots}><View style={s.previewDot} /><View style={s.previewDot} /><View style={s.previewDot} /></View><Text style={s.previewAddress}>siskohair.co.uk</Text></View>
     <ImageBackground source={hero} style={s.siteHero}>
       <LinearGradient colors={['rgba(5,7,9,.08)', 'rgba(5,7,9,.84)']} style={StyleSheet.absoluteFill} />
-      <View style={s.siteTop}><Text style={s.siteKicker}>SISKO</Text><View style={s.siteNav}><Text style={s.siteNavText}>HOME</Text><Text style={s.siteNavText}>SERVICES</Text><Text style={s.siteNavText}>CONTACT</Text><Ionicons name="menu" size={18} color="#fff" /></View></View>
-      <View style={s.siteCopy}><Text style={[s.siteHeadline, font === 1 && s.rounded, font === 2 && s.modern, editing && s.editing]}>Beautiful hair, beautifully yours.</Text>
-        <Text style={[s.siteBody, editing && s.editing]}>Thoughtful cuts, colour and styling in a calm modern salon.</Text>
-        <View style={[s.siteCta, { borderColor: colors[0] }]}><Text style={s.siteCtaText}>BOOK AN APPOINTMENT</Text></View></View>
+      <View style={s.siteTop}>
+        <Text style={[s.siteKicker, fo, editing ? s.editing : null]} onPress={ep('brand')}>SISKO</Text>
+        <View style={s.siteNav}><Text style={[s.siteNavText, fo]}>SERVICES</Text><Text style={[s.siteNavText, fo]}>CONTACT</Text><Ionicons name="menu" size={18} color="#fff" /></View>
+      </View>
+      <View style={s.siteCopy}>
+        <Text style={[s.siteHeadline, tf, editing ? s.editing : null]} onPress={ep('headline')}>{tx('headline', 'Beautiful hair, beautifully yours.')}</Text>
+        <Text style={[s.siteBody, fo, editing ? s.editing : null]} onPress={ep('heroBody')}>{tx('heroBody', 'Thoughtful cuts, colour and styling in a calm modern salon.')}</Text>
+        <View style={[s.siteCta, { borderColor: accent }]}><Text style={[s.siteCtaText, fo]}>BOOK NOW</Text></View>
+      </View>
     </ImageBackground>
-    <View style={s.siteSection}><Text style={[s.siteSectionTitle, { color: colors[2] }, editing && s.editing]}>Hair that feels like you</Text>
-      <Text style={[s.siteSectionBody, { color: colors[2] }, editing && s.editing]}>Personal service, honest advice and a finish made for real life.</Text>
-      <View style={s.swatches}>{colors.map(c => <View key={c} style={[s.swatch, { backgroundColor: c }]} />)}</View></View>
+    <View style={s.siteSection}>
+      <Text style={[s.siteSectionTitle, tf, { color: textColor }, editing ? s.editing : null]} onPress={ep('aboutTitle')}>{tx('aboutTitle', 'Hair that feels like you')}</Text>
+      <Text style={[s.siteSectionBody, fo, { color: textColor }, editing ? s.editing : null]} onPress={ep('aboutBody')}>{tx('aboutBody', 'Personal service, honest advice and a finish made for real life.')}</Text>
+    </View>
+    <View style={[s.siteServicesRow, { borderTopColor: accent + '33', borderBottomColor: accent + '22' }]}>
+      {['Cuts & Styling', 'Colour', 'Treatments'].map(name => <View key={name} style={[s.siteServiceCard, { borderColor: accent + '55' }]}>
+        <Text style={[s.siteServiceName, fo, { color: accent }]}>{name}</Text>
+        <Text style={[s.siteServiceLink, fo, { color: textColor }]}>View →</Text>
+      </View>)}
+    </View>
+    <View style={[s.siteReviewsSection, { backgroundColor: accent + '14' }]}>
+      <Text style={[s.siteReviewsSectionTitle, tf, { color: textColor }]}>Client reviews</Text>
+      <View style={s.siteStars}>{[0,1,2,3,4].map(i => <Ionicons key={i} name="star" size={7} color={accent} />)}</View>
+      <Text style={[s.siteReviewText, fo, { color: textColor }]}>"Amazing results every time."</Text>
+      <Text style={[s.siteReviewAuthor, fo, { color: textColor }]}>— Sarah M.</Text>
+    </View>
+    <View style={s.siteGallerySection}>
+      <View style={s.swatches}>{colors.map(c => <View key={c} style={[s.swatch, { backgroundColor: c }]} />)}</View>
+    </View>
   </View>;
 }
 
-function DesignTools({ active, setActive, palette, setPalette, font, setFont, editing, setEditing }: any) {
+function DragRow({ name, index, total, onMove, onToggle, visible }: any) {
+  const dy = useRef(new Animated.Value(0)).current;
+  const pan = useMemo(() => PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 3,
+    onPanResponderMove: Animated.event([null, { dy }], { useNativeDriver: false }),
+    onPanResponderRelease: (_, g) => {
+      const ITEM_H = 34;
+      const offset = Math.round(g.dy / ITEM_H);
+      if (offset !== 0) onMove(index, Math.max(0, Math.min(total - 1, index + offset)));
+      Animated.spring(dy, { toValue: 0, useNativeDriver: false }).start();
+    },
+    onPanResponderTerminate: () => Animated.spring(dy, { toValue: 0, useNativeDriver: false }).start(),
+  }), [index, total]);
+  return <Animated.View style={[s.sectionOption, { transform: [{ translateY: dy }] }]}>
+    <Animated.View {...pan.panHandlers}><Ionicons name="reorder-three" size={18} color="#436172" /></Animated.View>
+    <Text style={s.sectionText}>{name}</Text>
+    <Pressable onPress={() => onToggle(index)}><Ionicons name={visible ? 'eye-outline' : 'eye-off-outline'} size={17} color={visible ? '#436172' : 'rgba(67,97,114,.3)'} /></Pressable>
+  </Animated.View>;
+}
+
+function DesignTools({ active, setActive, palette, setPalette, font, setFont, editing, setEditing, sections, setSections }: any) {
   const items = [{ id: 'colour', icon: 'color-palette-outline' }, { id: 'font', icon: 'text-outline' }, { id: 'edit', icon: 'create-outline' }];
   const [paletteSection, setPaletteSection] = useState(0);
+  const [sectionVisible, setSectionVisible] = useState<Record<string, boolean>>({});
+  const handleMove = (from: number, to: number) => {
+    const next = [...sections]; const [item] = next.splice(from, 1); next.splice(to, 0, item); setSections(next);
+  };
+  const handleToggle = (idx: number) => {
+    const name = sections[idx]; setSectionVisible((v: any) => ({ ...v, [name]: v[name] === false ? true : false }));
+  };
   return <View style={s.tools}>
     <View style={s.toolStack}>{items.map(item => {
       const open = active === item.id;
@@ -146,8 +209,7 @@ function DesignTools({ active, setActive, palette, setPalette, font, setFont, ed
       <Text style={s.toolTitle}>{active === 'colour' ? 'Colour' : active === 'font' ? 'Font' : 'Edit site'}</Text>
       {active === 'colour' && <View style={s.paletteWrap}><Text style={s.paletteHeadingText}>{paletteGroups[paletteSection].name}</Text><ScrollView style={s.paletteScroll} onScroll={event => { const next = Math.min(paletteGroups.length - 1, Math.floor(event.nativeEvent.contentOffset.y / 286)); if (next !== paletteSection) { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setPaletteSection(next); } }} scrollEventThrottle={16}>{paletteGroups.map((group, groupIndex) => <View key={group.name} style={s.paletteGroup}>{group.options.map((colors, i) => { const paletteIndex = paletteGroups.slice(0, groupIndex).reduce((total, section) => total + section.options.length, 0) + i; return <Pressable key={colors.join()} onPress={() => setPalette(paletteIndex)} style={[s.option, palette === paletteIndex && s.selected]}>{colors.map(c => <View key={c} style={[s.dot, { backgroundColor: c }]} />)}</Pressable>; })}</View>)}</ScrollView></View>}
       {active === 'font' && fonts.map((name, i) => <Pressable key={name} onPress={() => setFont(i)} style={[s.fontOption, font === i && s.selected]}><Text style={s.fontOptionText}>{name}</Text></Pressable>)}
-      {active === 'edit' && ['Hero', 'About', 'Services', 'Gallery'].map(name => <View key={name} style={s.sectionOption}>
-        <Ionicons name="reorder-three" size={18} color="#436172" /><Text style={s.sectionText}>{name}</Text><Ionicons name="eye-outline" size={17} color="#436172" /></View>)}
+      {active === 'edit' && sections.map((name: string, i: number) => <DragRow key={name} name={name} index={i} total={sections.length} onMove={handleMove} onToggle={handleToggle} visible={sectionVisible[name] !== false} />)}
     </BlurView>}
   </View>;
 }
@@ -160,11 +222,25 @@ function Tutorial({ close }: any) {
   </BlurView>;
 }
 
+function TextEditModal({ visible, value, label, onSave, onClose }: any) {
+  const [draft, setDraft] = useState(value || '');
+  useEffect(() => setDraft(value || ''), [value, visible]);
+  return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <View style={s.modalOverlay}>
+      <View style={s.modalBox}>
+        <Text style={s.modalLabel}>{label}</Text>
+        <TextInput style={s.modalInput} value={draft} onChangeText={setDraft} multiline autoFocus placeholderTextColor="rgba(0,0,0,.35)" />
+        <View style={s.modalButtons}>
+          <Pressable onPress={onClose} style={[s.modalButton, s.modalButtonCancel]}><Text style={s.modalButtonText}>Cancel</Text></Pressable>
+          <Pressable onPress={() => { onSave(draft); onClose(); }} style={[s.modalButton, s.modalButtonSave]}><Text style={[s.modalButtonText, { color: '#fff' }]}>Save</Text></Pressable>
+        </View>
+      </View>
+    </View>
+  </Modal>;
+}
+
 function FlowBackdrop({ children }: any) {
-  return <View style={{ flex: 1, backgroundColor: '#060C1A' }}>
-    <Image source={require('./assets/background.webp')} style={{ position: 'absolute', top: 0, left: 0, width: SCREEN_WIDTH, height: SCREEN_HEIGHT, opacity: 0.55 }} resizeMode="cover" />
-    {children}
-  </View>;
+  return <View style={{ flex: 1, backgroundColor: '#fff' }}>{children}</View>;
 }
 
 function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, template, onEdit }: any) {
@@ -220,6 +296,9 @@ export default function App() {
   const [paymentComplete, setPaymentComplete] = useState(false);
   const [contactForm, setContactForm] = useState(true);
   const [tab, setTab] = useState('Website');
+  const [siteTexts, setSiteTexts] = useState<Record<string, string>>({});
+  const [editingText, setEditingText] = useState<{ key: string; label: string } | null>(null);
+  const [sections, setSections] = useState([...SITE_SECTIONS]);
   const [data, setData] = useState({ email: '', password: '', businessName: 'Sisko Hairdressing', category: 'Hair & Beauty', fullName: '', contactEmail: '', phone: '', website: '', instagram: '', facebook: '', address: '', services: 'Cut & finish', price: '£45', reviews: '', reviewLink: '' });
   const [showFullName, setShowFullName] = useState(false);
   const [hours, setHours] = useState(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((label, i) => ({ label, start: '9:00', end: i === 3 ? '19:00' : '17:30', enabled: i < 6 })));
@@ -488,7 +567,8 @@ export default function App() {
         </Pressable>
         <Pressable onPress={() => setContactForm(!contactForm)} style={[s.formChoice, contactForm && s.formChoiceOn]}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color={contactForm ? '#fff' : BRAND} /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: '#324254', true: BRAND }} thumbColor="#F7FCFF" /></Pressable></>;
       case 'design': return <View style={s.design}>
-        <Animated.View pointerEvents={designReady ? 'auto' : 'none'} style={[s.designPreview, { opacity: designReveal }]}><Animated.View style={{ transform: [{ translateX: templateMotion }] }}><SitePreview palette={palette} font={font} template={template} editing={editing} /></Animated.View>
+        <TextEditModal visible={!!editingText} value={editingText ? (siteTexts[editingText.key] ?? { headline: 'Beautiful hair, beautifully yours.', heroBody: 'Thoughtful cuts, colour and styling in a calm modern salon.', aboutTitle: 'Hair that feels like you', aboutBody: 'Personal service, honest advice and a finish made for real life.' }[editingText.key as keyof object] ?? '') : ''} label={editingText?.label || ''} onSave={(v: string) => setSiteTexts(t => ({ ...t, [editingText!.key]: v }))} onClose={() => setEditingText(null)} />
+        <Animated.View pointerEvents={designReady ? 'auto' : 'none'} style={[s.designPreview, { opacity: designReveal }]}><Animated.View style={{ transform: [{ translateX: templateMotion }] }}><SitePreview palette={palette} font={font} template={template} editing={editing} siteTexts={siteTexts} onEditText={(key: string) => { const labels: Record<string,string> = { headline: 'Hero headline', heroBody: 'Hero subtext', aboutTitle: 'About title', aboutBody: 'About description', brand: 'Brand name' }; setEditingText({ key, label: labels[key] || key }); }} /></Animated.View>
           <View style={s.templateDots}><View style={[s.templateDot, template === 0 && s.templateDotOn]} /><View style={[s.templateDot, template === 1 && s.templateDotOn]} /></View>
           {tutorial && designReady && <Tutorial close={() => setTutorial(false)} />}</Animated.View>
         <Animated.View pointerEvents="none" style={[s.loading, { opacity: designReveal.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }]}><View style={s.loadingWordmark}><Text style={s.loadingBrand}>BRIGHTSITE</Text><View style={s.loadingBrandDot} /></View>
@@ -571,7 +651,7 @@ export default function App() {
           const cardScale = cardPosition.interpolate({ inputRange: [-CARD_TRAVEL, 0, CARD_TRAVEL], outputRange: [.93, 1, .93], extrapolate: 'clamp' });
           return <Animated.View key={deckStep.id} pointerEvents={isActive ? 'auto' : 'none'} {...(isActive ? pan.panHandlers : {})} style={[s.card, s.deckCard, isActive ? s.deckCardActive : s.deckCardBehind, { zIndex: isIncoming ? 22 : isActive ? 21 : 20 - Math.abs(distance), transform: [{ translateY: travelPosition }, { scale: cardScale }] }]}>
             <BlurView intensity={42} tint="dark" style={StyleSheet.absoluteFill} />
-            <View style={[s.cardHeader, deckStep.id === 'design' && s.designCardHeader]}><Text style={s.cardTitle}>{deckStep.title}</Text>{deckStep.id === 'design' && designReady ? <DesignTools active={tool} setActive={setTool} palette={palette} setPalette={setPalette} font={font} setFont={setFont} editing={editing} setEditing={setEditing} /> : deckIndex > 0 && deckStep.id !== 'dashboard' && <Text style={s.count}>{deckIndex}/10</Text>}</View>
+            <View style={[s.cardHeader, deckStep.id === 'design' && s.designCardHeader]}><Text style={s.cardTitle}>{deckStep.title}</Text>{deckStep.id === 'design' && designReady ? <DesignTools active={tool} setActive={setTool} palette={palette} setPalette={setPalette} font={font} setFont={setFont} editing={editing} setEditing={setEditing} sections={sections} setSections={setSections} /> : deckIndex > 0 && deckStep.id !== 'dashboard' && <Text style={s.count}>{deckIndex}/10</Text>}</View>
             <ScrollView style={s.cardScroll} contentContainerStyle={[s.content, deckStep.id === 'login' && s.loginContent, deckStep.id === 'design' && { padding: 0 }, deckStep.id === 'hours' && s.hoursContent]}
               scrollEnabled={deckStep.id !== 'hours' || keyboardVisible}
               keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
@@ -644,19 +724,38 @@ const s = StyleSheet.create({
   loading: { position: 'absolute', inset: 0, minHeight: SCREEN_HEIGHT * .65, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 44 }, loadingWordmark: { flexDirection: 'row', position: 'relative', marginBottom: 26 }, loadingBrand: { fontFamily: FONT, letterSpacing: 1.6, fontWeight: '900', fontSize: 17, color: '#F7FCFF' }, loadingBrandDot: { position: 'absolute', width: 5, height: 5, borderRadius: 3, backgroundColor: '#4B9BFF', right: 32, top: -1 },
   loadingTitle: { fontFamily: FONT, fontSize: 25, lineHeight: 31, fontWeight: '800', color: '#F5FBFE', textAlign: 'center' }, loadingText: { fontFamily: FONT, fontSize: 13, lineHeight: 19, color: 'rgba(221,237,246,.58)', textAlign: 'center', marginTop: 10 }, loadingSteps: { alignSelf: 'stretch', gap: 10, marginTop: 27 }, loadingStep: { flexDirection: 'row', alignItems: 'center', gap: 9, opacity: .36 }, loadingStepOn: { opacity: 1 }, loadingStepText: { fontFamily: FONT, fontSize: 12, color: 'rgba(222,238,247,.6)' }, loadingStepTextOn: { color: '#EAF9FE', fontWeight: '700' },
   track: { width: '100%', height: 5, borderRadius: 5, backgroundColor: 'rgba(255,255,255,.1)', marginTop: 28, overflow: 'hidden' }, fill: { height: 5, backgroundColor: BRAND, borderRadius: 5 },
-  design: { minHeight: SCREEN_HEIGHT * .76, position: 'relative' }, designPreview: { minHeight: SCREEN_HEIGHT * .76 }, site: { overflow: 'hidden', minHeight: SCREEN_HEIGHT * .76 }, previewBrowser: { height: 29, paddingHorizontal: 11, backgroundColor: 'rgba(8,15,20,.9)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }, previewDots: { position: 'absolute', left: 11, flexDirection: 'row', gap: 4 }, previewDot: { width: 6, height: 6, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.35)' }, previewAddress: { fontFamily: FONT, fontSize: 8, color: 'rgba(255,255,255,.54)' }, siteHero: { height: SCREEN_HEIGHT * .49, padding: 20, justifyContent: 'space-between' },
-  siteTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, siteKicker: { fontFamily: FONT, fontSize: 12, letterSpacing: 3, fontWeight: '700', color: '#fff' }, siteNav: { flexDirection: 'row', alignItems: 'center', gap: 10 }, siteNavText: { fontFamily: FONT, fontSize: 7, letterSpacing: .7, color: 'rgba(255,255,255,.78)' }, siteCopy: { maxWidth: '76%' },
-  siteHeadline: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 30, lineHeight: 34, color: '#fff', marginBottom: 10 }, rounded: { fontFamily: FONT, fontWeight: '800', letterSpacing: -1 }, modern: { fontFamily: FONT, fontWeight: '400', letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 24 },
-  siteBody: { fontFamily: FONT, fontSize: 11, lineHeight: 16, color: 'rgba(255,255,255,.76)' }, editing: { borderWidth: 1, borderColor: BRAND, borderRadius: 5, padding: 3 },
-  siteCta: { marginTop: 15, alignSelf: 'flex-start', paddingVertical: 9, paddingHorizontal: 12, borderWidth: 1 }, siteCtaText: { fontFamily: FONT, fontSize: 8, fontWeight: '800', letterSpacing: 1.4, color: '#fff' },
-  siteSection: { minHeight: 170, padding: 22 }, siteSectionTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 22, marginBottom: 8 }, siteSectionBody: { fontFamily: FONT, fontSize: 11, lineHeight: 17, opacity: .68, maxWidth: '78%' },
-  swatches: { flexDirection: 'row', marginTop: 18, gap: 7 }, swatch: { width: 24, height: 24, borderRadius: 12 }, tutorial: { position: 'absolute', left: 24, right: 24, top: '33%', borderRadius: 27, overflow: 'hidden', padding: 22, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,.4)' },
+  design: { minHeight: SCREEN_HEIGHT * .76, position: 'relative' }, designPreview: {}, site: { overflow: 'hidden' }, previewBrowser: { height: 29, paddingHorizontal: 11, backgroundColor: 'rgba(8,15,20,.9)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }, previewDots: { position: 'absolute', left: 11, flexDirection: 'row', gap: 4 }, previewDot: { width: 6, height: 6, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.35)' }, previewAddress: { fontFamily: FONT, fontSize: 8, color: 'rgba(255,255,255,.54)' }, siteHero: { height: SCREEN_HEIGHT * .38, padding: 20, justifyContent: 'space-between' },
+  siteTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, siteKicker: { fontFamily: FONT, fontSize: 12, letterSpacing: 2, fontWeight: '700', color: '#fff' }, siteNav: { flexDirection: 'row', alignItems: 'center', gap: 10 }, siteNavText: { fontFamily: FONT, fontSize: 7, letterSpacing: .7, color: 'rgba(255,255,255,.78)' }, siteCopy: { maxWidth: '76%' },
+  siteHeadline: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 28, lineHeight: 32, color: '#fff', marginBottom: 8 }, rounded: { fontFamily: FONT, fontWeight: '800', letterSpacing: -1 }, modern: { fontFamily: FONT, fontWeight: '400', letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 22 },
+  siteBody: { fontFamily: FONT, fontSize: 11, lineHeight: 16, color: 'rgba(255,255,255,.76)' }, editing: { borderWidth: 1, borderColor: BRAND, borderRadius: 4, padding: 2 },
+  siteCta: { marginTop: 12, alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1 }, siteCtaText: { fontFamily: FONT, fontSize: 8, fontWeight: '800', letterSpacing: 1.4, color: '#fff' },
+  siteSection: { padding: 18 }, siteSectionTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 20, marginBottom: 6 }, siteSectionBody: { fontFamily: FONT, fontSize: 10, lineHeight: 15, opacity: .68, maxWidth: '78%' },
+  siteServicesRow: { flexDirection: 'row', paddingHorizontal: 14, paddingVertical: 14, gap: 8, borderTopWidth: 1, borderBottomWidth: 1 },
+  siteServiceCard: { flex: 1, padding: 10, borderRadius: 10, borderWidth: 1 },
+  siteServiceName: { fontFamily: FONT, fontSize: 8, fontWeight: '800', letterSpacing: .4 },
+  siteServiceLink: { fontFamily: FONT, fontSize: 7, marginTop: 5, opacity: .6 },
+  siteReviewsSection: { padding: 18 },
+  siteReviewsSectionTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 16, marginBottom: 8 },
+  siteStars: { flexDirection: 'row', gap: 2, marginBottom: 7 },
+  siteReviewText: { fontFamily: FONT, fontSize: 10, lineHeight: 14, fontStyle: 'italic', marginBottom: 5 },
+  siteReviewAuthor: { fontFamily: FONT, fontSize: 8, opacity: .6 },
+  siteGallerySection: { padding: 16 },
+  swatches: { flexDirection: 'row', marginTop: 2, gap: 7 }, swatch: { width: 22, height: 22, borderRadius: 11 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,.45)', justifyContent: 'flex-end' },
+  modalBox: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: Platform.OS === 'ios' ? 42 : 24 },
+  modalLabel: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: 'rgba(0,0,0,.45)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.8 },
+  modalInput: { borderWidth: 1, borderColor: 'rgba(0,0,0,.14)', borderRadius: 12, padding: 14, fontFamily: FONT, fontSize: 15, color: '#1A1A1A', minHeight: 80, textAlignVertical: 'top', marginBottom: 16, outlineWidth: 0 },
+  modalButtons: { flexDirection: 'row', gap: 10 },
+  modalButton: { flex: 1, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  modalButtonCancel: { backgroundColor: 'rgba(0,0,0,.06)' },
+  modalButtonSave: { backgroundColor: '#1C2832' },
+  modalButtonText: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#1C2832' }, tutorial: { position: 'absolute', left: 24, right: 24, top: '33%', borderRadius: 27, overflow: 'hidden', padding: 22, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,.4)' },
   tutorialTitle: { fontFamily: FONT, fontSize: 19, fontWeight: '800', color: '#fff', marginTop: 8 }, tutorialBody: { fontFamily: FONT, fontSize: 11, lineHeight: 16, color: 'rgba(255,255,255,.65)', textAlign: 'center', marginTop: 5 },
   gotIt: { marginTop: 16, minWidth: 118, paddingVertical: 10, borderRadius: 99, backgroundColor: 'rgba(222,247,255,.88)', alignItems: 'center' }, gotItText: { fontFamily: FONT, fontWeight: '800', color: '#123042' },
   templateDots: { position: 'absolute', bottom: 13, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 7 }, templateDot: { width: 7, height: 7, borderRadius: 5, backgroundColor: 'rgba(255,255,255,.35)' }, templateDotOn: { width: 21, backgroundColor: '#fff' },
   tools: { position: 'relative', zIndex: 30, alignItems: 'flex-end' }, toolStack: { gap: 6, alignItems: 'center', flexDirection: 'row' },
   toolButton: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(240,250,255,.72)', borderWidth: 1, borderColor: '#fff', alignItems: 'center', justifyContent: 'center', shadowColor: '#207EA0', shadowOpacity: .18, shadowRadius: 12 }, toolActive: { backgroundColor: BRAND, shadowOpacity: .34, shadowRadius: 20 }, toolButtonText: { fontFamily: FONT, fontSize: 12, fontWeight: '800', color: '#fff' },
-  toolPanel: { position: 'absolute', top: 49, right: 0, width: 142, maxHeight: 370, padding: 12, borderRadius: 23, overflow: 'hidden', borderWidth: 1, borderColor: '#fff', shadowColor: '#174E66', shadowOpacity: .18, shadowRadius: 18, zIndex: 200, elevation: 200 }, paletteWrap: { gap: 5 }, paletteScroll: { maxHeight: 274 }, paletteGroup: { paddingBottom: 12 }, paletteHeading: { paddingTop: 5, paddingBottom: 4 }, paletteHeadingText: { fontFamily: FONT, fontSize: 10, fontWeight: '900', letterSpacing: .8, color: '#345568', textTransform: 'uppercase' },
+  toolPanel: { position: 'absolute', top: 49, right: 0, width: 186, maxHeight: 400, padding: 12, borderRadius: 23, overflow: 'hidden', borderWidth: 1, borderColor: '#fff', shadowColor: '#174E66', shadowOpacity: .18, shadowRadius: 18, zIndex: 200, elevation: 200 }, paletteWrap: { gap: 5 }, paletteScroll: { maxHeight: 274 }, paletteGroup: { paddingBottom: 12 }, paletteHeading: { paddingTop: 5, paddingBottom: 4 }, paletteHeadingText: { fontFamily: FONT, fontSize: 10, fontWeight: '900', letterSpacing: .8, color: '#345568', textTransform: 'uppercase' },
   toolTitle: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#28495B', textAlign: 'center', marginBottom: 9 }, option: { minHeight: 39, borderRadius: 16, paddingHorizontal: 9, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' },
   dot: { width: 20, height: 20, borderRadius: 10 }, selected: { borderColor: BRAND, backgroundColor: 'rgba(34,188,231,.12)' }, fontOption: { paddingVertical: 10, borderRadius: 14, marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' }, fontOptionText: { fontFamily: FONT, fontSize: 11, fontWeight: '700', textAlign: 'center', color: '#345568' },
   sectionOption: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(66,104,125,.18)' }, sectionText: { flex: 1, fontFamily: FONT, fontSize: 10, color: '#345568' },
