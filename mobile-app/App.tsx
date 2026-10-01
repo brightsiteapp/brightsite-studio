@@ -162,7 +162,7 @@ function Tutorial({ close }: any) {
 
 function FlowBackdrop({ children }: any) {
   return <View style={{ flex: 1, backgroundColor: '#060C1A' }}>
-    <Image source={require('./assets/background.webp')} style={[StyleSheet.absoluteFill, { opacity: 0.55 }]} resizeMode="cover" />
+    <Image source={require('./assets/background.webp')} style={{ position: 'absolute', top: 0, left: 0, width: SCREEN_WIDTH, height: SCREEN_HEIGHT, opacity: 0.55 }} resizeMode="cover" />
     <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(4,9,30,0.62)' }]} pointerEvents="none" />
     {children}
   </View>;
