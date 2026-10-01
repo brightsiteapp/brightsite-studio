@@ -459,13 +459,12 @@ export default function App() {
       case 'media': return <><Intro>Add the images you want to use. Everything here is optional and can be changed later.</Intro>
         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
           <View style={{ flex: 1 }}>
+            <Text style={[s.fieldLabel, { marginBottom: 7 }]}>Logo</Text>
             <Upload icon="image-outline" title="Logo" subtitle="Logo" value={media.logo} onChange={(logo: string) => setMedia(current => ({ ...current, logo }))} fill h={110} />
-            <Text style={s.uploadLabel}>Logo</Text>
           </View>
           <View style={{ flex: 1 }}>
+            <Text style={[s.fieldLabel, { marginBottom: 7 }]}>Hero image</Text>
             <Upload icon="image-outline" title="Hero image" subtitle="Hero image" value={media.hero} onChange={(hero: string) => setMedia(current => ({ ...current, hero }))} fill h={110} />
-            <Text style={s.uploadLabel}>Hero image</Text>
-            <Text style={s.uploadLabelSub}>Your main photo</Text>
           </View>
         </View>
         <Text style={s.fieldLabel}>Gallery</Text>
