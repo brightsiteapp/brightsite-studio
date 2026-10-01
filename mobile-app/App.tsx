@@ -160,9 +160,17 @@ function Tutorial({ close }: any) {
   </BlurView>;
 }
 
+function FlowBackdrop({ children }: any) {
+  return <LinearGradient colors={['#061759', '#1236A3', '#F8FAFF']} locations={[0, .54, 1]} style={{ flex: 1 }}>
+    <LinearGradient pointerEvents="none" colors={['rgba(255,255,255,.76)', 'rgba(255,255,255,0)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.backdropGlowTop} />
+    <LinearGradient pointerEvents="none" colors={['rgba(255,255,255,.58)', 'rgba(255,255,255,0)']} start={{ x: 1, y: 1 }} end={{ x: 0, y: 0 }} style={s.backdropGlowBottom} />
+    {children}
+  </LinearGradient>;
+}
+
 function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, template, onEdit }: any) {
   const siteUrl = data.website?.trim() || `https://${domain}${suffix}`;
-  return <LinearGradient colors={['#FFF9EF', '#F8F0E4', '#EFE4D5']} style={{ flex: 1 }}>
+  return <FlowBackdrop>
     <StatusBar style="dark" />
     <View style={s.dashboardScreen}>
       <View style={s.dashboardBrandRow}><Text style={s.dashboardBrand}>BRIGHTSITE</Text><Text style={s.dashboardLive}>● LIVE</Text></View>
@@ -178,7 +186,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, templ
         {tab === 'Messages' && <><Text style={s.dashboardTitle}>Messages</Text><View style={s.messageBubble}><Text style={s.messageSender}>Tom · BrightSite</Text><Text style={s.messageText}>Welcome to BrightSite, {data.businessName || 'there'}! I’m Tom. Your website is live, and you can message me here whenever you need a hand.</Text></View><View style={s.messageInput}><Text style={s.messagePlaceholder}>Message BrightSite…</Text><Ionicons name="arrow-up-circle" size={24} color="#2878FF" /></View></>}
       </ScrollView>
     </View>
-  </LinearGradient>;
+  </FlowBackdrop>;
 }
 
 export default function App() {
@@ -516,9 +524,8 @@ export default function App() {
     }
   };
 
-  if (index === 0) return <LinearGradient colors={['#FFF9EF', '#F8F0E4', '#EFE4D5']} style={{ flex: 1 }}>
+  if (index === 0) return <FlowBackdrop>
     <StatusBar style="dark" />
-    <Image source={require('./assets/background.webp')} style={[StyleSheet.absoluteFill, { opacity: 0.12 }]} resizeMode="cover" />
     <View style={s.loginStage}>
       <View style={[s.card, s.loginCard]}>
         <BlurView intensity={42} tint="dark" style={StyleSheet.absoluteFill} />
@@ -528,7 +535,7 @@ export default function App() {
         </ScrollView>
       </View>
     </View>
-  </LinearGradient>;
+  </FlowBackdrop>;
 
   if (index === steps.length - 1 && paymentComplete) return <DashboardHome tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} template={template} onEdit={() => {
     const designIndex = steps.findIndex(item => item.id === 'design');
@@ -536,9 +543,8 @@ export default function App() {
     motion.setValue(designIndex * CARD_TRAVEL);
   }} />;
 
-  return <LinearGradient colors={['#FFF9EF', '#F8F0E4', '#EFE4D5']} style={{ flex: 1 }}>
+  return <FlowBackdrop>
     <StatusBar style="dark" />
-    <Image source={require('./assets/background.webp')} style={[StyleSheet.absoluteFill, { opacity: 0.12 }]} resizeMode="cover" />
     <View style={{ flex: 1 }}>
       <View style={s.stage}>
         {steps.filter((deckStep, deckIndex) => deckStep.id !== 'login' && Math.abs(deckIndex - index) <= 2).map((deckStep) => {
@@ -566,7 +572,7 @@ export default function App() {
         })}
       </View>
       <View style={s.rail} {...railPan.panHandlers}>{setupStepIndexes.map((actual) => {
-        const item = steps[actual], active = actual === index, done = complete.has(actual);
+        const item = steps[actual], done = complete.has(actual);
         const dotScale = motion.interpolate({
           inputRange: [Math.max(0, actual - 1) * CARD_TRAVEL, actual * CARD_TRAVEL, (actual + 1) * CARD_TRAVEL],
           outputRange: [1, 1.75, 1],
@@ -574,14 +580,15 @@ export default function App() {
         });
         return <View key={item.id} style={s.railButton}>
           <Animated.View style={[s.railDot, done && s.railDotOn, { transform: [{ scale: dotScale }] }]} />
-          {active && <View style={s.railActive}><Ionicons name={item.icon} size={15} color="#fff" /></View>}
+          <Animated.View pointerEvents="none" style={[s.railActive, { opacity: dotScale.interpolate({ inputRange: [1, 1.75], outputRange: [0, 1], extrapolate: 'clamp' }), transform: [{ scale: dotScale.interpolate({ inputRange: [1, 1.75], outputRange: [0, 1], extrapolate: 'clamp' }) }] }]}><Ionicons name={item.icon} size={15} color="#fff" /></Animated.View>
         </View>;
       })}</View>
     </View>
-  </LinearGradient>;
+  </FlowBackdrop>;
 }
 
 const s = StyleSheet.create({
+  backdropGlowTop: { position: 'absolute', width: '88%', height: '42%', top: '-9%', left: '-18%', borderRadius: 400, opacity: .86 }, backdropGlowBottom: { position: 'absolute', width: '94%', height: '46%', bottom: '-12%', right: '-24%', borderRadius: 440, opacity: .74 },
   stage: { flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28, paddingBottom: 72, paddingHorizontal: 18 },
   loginStage: { flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28, paddingBottom: 20, paddingHorizontal: 18 }, loginCard: { flex: 1 },
   loginHeader: { minHeight: 78, paddingLeft: 26, paddingRight: 18, paddingTop: 15, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, loginAppIcon: { width: 48, height: 48, borderRadius: 15, shadowColor: '#1C69E8', shadowOpacity: .28, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } },
@@ -654,7 +661,7 @@ const s = StyleSheet.create({
   nextPeek: { position: 'absolute', zIndex: 1, bottom: -(SCREEN_HEIGHT - 126) + 90, left: 34, right: 34, height: SCREEN_HEIGHT - 126, borderRadius: 26, backgroundColor: 'rgba(8,18,28,.54)', shadowColor: '#020A10', shadowOpacity: .34, shadowRadius: 28, shadowOffset: { width: 0, height: 16 }, overflow: 'hidden' },
   nextPeekTap: { paddingHorizontal: 22, paddingTop: 48, flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   nextLabel: { fontFamily: FONT, fontSize: 8, fontWeight: '900', color: BRAND, marginTop: 5 }, nextTitle: { flex: 1, fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#EFF9FC' },
-  rail: { position: 'absolute', left: 8, top: '25%', bottom: '25%', justifyContent: 'space-between', alignItems: 'center', zIndex: 140, elevation: 140 }, railHidden: { opacity: 0 }, railButton: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }, railNear: { width: 18, height: 18, borderRadius: 9 }, railFar: { width: 18, height: 18, borderRadius: 9 }, railDone: {}, railActive: { position: 'absolute', width: 27, height: 27, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#111315', borderWidth: 1, borderColor: 'rgba(255,255,255,.82)', shadowColor: '#000', shadowOpacity: .34, shadowRadius: 8, elevation: 8 }, railDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#15191D', borderWidth: 1, borderColor: 'rgba(0,0,0,.32)', shadowColor: '#000', shadowOpacity: .2, shadowRadius: 2 }, railDotOn: { backgroundColor: '#79D7A2', borderColor: '#A9F0C6', shadowColor: '#52BD81', shadowOpacity: .45, shadowRadius: 5 },
+  rail: { position: 'absolute', left: 8, top: '25%', bottom: '25%', justifyContent: 'space-between', alignItems: 'center', zIndex: 140, elevation: 140 }, railHidden: { opacity: 0 }, railButton: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }, railNear: { width: 18, height: 18, borderRadius: 9 }, railFar: { width: 18, height: 18, borderRadius: 9 }, railDone: {}, railActive: { position: 'absolute', width: 27, height: 27, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#2878FF', borderWidth: 1, borderColor: '#A9C8FF', shadowColor: '#2878FF', shadowOpacity: .34, shadowRadius: 8, elevation: 8 }, railDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#2878FF', borderWidth: 1, borderColor: '#B8D1FF', shadowColor: '#2878FF', shadowOpacity: .24, shadowRadius: 3 }, railDotOn: { backgroundColor: '#2878FF', borderColor: '#E5EEFF', shadowColor: '#2878FF', shadowOpacity: .5, shadowRadius: 6 },
   reviewCard: { marginBottom: 8, paddingBottom: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(255,255,255,.12)' },
   addReviewBtn: { height: 44, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(226,232,235,.42)', backgroundColor: 'rgba(255,255,255,.08)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 18 },
   addReviewText: { fontFamily: FONT, fontWeight: '800', fontSize: 12, color: '#F2F6F8' },
