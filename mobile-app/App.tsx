@@ -458,8 +458,15 @@ export default function App() {
       case 'prices': return <><Intro>Add your sections and services. Anything left blank will stay off your website.</Intro><Services items={services} setItems={setServices} /></>;
       case 'media': return <><Intro>Add the images you want to use. Everything here is optional and can be changed later.</Intro>
         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
-          <Upload icon="image-outline" title="Logo" subtitle="Logo" value={media.logo} onChange={(logo: string) => setMedia(current => ({ ...current, logo }))} fill h={110} />
-          <Upload icon="image-outline" title="Hero image" subtitle="Hero image" value={media.hero} onChange={(hero: string) => setMedia(current => ({ ...current, hero }))} fill h={110} />
+          <View style={{ flex: 1 }}>
+            <Upload icon="image-outline" title="Logo" subtitle="Logo" value={media.logo} onChange={(logo: string) => setMedia(current => ({ ...current, logo }))} fill h={Math.round((SCREEN_WIDTH - 58) / 2 * 9 / 16)} />
+            <Text style={s.uploadLabel}>Logo</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Upload icon="image-outline" title="Hero image" subtitle="Hero image" value={media.hero} onChange={(hero: string) => setMedia(current => ({ ...current, hero }))} fill h={Math.round((SCREEN_WIDTH - 58) / 2 * 9 / 16)} />
+            <Text style={s.uploadLabel}>Hero image</Text>
+            <Text style={s.uploadLabelSub}>Your main photo</Text>
+          </View>
         </View>
         <Text style={s.fieldLabel}>Gallery</Text>
         <View style={s.galleryGrid}>
@@ -609,6 +616,8 @@ const s = StyleSheet.create({
   cardTitle: { fontFamily: FONT, fontSize: 21, fontWeight: '700', letterSpacing: -.4, color: '#F3F8FC' }, count: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: 'rgba(220,238,248,.55)' },
   content: { padding: 24, paddingBottom: 76 }, loginContent: { flex: 1, paddingTop: 12, paddingBottom: 18 }, intro: { fontFamily: FONT, fontSize: 14, lineHeight: 21, color: 'rgba(225,239,248,.65)', marginBottom: 18 },
   fieldWrap: { marginBottom: 16 }, fieldLabel: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: 'rgba(223,239,248,.72)', marginBottom: 7 },
+  uploadLabel: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: 'rgba(199,228,240,.6)', marginTop: 6, letterSpacing: 0.3 },
+  uploadLabelSub: { fontFamily: FONT, fontSize: 11, color: 'rgba(199,228,240,.38)', marginTop: 1 },
   input: { minHeight: 50, borderRadius: 16, paddingHorizontal: 16, fontFamily: FONT, fontSize: 15, color: '#F7FCFF', backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(255,255,255,.32)', outlineWidth: 0 },
   inputMultiline: { minHeight: 92, paddingTop: 14, textAlignVertical: 'top' },
   nameDisplay: { marginTop: -3, marginBottom: 6, flexDirection: 'row', alignItems: 'center', gap: 9 },
