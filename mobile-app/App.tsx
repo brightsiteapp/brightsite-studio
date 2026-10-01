@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Animated, Dimensions, Easing, Image, ImageBackground, Keyboard, LayoutAnimation, Modal, PanResponder,
+  ActivityIndicator, Animated, Dimensions, Easing, Image, ImageBackground, Keyboard, KeyboardAvoidingView, LayoutAnimation, Modal, PanResponder,
   Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View,
 } from 'react-native';
 import { supabase } from './lib/supabase';
@@ -160,34 +160,75 @@ function SitePreview({ palette, font, template, editing, siteTexts = {}, onEditT
   </View>;
 }
 
-function DragRow({ name, index, total, onMove, onToggle, visible }: any) {
-  const dy = useRef(new Animated.Value(0)).current;
-  const pan = useMemo(() => PanResponder.create({
+function SectionDragList({ sections, setSections, sectionVisible, onToggle }: any) {
+  const ITEM_H = 50;
+  const [activeName, setActiveName] = useState<string | null>(null);
+  const dragY = useRef(new Animated.Value(0)).current;
+  const shifts = useRef(Object.fromEntries(SITE_SECTIONS.map(n => [n, new Animated.Value(0)]))).current;
+  const currentIdxRef = useRef<Record<string, number>>({});
+  const sectionsRef = useRef(sections);
+  const hoverRef = useRef<number | null>(null);
+  sectionsRef.current = sections;
+  sections.forEach((name: string, i: number) => { currentIdxRef.current[name] = i; });
+
+  const pans = useMemo(() => Object.fromEntries(SITE_SECTIONS.map(name => [name, PanResponder.create({
     onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 3,
-    onPanResponderMove: Animated.event([null, { dy }], { useNativeDriver: false }),
-    onPanResponderRelease: (_, g) => {
-      const ITEM_H = 34;
-      const offset = Math.round(g.dy / ITEM_H);
-      if (offset !== 0) onMove(index, Math.max(0, Math.min(total - 1, index + offset)));
-      Animated.spring(dy, { toValue: 0, useNativeDriver: false }).start();
+    onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 4,
+    onPanResponderGrant: () => { hoverRef.current = currentIdxRef.current[name]; setActiveName(name); },
+    onPanResponderMove: (_, g) => {
+      dragY.setValue(g.dy);
+      const fromIdx = currentIdxRef.current[name];
+      const secs = sectionsRef.current;
+      const newHover = Math.max(0, Math.min(secs.length - 1, fromIdx + Math.round(g.dy / ITEM_H)));
+      if (newHover !== hoverRef.current) {
+        hoverRef.current = newHover;
+        secs.forEach((sName: string, i: number) => {
+          if (sName === name) return;
+          let target = 0;
+          if (fromIdx < newHover && i > fromIdx && i <= newHover) target = -ITEM_H;
+          if (fromIdx > newHover && i < fromIdx && i >= newHover) target = ITEM_H;
+          Animated.spring(shifts[sName], { toValue: target, useNativeDriver: true, damping: 20, stiffness: 220 }).start();
+        });
+      }
     },
-    onPanResponderTerminate: () => Animated.spring(dy, { toValue: 0, useNativeDriver: false }).start(),
-  }), [index, total]);
-  return <Animated.View style={[s.sectionOption, { transform: [{ translateY: dy }] }]}>
-    <Animated.View {...pan.panHandlers}><Ionicons name="reorder-three" size={18} color="#436172" /></Animated.View>
-    <Text style={s.sectionText}>{name}</Text>
-    <Pressable onPress={() => onToggle(index)}><Ionicons name={visible ? 'eye-outline' : 'eye-off-outline'} size={17} color={visible ? '#436172' : 'rgba(67,97,114,.3)'} /></Pressable>
-  </Animated.View>;
+    onPanResponderRelease: (_, g) => {
+      const secs = sectionsRef.current;
+      const fromIdx = currentIdxRef.current[name];
+      const to = Math.max(0, Math.min(secs.length - 1, fromIdx + Math.round(g.dy / ITEM_H)));
+      SITE_SECTIONS.forEach(n => shifts[n].setValue(0)); dragY.setValue(0); hoverRef.current = null; setActiveName(null);
+      if (to !== fromIdx) {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        const next = [...secs]; const [item] = next.splice(fromIdx, 1); next.splice(to, 0, item); setSections(next);
+      }
+    },
+    onPanResponderTerminate: () => { SITE_SECTIONS.forEach(n => shifts[n].setValue(0)); dragY.setValue(0); hoverRef.current = null; setActiveName(null); },
+  })])), []);
+
+  return <View>
+    {sections.map((name: string, i: number) => {
+      const isActive = activeName === name;
+      return <Animated.View key={name} style={[s.sectionOption, {
+        transform: [{ translateY: isActive ? dragY : shifts[name] }],
+        zIndex: isActive ? 10 : 1, opacity: isActive ? 0.88 : 1,
+        backgroundColor: isActive ? 'rgba(255,255,255,.35)' : 'transparent',
+        borderRadius: isActive ? 12 : 0,
+      }]}>
+        <Pressable onPress={() => onToggle(i)} style={s.sectionEye}>
+          <Ionicons name={sectionVisible[name] !== false ? 'eye-outline' : 'eye-off-outline'} size={21} color={sectionVisible[name] !== false ? '#436172' : 'rgba(67,97,114,.28)'} />
+        </Pressable>
+        <Text style={s.sectionText}>{name}</Text>
+        <Animated.View {...pans[name].panHandlers} style={s.sectionDragHandle}>
+          <Ionicons name="reorder-three" size={24} color="#436172" />
+        </Animated.View>
+      </Animated.View>;
+    })}
+  </View>;
 }
 
 function DesignTools({ active, setActive, palette, setPalette, font, setFont, editing, setEditing, sections, setSections }: any) {
   const items = [{ id: 'colour', icon: 'color-palette-outline' }, { id: 'font', icon: 'text-outline' }, { id: 'edit', icon: 'create-outline' }];
   const [paletteSection, setPaletteSection] = useState(0);
   const [sectionVisible, setSectionVisible] = useState<Record<string, boolean>>({});
-  const handleMove = (from: number, to: number) => {
-    const next = [...sections]; const [item] = next.splice(from, 1); next.splice(to, 0, item); setSections(next);
-  };
   const handleToggle = (idx: number) => {
     const name = sections[idx]; setSectionVisible((v: any) => ({ ...v, [name]: v[name] === false ? true : false }));
   };
@@ -209,7 +250,7 @@ function DesignTools({ active, setActive, palette, setPalette, font, setFont, ed
       <Text style={s.toolTitle}>{active === 'colour' ? 'Colour' : active === 'font' ? 'Font' : 'Edit site'}</Text>
       {active === 'colour' && <View style={s.paletteWrap}><Text style={s.paletteHeadingText}>{paletteGroups[paletteSection].name}</Text><ScrollView style={s.paletteScroll} onScroll={event => { const next = Math.min(paletteGroups.length - 1, Math.floor(event.nativeEvent.contentOffset.y / 286)); if (next !== paletteSection) { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setPaletteSection(next); } }} scrollEventThrottle={16}>{paletteGroups.map((group, groupIndex) => <View key={group.name} style={s.paletteGroup}>{group.options.map((colors, i) => { const paletteIndex = paletteGroups.slice(0, groupIndex).reduce((total, section) => total + section.options.length, 0) + i; return <Pressable key={colors.join()} onPress={() => setPalette(paletteIndex)} style={[s.option, palette === paletteIndex && s.selected]}>{colors.map(c => <View key={c} style={[s.dot, { backgroundColor: c }]} />)}</Pressable>; })}</View>)}</ScrollView></View>}
       {active === 'font' && fonts.map((name, i) => <Pressable key={name} onPress={() => setFont(i)} style={[s.fontOption, font === i && s.selected]}><Text style={s.fontOptionText}>{name}</Text></Pressable>)}
-      {active === 'edit' && sections.map((name: string, i: number) => <DragRow key={name} name={name} index={i} total={sections.length} onMove={handleMove} onToggle={handleToggle} visible={sectionVisible[name] !== false} />)}
+      {active === 'edit' && <SectionDragList sections={sections} setSections={setSections} sectionVisible={sectionVisible} onToggle={handleToggle} />}
     </BlurView>}
   </View>;
 }
@@ -226,16 +267,18 @@ function TextEditModal({ visible, value, label, onSave, onClose }: any) {
   const [draft, setDraft] = useState(value || '');
   useEffect(() => setDraft(value || ''), [value, visible]);
   return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-    <View style={s.modalOverlay}>
-      <View style={s.modalBox}>
-        <Text style={s.modalLabel}>{label}</Text>
-        <TextInput style={s.modalInput} value={draft} onChangeText={setDraft} multiline autoFocus placeholderTextColor="rgba(0,0,0,.35)" />
-        <View style={s.modalButtons}>
-          <Pressable onPress={onClose} style={[s.modalButton, s.modalButtonCancel]}><Text style={s.modalButtonText}>Cancel</Text></Pressable>
-          <Pressable onPress={() => { onSave(draft); onClose(); }} style={[s.modalButton, s.modalButtonSave]}><Text style={[s.modalButtonText, { color: '#fff' }]}>Save</Text></Pressable>
-        </View>
-      </View>
-    </View>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+      <Pressable style={s.modalOverlay} onPress={onClose}>
+        <Pressable onPress={() => {}} style={s.modalBox}>
+          <Text style={s.modalLabel}>{label}</Text>
+          <TextInput style={s.modalInput} value={draft} onChangeText={setDraft} multiline autoFocus placeholderTextColor="rgba(0,0,0,.35)" />
+          <View style={s.modalButtons}>
+            <Pressable onPress={onClose} style={[s.modalButton, s.modalButtonCancel]}><Text style={s.modalButtonText}>Cancel</Text></Pressable>
+            <Pressable onPress={() => { onSave(draft); onClose(); }} style={[s.modalButton, s.modalButtonSave]}><Text style={[s.modalButtonText, { color: '#fff' }]}>Save</Text></Pressable>
+          </View>
+        </Pressable>
+      </Pressable>
+    </KeyboardAvoidingView>
   </Modal>;
 }
 
@@ -482,9 +525,15 @@ export default function App() {
   }, [data, hours, services, domainReady, designReady]);
 
   const pan = useMemo(() => PanResponder.create({
-    // Keep the card still while the keyboard is up so the inner ScrollView can
-    // bring a focused field above it.
-    onMoveShouldSetPanResponder: (_, g) => !keyboardVisible && (Math.abs(g.dy) > 16 && !(step.id === 'design' && tool) || step.id === 'design' && Math.abs(g.dx) > 16),
+    // Only allow card swipes from the header strip or the bottom prompt zone,
+    // so scrolling the site preview or form content never triggers a card transition.
+    onMoveShouldSetPanResponder: (_, g) => {
+      if (keyboardVisible) return false;
+      if (step.id === 'design' && Math.abs(g.dx) > 16 && Math.abs(g.dx) > Math.abs(g.dy)) return true;
+      const inHeader = g.y0 < CARD_TOP + 80;
+      const inFooter = g.y0 > SCREEN_HEIGHT - CARD_BOTTOM - 70;
+      return (inHeader || inFooter) && Math.abs(g.dy) > 12 && !(step.id === 'design' && tool);
+    },
     onPanResponderGrant: revealRail,
     onPanResponderMove: (_, g) => {
       if (step.id === 'design' && Math.abs(g.dx) > Math.abs(g.dy)) templateMotion.setValue(g.dx);
@@ -741,7 +790,7 @@ const s = StyleSheet.create({
   siteReviewAuthor: { fontFamily: FONT, fontSize: 8, opacity: .6 },
   siteGallerySection: { padding: 16 },
   swatches: { flexDirection: 'row', marginTop: 2, gap: 7 }, swatch: { width: 22, height: 22, borderRadius: 11 },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,.45)', justifyContent: 'flex-end' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,.45)', justifyContent: 'flex-end', cursor: 'default' as any },
   modalBox: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: Platform.OS === 'ios' ? 42 : 24 },
   modalLabel: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: 'rgba(0,0,0,.45)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.8 },
   modalInput: { borderWidth: 1, borderColor: 'rgba(0,0,0,.14)', borderRadius: 12, padding: 14, fontFamily: FONT, fontSize: 15, color: '#1A1A1A', minHeight: 80, textAlignVertical: 'top', marginBottom: 16, outlineWidth: 0 },
@@ -758,7 +807,8 @@ const s = StyleSheet.create({
   toolPanel: { position: 'absolute', top: 49, right: 0, width: 186, maxHeight: 400, padding: 12, borderRadius: 23, overflow: 'hidden', borderWidth: 1, borderColor: '#fff', shadowColor: '#174E66', shadowOpacity: .18, shadowRadius: 18, zIndex: 200, elevation: 200 }, paletteWrap: { gap: 5 }, paletteScroll: { maxHeight: 274 }, paletteGroup: { paddingBottom: 12 }, paletteHeading: { paddingTop: 5, paddingBottom: 4 }, paletteHeadingText: { fontFamily: FONT, fontSize: 10, fontWeight: '900', letterSpacing: .8, color: '#345568', textTransform: 'uppercase' },
   toolTitle: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#28495B', textAlign: 'center', marginBottom: 9 }, option: { minHeight: 39, borderRadius: 16, paddingHorizontal: 9, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' },
   dot: { width: 20, height: 20, borderRadius: 10 }, selected: { borderColor: BRAND, backgroundColor: 'rgba(34,188,231,.12)' }, fontOption: { paddingVertical: 10, borderRadius: 14, marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' }, fontOptionText: { fontFamily: FONT, fontSize: 11, fontWeight: '700', textAlign: 'center', color: '#345568' },
-  sectionOption: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(66,104,125,.18)' }, sectionText: { flex: 1, fontFamily: FONT, fontSize: 10, color: '#345568' },
+  sectionOption: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(66,104,125,.18)' }, sectionText: { flex: 1, fontFamily: FONT, fontSize: 12, fontWeight: '600', color: '#345568', marginHorizontal: 8 },
+  sectionEye: { padding: 7 }, sectionDragHandle: { padding: 7 },
   domainSearch: { flexDirection: 'row', alignItems: 'center', borderRadius: 18, backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(255,255,255,.32)' }, domainInput: { flex: 1, minHeight: 54, paddingHorizontal: 16, fontFamily: FONT, fontSize: 16, color: '#fff', outlineWidth: 0 }, suffixButton: { height: 54, paddingLeft: 8, paddingRight: 13, flexDirection: 'row', alignItems: 'center', gap: 3 }, domainSuffix: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: '#E5EBEE' }, suffixDropdown: { position: 'absolute', top: 58, right: 0, zIndex: 99, minWidth: 120, backgroundColor: '#1A2128', borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,.14)', shadowColor: '#000', shadowOpacity: .4, shadowRadius: 12, elevation: 10, overflow: 'hidden' }, suffixDropdownItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13, paddingHorizontal: 16 }, suffixDropdownDivider: { borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.08)' }, suffixDropdownItemOn: { backgroundColor: 'rgba(75,155,255,.12)' }, suffixDropdownText: { fontFamily: FONT, fontSize: 15, fontWeight: '600', color: '#E5EBEE' },
   check: { marginTop: 12, paddingVertical: 15, borderRadius: 17, alignItems: 'center', backgroundColor: 'rgba(34,188,231,.15)', borderWidth: 1, borderColor: 'rgba(34,188,231,.35)' }, checkText: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#DDF8FF' },
   checkDisabled: { opacity: .58 }, domainError: { marginTop: 10, fontFamily: FONT, fontSize: 12, lineHeight: 17, color: '#FFB6B6' }, domainResult: { marginTop: 14, padding: 15, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: 'rgba(34,188,231,.09)', borderWidth: 1, borderColor: 'rgba(34,188,231,.3)' }, domainName: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#F0FBFF' }, domainPrice: { fontFamily: FONT, fontSize: 11, color: '#76D8F2', marginTop: 2 },
