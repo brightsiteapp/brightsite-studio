@@ -72,13 +72,26 @@ function Hours({ rows, setRows }: any) {
 
 function Services({ items, setItems }: any) {
   const update = (i: number, key: string, value: string) => setItems(items.map((item: any, n: number) => n === i ? { ...item, [key]: value } : item));
+  const remove = (i: number) => { if (items.length > 1) setItems(items.filter((_: any, n: number) => n !== i)); };
   const addService = () => setItems([...items, { section: items[items.length - 1]?.section || '', name: '', duration: '', price: '' }]);
   const addSection = () => setItems([...items, { section: '', name: '', duration: '', price: '' }]);
-  return <View>{items.map((item: any, i: number) => <View key={i}>
-    {(i === 0 || item.section !== items[i - 1].section) && <Field label="Service section name" value={item.section} onChangeText={(v: string) => update(i, 'section', v)} placeholder="e.g. Cutting & styling" />}
-    <View style={s.serviceRow}><TextInput value={item.name} onChangeText={v => update(i, 'name', v)} placeholder="Service" placeholderTextColor="rgba(218,232,244,.35)" style={[s.serviceInput, { flex: 1.6 }]} /><TextInput value={item.duration} onChangeText={v => update(i, 'duration', v)} placeholder="Time" placeholderTextColor="rgba(218,232,244,.35)" style={[s.serviceInput, { flex: 1 }]} /><TextInput value={item.price} onChangeText={v => update(i, 'price', v)} placeholder="Price" placeholderTextColor="rgba(218,232,244,.35)" style={[s.serviceInput, { flex: .8 }]} /></View>
-  </View>)}
-    <View style={s.serviceActions}><Pressable onPress={addService} style={s.addService}><Ionicons name="add" size={16} color={BRAND} /><Text style={s.addServiceText}>Add service</Text></Pressable><Pressable onPress={addSection} style={s.addService}><Ionicons name="add" size={16} color={BRAND} /><Text style={s.addServiceText}>Add section</Text></Pressable></View></View>;
+  return <View>
+    {items.map((item: any, i: number) => {
+      const isNewSection = i === 0 || item.section !== items[i - 1].section;
+      return <View key={i}>
+        {isNewSection && i > 0 && <View style={s.sectionDivider} />}
+        {isNewSection && <Field label="Service section name" value={item.section} onChangeText={(v: string) => update(i, 'section', v)} placeholder="e.g. Cutting & styling" />}
+        <View style={s.serviceRow}>
+          <TextInput value={item.name} onChangeText={v => update(i, 'name', v)} placeholder="Service" placeholderTextColor="rgba(218,232,244,.35)" style={[s.serviceInput, { flex: 1.6 }]} />
+          <TextInput value={item.duration} onChangeText={v => update(i, 'duration', v)} placeholder="Time" placeholderTextColor="rgba(218,232,244,.35)" style={[s.serviceInput, { flex: 1 }]} />
+          <TextInput value={item.price} onChangeText={v => update(i, 'price', v)} placeholder="Price" placeholderTextColor="rgba(218,232,244,.35)" style={[s.serviceInput, { flex: .8 }]} />
+          <Pressable onPress={() => remove(i)} style={s.serviceDelete}><Ionicons name="close" size={13} color="rgba(220,232,242,.42)" /></Pressable>
+        </View>
+      </View>;
+    })}
+    <Pressable onPress={addService} style={s.addService}><Ionicons name="add" size={16} color={BRAND} /><Text style={s.addServiceText}>Add service</Text></Pressable>
+    <Pressable onPress={addSection} style={[s.addService, s.addSectionBtn]}><Ionicons name="add" size={16} color={BRAND} /><Text style={s.addServiceText}>Add section</Text></Pressable>
+  </View>;
 }
 
 function Upload({ icon, title, subtitle, value, onChange, multiple = false, fill = false }: any) {
@@ -491,6 +504,7 @@ export default function App() {
           {domainReady && domainQuote && <Animated.View style={s.domainResult}><Ionicons name="checkmark-circle" size={24} color={BRAND} /><View style={{ flex: 1 }}><Text style={s.domainName}>{domainQuote.domain}</Text><Text style={s.domainPrice}>Available — {domainQuote.priceLabel}</Text></View></Animated.View>}</>;
       }
       case 'plan': return paymentComplete ? <View style={s.paymentSuccess}><Ionicons name="checkmark-circle" size={48} color="#79D7A2" /><Text style={s.paymentSuccessTitle}>Your website is ready</Text><Text style={s.paymentSuccessText}>Payment is complete. Swipe up to open your BrightSite dashboard.</Text></View> : <><Intro>Your website is free. You only pay for hosting.</Intro>
+        {domainReady && <View style={s.planDomain}><Ionicons name="globe-outline" size={15} color="#DDF8FF" /><Text style={s.planDomainText}>{domain}{suffix}</Text></View>}
         <Pressable onPress={() => setAnnual(false)} style={[s.plan, !annual && s.planOn]}><View><Text style={s.planName}>Monthly</Text><Text style={s.planNote}>Cancel any time</Text></View><Text style={s.planPrice}>£19<Text style={s.planSmall}>/month</Text></Text></Pressable>
         <Pressable onPress={() => setAnnual(true)} style={[s.plan, annual && s.planOn]}><View><Text style={s.save}>SAVE £24</Text><Text style={s.planName}>Annual</Text><Text style={s.planNote}>Billed £204 yearly</Text></View><Text style={s.planPrice}>£17<Text style={s.planSmall}>/month</Text></Text></Pressable>
         <Pressable onPress={() => setPaymentComplete(true)} style={s.payButton}><Ionicons name="lock-closed" size={16} color="#1B2226" /><Text style={s.payButtonText}>Continue to secure payment</Text></Pressable></>;
@@ -516,7 +530,7 @@ export default function App() {
     </View>
   </LinearGradient>;
 
-  if (index === steps.length - 1) return <DashboardHome tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} template={template} onEdit={() => {
+  if (index === steps.length - 1 && paymentComplete) return <DashboardHome tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} template={template} onEdit={() => {
     const designIndex = steps.findIndex(item => item.id === 'design');
     setIndex(designIndex);
     motion.setValue(designIndex * CARD_TRAVEL);
@@ -598,13 +612,13 @@ const s = StyleSheet.create({
   hoursRow: { flex: 1, minHeight: 58, paddingHorizontal: 17, flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(255,255,255,.14)' }, hoursRowLast: { borderBottomWidth: 0 }, hoursDay: { width: 43, fontFamily: FONT, fontSize: 14, fontWeight: '700', color: '#ECF6FA' }, hoursTimes: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, timeInput: { width: 63, height: 34, borderRadius: 10, paddingHorizontal: 8, backgroundColor: 'transparent', color: '#F7FCFF', fontFamily: FONT, fontSize: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', outlineWidth: 0 }, timeInputOff: { width: 63, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)' }, timeOffText: { fontFamily: FONT, color: 'rgba(235,243,247,.30)', fontSize: 13 }, timeDash: { fontFamily: FONT, fontSize: 13, color: 'rgba(220,236,245,.58)' }, hoursSwitch: { width: 52, alignItems: 'flex-end' }, closedText: { flex: 1, fontFamily: FONT, fontSize: 12, color: 'rgba(220,236,245,.48)' },
   toggleLabel: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: '#ECF6FA' }, toggleValue: { fontFamily: FONT, fontSize: 12, color: 'rgba(219,235,245,.55)', marginTop: 2 },
   inline: { flexDirection: 'row', gap: 10 }, uploadGrid: { flexDirection: 'row', gap: 12, marginBottom: 12 },
-  upload: { flex: 1, minHeight: 130, alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.055)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)', overflow: 'hidden' }, uploadFill: { minHeight: 188, padding: 0 },
+  upload: { flex: 1, minHeight: 130, alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.055)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)', overflow: 'hidden' }, uploadFill: { height: 188, padding: 0, flex: 0 },
   uploadPreview: { width: 52, height: 52, borderRadius: 15, marginBottom: 9 }, uploadPreviewFill: { width: '100%', height: '100%' },
   uploadIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(34,188,231,.12)', marginBottom: 10 },
   uploadTitle: { fontFamily: FONT, fontWeight: '800', fontSize: 14, color: '#F0F8FC' }, uploadSub: { fontFamily: FONT, fontSize: 11, color: 'rgba(222,238,247,.5)', marginTop: 3 },
   continue: { marginTop: 24, gap: 16 }, skip: { fontFamily: FONT, fontSize: 12, color: 'rgba(219,235,245,.5)', textAlign: 'center' }, loginSwipe: { marginTop: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 }, designSwipe: { paddingVertical: 22, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 }, swipeHint: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: 'rgba(235,243,247,.76)', textAlign: 'center' },
   fixedPrompt: { position: 'absolute', left: 18, right: 18, bottom: 14, zIndex: 120, elevation: 120, alignItems: 'center', gap: 7 }, swipeRow: { minHeight: 31, paddingHorizontal: 13, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(25,29,33,.72)' }, validationText: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: '#FFD1D1', textAlign: 'center', paddingHorizontal: 12 },
-  serviceRow: { flexDirection: 'row', gap: 7, marginTop: 5 }, serviceInput: { height: 48, borderRadius: 14, paddingHorizontal: 10, fontFamily: FONT, fontSize: 12, color: '#F7FCFF', backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(255,255,255,.30)', outlineWidth: 0 }, serviceActions: { flexDirection: 'row', gap: 8 }, addService: { flex: 1, marginTop: 13, height: 42, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(226,232,235,.42)', backgroundColor: 'rgba(255,255,255,.08)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, addServiceText: { fontFamily: FONT, fontWeight: '800', fontSize: 12, color: '#F2F6F8' },
+  serviceRow: { flexDirection: 'row', gap: 7, marginTop: 5, alignItems: 'center' }, serviceInput: { height: 48, borderRadius: 14, paddingHorizontal: 10, fontFamily: FONT, fontSize: 12, color: '#F7FCFF', backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(255,255,255,.30)', outlineWidth: 0 }, serviceActions: { flexDirection: 'row', gap: 8 }, serviceDelete: { width: 28, height: 48, alignItems: 'center', justifyContent: 'center' }, sectionDivider: { height: StyleSheet.hairlineWidth, backgroundColor: 'rgba(255,255,255,.14)', marginVertical: 16 }, addService: { marginTop: 13, height: 42, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(226,232,235,.42)', backgroundColor: 'rgba(255,255,255,.08)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, addSectionBtn: { marginTop: 8, borderColor: 'rgba(226,232,235,.2)', backgroundColor: 'transparent' }, addServiceText: { fontFamily: FONT, fontWeight: '800', fontSize: 12, color: '#F2F6F8' },
   loading: { position: 'absolute', inset: 0, minHeight: SCREEN_HEIGHT * .65, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 44 }, loadingWordmark: { flexDirection: 'row', position: 'relative', marginBottom: 26 }, loadingBrand: { fontFamily: FONT, letterSpacing: 1.6, fontWeight: '900', fontSize: 17, color: '#F7FCFF' }, loadingBrandDot: { position: 'absolute', width: 5, height: 5, borderRadius: 3, backgroundColor: '#4B9BFF', right: 32, top: -1 },
   loadingTitle: { fontFamily: FONT, fontSize: 25, lineHeight: 31, fontWeight: '800', color: '#F5FBFE', textAlign: 'center' }, loadingText: { fontFamily: FONT, fontSize: 13, lineHeight: 19, color: 'rgba(221,237,246,.58)', textAlign: 'center', marginTop: 10 }, loadingSteps: { alignSelf: 'stretch', gap: 10, marginTop: 27 }, loadingStep: { flexDirection: 'row', alignItems: 'center', gap: 9, opacity: .36 }, loadingStepOn: { opacity: 1 }, loadingStepText: { fontFamily: FONT, fontSize: 12, color: 'rgba(222,238,247,.6)' }, loadingStepTextOn: { color: '#EAF9FE', fontWeight: '700' },
   track: { width: '100%', height: 5, borderRadius: 5, backgroundColor: 'rgba(255,255,255,.1)', marginTop: 28, overflow: 'hidden' }, fill: { height: 5, backgroundColor: BRAND, borderRadius: 5 },
@@ -648,4 +662,37 @@ const s = StyleSheet.create({
   galleryItem: { width: (SCREEN_WIDTH - 96) / 2, height: (SCREEN_WIDTH - 96) / 2, borderRadius: 14, overflow: 'hidden' },
   galleryThumb: { width: '100%', height: '100%' },
   galleryAdd: { width: (SCREEN_WIDTH - 96) / 2, height: (SCREEN_WIDTH - 96) / 2, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', alignItems: 'center', justifyContent: 'center' },
+  planDomain: { flexDirection: 'row', alignItems: 'center', gap: 9, padding: 14, borderRadius: 14, backgroundColor: 'rgba(34,188,231,.1)', borderWidth: 1, borderColor: 'rgba(34,188,231,.28)', marginBottom: 16 },
+  planDomainText: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#DDF8FF' },
+  paymentSuccess: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, paddingHorizontal: 24 },
+  paymentSuccessTitle: { fontFamily: FONT, fontSize: 22, fontWeight: '800', color: '#F5FCFF', textAlign: 'center' },
+  paymentSuccessText: { fontFamily: FONT, fontSize: 13, lineHeight: 19, color: 'rgba(221,237,246,.62)', textAlign: 'center' },
+  payButton: { marginTop: 20, height: 52, paddingHorizontal: 20, borderRadius: 18, backgroundColor: '#E5F9FF', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
+  payButtonText: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#061824' },
+  dashboardScreen: { flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28 },
+  dashboardBrandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 22, paddingBottom: 12 },
+  dashboardBrand: { fontFamily: FONT, fontSize: 11, fontWeight: '900', letterSpacing: 1.6, color: '#1C2832' },
+  dashboardLive: { fontFamily: FONT, fontSize: 9, fontWeight: '900', letterSpacing: 1, color: '#3CAB6A' },
+  dashboardTabsTop: { flexDirection: 'row', paddingHorizontal: 18, gap: 6, marginBottom: 20 },
+  dashboardTab: { flex: 1, paddingVertical: 10, borderRadius: 14, alignItems: 'center', backgroundColor: 'rgba(0,0,0,.06)' },
+  dashboardTabOn: { backgroundColor: '#1C2832' },
+  dashboardTabText: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: 'rgba(28,40,50,.48)' },
+  dashboardTabTextOn: { color: '#fff' },
+  dashboardContent: { paddingHorizontal: 22, paddingBottom: 48 },
+  dashboardTitle: { fontFamily: FONT, fontSize: 24, fontWeight: '800', letterSpacing: -.5, color: '#141A1E', marginBottom: 6 },
+  dashboardIntro: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: 'rgba(20,26,30,.55)', marginBottom: 18 },
+  dashboardInfoCard: { padding: 18, borderRadius: 18, backgroundColor: '#fff', marginBottom: 12, shadowColor: '#000', shadowOpacity: .07, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } },
+  dashboardCardLabel: { fontFamily: FONT, fontSize: 9, fontWeight: '900', letterSpacing: 1, color: 'rgba(20,26,30,.42)', marginBottom: 5 },
+  dashboardCardTitle: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: '#141A1E' },
+  dashboardCardText: { fontFamily: FONT, fontSize: 12, color: 'rgba(20,26,30,.48)', marginTop: 3 },
+  dashboardWebsiteHead: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 12 },
+  dashboardEdit: { paddingVertical: 9, paddingHorizontal: 14, borderRadius: 99, flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#1C2832' },
+  dashboardEditText: { fontFamily: FONT, fontSize: 11, fontWeight: '800', color: '#fff' },
+  phoneFrame: { height: 420, borderRadius: 20, overflow: 'hidden', marginBottom: 16, backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .12, shadowRadius: 18, shadowOffset: { width: 0, height: 8 } },
+  phoneScale: {},
+  messageBubble: { padding: 16, borderRadius: 18, backgroundColor: '#fff', marginBottom: 12, shadowColor: '#000', shadowOpacity: .06, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } },
+  messageSender: { fontFamily: FONT, fontSize: 11, fontWeight: '800', color: '#1C2832', marginBottom: 6 },
+  messageText: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: '#2C3E4A' },
+  messageInput: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14, borderRadius: 16, backgroundColor: '#fff', borderWidth: 1, borderColor: 'rgba(0,0,0,.1)', marginTop: 8 },
+  messagePlaceholder: { fontFamily: FONT, fontSize: 14, color: 'rgba(28,40,50,.38)' },
 });
