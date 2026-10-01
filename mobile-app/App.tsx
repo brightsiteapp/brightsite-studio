@@ -163,52 +163,57 @@ function SitePreview({ palette, font, template, editing, siteTexts = {}, onEditT
 function SectionDragList({ sections, setSections, sectionVisible, onToggle }: any) {
   const ITEM_H = 50;
   const [activeName, setActiveName] = useState<string | null>(null);
-  const dragY = useRef(new Animated.Value(0)).current;
-  const shifts = useRef(Object.fromEntries(SITE_SECTIONS.map(n => [n, new Animated.Value(0)]))).current;
+  // Each item owns its own Animated.Value — no conditional, always connected to transform
+  const itemDys = useRef(Object.fromEntries(SITE_SECTIONS.map(n => [n, new Animated.Value(0)]))).current;
   const currentIdxRef = useRef<Record<string, number>>({});
   const sectionsRef = useRef(sections);
   const hoverRef = useRef<number | null>(null);
   sectionsRef.current = sections;
   sections.forEach((name: string, i: number) => { currentIdxRef.current[name] = i; });
 
+  const resetAll = () => { SITE_SECTIONS.forEach(n => itemDys[n].setValue(0)); hoverRef.current = null; };
+
   const pans = useMemo(() => Object.fromEntries(SITE_SECTIONS.map(name => [name, PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 4,
     onPanResponderGrant: () => { hoverRef.current = currentIdxRef.current[name]; setActiveName(name); },
-    onPanResponderMove: (_, g) => {
-      dragY.setValue(g.dy);
-      const fromIdx = currentIdxRef.current[name];
-      const secs = sectionsRef.current;
-      const newHover = Math.max(0, Math.min(secs.length - 1, fromIdx + Math.round(g.dy / ITEM_H)));
-      if (newHover !== hoverRef.current) {
-        hoverRef.current = newHover;
-        secs.forEach((sName: string, i: number) => {
-          if (sName === name) return;
-          let target = 0;
-          if (fromIdx < newHover && i > fromIdx && i <= newHover) target = -ITEM_H;
-          if (fromIdx > newHover && i < fromIdx && i >= newHover) target = ITEM_H;
-          Animated.spring(shifts[sName], { toValue: target, useNativeDriver: true, damping: 20, stiffness: 220 }).start();
-        });
-      }
-    },
+    // Animated.event links gesture.dy directly to itemDys[name] — moves immediately, no re-render needed
+    onPanResponderMove: Animated.event([null, { dy: itemDys[name] }], {
+      useNativeDriver: false,
+      listener: (_: any, g: any) => {
+        const fromIdx = currentIdxRef.current[name];
+        const secs = sectionsRef.current;
+        const newHover = Math.max(0, Math.min(secs.length - 1, fromIdx + Math.round(g.dy / ITEM_H)));
+        if (newHover !== hoverRef.current) {
+          hoverRef.current = newHover;
+          secs.forEach((sName: string, i: number) => {
+            if (sName === name) return;
+            let target = 0;
+            if (fromIdx < newHover && i > fromIdx && i <= newHover) target = -ITEM_H;
+            if (fromIdx > newHover && i < fromIdx && i >= newHover) target = ITEM_H;
+            Animated.spring(itemDys[sName], { toValue: target, useNativeDriver: false, damping: 20, stiffness: 220 }).start();
+          });
+        }
+      },
+    }),
     onPanResponderRelease: (_, g) => {
       const secs = sectionsRef.current;
       const fromIdx = currentIdxRef.current[name];
       const to = Math.max(0, Math.min(secs.length - 1, fromIdx + Math.round(g.dy / ITEM_H)));
-      SITE_SECTIONS.forEach(n => shifts[n].setValue(0)); dragY.setValue(0); hoverRef.current = null; setActiveName(null);
+      resetAll(); setActiveName(null);
       if (to !== fromIdx) {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
         const next = [...secs]; const [item] = next.splice(fromIdx, 1); next.splice(to, 0, item); setSections(next);
       }
     },
-    onPanResponderTerminate: () => { SITE_SECTIONS.forEach(n => shifts[n].setValue(0)); dragY.setValue(0); hoverRef.current = null; setActiveName(null); },
+    onPanResponderTerminate: () => { resetAll(); setActiveName(null); },
   })])), []);
 
   return <View>
     {sections.map((name: string, i: number) => {
       const isActive = activeName === name;
       return <Animated.View key={name} style={[s.sectionOption, {
-        transform: [{ translateY: isActive ? dragY : shifts[name] }],
+        transform: [{ translateY: itemDys[name] }],
         zIndex: isActive ? 10 : 1, opacity: isActive ? 0.88 : 1,
         backgroundColor: isActive ? 'rgba(255,255,255,.35)' : 'transparent',
         borderRadius: isActive ? 12 : 0,
