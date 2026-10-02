@@ -3,6 +3,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator, Animated, Dimensions, Easing, Image, ImageBackground, Keyboard, KeyboardAvoidingView, LayoutAnimation, Modal, PanResponder,
@@ -18,7 +19,9 @@ const FONT = Platform.select({ ios: 'Avenir Next', android: 'sans-serif', defaul
 const BRAND = '#E2E8EB';
 const DOMAIN_TLDS = ['.com', '.co.uk', '.net', '.org', '.io', '.co', '.uk', '.app'];
 const DOMAIN_API = 'https://api.brightsite.app/api/check-domain';
-// A deep, softened sheet rather than a conventional outlined app panel.
+const PAYMENT_API = 'https://api.brightsite.app/api/create-payment-intent';
+// Replace with your Stripe publishable key from stripe.com/dashboard
+const STRIPE_KEY = 'pk_live_YOUR_STRIPE_PUBLISHABLE_KEY';
 const CARD = 'rgba(195,202,210,.88)';
 
 type Step = { id: string; title: string; icon: keyof typeof Ionicons.glyphMap };
@@ -47,7 +50,29 @@ const paletteGroups = [
 ];
 const palettes = paletteGroups.flatMap(group => group.options);
 const fonts = ['Editorial', 'Rounded', 'Modern', 'Thin', 'Classic'];
-const SITE_SECTIONS = ['Hero', 'About', 'Services', 'Reviews', 'Gallery', 'Contact'];
+const HOME_SECTIONS_DEFAULT = ['Hero', 'About & Services', 'Reviews', 'Gallery', 'Contact'];
+const SERVICES_SECTIONS_DEFAULT = ['Services List', 'Contact CTA'];
+const CONTACT_SECTIONS_DEFAULT = ['Info & Hours', 'Map', 'Contact Form'];
+const ALL_PAGE_SECTIONS = [...HOME_SECTIONS_DEFAULT, ...SERVICES_SECTIONS_DEFAULT, ...CONTACT_SECTIONS_DEFAULT];
+
+const CATEGORY_PRESETS: Record<string, { topServices: string[]; about: string; heroTitle: string; heroBody: string }> = {
+  'Hair': { topServices: ['Cuts & Styling', 'Colour', 'Treatments'], about: 'Personal service, honest advice and a finish made for real life.', heroTitle: 'Beautiful hair, beautifully yours.', heroBody: 'Thoughtful cuts, colour and styling in a calm modern salon.' },
+  'Beauty': { topServices: ['Facials', 'Nails', 'Waxing'], about: 'A sanctuary of calm where you leave feeling your best self.', heroTitle: 'Feel beautiful, every day.', heroBody: 'Luxurious treatments tailored to you in a serene and welcoming space.' },
+  'Restaurant': { topServices: ['Starters', 'Mains', 'Desserts'], about: 'Freshly prepared dishes made with locally sourced ingredients.', heroTitle: 'Honest food, made with love.', heroBody: 'Seasonal menus, warm service and a table worth coming back to.' },
+  'Café': { topServices: ['Breakfast', 'Lunch', 'Drinks'], about: 'Good coffee, fresh food and a space worth staying in.', heroTitle: 'Your neighbourhood café.', heroBody: 'Freshly brewed coffee and handmade food from early morning.' },
+  'Fitness': { topServices: ['Personal Training', 'Group Classes', 'Nutrition'], about: 'Expert coaching to help you reach your health and fitness goals.', heroTitle: 'Your best body starts here.', heroBody: 'Science-backed training, real results and a community that supports you.' },
+  'Gym': { topServices: ['Memberships', 'Classes', 'PT Sessions'], about: 'A fully equipped gym with classes for every fitness level.', heroTitle: 'Push your limits.', heroBody: 'State-of-the-art equipment and expert trainers to help you achieve more.' },
+  'Photography': { topServices: ['Portraits', 'Events', 'Commercial'], about: 'Capturing the moments that matter most in your most authentic light.', heroTitle: 'Your story, beautifully told.', heroBody: 'Natural light portraits, events and commercial photography.' },
+  'Dental': { topServices: ['Check-ups', 'Whitening', 'Orthodontics'], about: 'Gentle, professional dental care for the whole family.', heroTitle: "A smile you're proud of.", heroBody: 'Expert dental care delivered with warmth and attention to detail.' },
+  'Plumbing': { topServices: ['Boiler Repair', 'Installation', 'Emergency'], about: 'Reliable, qualified plumbers for every job big or small.', heroTitle: 'Plumbing you can count on.', heroBody: 'Fast, professional service from fully qualified engineers.' },
+  'Cleaning': { topServices: ['Domestic', 'Commercial', 'Deep Clean'], about: 'Professional cleaning services for homes and businesses.', heroTitle: 'Spotlessly clean, every time.', heroBody: 'Reliable, thorough cleaning using eco-friendly products.' },
+};
+function getPreset(category: string) {
+  const key = Object.keys(CATEGORY_PRESETS).find(k =>
+    (category || '').toLowerCase().includes(k.toLowerCase()) || k.toLowerCase().includes((category || '').toLowerCase())
+  );
+  return key ? CATEGORY_PRESETS[key] : { topServices: ['Our Services', 'Consultations', 'Packages'], about: 'Professional, friendly service tailored to your needs.', heroTitle: 'Welcome.', heroBody: "We're here to help." };
+}
 
 function Field({ label, value, onChangeText, placeholder, keyboardType = 'default', multiline = false, ...inputProps }: any) {
   return <View style={s.fieldWrap}>
@@ -111,69 +136,153 @@ function Upload({ icon, title, subtitle, value, onChange, multiple = false, fill
   </Pressable>;
 }
 
-function SitePreview({ palette, font, template, editing, siteTexts = {}, onEditText }: any) {
+function SitePreview({ palette, font, page = 0, onPageChange, editing, siteTexts = {}, onEditText,
+  businessName = '', category = '', servicesData = [], hoursData = [],
+  contactData = {} as any, contactForm = true,
+  homeSections = HOME_SECTIONS_DEFAULT, servicesSections = SERVICES_SECTIONS_DEFAULT, contactSections = CONTACT_SECTIONS_DEFAULT,
+}: any) {
   const colors = palettes[palette];
   const [accent, bg, textColor] = colors;
-  const hero = template === 0 ? require('./assets/hair-beauty-hero.jpg') : require('./assets/sisko-preview.webp');
-
+  const preset = getPreset(category);
   const titleFamily = font === 0 ? Platform.select({ ios: 'Didot', android: 'serif', default: 'serif' }) : FONT;
   const fw: any = font === 1 ? '800' : font === 2 ? '300' : font === 3 ? '200' : font === 4 ? '900' : undefined;
   const fo: any = { fontFamily: FONT, ...(fw && { fontWeight: fw }), ...(font === 2 && { letterSpacing: 1.2 }), ...(font === 3 && { letterSpacing: 1.8 }), ...(font === 4 && { letterSpacing: -0.5 }) };
   const tf: any = { ...fo, fontFamily: titleFamily };
-
   const tx = (key: string, fallback: string) => (siteTexts as any)[key] || fallback;
   const ep = (key: string) => editing ? () => onEditText?.(key) : undefined;
+  const biz = businessName || 'Business';
+  const topSvcs = servicesData?.filter((sv: any) => sv.name).slice(0, 3).map((sv: any) => sv.name);
+  const displaySvcs = topSvcs?.length ? topSvcs : preset.topServices;
+
+  const renderHome = (name: string) => {
+    switch (name) {
+      case 'Hero': return <ImageBackground key="Hero" source={require('./assets/hair-beauty-hero.jpg')} style={s.siteHero}>
+        <LinearGradient colors={['rgba(5,7,9,.08)', 'rgba(5,7,9,.84)']} style={StyleSheet.absoluteFill} />
+        <View style={s.siteTop}>
+          <Text style={[s.siteKicker, fo, editing && s.editing]} onPress={ep('brand')}>{tx('brand', biz.toUpperCase())}</Text>
+          <View style={s.siteNav}><Text style={[s.siteNavText, fo]}>SERVICES</Text><Text style={[s.siteNavText, fo]}>CONTACT</Text><Ionicons name="menu" size={18} color="#fff" /></View>
+        </View>
+        <View style={s.siteCopy}>
+          <Text style={[s.siteHeadline, tf, editing && s.editing]} onPress={ep('headline')}>{tx('headline', preset.heroTitle)}</Text>
+          <Text style={[s.siteBody, fo, editing && s.editing]} onPress={ep('heroBody')}>{tx('heroBody', preset.heroBody)}</Text>
+          <View style={[s.siteCta, { borderColor: accent }]}><Text style={[s.siteCtaText, fo]}>BOOK NOW</Text></View>
+        </View>
+      </ImageBackground>;
+      case 'About & Services': return <View key="About & Services" style={s.siteAboutServRow}>
+        <View style={s.siteAboutCol}>
+          <Text style={[s.siteSectionTitle, tf, { color: textColor }, editing && s.editing]} onPress={ep('aboutTitle')}>{tx('aboutTitle', biz)}</Text>
+          <Text style={[s.siteSectionBody, fo, { color: textColor }, editing && s.editing]} onPress={ep('aboutBody')}>{tx('aboutBody', preset.about)}</Text>
+        </View>
+        <View style={s.siteSvcsCol}>
+          {displaySvcs.map((sv: string, i: number) => <View key={i} style={[s.siteServiceCard, { borderColor: accent + '55' }]}>
+            <Text style={[s.siteServiceName, fo, { color: accent }]}>{sv}</Text>
+            <Text style={[s.siteServiceLink, fo, { color: textColor }]}>View →</Text>
+          </View>)}
+        </View>
+      </View>;
+      case 'Reviews': return <View key="Reviews" style={[s.siteReviewsSection, { backgroundColor: accent + '14' }]}>
+        <Text style={[s.siteReviewsSectionTitle, tf, { color: textColor }]}>What clients say</Text>
+        <View style={s.siteStars}>{[0,1,2,3,4].map(i => <Ionicons key={i} name="star" size={7} color={accent} />)}</View>
+        <Text style={[s.siteReviewText, fo, { color: textColor }]}>"Amazing results every time."</Text>
+        <Text style={[s.siteReviewAuthor, fo, { color: textColor }]}>— Sarah M.</Text>
+      </View>;
+      case 'Gallery': return <View key="Gallery" style={s.siteGallerySection}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 5 }}>
+          {Array.from({ length: 6 }, (_, i) => <View key={i} style={{ width: 38, height: 38, borderRadius: 8, backgroundColor: i % 2 === 0 ? accent + (i === 0 ? 'FF' : 'AA') : textColor + '33' }} />)}
+        </View>
+      </View>;
+      case 'Contact': return <View key="Contact" style={[s.siteContactCta, { borderTopColor: accent + '33' }]}>
+        <Text style={[s.siteContactCtaTitle, tf, { color: textColor }]}>Ready to book?</Text>
+        <View style={[s.siteCtaFilled, { backgroundColor: accent }]}><Text style={[s.siteCtaFilledText, fo]}>Book Now</Text></View>
+      </View>;
+      default: return null;
+    }
+  };
+
+  const renderServices = (name: string) => {
+    const allSvcs = servicesData?.filter((sv: any) => sv.name) || [];
+    const listItems = allSvcs.length ? allSvcs : preset.topServices.map((n: string) => ({ name: n, duration: '', price: '' }));
+    switch (name) {
+      case 'Services List': return <View key="Services List" style={s.siteSvcsListSection}>
+        <Text style={[s.siteSectionTitle, tf, { color: textColor }]}>Our Services</Text>
+        {listItems.map((sv: any, i: number) => <View key={i} style={[s.siteSvcRow, { borderBottomColor: accent + '22' }]}>
+          <View style={{ flex: 1 }}><Text style={[s.siteSvcRowName, fo, { color: textColor }]}>{sv.name || sv}</Text>
+            {!!sv.duration && <Text style={[s.siteSvcRowDetail, fo, { color: textColor }]}>{sv.duration}</Text>}</View>
+          <Text style={[s.siteSvcRowPrice, fo, { color: accent }]}>{sv.price || '—'}</Text>
+        </View>)}
+      </View>;
+      case 'Contact CTA': return <View key="Contact CTA" style={[s.siteContactCta, { borderTopColor: accent + '33' }]}>
+        <View style={[s.siteCtaFilled, { backgroundColor: accent }]}><Text style={[s.siteCtaFilledText, fo]}>Contact Us</Text></View>
+      </View>;
+      default: return null;
+    }
+  };
+
+  const renderContact = (name: string) => {
+    switch (name) {
+      case 'Info & Hours': return <View key="Info & Hours" style={s.siteContactInfoRow}>
+        <View style={s.siteContactInfoCol}>
+          <Text style={[s.siteContactInfoTitle, tf, { color: textColor }]}>Contact</Text>
+          {!!contactData.phone && <View style={s.siteContactItem}><Ionicons name="call-outline" size={8} color={accent} /><Text style={[s.siteContactItemText, fo, { color: textColor }]}>{contactData.phone}</Text></View>}
+          {!!contactData.email && <View style={s.siteContactItem}><Ionicons name="mail-outline" size={8} color={accent} /><Text style={[s.siteContactItemText, fo, { color: textColor }]}>{contactData.email}</Text></View>}
+          {!!contactData.address && <View style={s.siteContactItem}><Ionicons name="location-outline" size={8} color={accent} /><Text style={[s.siteContactItemText, fo, { color: textColor }]}>{contactData.address}</Text></View>}
+          {!!contactData.instagram && <View style={s.siteContactItem}><Ionicons name="logo-instagram" size={8} color={accent} /><Text style={[s.siteContactItemText, fo, { color: textColor }]}>{contactData.instagram}</Text></View>}
+        </View>
+        <View style={s.siteHoursCol}>
+          <Text style={[s.siteContactInfoTitle, tf, { color: textColor }]}>Hours</Text>
+          {(hoursData.length ? hoursData : ['Mon','Tue','Wed','Thu','Fri'].map((d: string) => ({ label: d, start: '9:00', end: '17:30', enabled: true }))).slice(0, 5).map((row: any, i: number) => <View key={i} style={s.siteHoursRow}>
+            <Text style={[s.siteHoursDay, fo, { color: textColor }]}>{(row.label || row).slice(0, 3)}</Text>
+            <Text style={[s.siteHoursTime, fo, { color: textColor }]}>{row.enabled ? `${row.start}–${row.end}` : 'Closed'}</Text>
+          </View>)}
+        </View>
+      </View>;
+      case 'Map': return <View key="Map" style={[s.siteMockMap, { backgroundColor: accent + '14', borderColor: accent + '28' }]}>
+        <Ionicons name="location" size={18} color={accent} />
+        <View><Text style={[s.siteMockMapAddr, fo, { color: textColor }]}>{contactData.address || 'Your business location'}</Text>
+          <Text style={[s.siteMockMapSub, fo, { color: textColor }]}>Google Maps</Text></View>
+      </View>;
+      case 'Contact Form': return contactForm
+        ? <View key="Contact Form" style={s.siteFormSection}>
+            <Text style={[s.siteSectionTitle, tf, { color: textColor }]}>Send a message</Text>
+            {['Your name', 'Your email'].map((ph, i) => <View key={i} style={[s.siteFormField, { borderColor: accent + '44' }]}><Text style={[s.siteFormPh, fo, { color: textColor }]}>{ph}</Text></View>)}
+            <View style={[s.siteFormField, { borderColor: accent + '44', minHeight: 36 }]}><Text style={[s.siteFormPh, fo, { color: textColor }]}>Message</Text></View>
+            <View style={[s.siteCtaFilled, { backgroundColor: accent, alignSelf: 'stretch', marginTop: 6 }]}><Text style={[s.siteCtaFilledText, fo]}>Send Message</Text></View>
+          </View>
+        : <View key="Contact Form" style={[s.siteContactCta, { borderTopColor: accent + '33' }]}>
+            <View style={[s.siteCtaFilled, { backgroundColor: accent }]}><Text style={[s.siteCtaFilledText, fo]}>Contact Us</Text></View>
+          </View>;
+      default: return null;
+    }
+  };
 
   return <View style={[s.site, { backgroundColor: bg }]}>
-    <View style={s.previewBrowser}><View style={s.previewDots}><View style={s.previewDot} /><View style={s.previewDot} /><View style={s.previewDot} /></View><Text style={s.previewAddress}>siskohair.co.uk</Text></View>
-    <ImageBackground source={hero} style={s.siteHero}>
-      <LinearGradient colors={['rgba(5,7,9,.08)', 'rgba(5,7,9,.84)']} style={StyleSheet.absoluteFill} />
-      <View style={s.siteTop}>
-        <Text style={[s.siteKicker, fo, editing ? s.editing : null]} onPress={ep('brand')}>SISKO</Text>
-        <View style={s.siteNav}><Text style={[s.siteNavText, fo]}>SERVICES</Text><Text style={[s.siteNavText, fo]}>CONTACT</Text><Ionicons name="menu" size={18} color="#fff" /></View>
+    <View style={s.previewBrowserWrap}>
+      <View style={s.previewBrowser}><View style={s.previewDots}><View style={s.previewDot} /><View style={s.previewDot} /><View style={s.previewDot} /></View><Text style={s.previewAddress}>{biz.toLowerCase().replace(/\s+/g, '')}.co.uk</Text></View>
+      <View style={[s.previewPageNav, { borderBottomColor: accent + '33' }]}>
+        {['Home', 'Services', 'Contact'].map((name, i) => <Pressable key={name} onPress={() => onPageChange?.(i)} style={[s.previewPageTab, page === i && { borderBottomColor: accent, borderBottomWidth: 2 }]}>
+          <Text style={[s.previewPageTabText, fo, page === i && { color: accent }]}>{name}</Text>
+        </Pressable>)}
       </View>
-      <View style={s.siteCopy}>
-        <Text style={[s.siteHeadline, tf, editing ? s.editing : null]} onPress={ep('headline')}>{tx('headline', 'Beautiful hair, beautifully yours.')}</Text>
-        <Text style={[s.siteBody, fo, editing ? s.editing : null]} onPress={ep('heroBody')}>{tx('heroBody', 'Thoughtful cuts, colour and styling in a calm modern salon.')}</Text>
-        <View style={[s.siteCta, { borderColor: accent }]}><Text style={[s.siteCtaText, fo]}>BOOK NOW</Text></View>
-      </View>
-    </ImageBackground>
-    <View style={s.siteSection}>
-      <Text style={[s.siteSectionTitle, tf, { color: textColor }, editing ? s.editing : null]} onPress={ep('aboutTitle')}>{tx('aboutTitle', 'Hair that feels like you')}</Text>
-      <Text style={[s.siteSectionBody, fo, { color: textColor }, editing ? s.editing : null]} onPress={ep('aboutBody')}>{tx('aboutBody', 'Personal service, honest advice and a finish made for real life.')}</Text>
     </View>
-    <View style={[s.siteServicesRow, { borderTopColor: accent + '33', borderBottomColor: accent + '22' }]}>
-      {['Cuts & Styling', 'Colour', 'Treatments'].map(name => <View key={name} style={[s.siteServiceCard, { borderColor: accent + '55' }]}>
-        <Text style={[s.siteServiceName, fo, { color: accent }]}>{name}</Text>
-        <Text style={[s.siteServiceLink, fo, { color: textColor }]}>View →</Text>
-      </View>)}
-    </View>
-    <View style={[s.siteReviewsSection, { backgroundColor: accent + '14' }]}>
-      <Text style={[s.siteReviewsSectionTitle, tf, { color: textColor }]}>Client reviews</Text>
-      <View style={s.siteStars}>{[0,1,2,3,4].map(i => <Ionicons key={i} name="star" size={7} color={accent} />)}</View>
-      <Text style={[s.siteReviewText, fo, { color: textColor }]}>"Amazing results every time."</Text>
-      <Text style={[s.siteReviewAuthor, fo, { color: textColor }]}>— Sarah M.</Text>
-    </View>
-    <View style={s.siteGallerySection}>
-      <View style={s.swatches}>{colors.map(c => <View key={c} style={[s.swatch, { backgroundColor: c }]} />)}</View>
-    </View>
+    {page === 0 && <View>{homeSections.map((n: string) => renderHome(n))}</View>}
+    {page === 1 && <View>{servicesSections.map((n: string) => renderServices(n))}</View>}
+    {page === 2 && <View>{contactSections.map((n: string) => renderContact(n))}</View>}
   </View>;
 }
 
 function SectionDragList({ sections, setSections, sectionVisible, onToggle }: any) {
   const ITEM_H = 50;
   const [activeName, setActiveName] = useState<string | null>(null);
-  // Each item owns its own Animated.Value — no conditional, always connected to transform
-  const itemDys = useRef(Object.fromEntries(SITE_SECTIONS.map(n => [n, new Animated.Value(0)]))).current;
+  const itemDys = useRef(Object.fromEntries(ALL_PAGE_SECTIONS.map(n => [n, new Animated.Value(0)]))).current;
   const currentIdxRef = useRef<Record<string, number>>({});
   const sectionsRef = useRef(sections);
   const hoverRef = useRef<number | null>(null);
   sectionsRef.current = sections;
   sections.forEach((name: string, i: number) => { currentIdxRef.current[name] = i; });
 
-  const resetAll = () => { SITE_SECTIONS.forEach(n => itemDys[n].setValue(0)); hoverRef.current = null; };
+  const resetAll = () => { ALL_PAGE_SECTIONS.forEach(n => itemDys[n].setValue(0)); hoverRef.current = null; };
 
-  const pans = useMemo(() => Object.fromEntries(SITE_SECTIONS.map(name => [name, PanResponder.create({
+  const pans = useMemo(() => Object.fromEntries(ALL_PAGE_SECTIONS.map(name => [name, PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 4,
     onPanResponderGrant: () => { hoverRef.current = currentIdxRef.current[name]; setActiveName(name); },
@@ -230,12 +339,18 @@ function SectionDragList({ sections, setSections, sectionVisible, onToggle }: an
   </View>;
 }
 
-function DesignTools({ active, setActive, palette, setPalette, font, setFont, editing, setEditing, sections, setSections }: any) {
+function DesignTools({ active, setActive, palette, setPalette, font, setFont, editing, setEditing,
+  homeSections, setHomeSections, servicesSections, setServicesSections, contactSections, setContactSections }: any) {
   const items = [{ id: 'colour', icon: 'color-palette-outline' }, { id: 'font', icon: 'text-outline' }, { id: 'edit', icon: 'create-outline' }];
   const [paletteSection, setPaletteSection] = useState(0);
   const [sectionVisible, setSectionVisible] = useState<Record<string, boolean>>({});
+  const [editPage, setEditPage] = useState(0);
+  const pageSections = [homeSections, servicesSections, contactSections];
+  const setPageSections = [setHomeSections, setServicesSections, setContactSections];
+  const curSections = pageSections[editPage];
+  const setCurSections = setPageSections[editPage];
   const handleToggle = (idx: number) => {
-    const name = sections[idx]; setSectionVisible((v: any) => ({ ...v, [name]: v[name] === false ? true : false }));
+    const name = curSections[idx]; setSectionVisible((v: any) => ({ ...v, [name]: v[name] === false ? true : false }));
   };
   return <View style={s.tools}>
     <View style={s.toolStack}>{items.map(item => {
@@ -255,7 +370,14 @@ function DesignTools({ active, setActive, palette, setPalette, font, setFont, ed
       <Text style={s.toolTitle}>{active === 'colour' ? 'Colour' : active === 'font' ? 'Font' : 'Edit site'}</Text>
       {active === 'colour' && <View style={s.paletteWrap}><Text style={s.paletteHeadingText}>{paletteGroups[paletteSection].name}</Text><ScrollView style={s.paletteScroll} onScroll={event => { const next = Math.min(paletteGroups.length - 1, Math.floor(event.nativeEvent.contentOffset.y / 286)); if (next !== paletteSection) { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setPaletteSection(next); } }} scrollEventThrottle={16}>{paletteGroups.map((group, groupIndex) => <View key={group.name} style={s.paletteGroup}>{group.options.map((colors, i) => { const paletteIndex = paletteGroups.slice(0, groupIndex).reduce((total, section) => total + section.options.length, 0) + i; return <Pressable key={colors.join()} onPress={() => setPalette(paletteIndex)} style={[s.option, palette === paletteIndex && s.selected]}>{colors.map(c => <View key={c} style={[s.dot, { backgroundColor: c }]} />)}</Pressable>; })}</View>)}</ScrollView></View>}
       {active === 'font' && fonts.map((name, i) => <Pressable key={name} onPress={() => setFont(i)} style={[s.fontOption, font === i && s.selected]}><Text style={s.fontOptionText}>{name}</Text></Pressable>)}
-      {active === 'edit' && <SectionDragList sections={sections} setSections={setSections} sectionVisible={sectionVisible} onToggle={handleToggle} />}
+      {active === 'edit' && <>
+        <View style={s.editPageTabs}>
+          {['Home', 'Svcs', 'Contact'].map((name, i) => <Pressable key={name} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setEditPage(i); }} style={[s.editPageTab, editPage === i && s.editPageTabOn]}>
+            <Text style={[s.editPageTabText, editPage === i && s.editPageTabTextOn]}>{name}</Text>
+          </Pressable>)}
+        </View>
+        <SectionDragList sections={curSections} setSections={setCurSections} sectionVisible={sectionVisible} onToggle={handleToggle} />
+      </>}
     </BlurView>}
   </View>;
 }
@@ -291,7 +413,7 @@ function FlowBackdrop({ children }: any) {
   return <View style={{ flex: 1, backgroundColor: '#fff' }}>{children}</View>;
 }
 
-function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, template, onEdit }: any) {
+function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, onEdit }: any) {
   const siteUrl = data.website?.trim() || `https://${domain}${suffix}`;
   return <FlowBackdrop>
     <StatusBar style="dark" />
@@ -305,14 +427,15 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, templ
           <View style={s.dashboardInfoCard}><Text style={s.dashboardCardLabel}>ACCOUNT EMAIL</Text><Text style={s.dashboardCardTitle}>{data.email || data.contactEmail || 'Add an email address'}</Text></View></>}
         {tab === 'Website' && <><View style={s.dashboardWebsiteHead}><View><Text style={s.dashboardLive}>● LIVE</Text><Text style={s.dashboardTitle}>Your website</Text></View><Pressable onPress={onEdit} style={s.dashboardEdit}><Ionicons name="create-outline" size={15} color="#fff" /><Text style={s.dashboardEditText}>Edit</Text></Pressable></View>
           <Text style={s.dashboardIntro}>Tap your homepage to open it, or edit its design and content.</Text>
-          <Pressable onPress={() => void Linking.openURL(siteUrl)} style={s.phoneFrame}><View pointerEvents="none" style={s.phoneScale}><SitePreview palette={palette} font={font} template={template} editing={false} /></View></Pressable></>}
+          <Pressable onPress={() => void Linking.openURL(siteUrl)} style={s.phoneFrame}><View pointerEvents="none" style={s.phoneScale}><SitePreview palette={palette} font={font} page={0} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></View></Pressable></>}
         {tab === 'Messages' && <><Text style={s.dashboardTitle}>Messages</Text><View style={s.messageBubble}><Text style={s.messageSender}>Tom · BrightSite</Text><Text style={s.messageText}>Welcome to BrightSite, {data.businessName || 'there'}! I’m Tom. Your website is live, and you can message me here whenever you need a hand.</Text></View><View style={s.messageInput}><Text style={s.messagePlaceholder}>Message BrightSite…</Text><Ionicons name="arrow-up-circle" size={24} color="#2878FF" /></View></>}
       </ScrollView>
     </View>
   </FlowBackdrop>;
 }
 
-export default function App() {
+function AppInner() {
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [index, setIndex] = useState(0);
   const [authMode, setAuthMode] = useState<'signup' | 'login'>('signup');
   const [authBusy, setAuthBusy] = useState(false);
@@ -323,7 +446,7 @@ export default function App() {
   const [tutorial, setTutorial] = useState(true);
   const [palette, setPalette] = useState(0);
   const [font, setFont] = useState(0);
-  const [template, setTemplate] = useState(0);
+  const [previewPage, setPreviewPage] = useState(0);
   const [tool, setTool] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [showRail, setShowRail] = useState(false);
@@ -346,7 +469,11 @@ export default function App() {
   const [tab, setTab] = useState('Website');
   const [siteTexts, setSiteTexts] = useState<Record<string, string>>({});
   const [editingText, setEditingText] = useState<{ key: string; label: string } | null>(null);
-  const [sections, setSections] = useState([...SITE_SECTIONS]);
+  const [homeSections, setHomeSections] = useState([...HOME_SECTIONS_DEFAULT]);
+  const [servicesSections, setServicesSections] = useState([...SERVICES_SECTIONS_DEFAULT]);
+  const [contactSections, setContactSections] = useState([...CONTACT_SECTIONS_DEFAULT]);
+  const [payBusy, setPayBusy] = useState(false);
+  const [payError, setPayError] = useState('');
   const [data, setData] = useState({ email: '', password: '', businessName: 'Sisko Hairdressing', category: 'Hair & Beauty', fullName: '', contactEmail: '', phone: '', website: '', instagram: '', facebook: '', address: '', services: 'Cut & finish', price: '£45', reviews: '', reviewLink: '' });
   const [showFullName, setShowFullName] = useState(false);
   const [hours, setHours] = useState(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((label, i) => ({ label, start: '9:00', end: i === 3 ? '19:00' : '17:30', enabled: i < 6 })));
@@ -498,12 +625,35 @@ export default function App() {
     }
     transitionTo(next);
   };
-  const changeTemplate = (direction: number) => {
+  const changePage = (direction: number) => {
     Animated.timing(templateMotion, { toValue: direction < 0 ? -SCREEN_HEIGHT : SCREEN_HEIGHT, duration: 180, useNativeDriver: true }).start(() => {
-      setTemplate(value => (value + (direction < 0 ? 1 : -1) + 2) % 2);
+      setPreviewPage(v => (v + (direction < 0 ? 1 : -1) + 3) % 3);
       templateMotion.setValue(direction < 0 ? SCREEN_HEIGHT : -SCREEN_HEIGHT);
       Animated.spring(templateMotion, { toValue: 0, useNativeDriver: true, damping: 24, stiffness: 190 }).start();
     });
+  };
+
+  const handlePayment = async () => {
+    setPayBusy(true);
+    setPayError('');
+    try {
+      const res = await fetch(PAYMENT_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: annual ? 'annual' : 'monthly', domain: domainReady ? domain + suffix : null }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Could not set up payment.');
+      const { error: initErr } = await initPaymentSheet({ merchantDisplayName: 'BrightSite', paymentIntentClientSecret: json.clientSecret, allowsDelayedPaymentMethods: false });
+      if (initErr) throw new Error(initErr.message);
+      const { error: presentErr } = await presentPaymentSheet();
+      if (presentErr) { if (presentErr.code !== 'Canceled') setPayError(presentErr.message); return; }
+      setPaymentComplete(true);
+    } catch (err: any) {
+      setPayError(err.message || 'Payment failed. Please try again.');
+    } finally {
+      setPayBusy(false);
+    }
   };
   useEffect(() => {
     if (step.id !== 'design' || designReady) return;
@@ -548,7 +698,7 @@ export default function App() {
       }
     },
     onPanResponderRelease: (_, g) => {
-      if (step.id === 'design' && Math.abs(g.dx) > 65 && Math.abs(g.dx) > Math.abs(g.dy)) { changeTemplate(g.dx); motion.setValue(index * CARD_TRAVEL); return; }
+      if (step.id === 'design' && Math.abs(g.dx) > 65 && Math.abs(g.dx) > Math.abs(g.dy)) { changePage(g.dx); motion.setValue(index * CARD_TRAVEL); return; }
       if (step.id === 'design' && Math.abs(g.dx) > Math.abs(g.dy)) { Animated.spring(templateMotion, { toValue: 0, useNativeDriver: true }).start(); return; }
       if (g.dy < -48 || g.vy < -.55) go(index + 1); else if (g.dy > 48 || g.vy > .55) go(index - 1); else Animated.spring(motion, { toValue: index * CARD_TRAVEL, damping: 20, stiffness: 210, useNativeDriver: true }).start(() => setDeckDirection(0));
       hideRailSoon();
@@ -622,8 +772,8 @@ export default function App() {
         <Pressable onPress={() => setContactForm(!contactForm)} style={[s.formChoice, contactForm && s.formChoiceOn]}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color={contactForm ? '#fff' : BRAND} /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: '#324254', true: BRAND }} thumbColor="#F7FCFF" /></Pressable></>;
       case 'design': return <View style={s.design}>
         <TextEditModal visible={!!editingText} value={editingText ? (siteTexts[editingText.key] ?? { headline: 'Beautiful hair, beautifully yours.', heroBody: 'Thoughtful cuts, colour and styling in a calm modern salon.', aboutTitle: 'Hair that feels like you', aboutBody: 'Personal service, honest advice and a finish made for real life.' }[editingText.key as keyof object] ?? '') : ''} label={editingText?.label || ''} onSave={(v: string) => setSiteTexts(t => ({ ...t, [editingText!.key]: v }))} onClose={() => setEditingText(null)} />
-        <Animated.View pointerEvents={designReady ? 'auto' : 'none'} style={[s.designPreview, { opacity: designReveal }]}><Animated.View style={{ transform: [{ translateX: templateMotion }] }}><SitePreview palette={palette} font={font} template={template} editing={editing} siteTexts={siteTexts} onEditText={(key: string) => { const labels: Record<string,string> = { headline: 'Hero headline', heroBody: 'Hero subtext', aboutTitle: 'About title', aboutBody: 'About description', brand: 'Brand name' }; setEditingText({ key, label: labels[key] || key }); }} /></Animated.View>
-          <View style={s.templateDots}><View style={[s.templateDot, template === 0 && s.templateDotOn]} /><View style={[s.templateDot, template === 1 && s.templateDotOn]} /></View>
+        <Animated.View pointerEvents={designReady ? 'auto' : 'none'} style={[s.designPreview, { opacity: designReveal }]}><Animated.View style={{ transform: [{ translateX: templateMotion }] }}><SitePreview palette={palette} font={font} page={previewPage} onPageChange={setPreviewPage} editing={editing} siteTexts={siteTexts} onEditText={(key: string) => { const labels: Record<string,string> = { headline: 'Hero headline', heroBody: 'Hero subtext', aboutTitle: 'About title', aboutBody: 'About description', brand: 'Brand name' }; setEditingText({ key, label: labels[key] || key }); }} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></Animated.View>
+          <View style={s.templateDots}>{[0,1,2].map(i => <View key={i} style={[s.templateDot, previewPage === i && s.templateDotOn]} />)}</View>
           {tutorial && designReady && <Tutorial close={() => setTutorial(false)} />}</Animated.View>
         <Animated.View pointerEvents="none" style={[s.loading, { opacity: designReveal.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }]}><View style={s.loadingWordmark}><Text style={s.loadingBrand}>BRIGHTSITE</Text><View style={s.loadingBrandDot} /></View>
           <Text style={s.loadingTitle}>Creating {data.businessName || 'your'} design options</Text><Text style={s.loadingText}>We’re shaping your details into a website that feels like your business.</Text>
@@ -661,7 +811,10 @@ export default function App() {
         {domainReady && <View style={s.planDomain}><Ionicons name="globe-outline" size={15} color="#DDF8FF" /><Text style={s.planDomainText}>{domain}{suffix}</Text></View>}
         <Pressable onPress={() => setAnnual(false)} style={[s.plan, !annual && s.planOn]}><View><Text style={s.planName}>Monthly</Text><Text style={s.planNote}>Cancel any time</Text></View><Text style={s.planPrice}>£19<Text style={s.planSmall}>/month</Text></Text></Pressable>
         <Pressable onPress={() => setAnnual(true)} style={[s.plan, annual && s.planOn]}><View><Text style={s.save}>SAVE £24</Text><Text style={s.planName}>Annual</Text><Text style={s.planNote}>Billed £204 yearly</Text></View><Text style={s.planPrice}>£17<Text style={s.planSmall}>/month</Text></Text></Pressable>
-        <Pressable onPress={() => setPaymentComplete(true)} style={s.payButton}><Ionicons name="lock-closed" size={16} color="#1B2226" /><Text style={s.payButtonText}>Continue to secure payment</Text></Pressable></>;
+        <Pressable onPress={() => void handlePayment()} disabled={payBusy} style={[s.payButton, payBusy && s.checkDisabled]}>
+          {payBusy ? <ActivityIndicator size="small" color="#1B2226" /> : <><Ionicons name="lock-closed" size={16} color="#1B2226" /><Text style={s.payButtonText}>Continue to secure payment</Text></>}
+        </Pressable>
+        {!!payError && <Text style={s.domainError}>{payError}</Text>}</>;
       case 'dashboard': return <><View style={s.dashHead}><View><Text style={s.live}>PUBLISHING</Text><Text style={s.dashTitle}>Your website is nearly live</Text></View>
         <Pressable style={s.editPill}><Ionicons name="create-outline" size={16} color="#DFF8FF" /><Text style={s.editPillText}>Edit</Text></Pressable></View>
         <View style={s.browser}><View style={s.browserBar}><View style={s.browserDot} /><View style={s.browserDot} /><View style={s.browserDot} /></View>
@@ -683,7 +836,7 @@ export default function App() {
     </View>
   </FlowBackdrop>;
 
-  if (index === steps.length - 1 && paymentComplete) return <DashboardHome tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} template={template} onEdit={() => {
+  if (index === steps.length - 1 && paymentComplete) return <DashboardHome tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} onEdit={() => {
     const designIndex = steps.findIndex(item => item.id === 'design');
     setIndex(designIndex);
     motion.setValue(designIndex * CARD_TRAVEL);
@@ -705,7 +858,7 @@ export default function App() {
           const cardScale = cardPosition.interpolate({ inputRange: [-CARD_TRAVEL, 0, CARD_TRAVEL], outputRange: [.93, 1, .93], extrapolate: 'clamp' });
           return <Animated.View key={deckStep.id} pointerEvents={isActive ? 'auto' : 'none'} {...(isActive ? pan.panHandlers : {})} style={[s.card, s.deckCard, isActive ? s.deckCardActive : s.deckCardBehind, { zIndex: isIncoming ? 22 : isActive ? 21 : 20 - Math.abs(distance), transform: [{ translateY: travelPosition }, { scale: cardScale }] }]}>
             <BlurView intensity={42} tint="dark" style={StyleSheet.absoluteFill} />
-            <View style={[s.cardHeader, deckStep.id === 'design' && s.designCardHeader]}><Text style={s.cardTitle}>{deckStep.title}</Text>{deckStep.id === 'design' && designReady ? <DesignTools active={tool} setActive={setTool} palette={palette} setPalette={setPalette} font={font} setFont={setFont} editing={editing} setEditing={setEditing} sections={sections} setSections={setSections} /> : deckIndex > 0 && deckStep.id !== 'dashboard' && <Text style={s.count}>{deckIndex}/10</Text>}</View>
+            <View style={[s.cardHeader, deckStep.id === 'design' && s.designCardHeader]}><Text style={s.cardTitle}>{deckStep.title}</Text>{deckStep.id === 'design' && designReady ? <DesignTools active={tool} setActive={setTool} palette={palette} setPalette={setPalette} font={font} setFont={setFont} editing={editing} setEditing={setEditing} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} /> : deckIndex > 0 && deckStep.id !== 'dashboard' && <Text style={s.count}>{deckIndex}/10</Text>}</View>
             <ScrollView style={s.cardScroll} contentContainerStyle={[s.content, deckStep.id === 'login' && s.loginContent, deckStep.id === 'design' && { padding: 0 }, deckStep.id === 'hours' && s.hoursContent]}
               scrollEnabled={deckStep.id !== 'hours' || keyboardVisible}
               keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
@@ -732,6 +885,14 @@ export default function App() {
       })}</View>
     </View>
   </FlowBackdrop>;
+}
+
+export default function App() {
+  return (
+    <StripeProvider publishableKey={STRIPE_KEY}>
+      <AppInner />
+    </StripeProvider>
+  );
 }
 
 const s = StyleSheet.create({
@@ -778,22 +939,57 @@ const s = StyleSheet.create({
   loading: { position: 'absolute', inset: 0, minHeight: SCREEN_HEIGHT * .65, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 44 }, loadingWordmark: { flexDirection: 'row', position: 'relative', marginBottom: 26 }, loadingBrand: { fontFamily: FONT, letterSpacing: 1.6, fontWeight: '900', fontSize: 17, color: '#F7FCFF' }, loadingBrandDot: { position: 'absolute', width: 5, height: 5, borderRadius: 3, backgroundColor: '#4B9BFF', right: 32, top: -1 },
   loadingTitle: { fontFamily: FONT, fontSize: 25, lineHeight: 31, fontWeight: '800', color: '#F5FBFE', textAlign: 'center' }, loadingText: { fontFamily: FONT, fontSize: 13, lineHeight: 19, color: 'rgba(221,237,246,.58)', textAlign: 'center', marginTop: 10 }, loadingSteps: { alignSelf: 'stretch', gap: 10, marginTop: 27 }, loadingStep: { flexDirection: 'row', alignItems: 'center', gap: 9, opacity: .36 }, loadingStepOn: { opacity: 1 }, loadingStepText: { fontFamily: FONT, fontSize: 12, color: 'rgba(222,238,247,.6)' }, loadingStepTextOn: { color: '#EAF9FE', fontWeight: '700' },
   track: { width: '100%', height: 5, borderRadius: 5, backgroundColor: 'rgba(255,255,255,.1)', marginTop: 28, overflow: 'hidden' }, fill: { height: 5, backgroundColor: BRAND, borderRadius: 5 },
-  design: { minHeight: SCREEN_HEIGHT * .76, position: 'relative' }, designPreview: {}, site: { overflow: 'hidden' }, previewBrowser: { height: 29, paddingHorizontal: 11, backgroundColor: 'rgba(8,15,20,.9)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }, previewDots: { position: 'absolute', left: 11, flexDirection: 'row', gap: 4 }, previewDot: { width: 6, height: 6, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.35)' }, previewAddress: { fontFamily: FONT, fontSize: 8, color: 'rgba(255,255,255,.54)' }, siteHero: { height: SCREEN_HEIGHT * .38, padding: 20, justifyContent: 'space-between' },
-  siteTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, siteKicker: { fontFamily: FONT, fontSize: 12, letterSpacing: 2, fontWeight: '700', color: '#fff' }, siteNav: { flexDirection: 'row', alignItems: 'center', gap: 10 }, siteNavText: { fontFamily: FONT, fontSize: 7, letterSpacing: .7, color: 'rgba(255,255,255,.78)' }, siteCopy: { maxWidth: '76%' },
-  siteHeadline: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 28, lineHeight: 32, color: '#fff', marginBottom: 8 }, rounded: { fontFamily: FONT, fontWeight: '800', letterSpacing: -1 }, modern: { fontFamily: FONT, fontWeight: '400', letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 22 },
-  siteBody: { fontFamily: FONT, fontSize: 11, lineHeight: 16, color: 'rgba(255,255,255,.76)' }, editing: { borderWidth: 1, borderColor: BRAND, borderRadius: 4, padding: 2 },
-  siteCta: { marginTop: 12, alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1 }, siteCtaText: { fontFamily: FONT, fontSize: 8, fontWeight: '800', letterSpacing: 1.4, color: '#fff' },
-  siteSection: { padding: 18 }, siteSectionTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 20, marginBottom: 6 }, siteSectionBody: { fontFamily: FONT, fontSize: 10, lineHeight: 15, opacity: .68, maxWidth: '78%' },
-  siteServicesRow: { flexDirection: 'row', paddingHorizontal: 14, paddingVertical: 14, gap: 8, borderTopWidth: 1, borderBottomWidth: 1 },
-  siteServiceCard: { flex: 1, padding: 10, borderRadius: 10, borderWidth: 1 },
-  siteServiceName: { fontFamily: FONT, fontSize: 8, fontWeight: '800', letterSpacing: .4 },
-  siteServiceLink: { fontFamily: FONT, fontSize: 7, marginTop: 5, opacity: .6 },
-  siteReviewsSection: { padding: 18 },
-  siteReviewsSectionTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 16, marginBottom: 8 },
-  siteStars: { flexDirection: 'row', gap: 2, marginBottom: 7 },
-  siteReviewText: { fontFamily: FONT, fontSize: 10, lineHeight: 14, fontStyle: 'italic', marginBottom: 5 },
-  siteReviewAuthor: { fontFamily: FONT, fontSize: 8, opacity: .6 },
-  siteGallerySection: { padding: 16 },
+  design: { minHeight: SCREEN_HEIGHT * .76, position: 'relative' }, designPreview: {}, site: { overflow: 'hidden' },
+  previewBrowserWrap: { backgroundColor: 'rgba(8,15,20,.9)' },
+  previewBrowser: { height: 29, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  previewDots: { position: 'absolute', left: 11, flexDirection: 'row', gap: 4 }, previewDot: { width: 6, height: 6, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.35)' }, previewAddress: { fontFamily: FONT, fontSize: 8, color: 'rgba(255,255,255,.54)' },
+  previewPageNav: { flexDirection: 'row', borderBottomWidth: StyleSheet.hairlineWidth },
+  previewPageTab: { flex: 1, paddingVertical: 6, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
+  previewPageTabText: { fontFamily: FONT, fontSize: 8, fontWeight: '700', color: 'rgba(255,255,255,.45)', letterSpacing: .5 },
+  siteHero: { height: SCREEN_HEIGHT * .36, padding: 18, justifyContent: 'space-between' },
+  siteTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, siteKicker: { fontFamily: FONT, fontSize: 11, letterSpacing: 2, fontWeight: '700', color: '#fff' }, siteNav: { flexDirection: 'row', alignItems: 'center', gap: 10 }, siteNavText: { fontFamily: FONT, fontSize: 7, letterSpacing: .7, color: 'rgba(255,255,255,.78)' }, siteCopy: { maxWidth: '76%' },
+  siteHeadline: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 24, lineHeight: 28, color: '#fff', marginBottom: 7 }, rounded: { fontFamily: FONT, fontWeight: '800', letterSpacing: -1 }, modern: { fontFamily: FONT, fontWeight: '400', letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 20 },
+  siteBody: { fontFamily: FONT, fontSize: 10, lineHeight: 15, color: 'rgba(255,255,255,.76)' }, editing: { borderWidth: 1, borderColor: BRAND, borderRadius: 4, padding: 2 },
+  siteCta: { marginTop: 10, alignSelf: 'flex-start', paddingVertical: 7, paddingHorizontal: 11, borderWidth: 1 }, siteCtaText: { fontFamily: FONT, fontSize: 7, fontWeight: '800', letterSpacing: 1.4, color: '#fff' },
+  siteCtaFilled: { paddingVertical: 9, paddingHorizontal: 16, borderRadius: 6, alignItems: 'center', alignSelf: 'flex-start' }, siteCtaFilledText: { fontFamily: FONT, fontSize: 8, fontWeight: '800', color: '#fff' },
+  siteSection: { padding: 16 }, siteSectionTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 16, marginBottom: 5 }, siteSectionBody: { fontFamily: FONT, fontSize: 9, lineHeight: 14, opacity: .68 },
+  siteAboutServRow: { flexDirection: 'row', padding: 14, paddingTop: 16, gap: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(0,0,0,.08)' },
+  siteAboutCol: { flex: 1.2 }, siteSvcsCol: { flex: 1, gap: 6 },
+  siteServiceCard: { padding: 9, borderRadius: 9, borderWidth: 1 },
+  siteServiceName: { fontFamily: FONT, fontSize: 7, fontWeight: '800', letterSpacing: .3 },
+  siteServiceLink: { fontFamily: FONT, fontSize: 6, marginTop: 4, opacity: .6 },
+  siteReviewsSection: { padding: 16 },
+  siteReviewsSectionTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 14, marginBottom: 7 },
+  siteStars: { flexDirection: 'row', gap: 2, marginBottom: 6 },
+  siteReviewText: { fontFamily: FONT, fontSize: 9, lineHeight: 13, fontStyle: 'italic', marginBottom: 4 },
+  siteReviewAuthor: { fontFamily: FONT, fontSize: 7, opacity: .6 },
+  siteGallerySection: { padding: 14 },
+  siteContactCta: { padding: 16, borderTopWidth: 1, alignItems: 'center', gap: 10 },
+  siteContactCtaTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 16 },
+  siteSvcsListSection: { padding: 14 },
+  siteSvcRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth },
+  siteSvcRowName: { fontFamily: FONT, fontSize: 9, fontWeight: '700' },
+  siteSvcRowDetail: { fontFamily: FONT, fontSize: 7, opacity: .55, marginTop: 2 },
+  siteSvcRowPrice: { fontFamily: FONT, fontSize: 9, fontWeight: '800' },
+  siteContactInfoRow: { flexDirection: 'row', padding: 14, gap: 10 },
+  siteContactInfoCol: { flex: 1 }, siteHoursCol: { flex: 1 },
+  siteContactInfoTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 13, marginBottom: 7 },
+  siteContactItem: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 5 },
+  siteContactItemText: { fontFamily: FONT, fontSize: 7, lineHeight: 11, flex: 1 },
+  siteHoursRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+  siteHoursDay: { fontFamily: FONT, fontSize: 7, fontWeight: '700', width: 24 },
+  siteHoursTime: { fontFamily: FONT, fontSize: 7, opacity: .7 },
+  siteMockMap: { margin: 14, marginTop: 0, borderRadius: 10, borderWidth: 1, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 52 },
+  siteMockMapAddr: { fontFamily: FONT, fontSize: 8, fontWeight: '700' },
+  siteMockMapSub: { fontFamily: FONT, fontSize: 7, opacity: .5, marginTop: 2 },
+  siteFormSection: { padding: 14 },
+  siteFormField: { borderWidth: 1, borderRadius: 7, padding: 8, marginBottom: 6, minHeight: 26 },
+  siteFormPh: { fontFamily: FONT, fontSize: 7, opacity: .45 },
+  editPageTabs: { flexDirection: 'row', marginBottom: 8, borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(66,104,125,.18)' },
+  editPageTab: { flex: 1, paddingVertical: 6, alignItems: 'center' },
+  editPageTabOn: { backgroundColor: 'rgba(34,188,231,.18)' },
+  editPageTabText: { fontFamily: FONT, fontSize: 9, fontWeight: '700', color: '#345568' },
+  editPageTabTextOn: { color: '#2878A0' },
   swatches: { flexDirection: 'row', marginTop: 2, gap: 7 }, swatch: { width: 22, height: 22, borderRadius: 11 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,.45)', justifyContent: 'flex-end', cursor: 'default' as any },
   modalBox: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: Platform.OS === 'ios' ? 42 : 24 },
