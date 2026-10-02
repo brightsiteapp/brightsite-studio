@@ -31,25 +31,20 @@
   #pricing{padding-top:12px!important;padding-bottom:14px}
   footer{padding:20px 24px!important}
 
-  #pricing > .wrap{max-width:520px}
+  #pricing > .wrap{max-width:860px}
 
-  #pricing .plans{display:flex;flex-direction:column}
+  #pricing .plans{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
   #pricing .plan{border-color:var(--accent);position:relative;box-sizing:border-box;width:100%;display:flex;flex-direction:column}
 
-  /* Toggle */
-  .plan-header{margin-bottom:6px;display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:10px}
-  .plan-header h4{margin:0;min-width:0}
-  .card-billing{position:static;display:flex;align-items:stretch;gap:0;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;flex-shrink:0;margin-top:4px}
-  .card-billing button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:11px;font-weight:700;padding:6px 10px;cursor:pointer;line-height:1.2;transition:background .15s,color .15s;white-space:nowrap;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
-  .card-billing button.active{background:var(--accent);color:#fff}
-  .card-save-badge{font-size:9px;font-weight:700;color:inherit;opacity:.85;letter-spacing:-.01em}
+  .plan-label{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+  .plan-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:3px 14px;border-radius:999px;white-space:nowrap}
 
-  #pricing .plan{padding:30px 28px}
-  #pricing .plan h4{font-size:30px;margin-bottom:0}
+  #pricing .plan{padding:28px 24px}
+  #pricing .plan h4{font-size:26px;margin-bottom:0}
   #pricing .plan .desc{margin-bottom:14px}
-  #pricing .plan .price{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;white-space:normal;font-size:52px;font-weight:800;color:#111;letter-spacing:-0.03em}
-  #pricing .plan .price small{font-size:14px;margin-left:4px;color:var(--accent);font-weight:600;letter-spacing:0}
-  #pricing .plan .price-note{font-size:12px;color:#999;margin-top:2px;margin-bottom:18px;min-height:16px}
+  #pricing .plan .price{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;font-size:46px;font-weight:800;color:#111;letter-spacing:-0.03em}
+  #pricing .plan .price small{font-size:13px;margin-left:4px;color:var(--accent);font-weight:600;letter-spacing:0}
+  #pricing .plan .price-note{font-size:12px;color:#999;margin-top:2px;margin-bottom:18px}
   #pricing .annual-saving{color:var(--accent);font-weight:700}
   #pricing .plan ul{gap:8px;margin-bottom:0}
   #pricing .plan li{font-size:14px}
@@ -57,19 +52,18 @@
   #pricing .pricing-note{margin-top:20px}
 
   /* Annual perks callout */
-  .annual-bonus{display:none;margin-bottom:20px;border-radius:13px;overflow:hidden;border:1.5px solid var(--accent);background:linear-gradient(135deg,#f0f7ff 0%,#e8f4fd 100%)}
-  .annual-bonus.visible{display:flex;flex-direction:column;gap:0}
-  .annual-bonus-item{display:flex;align-items:center;gap:13px;padding:13px 16px;border-bottom:1px solid rgba(0,0,0,.06)}
+  .annual-bonus{display:flex;flex-direction:column;gap:0;margin-bottom:20px;border-radius:13px;overflow:hidden;border:1.5px solid var(--accent);background:linear-gradient(135deg,#f0f7ff 0%,#e8f4fd 100%)}
+  .annual-bonus-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid rgba(0,0,0,.06)}
   .annual-bonus-item:last-child{border-bottom:0}
-  .bonus-icon{width:34px;height:34px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px}
-  .bonus-text strong{display:block;font-size:13px;font-weight:800;color:#111}
+  .bonus-icon{width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+  .bonus-text strong{display:block;font-size:12px;font-weight:800;color:#111}
   .bonus-text span{font-size:11px;color:#888}
 
-  @media(max-width:600px){
-    #pricing .plan{padding:20px 18px}
-    #pricing .plan h4{font-size:24px}
-    #pricing .plan .price{font-size:36px;white-space:normal;flex-wrap:wrap}
-    .card-billing button{font-size:10px;padding:6px 9px}
+  @media(max-width:640px){
+    #pricing .plans{grid-template-columns:1fr}
+    #pricing .plan{padding:22px 18px}
+    #pricing .plan h4{font-size:22px}
+    #pricing .plan .price{font-size:36px}
   }
 </style>
 <script src="reveal.js?v=20260902-3" defer></script>
@@ -110,23 +104,37 @@
 
       <div class="plans">
 
-        <!-- Free Plan -->
-        <div class="plan feature" data-essential>
-          <div class="plan-header">
-            <h4>Free Plan</h4>
-            <div class="card-billing">
-              <button type="button" class="card-bill-monthly">Monthly</button>
-              <button type="button" class="card-bill-annual active">Annual <span class="card-save-badge">Save £24</span></button>
-            </div>
-          </div>
-          <div class="desc">Your website built for free — just pay hosting to go live.</div>
+        <!-- Monthly card -->
+        <div class="plan feature">
+          <span class="plan-label">Monthly</span>
+          <h4>Free Plan</h4>
+          <div class="desc">Website built for free — just pay hosting to go live.</div>
           <div class="price-row">
-            <span class="price"><span class="setup-price">Free</span><small class="hosting-price">£17/mo hosting</small></span>
+            <span class="price">Free<small>£19/mo hosting</small></span>
+          </div>
+          <div class="price-note">£19/mo — cancel any time</div>
+          <ul>
+            <li>Website built for you at no cost</li>
+            <li>Hosting, security &amp; maintenance</li>
+            <li>SEO &amp; SEO-focused content</li>
+            <li>Mobile optimisation</li>
+            <li>1–3 pages with contact &amp; enquiry forms</li>
+            <li>Custom hero/header image</li>
+          </ul>
+          <a href="/account/login.html?signup=1" class="go">Sign up</a>
+        </div>
+
+        <!-- Annual card -->
+        <div class="plan feature" style="position:relative;margin-top:12px">
+          <span class="plan-badge">BEST VALUE</span>
+          <span class="plan-label">Annual</span>
+          <h4>Free Plan</h4>
+          <div class="desc">Everything in monthly, plus a free domain and logo.</div>
+          <div class="price-row">
+            <span class="price">Free<small>£17/mo hosting</small></span>
           </div>
           <div class="price-note">Billed £204/yr — <span class="annual-saving">save £24 a year</span></div>
-
-          <!-- Annual bonus callout — shown only when annual is active -->
-          <div class="annual-bonus visible" id="annualBonus">
+          <div class="annual-bonus">
             <div class="annual-bonus-item">
               <div class="bonus-icon">🌐</div>
               <div class="bonus-text">
@@ -142,7 +150,6 @@
               </div>
             </div>
           </div>
-
           <ul>
             <li>Website built for you at no cost</li>
             <li>Hosting, security &amp; maintenance</li>
@@ -177,31 +184,6 @@
   u();
 })();
 
-// Billing toggle
-(function(){
-  var plan = document.querySelector('#pricing .plan');
-  if (!plan) return;
-
-  var btnMonthly = plan.querySelector('.card-bill-monthly');
-  var btnAnnual  = plan.querySelector('.card-bill-annual');
-  var hostingEl  = plan.querySelector('.hosting-price');
-  var noteEl     = plan.querySelector('.price-note');
-  var bonusEl    = document.getElementById('annualBonus');
-
-  function update(isAnnual) {
-    btnMonthly.classList.toggle('active', !isAnnual);
-    btnAnnual.classList.toggle('active', isAnnual);
-    if (hostingEl) hostingEl.textContent = isAnnual ? '£17/mo hosting' : '£19/mo hosting';
-    if (noteEl) noteEl.innerHTML = isAnnual
-      ? 'Billed £204/yr — <span class="annual-saving">save £24 a year</span>'
-      : '£19/mo — cancel any time';
-    if (bonusEl) bonusEl.classList.toggle('visible', isAnnual);
-  }
-
-  btnMonthly.addEventListener('click', function(e){ e.stopPropagation(); update(false); });
-  btnAnnual.addEventListener('click',  function(e){ e.stopPropagation(); update(true);  });
-  update(true);
-})();
 </script>
 </body>
 </html>
