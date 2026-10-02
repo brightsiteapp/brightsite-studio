@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Pricing — BrightSite</title>
-<meta name="description" content="Simple pricing for custom websites: Free Plan with £19/mo hosting, or Pro (£99–£199 setup) and Prestige (£149–£299 setup) — all with SEO, hosting and management.">
+<meta name="description" content="One simple plan — your website built for free, just pay £19/mo hosting. Go annual for £17/mo and get a free domain and free logo thrown in.">
 <meta property="og:title" content="Straightforward Website Pricing | BrightSite">
 <meta property="og:description" content="Choose a custom website plan, then see a free personalised preview before you commit.">
 <meta property="og:type" content="website">
@@ -31,22 +31,12 @@
   #pricing{padding-top:12px!important;padding-bottom:14px}
   footer{padding:20px 24px!important}
 
-  #pricing > .wrap{max-width:1320px}
+  #pricing > .wrap{max-width:520px}
 
-  /* Zero-minimum tracks keep content and billing state from changing card widths. */
-  #pricing .plans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
-  #pricing .plan{border-color:var(--accent);position:relative;box-sizing:border-box;width:100%;min-width:0;display:flex;flex-direction:column}
-  #pricing .plan ul{flex:1;margin-bottom:0}
-  @media(max-width:900px){#pricing .plans{grid-template-columns:minmax(0,1fr)}}
+  #pricing .plans{display:flex;flex-direction:column}
+  #pricing .plan{border-color:var(--accent);position:relative;box-sizing:border-box;width:100%;display:flex;flex-direction:column}
 
-  @media(min-width:901px){
-    #pricing .plan{display:grid;grid-template-rows:subgrid;grid-row:span 6;row-gap:0}
-    #pricing .plan .price-spacer{display:none}
-    #pricing .plan .price-row{align-items:flex-start}
-    #pricing .plan .go{justify-self:start}
-  }
-
-  /* Toggle: flex row with h4 so they never overlap */
+  /* Toggle */
   .plan-header{margin-bottom:6px;display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:10px}
   .plan-header h4{margin:0;min-width:0}
   .card-billing{position:static;display:flex;align-items:stretch;gap:0;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;flex-shrink:0;margin-top:4px}
@@ -54,38 +44,31 @@
   .card-billing button.active{background:var(--accent);color:#fff}
   .card-save-badge{font-size:9px;font-weight:700;color:inherit;opacity:.85;letter-spacing:-.01em}
 
-  /* Best value badge on Pro */
-  .best-value-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:3px 12px;border-radius:999px;white-space:nowrap}
-
-  .price-was { font-size: 15px; color: #999; text-decoration: line-through; margin-right: 4px; display: inline-block; visibility: hidden; }
-  .price-save { font-size: 11px; font-weight: 700; color: var(--accent); background: #EAF0FE; padding: 2px 7px; border-radius: 20px; margin-left: 8px; vertical-align: middle; letter-spacing: -0.02em; display: inline-block; visibility: hidden; }
-  .plan[data-annual-active][data-annual-discount] .price-was,
-  .plan[data-annual-active][data-annual-discount] .price-save { visibility: visible; }
-  /* spacer keeps price rows aligned across all cards */
-  .price-spacer{display:block;height:22px}
-
-  #pricing .plan{padding:26px 24px}
-  #pricing .plan h4{font-size:29px;margin-bottom:0}
-  #pricing .plan .desc{margin-bottom:13px}
-  #pricing .plan .price{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;white-space:normal;font-size:48px;font-weight:800;color:#111;letter-spacing:-0.03em}
-  #pricing .plan .price .setup-price{font-size:48px;font-weight:800;color:#111!important}
-  #pricing .plan .price .price-was{font-size:18px;color:#bbb;text-decoration:line-through;margin-right:2px;font-weight:600}
-  #pricing .plan .price small{font-size:13px;margin-left:4px;color:var(--accent);font-weight:600;letter-spacing:0}
-  #pricing .price-save{margin-left:0}
-  #pricing .plan .price-note{font-size:12px;color:#999;margin-top:2px;margin-bottom:14px;min-height:16px}
-  #pricing .plan .price-addon{margin-bottom:17px}
-  #pricing .plan ul{gap:8px;margin-bottom:19px}
-  #pricing .plan li{font-size:14px}
-  #pricing .pricing-note{margin-top:20px}
-  #pricing .plan ul{margin-bottom:0}
-  #pricing .plan .go{margin-top:24px}
+  #pricing .plan{padding:30px 28px}
+  #pricing .plan h4{font-size:30px;margin-bottom:0}
+  #pricing .plan .desc{margin-bottom:14px}
+  #pricing .plan .price{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;white-space:normal;font-size:52px;font-weight:800;color:#111;letter-spacing:-0.03em}
+  #pricing .plan .price small{font-size:14px;margin-left:4px;color:var(--accent);font-weight:600;letter-spacing:0}
+  #pricing .plan .price-note{font-size:12px;color:#999;margin-top:2px;margin-bottom:18px;min-height:16px}
   #pricing .annual-saving{color:var(--accent);font-weight:700}
-  #pricing .plan li.addon{color:var(--accent);font-weight:700}
+  #pricing .plan ul{gap:8px;margin-bottom:0}
+  #pricing .plan li{font-size:14px}
+  #pricing .plan .go{margin-top:24px}
+  #pricing .pricing-note{margin-top:20px}
+
+  /* Annual perks callout */
+  .annual-bonus{display:none;margin-bottom:20px;border-radius:13px;overflow:hidden;border:1.5px solid var(--accent);background:linear-gradient(135deg,#f0f7ff 0%,#e8f4fd 100%)}
+  .annual-bonus.visible{display:flex;flex-direction:column;gap:0}
+  .annual-bonus-item{display:flex;align-items:center;gap:13px;padding:13px 16px;border-bottom:1px solid rgba(0,0,0,.06)}
+  .annual-bonus-item:last-child{border-bottom:0}
+  .bonus-icon{width:34px;height:34px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px}
+  .bonus-text strong{display:block;font-size:13px;font-weight:800;color:#111}
+  .bonus-text span{font-size:11px;color:#888}
+
   @media(max-width:600px){
-    #pricing .plan{padding:18px 16px}
-    #pricing .plan h4{font-size:22px}
-    #pricing .plan .price{font-size:32px;white-space:normal;flex-wrap:wrap}
-    #pricing .plan .price .setup-price{font-size:32px}
+    #pricing .plan{padding:20px 18px}
+    #pricing .plan h4{font-size:24px}
+    #pricing .plan .price{font-size:36px;white-space:normal;flex-wrap:wrap}
     .card-billing button{font-size:10px;padding:6px 9px}
   }
 </style>
@@ -117,8 +100,8 @@
     <div class="wrap">
       <div class="page-hero">
         <div class="eyebrow">Pricing</div>
-        <h1>Three ways to work with us</h1>
-        <p>Every plan gets a real custom website, SEO and full management — the difference is how far the design goes.</p>
+        <h1>One simple plan</h1>
+        <p>Your website built for free — just pay hosting to go live. Go annual and we'll throw in a free domain and free logo.</p>
       </div>
     </div>
   </section>
@@ -128,7 +111,7 @@
       <div class="plans">
 
         <!-- Free Plan -->
-        <div class="plan feature" data-setup-monthly="0" data-setup-annual="0" data-essential>
+        <div class="plan feature" data-essential>
           <div class="plan-header">
             <h4>Free Plan</h4>
             <div class="card-billing">
@@ -136,72 +119,36 @@
               <button type="button" class="card-bill-annual active">Annual <span class="card-save-badge">Save £24</span></button>
             </div>
           </div>
-          <div class="desc">Your website built for free — just pay £19/mo hosting to go live.</div>
+          <div class="desc">Your website built for free — just pay hosting to go live.</div>
           <div class="price-row">
-            <span class="price-spacer"></span>
             <span class="price"><span class="setup-price">Free</span><small class="hosting-price">£17/mo hosting</small></span>
           </div>
           <div class="price-note">Billed £204/yr — <span class="annual-saving">save £24 a year</span></div>
+
+          <!-- Annual bonus callout — shown only when annual is active -->
+          <div class="annual-bonus visible" id="annualBonus">
+            <div class="annual-bonus-item">
+              <div class="bonus-icon">🌐</div>
+              <div class="bonus-text">
+                <strong>Free domain included</strong>
+                <span>Worth up to £12/yr — yours for free</span>
+              </div>
+            </div>
+            <div class="annual-bonus-item">
+              <div class="bonus-icon">✨</div>
+              <div class="bonus-text">
+                <strong>Free logo creation</strong>
+                <span>Professional logo designed for your brand</span>
+              </div>
+            </div>
+          </div>
+
           <ul>
             <li>Website built for you at no cost</li>
             <li>Hosting, security &amp; maintenance</li>
             <li>SEO &amp; SEO-focused content</li>
             <li>Mobile optimisation</li>
             <li>1–3 pages with contact &amp; enquiry forms</li>
-            <li>Free logo creation</li>
-            <li>Custom hero/header image</li>
-          </ul>
-          <a href="/account/login.html?signup=1" class="go">Sign up</a>
-        </div>
-
-        <!-- Pro Plan -->
-        <div class="plan feature" data-setup-monthly="199" data-setup-annual="99" data-annual-discount>
-          <span class="best-value-badge">BEST VALUE</span>
-          <div class="plan-header">
-            <h4>Pro Plan</h4>
-            <div class="card-billing">
-              <button type="button" class="card-bill-monthly">Monthly</button>
-              <button type="button" class="card-bill-annual active">Annual <span class="card-save-badge">Save 50%</span></button>
-            </div>
-          </div>
-          <div class="desc"><b>Best for:</b> businesses that need a website with lots of info.</div>
-          <div class="price-row">
-            <span class="price"><span class="price-was">£199</span><span class="setup-price">£99</span><small class="hosting-price">£19/mo hosting</small><span class="price-save">Save 50%</span></span>
-          </div>
-          <div class="price-note">One-off build, then £228/yr</div>
-          <ul>
-            <li>Everything in Free</li>
-            <li>Up to 5 custom-designed pages</li>
-            <li>Custom sections built for you</li>
-            <li>Interactions &amp; animations</li>
-            <li class="addon"><span>Free domain included <small>(under £12/yr)</small></span></li>
-            <li>Free logo creation</li>
-            <li>Custom hero/header image</li>
-          </ul>
-          <a href="/account/login.html?signup=1" class="go">Sign up</a>
-        </div>
-
-        <!-- Prestige Plan -->
-        <div class="plan feature" data-setup-monthly="299" data-setup-annual="149" data-annual-discount>
-          <div class="plan-header">
-            <h4>Prestige Plan</h4>
-            <div class="card-billing">
-              <button type="button" class="card-bill-monthly">Monthly</button>
-              <button type="button" class="card-bill-annual active">Annual <span class="card-save-badge">Save 50%</span></button>
-            </div>
-          </div>
-          <div class="desc"><b>Best for:</b> corporate needs and multi-location brands.</div>
-          <div class="price-row">
-            <span class="price"><span class="price-was">£299</span><span class="setup-price">£149</span><small class="hosting-price">£19/mo hosting</small><span class="price-save">Save 50%</span></span>
-          </div>
-          <div class="price-note">One-off build, then £228/yr</div>
-          <ul>
-            <li>Everything in Free &amp; Pro</li>
-            <li>Up to 7 custom-designed pages</li>
-            <li>Multi-location or multi-service structure</li>
-            <li>Priority same-day support</li>
-            <li class="addon"><span>Free domain included <small>(under £12/yr)</small></span></li>
-            <li>Free logo creation</li>
             <li>Custom hero/header image</li>
           </ul>
           <a href="/account/login.html?signup=1" class="go">Sign up</a>
@@ -230,75 +177,30 @@
   u();
 })();
 
-// Per-card billing toggles
+// Billing toggle
 (function(){
-  var plans = document.querySelectorAll('#pricing .plan');
+  var plan = document.querySelector('#pricing .plan');
+  if (!plan) return;
 
-  plans.forEach(function(plan) {
-    var btnMonthly = plan.querySelector('.card-bill-monthly');
-    var btnAnnual  = plan.querySelector('.card-bill-annual');
-    if (!btnMonthly || !btnAnnual) return;
+  var btnMonthly = plan.querySelector('.card-bill-monthly');
+  var btnAnnual  = plan.querySelector('.card-bill-annual');
+  var hostingEl  = plan.querySelector('.hosting-price');
+  var noteEl     = plan.querySelector('.price-note');
+  var bonusEl    = document.getElementById('annualBonus');
 
-    var setupEl   = plan.querySelector('.setup-price');
-    var hostingEl = plan.querySelector('.hosting-price');
-    var noteEl    = plan.querySelector('.price-note');
-    var wasEl     = plan.querySelector('.price-was');
-
-    var isEssential = plan.hasAttribute('data-essential');
-    var monthlySetup = plan.dataset.setupMonthly;
-    var annualSetup  = plan.dataset.setupAnnual;
-
-    var saveEl = plan.querySelector('.price-save');
-
-    function update(isAnnual) {
-      btnMonthly.classList.toggle('active', !isAnnual);
-      btnAnnual.classList.toggle('active', isAnnual);
-
-      if (isEssential) {
-        if (hostingEl) hostingEl.textContent = isAnnual ? '£17/mo hosting' : '£19/mo hosting';
-        if (noteEl) noteEl.innerHTML = isAnnual ? 'Billed £204/yr — <span class="annual-saving">save £24 a year</span>' : '£19/mo hosting — cancel any time';
-      } else {
-        if (setupEl) {
-          setupEl.textContent = '£' + (isAnnual ? annualSetup : monthlySetup);
-        }
-        if (wasEl)   wasEl.style.visibility = isAnnual ? 'visible' : 'hidden';
-        if (saveEl)  saveEl.style.visibility = isAnnual ? 'visible' : 'hidden';
-        if (hostingEl) hostingEl.textContent = '£19/mo hosting';
-        if (noteEl) noteEl.textContent = isAnnual ? 'One-off build, then £228/yr' : 'One-off build, then £19/mo';
-        if (isAnnual) {
-          plan.setAttribute('data-annual-active', '');
-        } else {
-          plan.removeAttribute('data-annual-active');
-        }
-      }
-    }
-
-    btnMonthly.addEventListener('click', function(e){ e.stopPropagation(); update(false); });
-    btnAnnual.addEventListener('click',  function(e){ e.stopPropagation(); update(true);  });
-
-    // Init: annual
-    update(true);
-  });
-
-  // Lock all cards to the same fixed height across every toggle state
-  function lockHeights() {
-    var allPlans = document.querySelectorAll('#pricing .plan');
-    allPlans.forEach(function(p){ p.style.minHeight = ''; });
-
-    document.querySelectorAll('.card-bill-annual').forEach(function(b){ b.click(); });
-    var h1 = Math.max.apply(null, [...allPlans].map(function(p){ return p.offsetHeight; }));
-
-    document.querySelectorAll('.card-bill-monthly').forEach(function(b){ b.click(); });
-    var h2 = Math.max.apply(null, [...allPlans].map(function(p){ return p.offsetHeight; }));
-
-    document.querySelectorAll('.card-bill-annual').forEach(function(b){ b.click(); });
-
-    var maxH = Math.max(h1, h2);
-    allPlans.forEach(function(p){ p.style.minHeight = maxH + 'px'; });
+  function update(isAnnual) {
+    btnMonthly.classList.toggle('active', !isAnnual);
+    btnAnnual.classList.toggle('active', isAnnual);
+    if (hostingEl) hostingEl.textContent = isAnnual ? '£17/mo hosting' : '£19/mo hosting';
+    if (noteEl) noteEl.innerHTML = isAnnual
+      ? 'Billed £204/yr — <span class="annual-saving">save £24 a year</span>'
+      : '£19/mo — cancel any time';
+    if (bonusEl) bonusEl.classList.toggle('visible', isAnnual);
   }
 
-  setTimeout(lockHeights, 100);
-  window.addEventListener('resize', function(){ lockHeights(); });
+  btnMonthly.addEventListener('click', function(e){ e.stopPropagation(); update(false); });
+  btnAnnual.addEventListener('click',  function(e){ e.stopPropagation(); update(true);  });
+  update(true);
 })();
 </script>
 </body>
