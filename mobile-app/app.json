@@ -31,7 +31,9 @@
           "photosPermission": "Allow BrightSite to use the photos you choose for your website."
         }
       ],
-      "@stripe/stripe-react-native"
+      ["@stripe/stripe-react-native", {
+        "merchantIdentifier": "merchant.app.brightsite.mobile"
+      }]
     ]
   }
 }

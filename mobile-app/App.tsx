@@ -33,12 +33,10 @@ const steps: Step[] = [
   { id: 'prices', title: 'Services & prices', icon: 'pricetag-outline' },
   { id: 'media', title: 'Photos & logo', icon: 'images-outline' },
   { id: 'reviews', title: 'Reviews', icon: 'star-outline' },
-  { id: 'design', title: 'Design Editor', icon: 'layers-outline' },
   { id: 'domain', title: 'Choose a domain', icon: 'globe-outline' },
-  { id: 'plan', title: 'Choose your plan', icon: 'card-outline' },
-  { id: 'dashboard', title: 'Your website', icon: 'checkmark-circle-outline' },
+  { id: 'choice', title: 'Build your website', icon: 'construct-outline' },
 ];
-const setupStepIndexes = Array.from({ length: 9 }, (_, i) => i + 1);
+const setupStepIndexes = Array.from({ length: 8 }, (_, i) => i + 1);
 const paletteGroups = [
   { name: 'Light', options: [['#B98B5F', '#F5EFE5', '#201B18'], ['#C78561', '#FFF5EC', '#2D1811'], ['#8E9B7A', '#F2F5EC', '#20321D'], ['#A47A57', '#F6F0E8', '#271C15'], ['#7697A6', '#EDF6F7', '#162D35'], ['#C59C7B', '#FCF8F2', '#302015']] },
   { name: 'Dark', options: [['#D6A56B', '#15110E', '#F3EADF'], ['#78BDCF', '#0C2028', '#E7F8FC'], ['#B2C798', '#142016', '#F2F6ED'], ['#CE8471', '#261412', '#FAEDEA'], ['#A19BDB', '#171529', '#F2F1FF'], ['#D7B179', '#211A11', '#FBF1DF']] },
@@ -63,7 +61,7 @@ const CATEGORY_PRESETS: Record<string, { topServices: string[]; about: string; h
   'Fitness': { topServices: ['Personal Training', 'Group Classes', 'Nutrition'], about: 'Expert coaching to help you reach your health and fitness goals.', heroTitle: 'Your best body starts here.', heroBody: 'Science-backed training, real results and a community that supports you.' },
   'Gym': { topServices: ['Memberships', 'Classes', 'PT Sessions'], about: 'A fully equipped gym with classes for every fitness level.', heroTitle: 'Push your limits.', heroBody: 'State-of-the-art equipment and expert trainers to help you achieve more.' },
   'Photography': { topServices: ['Portraits', 'Events', 'Commercial'], about: 'Capturing the moments that matter most in your most authentic light.', heroTitle: 'Your story, beautifully told.', heroBody: 'Natural light portraits, events and commercial photography.' },
-  'Dental': { topServices: ['Check-ups', 'Whitening', 'Orthodontics'], about: 'Gentle, professional dental care for the whole family.', heroTitle: "A smile you're proud of.", heroBody: 'Expert dental care delivered with warmth and attention to detail.' },
+  'Dental': { topServices: ['Check-ups', 'Whitening', 'Orthodontics'], about: 'Gentle, professional dental care for the whole family.', heroTitle: "A smile you’re proud of.", heroBody: 'Expert dental care delivered with warmth and attention to detail.' },
   'Plumbing': { topServices: ['Boiler Repair', 'Installation', 'Emergency'], about: 'Reliable, qualified plumbers for every job big or small.', heroTitle: 'Plumbing you can count on.', heroBody: 'Fast, professional service from fully qualified engineers.' },
   'Cleaning': { topServices: ['Domestic', 'Commercial', 'Deep Clean'], about: 'Professional cleaning services for homes and businesses.', heroTitle: 'Spotlessly clean, every time.', heroBody: 'Reliable, thorough cleaning using eco-friendly products.' },
 };
@@ -71,7 +69,7 @@ function getPreset(category: string) {
   const key = Object.keys(CATEGORY_PRESETS).find(k =>
     (category || '').toLowerCase().includes(k.toLowerCase()) || k.toLowerCase().includes((category || '').toLowerCase())
   );
-  return key ? CATEGORY_PRESETS[key] : { topServices: ['Our Services', 'Consultations', 'Packages'], about: 'Professional, friendly service tailored to your needs.', heroTitle: 'Welcome.', heroBody: "We're here to help." };
+  return key ? CATEGORY_PRESETS[key] : { topServices: ['Our Services', 'Consultations', 'Packages'], about: 'Professional, friendly service tailored to your needs.', heroTitle: 'Welcome.', heroBody: "We’re here to help." };
 }
 
 function Field({ label, value, onChangeText, placeholder, keyboardType = 'default', multiline = false, ...inputProps }: any) {
@@ -413,29 +411,160 @@ function FlowBackdrop({ children }: any) {
   return <View style={{ flex: 1, backgroundColor: '#fff' }}>{children}</View>;
 }
 
-function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, onEdit }: any) {
+const LOADING_MESSAGES = {
+  template: ['Choosing a layout', 'Setting the tone', 'Matching your details', 'Almost ready'],
+  designer: ['Saving your details', 'Preparing your dashboard', 'Getting things ready', 'Almost there'],
+};
+
+function FadeIn({ children }: { children: React.ReactNode }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(opacity, { toValue: 1, duration: 480, useNativeDriver: true }).start();
+  }, []);
+  return <Animated.View style={{ flex: 1, opacity }}>{children}</Animated.View>;
+}
+
+function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, onEdit, websiteStatus, onMakeLive, onTakeOffline }: any) {
   const siteUrl = data.website?.trim() || `https://${domain}${suffix}`;
+  const [showLiveDropdown, setShowLiveDropdown] = useState(false);
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [annual, setAnnual] = useState(false);
+  const [payBusy, setPayBusy] = useState(false);
+  const [payError, setPayError] = useState('');
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
+
+  const handlePay = async () => {
+    setPayBusy(true); setPayError('');
+    try {
+      const res = await fetch(PAYMENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan: annual ? 'annual' : 'monthly', domain: domain + suffix }) });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Could not set up payment.');
+      const { error: initErr } = await initPaymentSheet({ merchantDisplayName: 'BrightSite', paymentIntentClientSecret: json.clientSecret, allowsDelayedPaymentMethods: false });
+      if (initErr) throw new Error(initErr.message);
+      const { error: presentErr } = await presentPaymentSheet();
+      if (presentErr) { if (presentErr.code !== 'Canceled') setPayError(presentErr.message); return; }
+      setShowPlanModal(false);
+      onMakeLive?.();
+    } catch (err: any) { setPayError(err.message || 'Payment failed. Please try again.'); }
+    finally { setPayBusy(false); }
+  };
+
+  const isLive = websiteStatus === 'live';
+  const isBuilding = websiteStatus === 'building';
+  const isReady = websiteStatus === 'ready';
+
   return <FlowBackdrop>
     <StatusBar style="dark" />
     <View style={s.dashboardScreen}>
-      <View style={s.dashboardBrandRow}><Text style={s.dashboardBrand}>BRIGHTSITE</Text><Text style={s.dashboardLive}>● LIVE</Text></View>
+      <View style={s.dashboardBrandRow}>
+        <Text style={s.dashboardBrand}>BRIGHTSITE</Text>
+        {isLive && <Text style={s.dashboardLive}>● LIVE</Text>}
+      </View>
       <View style={s.dashboardTabsTop}>{['Account', 'Website', 'Messages'].map(name => <Pressable key={name} onPress={() => setTab(name)} style={[s.dashboardTab, tab === name && s.dashboardTabOn]}><Text style={[s.dashboardTabText, tab === name && s.dashboardTabTextOn]}>{name}</Text></Pressable>)}</View>
       <ScrollView contentContainerStyle={s.dashboardContent} showsVerticalScrollIndicator={false}>
-        {tab === 'Account' && <><Text style={s.dashboardTitle}>Your account</Text><Text style={s.dashboardIntro}>Everything for {data.businessName || 'your business'} in one place.</Text>
-          <View style={s.dashboardInfoCard}><Text style={s.dashboardCardLabel}>YOUR PLAN</Text><Text style={s.dashboardCardTitle}>Free website plan</Text><Text style={s.dashboardCardText}>£19/month hosting</Text></View>
+        {tab === 'Account' && <>
+          <Text style={s.dashboardTitle}>Your account</Text>
+          <Text style={s.dashboardIntro}>Everything for {data.businessName || 'your business'} in one place.</Text>
+          <View style={s.dashboardInfoCard}><Text style={s.dashboardCardLabel}>YOUR PLAN</Text><Text style={s.dashboardCardTitle}>{isLive ? (annual ? 'Annual Plan' : 'Monthly Plan') : 'Free Plan'}</Text><Text style={s.dashboardCardText}>{isLive ? (annual ? '£17/month · £204/year' : '£19/month') : 'Activate to go live'}</Text></View>
           <View style={s.dashboardInfoCard}><Text style={s.dashboardCardLabel}>YOUR DOMAIN</Text><Text style={s.dashboardCardTitle}>{domain}{suffix}</Text><Text style={s.dashboardCardText}>Connected to your website</Text></View>
-          <View style={s.dashboardInfoCard}><Text style={s.dashboardCardLabel}>ACCOUNT EMAIL</Text><Text style={s.dashboardCardTitle}>{data.email || data.contactEmail || 'Add an email address'}</Text></View></>}
-        {tab === 'Website' && <><View style={s.dashboardWebsiteHead}><View><Text style={s.dashboardLive}>● LIVE</Text><Text style={s.dashboardTitle}>Your website</Text></View><Pressable onPress={onEdit} style={s.dashboardEdit}><Ionicons name="create-outline" size={15} color="#fff" /><Text style={s.dashboardEditText}>Edit</Text></Pressable></View>
-          <Text style={s.dashboardIntro}>Tap your homepage to open it, or edit its design and content.</Text>
-          <Pressable onPress={() => void Linking.openURL(siteUrl)} style={s.phoneFrame}><View pointerEvents="none" style={s.phoneScale}><SitePreview palette={palette} font={font} page={0} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></View></Pressable></>}
-        {tab === 'Messages' && <><Text style={s.dashboardTitle}>Messages</Text><View style={s.messageBubble}><Text style={s.messageSender}>Tom · BrightSite</Text><Text style={s.messageText}>Welcome to BrightSite, {data.businessName || 'there'}! I’m Tom. Your website is live, and you can message me here whenever you need a hand.</Text></View><View style={s.messageInput}><Text style={s.messagePlaceholder}>Message BrightSite…</Text><Ionicons name="arrow-up-circle" size={24} color="#2878FF" /></View></>}
+          <View style={s.dashboardInfoCard}><Text style={s.dashboardCardLabel}>ACCOUNT EMAIL</Text><Text style={s.dashboardCardTitle}>{data.email || data.contactEmail || 'Add an email address'}</Text></View>
+        </>}
+        {tab === 'Website' && <>
+          <View style={s.dashboardWebsiteHead}>
+            <View>
+              {isLive && <Text style={s.dashboardLive}>● LIVE</Text>}
+              {isBuilding && <Text style={[s.dashboardLive, { color: '#F0A030' }]}>⏳ BUILDING</Text>}
+              {isReady && <Text style={[s.dashboardLive, { color: '#4B9BFF' }]}>● READY TO PUBLISH</Text>}
+              <Text style={s.dashboardTitle}>Your website</Text>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+              {!isBuilding && <Pressable onPress={onEdit} style={s.dashboardEdit}><Ionicons name="create-outline" size={15} color="#fff" /><Text style={s.dashboardEditText}>Edit</Text></Pressable>}
+              {isLive && <Pressable onPress={() => setShowLiveDropdown(!showLiveDropdown)} style={[s.dashboardEdit, { backgroundColor: '#3CAB6A' }]}>
+                <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: '#fff' }} />
+                <Text style={s.dashboardEditText}>Live</Text>
+                <Ionicons name="chevron-down" size={12} color="#fff" />
+              </Pressable>}
+              {showLiveDropdown && <View style={s.liveDropdown}>
+                <Pressable onPress={() => { setShowLiveDropdown(false); onTakeOffline?.(); }} style={s.liveDropdownItem}><Ionicons name="cloud-offline-outline" size={14} color="#C04040" /><Text style={s.liveDropdownText}>Take offline</Text></Pressable>
+              </View>}
+            </View>
+          </View>
+          <Text style={s.dashboardIntro}>{isBuilding ? 'Your designer preview is being built. This usually takes 1–2 days.' : 'Tap your homepage to open it, or edit its design.'}</Text>
+          {isBuilding
+            ? <View style={s.buildingCard}><ActivityIndicator size="large" color="#4B9BFF" style={{ marginBottom: 14 }} /><Text style={s.buildingText}>Building your preview…</Text><Text style={s.buildingSub}>Tom will send you a message when it’s ready to review.</Text></View>
+            : <Pressable onPress={() => isLive ? void Linking.openURL(siteUrl) : undefined} style={s.phoneFrame}>
+                <View pointerEvents="none" style={s.phoneScale}><SitePreview palette={palette} font={font} page={0} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></View>
+                {isLive && <View style={s.previewOpenBadge}><Ionicons name="open-outline" size={12} color="#fff" /><Text style={s.previewOpenText}>Open {domain}{suffix}</Text></View>}
+              </Pressable>
+          }
+          {(isReady || isBuilding) && !isLive && <Pressable onPress={() => { if (isReady) setShowPlanModal(true); }} style={[s.makeLiveBtn, !isReady && s.makeLiveBtnDisabled]}>
+            <Ionicons name="rocket-outline" size={18} color={isReady ? '#fff' : 'rgba(255,255,255,.4)'} />
+            <Text style={[s.makeLiveBtnText, !isReady && { color: 'rgba(255,255,255,.4)' }]}>{isBuilding ? 'Make Live (pending review)' : 'Make Live'}</Text>
+          </Pressable>}
+          {isReady && !isLive && <Pressable onPress={() => setTab('Messages')} style={s.requestChangesBtn}>
+            <Ionicons name="chatbubble-outline" size={15} color="#4B9BFF" />
+            <Text style={s.requestChangesText}>Request Changes</Text>
+          </Pressable>}
+        </>}
+        {tab === 'Messages' && <>
+          <Text style={s.dashboardTitle}>Messages</Text>
+          <View style={s.messageBubble}><Text style={s.messageSender}>Tom · BrightSite</Text><Text style={s.messageText}>Welcome to BrightSite, {data.businessName || 'there'}! I’m Tom. Your website is live, and you can message me here whenever you need a hand.</Text></View>
+          <View style={s.messageInput}><Text style={s.messagePlaceholder}>Message BrightSite…</Text><Ionicons name="arrow-up-circle" size={24} color="#2878FF" /></View>
+        </>}
       </ScrollView>
     </View>
+    <Modal visible={showPlanModal} transparent animationType="slide" onRequestClose={() => setShowPlanModal(false)}>
+      <View style={s.planModalOverlay}>
+        <View style={s.planModalBox}>
+          <View style={s.planModalHeader}><Text style={s.planModalTitle}>Choose your plan</Text><Pressable onPress={() => setShowPlanModal(false)}><Ionicons name="close" size={22} color="#1C2832" /></Pressable></View>
+          <Text style={s.planModalSub}>Your website is free. You only pay for hosting.</Text>
+          <View style={s.planModalDomain}><Ionicons name="globe-outline" size={14} color="#4B9BFF" /><Text style={s.planModalDomainText}>{domain}{suffix}</Text></View>
+          <Pressable onPress={() => setAnnual(false)} style={[s.planModalOption, !annual && s.planModalOptionOn]}>
+            <View><Text style={s.planModalOptionName}>Monthly</Text><Text style={s.planModalOptionNote}>Cancel any time</Text></View>
+            <Text style={s.planModalOptionPrice}>£19<Text style={{ fontSize: 12 }}>/mo</Text></Text>
+          </Pressable>
+          <Pressable onPress={() => setAnnual(true)} style={[s.planModalOption, annual && s.planModalOptionOn]}>
+            <View><View style={s.savePill}><Text style={s.savePillText}>SAVE £24</Text></View><Text style={s.planModalOptionName}>Annual</Text><Text style={s.planModalOptionNote}>Billed £204 yearly</Text></View>
+            <Text style={s.planModalOptionPrice}>£17<Text style={{ fontSize: 12 }}>/mo</Text></Text>
+          </Pressable>
+          {!!payError && <Text style={{ fontFamily: FONT, fontSize: 12, color: '#C04040', marginTop: 8 }}>{payError}</Text>}
+          <Pressable onPress={() => void handlePay()} disabled={payBusy} style={[s.planModalPayBtn, payBusy && { opacity: .6 }]}>
+            {payBusy ? <ActivityIndicator size="small" color="#fff" /> : <><Ionicons name="lock-closed" size={15} color="#fff" /><Text style={s.planModalPayBtnText}>Continue to secure payment</Text></>}
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
   </FlowBackdrop>;
 }
 
+function DesignEditorFullscreen({ domain, suffix, palette, setPalette, font, setFont, siteTexts, setSiteTexts, homeSections, setHomeSections, servicesSections, setServicesSections, contactSections, setContactSections, data, services, hours, contactForm, onBack, onConfirm }: any) {
+  const [tool, setTool] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [previewPage, setPreviewPage] = useState(0);
+  const [editingText, setEditingText] = useState<{ key: string; label: string } | null>(null);
+  return <View style={{ flex: 1, backgroundColor: '#070D12' }}>
+    <StatusBar style="light" />
+    <TextEditModal visible={!!editingText} value={editingText ? (siteTexts[editingText.key] ?? '') : ''} label={editingText?.label || ''} onSave={(v: string) => setSiteTexts((t: any) => ({ ...t, [editingText!.key]: v }))} onClose={() => setEditingText(null)} />
+    <View style={s.fsBrowserBar}>
+      <Pressable onPress={onBack} style={s.fsBrowserBtn}><Ionicons name="chevron-back" size={20} color="rgba(255,255,255,.82)" /></Pressable>
+      <View style={s.fsBrowserUrl}>
+        <Ionicons name="lock-closed" size={9} color="rgba(255,255,255,.45)" />
+        <Text style={s.fsBrowserUrlText} numberOfLines={1}>{domain}{suffix}</Text>
+      </View>
+      <View style={s.fsBrowserRight}>
+        <DesignTools active={tool} setActive={setTool} palette={palette} setPalette={setPalette} font={font} setFont={setFont} editing={editing} setEditing={setEditing} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} />
+        <Pressable onPress={onConfirm} style={s.fsBrowserTick}>
+          <Ionicons name="checkmark" size={17} color="#fff" />
+        </Pressable>
+      </View>
+    </View>
+    <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+      <SitePreview palette={palette} font={font} page={previewPage} onPageChange={setPreviewPage} editing={editing} siteTexts={siteTexts} onEditText={(key: string) => { const labels: Record<string, string> = { headline: 'Hero headline', heroBody: 'Hero subtext', aboutTitle: 'About title', aboutBody: 'About description', brand: 'Brand name' }; setEditingText({ key, label: labels[key] || key }); }} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} />
+    </ScrollView>
+  </View>;
+}
+
 function AppInner() {
-  const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [index, setIndex] = useState(0);
   const [authMode, setAuthMode] = useState<'signup' | 'login'>('signup');
   const [authBusy, setAuthBusy] = useState(false);
@@ -452,7 +581,6 @@ function AppInner() {
   const [showRail, setShowRail] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [deckDirection, setDeckDirection] = useState<-1 | 0 | 1>(0);
-  const [loadingStage, setLoadingStage] = useState(0);
   const [designReady, setDesignReady] = useState(false);
   const [validationMessage, setValidationMessage] = useState('');
   const [media, setMedia] = useState<{ logo?: string; hero?: string; gallery: string[] }>({ gallery: [] });
@@ -463,8 +591,6 @@ function AppInner() {
   const [domainChecking, setDomainChecking] = useState(false);
   const [domainQuote, setDomainQuote] = useState<{ domain: string; priceLabel: string } | null>(null);
   const [domainError, setDomainError] = useState('');
-  const [annual, setAnnual] = useState(false);
-  const [paymentComplete, setPaymentComplete] = useState(false);
   const [contactForm, setContactForm] = useState(true);
   const [tab, setTab] = useState('Website');
   const [siteTexts, setSiteTexts] = useState<Record<string, string>>({});
@@ -472,15 +598,16 @@ function AppInner() {
   const [homeSections, setHomeSections] = useState([...HOME_SECTIONS_DEFAULT]);
   const [servicesSections, setServicesSections] = useState([...SERVICES_SECTIONS_DEFAULT]);
   const [contactSections, setContactSections] = useState([...CONTACT_SECTIONS_DEFAULT]);
-  const [payBusy, setPayBusy] = useState(false);
-  const [payError, setPayError] = useState('');
+  const [appScreen, setAppScreen] = useState<'onboarding' | 'loading' | 'design-editor' | 'dashboard'>('onboarding');
+  const [editFrom, setEditFrom] = useState<'onboarding' | 'dashboard'>('onboarding');
+  const [buildChoice, setBuildChoice] = useState<'designer' | 'template' | null>(null);
+  const [websiteStatus, setWebsiteStatus] = useState<'building' | 'ready' | 'live'>('building');
   const [data, setData] = useState({ email: '', password: '', businessName: 'Sisko Hairdressing', category: 'Hair & Beauty', fullName: '', contactEmail: '', phone: '', website: '', instagram: '', facebook: '', address: '', services: 'Cut & finish', price: '£45', reviews: '', reviewLink: '' });
   const [showFullName, setShowFullName] = useState(false);
   const [hours, setHours] = useState(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((label, i) => ({ label, start: '9:00', end: i === 3 ? '19:00' : '17:30', enabled: i < 6 })));
   const [services, setServices] = useState([{ section: 'Cutting & styling', name: 'Cut & finish', duration: '45 mins', price: '£45' }]);
   const [reviewsList, setReviewsList] = useState([{ title: '', description: '', name: '' }]);
   const motion = useRef(new Animated.Value(0)).current;
-  const templateMotion = useRef(new Animated.Value(0)).current;
   const loadingProgress = useRef(new Animated.Value(0)).current;
   const loadingFades = useRef([0, 1, 2, 3].map(() => new Animated.Value(0))).current;
   const designReveal = useRef(new Animated.Value(0)).current;
@@ -501,8 +628,8 @@ function AppInner() {
     const hasWebsite = !!rows?.some((row: any) => !(row.data && row.data.stub));
     if (hasWebsite) {
       Keyboard.dismiss();
-      setIndex(steps.length - 1);
-      motion.setValue((steps.length - 1) * CARD_TRAVEL);
+      setWebsiteStatus('ready');
+      setAppScreen('dashboard');
       return;
     }
     setIndex(1);
@@ -541,8 +668,8 @@ function AppInner() {
       case 'contact': return /\S+@\S+\.\S+/.test(data.contactEmail.trim()) || data.phone.replace(/\D/g, '').length >= 7;
       case 'hours': return hours.some(row => row.enabled && row.start.trim() && row.end.trim());
       case 'prices': return services.some(item => item.name.trim() && item.price.trim());
-      case 'design': return designReady;
       case 'domain': return domainReady;
+      case 'choice': return false;
       default: return true;
     }
   };
@@ -552,8 +679,8 @@ function AppInner() {
     contact: 'Add an email address or phone number first',
     hours: 'Keep at least one day open and add its times',
     prices: 'Add at least one service and its price first',
-    design: 'Your designs are still being prepared',
     domain: 'Check and select an available domain first',
+    choice: 'Choose an option above to continue',
   } as Record<string, string>)[step.id] || 'Complete the required details first';
   const transitionTo = (to: number) => {
     const next = Math.max(authSession ? 1 : 0, Math.min(steps.length - 1, to));
@@ -609,7 +736,6 @@ function AppInner() {
     }
   };
   const go = (to: number) => {
-    // A gesture can only move to the adjacent card, so no card can be skipped.
     const requested = Math.max(0, Math.min(steps.length - 1, to));
     const next = Math.max(index - 1, Math.min(index + 1, requested));
     if (next === index || transitioning.current) return;
@@ -625,44 +751,14 @@ function AppInner() {
     }
     transitionTo(next);
   };
-  const changePage = (direction: number) => {
-    Animated.timing(templateMotion, { toValue: direction < 0 ? -SCREEN_HEIGHT : SCREEN_HEIGHT, duration: 180, useNativeDriver: true }).start(() => {
-      setPreviewPage(v => (v + (direction < 0 ? 1 : -1) + 3) % 3);
-      templateMotion.setValue(direction < 0 ? SCREEN_HEIGHT : -SCREEN_HEIGHT);
-      Animated.spring(templateMotion, { toValue: 0, useNativeDriver: true, damping: 24, stiffness: 190 }).start();
-    });
-  };
 
-  const handlePayment = async () => {
-    setPayBusy(true);
-    setPayError('');
-    try {
-      const res = await fetch(PAYMENT_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: annual ? 'annual' : 'monthly', domain: domainReady ? domain + suffix : null }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Could not set up payment.');
-      const { error: initErr } = await initPaymentSheet({ merchantDisplayName: 'BrightSite', paymentIntentClientSecret: json.clientSecret, allowsDelayedPaymentMethods: false });
-      if (initErr) throw new Error(initErr.message);
-      const { error: presentErr } = await presentPaymentSheet();
-      if (presentErr) { if (presentErr.code !== 'Canceled') setPayError(presentErr.message); return; }
-      setPaymentComplete(true);
-    } catch (err: any) {
-      setPayError(err.message || 'Payment failed. Please try again.');
-    } finally {
-      setPayBusy(false);
-    }
-  };
   useEffect(() => {
-    if (step.id !== 'design' || designReady) return;
-    setLoadingStage(0);
+    if (appScreen !== 'loading') return;
     loadingProgress.setValue(0);
     designReveal.setValue(0);
     loadingFades.forEach(value => value.setValue(0));
+    const isTemplate = buildChoice === 'template';
     const timers = [520, 1100, 1720, 2350].map((delay, i) => setTimeout(() => {
-      setLoadingStage(i + 1);
       Animated.parallel([
         Animated.timing(loadingFades[i], { toValue: 1, duration: 360, useNativeDriver: true }),
         Animated.timing(loadingProgress, { toValue: (i + 1) / 4, duration: 460, useNativeDriver: false }),
@@ -670,10 +766,17 @@ function AppInner() {
     }, delay));
     const done = setTimeout(() => {
       setDesignReady(true);
-      Animated.timing(designReveal, { toValue: 1, duration: 700, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+      Animated.timing(designReveal, { toValue: 1, duration: 700, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(() => {
+        if (isTemplate) {
+          setAppScreen('design-editor');
+        } else {
+          setWebsiteStatus('building');
+          setAppScreen('dashboard');
+        }
+      });
     }, 3250);
     return () => { timers.forEach(clearTimeout); clearTimeout(done); };
-  }, [step.id]);
+  }, [appScreen, buildChoice]);
 
   useEffect(() => {
     if (validationMessage) setValidationMessage('');
@@ -684,27 +787,23 @@ function AppInner() {
     // so scrolling the site preview or form content never triggers a card transition.
     onMoveShouldSetPanResponder: (_, g) => {
       if (keyboardVisible) return false;
-      if (step.id === 'design' && Math.abs(g.dx) > 16 && Math.abs(g.dx) > Math.abs(g.dy)) return true;
       const inHeader = g.y0 < CARD_TOP + 80;
       const inFooter = g.y0 > SCREEN_HEIGHT - CARD_BOTTOM - 70;
-      return (inHeader || inFooter) && Math.abs(g.dy) > 12 && !(step.id === 'design' && tool);
+      return (inHeader || inFooter) && Math.abs(g.dy) > 12;
     },
     onPanResponderGrant: revealRail,
     onPanResponderMove: (_, g) => {
-      if (step.id === 'design' && Math.abs(g.dx) > Math.abs(g.dy)) templateMotion.setValue(g.dx);
-      else if (Math.abs(g.dy) > Math.abs(g.dx)) {
+      if (Math.abs(g.dy) > Math.abs(g.dx)) {
         if (Math.abs(g.dy) > 12) setDeckDirection(g.dy < 0 ? 1 : -1);
         motion.setValue(index * CARD_TRAVEL - g.dy);
       }
     },
     onPanResponderRelease: (_, g) => {
-      if (step.id === 'design' && Math.abs(g.dx) > 65 && Math.abs(g.dx) > Math.abs(g.dy)) { changePage(g.dx); motion.setValue(index * CARD_TRAVEL); return; }
-      if (step.id === 'design' && Math.abs(g.dx) > Math.abs(g.dy)) { Animated.spring(templateMotion, { toValue: 0, useNativeDriver: true }).start(); return; }
       if (g.dy < -48 || g.vy < -.55) go(index + 1); else if (g.dy > 48 || g.vy > .55) go(index - 1); else Animated.spring(motion, { toValue: index * CARD_TRAVEL, damping: 20, stiffness: 210, useNativeDriver: true }).start(() => setDeckDirection(0));
       hideRailSoon();
     },
     onPanResponderTerminate: () => Animated.spring(motion, { toValue: index * CARD_TRAVEL, damping: 20, stiffness: 210, useNativeDriver: true }).start(() => setDeckDirection(0)),
-  }), [index, step.id, data, hours, services, domainReady, designReady, keyboardVisible, tool]);
+  }), [index, step.id, data, hours, services, domainReady, designReady, keyboardVisible]);
 
   const railPan = useMemo(() => PanResponder.create({
     onStartShouldSetPanResponder: () => true, onMoveShouldSetPanResponder: () => true, onPanResponderGrant: revealRail,
@@ -770,15 +869,25 @@ function AppInner() {
           <Ionicons name="add" size={16} color={BRAND} /><Text style={s.addReviewText}>Add another review</Text>
         </Pressable>
         <Pressable onPress={() => setContactForm(!contactForm)} style={[s.formChoice, contactForm && s.formChoiceOn]}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color={contactForm ? '#fff' : BRAND} /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: '#324254', true: BRAND }} thumbColor="#F7FCFF" /></Pressable></>;
-      case 'design': return <View style={s.design}>
-        <TextEditModal visible={!!editingText} value={editingText ? (siteTexts[editingText.key] ?? { headline: 'Beautiful hair, beautifully yours.', heroBody: 'Thoughtful cuts, colour and styling in a calm modern salon.', aboutTitle: 'Hair that feels like you', aboutBody: 'Personal service, honest advice and a finish made for real life.' }[editingText.key as keyof object] ?? '') : ''} label={editingText?.label || ''} onSave={(v: string) => setSiteTexts(t => ({ ...t, [editingText!.key]: v }))} onClose={() => setEditingText(null)} />
-        <Animated.View pointerEvents={designReady ? 'auto' : 'none'} style={[s.designPreview, { opacity: designReveal }]}><Animated.View style={{ transform: [{ translateX: templateMotion }] }}><SitePreview palette={palette} font={font} page={previewPage} onPageChange={setPreviewPage} editing={editing} siteTexts={siteTexts} onEditText={(key: string) => { const labels: Record<string,string> = { headline: 'Hero headline', heroBody: 'Hero subtext', aboutTitle: 'About title', aboutBody: 'About description', brand: 'Brand name' }; setEditingText({ key, label: labels[key] || key }); }} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></Animated.View>
-          <View style={s.templateDots}>{[0,1,2].map(i => <View key={i} style={[s.templateDot, previewPage === i && s.templateDotOn]} />)}</View>
-          {tutorial && designReady && <Tutorial close={() => setTutorial(false)} />}</Animated.View>
-        <Animated.View pointerEvents="none" style={[s.loading, { opacity: designReveal.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }]}><View style={s.loadingWordmark}><Text style={s.loadingBrand}>BRIGHTSITE</Text><View style={s.loadingBrandDot} /></View>
-          <Text style={s.loadingTitle}>Creating {data.businessName || 'your'} design options</Text><Text style={s.loadingText}>We’re shaping your details into a website that feels like your business.</Text>
-          <View style={s.loadingSteps}>{['Choosing a layout', 'Setting the tone', 'Matching your details', 'Almost ready'].map((item, i) => <Animated.View key={item} style={[s.loadingStep, i < loadingStage && s.loadingStepOn, { opacity: loadingFades[i], transform: [{ translateY: loadingFades[i].interpolate({ inputRange: [0, 1], outputRange: [7, 0] }) }] }]}><Ionicons name={i < loadingStage ? 'checkmark-circle' : 'ellipse-outline'} size={15} color={i < loadingStage ? '#79D7A2' : 'rgba(218,235,244,.32)'} /><Text style={[s.loadingStepText, i < loadingStage && s.loadingStepTextOn]}>{item}</Text></Animated.View>)}</View>
-          <View style={s.track}><Animated.View style={[s.fill, { width: loadingProgress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }]} /></View></Animated.View>
+      case 'choice': return <View style={s.choiceWrap}>
+        <Text style={s.choiceHeading}>How would you like to build your website?</Text>
+        <Text style={s.choiceSub}>Either way, you can always make changes later.</Text>
+        <Pressable onPress={() => { setBuildChoice('template'); setAppScreen('loading'); }} style={s.choiceCard}>
+          <View style={[s.choiceIcon, { backgroundColor: 'rgba(34,188,231,.14)' }]}><Ionicons name="layers-outline" size={26} color="#4BD4F8" /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={s.choiceCardTitle}>Build with Template</Text>
+            <Text style={s.choiceCardText}>Choose a design, pick your colours and font — goes live today.</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="rgba(220,238,248,.4)" />
+        </Pressable>
+        <Pressable onPress={() => { setBuildChoice('designer'); setAppScreen('loading'); }} style={s.choiceCard}>
+          <View style={[s.choiceIcon, { backgroundColor: 'rgba(120,190,120,.14)' }]}><Ionicons name="person-outline" size={26} color="#79D7A2" /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={s.choiceCardTitle}>Send to Designer</Text>
+            <Text style={s.choiceCardText}>Tom builds your website for you. Preview ready in 1–2 days.</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="rgba(220,238,248,.4)" />
+        </Pressable>
       </View>;
       case 'domain': {
         const clearDomainQuote = () => { setDomainReady(false); setDomainQuote(null); setDomainError(''); };
@@ -807,19 +916,6 @@ function AppInner() {
           {!!domainError && <Text style={s.domainError}>{domainError}</Text>}
           {domainReady && domainQuote && <Animated.View style={s.domainResult}><Ionicons name="checkmark-circle" size={24} color={BRAND} /><View style={{ flex: 1 }}><Text style={s.domainName}>{domainQuote.domain}</Text><Text style={s.domainPrice}>Available — {domainQuote.priceLabel}</Text></View></Animated.View>}</>;
       }
-      case 'plan': return paymentComplete ? <View style={s.paymentSuccess}><Ionicons name="checkmark-circle" size={48} color="#79D7A2" /><Text style={s.paymentSuccessTitle}>Your website is ready</Text><Text style={s.paymentSuccessText}>Payment is complete. Swipe up to open your BrightSite dashboard.</Text></View> : <><Intro>Your website is free. You only pay for hosting.</Intro>
-        {domainReady && <View style={s.planDomain}><Ionicons name="globe-outline" size={15} color="#DDF8FF" /><Text style={s.planDomainText}>{domain}{suffix}</Text></View>}
-        <Pressable onPress={() => setAnnual(false)} style={[s.plan, !annual && s.planOn]}><View><Text style={s.planName}>Monthly</Text><Text style={s.planNote}>Cancel any time</Text></View><Text style={s.planPrice}>£19<Text style={s.planSmall}>/month</Text></Text></Pressable>
-        <Pressable onPress={() => setAnnual(true)} style={[s.plan, annual && s.planOn]}><View><Text style={s.save}>SAVE £24</Text><Text style={s.planName}>Annual</Text><Text style={s.planNote}>Billed £204 yearly</Text></View><Text style={s.planPrice}>£17<Text style={s.planSmall}>/month</Text></Text></Pressable>
-        <Pressable onPress={() => void handlePayment()} disabled={payBusy} style={[s.payButton, payBusy && s.checkDisabled]}>
-          {payBusy ? <ActivityIndicator size="small" color="#1B2226" /> : <><Ionicons name="lock-closed" size={16} color="#1B2226" /><Text style={s.payButtonText}>Continue to secure payment</Text></>}
-        </Pressable>
-        {!!payError && <Text style={s.domainError}>{payError}</Text>}</>;
-      case 'dashboard': return <><View style={s.dashHead}><View><Text style={s.live}>PUBLISHING</Text><Text style={s.dashTitle}>Your website is nearly live</Text></View>
-        <Pressable style={s.editPill}><Ionicons name="create-outline" size={16} color="#DFF8FF" /><Text style={s.editPillText}>Edit</Text></Pressable></View>
-        <View style={s.browser}><View style={s.browserBar}><View style={s.browserDot} /><View style={s.browserDot} /><View style={s.browserDot} /></View>
-        <Image source={require('./assets/sisko-preview.webp')} resizeMode="cover" style={s.dashImage} /><View style={s.publishOverlay}><View style={s.spinner} /><Text style={s.publishText}>Publishing your website…</Text></View></View>
-        </>;
     }
   };
 
@@ -836,11 +932,26 @@ function AppInner() {
     </View>
   </FlowBackdrop>;
 
-  if (index === steps.length - 1 && paymentComplete) return <DashboardHome tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} onEdit={() => {
-    const designIndex = steps.findIndex(item => item.id === 'design');
-    setIndex(designIndex);
-    motion.setValue(designIndex * CARD_TRAVEL);
-  }} />;
+  if (appScreen === 'dashboard') return <FadeIn><DashboardHome tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} onMakeLive={() => setWebsiteStatus('live')} onTakeOffline={() => setWebsiteStatus('ready')} onEdit={() => { setEditFrom('dashboard'); setAppScreen('design-editor'); }} /></FadeIn>;
+
+  if (appScreen === 'design-editor') return <FadeIn><DesignEditorFullscreen domain={domain} suffix={suffix} palette={palette} setPalette={setPalette} font={font} setFont={setFont} siteTexts={siteTexts} setSiteTexts={setSiteTexts} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} data={data} services={services} hours={hours} contactForm={contactForm} onBack={() => {
+    if (editFrom === 'dashboard') { setAppScreen('dashboard'); return; }
+    setAppScreen('onboarding');
+    setIndex(steps.findIndex(item => item.id === 'domain'));
+    motion.setValue(steps.findIndex(item => item.id === 'domain') * CARD_TRAVEL);
+  }} onConfirm={() => { setWebsiteStatus('ready'); setTab('Website'); setAppScreen('dashboard'); }} /></FadeIn>;
+
+  if (appScreen === 'loading') {
+    const messages = buildChoice === 'template' ? LOADING_MESSAGES.template : LOADING_MESSAGES.designer;
+    return <FlowBackdrop>
+      <StatusBar style="dark" />
+      <Animated.View style={[s.fullLoading, { opacity: designReveal.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }]}>
+        <Text style={s.fullLoadingTitle}>{buildChoice === 'template' ? 'Building your template' : 'Setting up your dashboard'}</Text>
+        <View style={s.fullLoadingList}>{messages.map((message, i) => <Animated.View key={message} style={[s.fullLoadingRow, { opacity: loadingFades[i] }]}><Ionicons name="checkmark-circle" size={16} color="#4BD4F8" /><Text style={s.fullLoadingLine}>{message}</Text></Animated.View>)}</View>
+        <View style={s.fullLoadingTrack}><Animated.View style={[s.fullLoadingFill, { width: loadingProgress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }]} /></View>
+      </Animated.View>
+    </FlowBackdrop>;
+  }
 
   return <FlowBackdrop>
     <StatusBar style="dark" />
@@ -858,16 +969,16 @@ function AppInner() {
           const cardScale = cardPosition.interpolate({ inputRange: [-CARD_TRAVEL, 0, CARD_TRAVEL], outputRange: [.93, 1, .93], extrapolate: 'clamp' });
           return <Animated.View key={deckStep.id} pointerEvents={isActive ? 'auto' : 'none'} {...(isActive ? pan.panHandlers : {})} style={[s.card, s.deckCard, isActive ? s.deckCardActive : s.deckCardBehind, { zIndex: isIncoming ? 22 : isActive ? 21 : 20 - Math.abs(distance), transform: [{ translateY: travelPosition }, { scale: cardScale }] }]}>
             <BlurView intensity={42} tint="dark" style={StyleSheet.absoluteFill} />
-            <View style={[s.cardHeader, deckStep.id === 'design' && s.designCardHeader]}><Text style={s.cardTitle}>{deckStep.title}</Text>{deckStep.id === 'design' && designReady ? <DesignTools active={tool} setActive={setTool} palette={palette} setPalette={setPalette} font={font} setFont={setFont} editing={editing} setEditing={setEditing} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} /> : deckIndex > 0 && deckStep.id !== 'dashboard' && <Text style={s.count}>{deckIndex}/10</Text>}</View>
-            <ScrollView style={s.cardScroll} contentContainerStyle={[s.content, deckStep.id === 'login' && s.loginContent, deckStep.id === 'design' && { padding: 0 }, deckStep.id === 'hours' && s.hoursContent]}
+            <View style={s.cardHeader}><Text style={s.cardTitle}>{deckStep.title}</Text>{deckIndex > 0 && <Text style={s.count}>{deckIndex}/{setupStepIndexes.length}</Text>}</View>
+            <ScrollView style={s.cardScroll} contentContainerStyle={[s.content, deckStep.id === 'login' && s.loginContent, deckStep.id === 'hours' && s.hoursContent]}
               scrollEnabled={deckStep.id !== 'hours' || keyboardVisible}
               keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
               {content(deckStep)}
             </ScrollView>
-            {deckStep.id !== 'dashboard' && <View pointerEvents="none" style={s.fixedPrompt}>
+            <View pointerEvents="none" style={s.fixedPrompt}>
               {!!validationMessage && isActive && <Text style={s.validationText}>{validationMessage}</Text>}
-              <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="arrow-up" size={14} color="rgba(255,255,255,.7)" />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : deckStep.id === 'plan' ? 'Swipe up to continue to secure payment' : deckStep.id === 'design' ? designReady ? 'Swipe up to use this design' : 'Creating your design…' : 'Swipe up to save'}</Text></View>
-            </View>}
+              <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="arrow-up" size={14} color="rgba(255,255,255,.7)" />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : deckStep.id === 'choice' ? 'Pick an option above' : 'Swipe up to save'}</Text></View>
+            </View>
           </Animated.View>;
         })}
       </View>
@@ -1067,4 +1178,54 @@ const s = StyleSheet.create({
   messageText: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: '#2C3E4A' },
   messageInput: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14, borderRadius: 16, backgroundColor: '#fff', borderWidth: 1, borderColor: 'rgba(0,0,0,.1)', marginTop: 8 },
   messagePlaceholder: { fontFamily: FONT, fontSize: 14, color: 'rgba(28,40,50,.38)' },
+
+  choiceWrap: { gap: 0, paddingTop: 4 },
+  choiceHeading: { fontFamily: FONT, fontSize: 22, fontWeight: '800', letterSpacing: -.6, color: '#F3F8FC', marginBottom: 8 },
+  choiceSub: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: 'rgba(225,239,248,.65)', marginBottom: 18 },
+  choiceCard: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)', marginBottom: 12 },
+  choiceIcon: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  choiceCardTitle: { fontFamily: FONT, fontSize: 16, fontWeight: '700', color: '#F3F8FC' },
+  choiceCardText: { fontFamily: FONT, fontSize: 13, lineHeight: 18, color: 'rgba(225,239,248,.6)', marginTop: 3 },
+  buildingCard: { alignItems: 'center', padding: 28, borderRadius: 22, backgroundColor: 'rgba(255,255,255,.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)', marginTop: 6 },
+  buildingText: { fontFamily: FONT, fontSize: 16, fontWeight: '700', color: '#F3F8FC' },
+  buildingSub: { fontFamily: FONT, fontSize: 13, lineHeight: 19, color: 'rgba(225,239,248,.6)', textAlign: 'center', marginTop: 6 },
+  makeLiveBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', minHeight: 52, borderRadius: 18, backgroundColor: '#2878FF', marginTop: 16 },
+  makeLiveBtnDisabled: { backgroundColor: 'rgba(255,255,255,.06)' },
+  makeLiveBtnText: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#fff' },
+  requestChangesBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', minHeight: 46, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(75,155,255,.4)', marginTop: 10 },
+  requestChangesText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: '#4B9BFF' },
+  liveDropdown: { position: 'absolute', top: 40, right: 0, minWidth: 150, backgroundColor: '#fff', borderRadius: 14, padding: 6, zIndex: 50, elevation: 10, shadowColor: '#000', shadowOpacity: .2, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } },
+  liveDropdownItem: { flexDirection: 'row', gap: 8, alignItems: 'center', padding: 10, borderRadius: 10 },
+  liveDropdownText: { fontFamily: FONT, fontSize: 14, fontWeight: '600', color: '#C04040' },
+  previewOpenBadge: { position: 'absolute', bottom: 12, right: 12, flexDirection: 'row', gap: 6, alignItems: 'center', backgroundColor: 'rgba(0,0,0,.6)', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999 },
+  previewOpenText: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: '#fff' },
+  planModalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(3,10,16,.6)' },
+  planModalBox: { backgroundColor: '#F7FBFE', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 22, paddingBottom: 36 },
+  planModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  planModalTitle: { fontFamily: FONT, fontSize: 20, fontWeight: '800', color: '#1C2832' },
+  planModalSub: { fontFamily: FONT, fontSize: 13, color: '#5B6B78', marginBottom: 12 },
+  planModalDomain: { flexDirection: 'row', gap: 6, alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(75,155,255,.12)', marginBottom: 14 },
+  planModalDomainText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: '#2878FF' },
+  planModalOption: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderRadius: 18, borderWidth: 1.5, borderColor: '#D5E0EA', backgroundColor: '#fff', marginBottom: 10 },
+  planModalOptionOn: { borderColor: '#2878FF', backgroundColor: '#F0F6FF' },
+  planModalOptionName: { fontFamily: FONT, fontSize: 15, fontWeight: '700', color: '#1C2832' },
+  planModalOptionNote: { fontFamily: FONT, fontSize: 12, color: '#5B6B78', marginTop: 2 },
+  planModalOptionPrice: { fontFamily: FONT, fontSize: 22, fontWeight: '800', color: '#1C2832' },
+  savePill: { alignSelf: 'flex-start', backgroundColor: '#3CAB6A', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999, marginBottom: 4 },
+  savePillText: { fontFamily: FONT, fontSize: 10, fontWeight: '800', color: '#fff', letterSpacing: .4 },
+  planModalPayBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', minHeight: 52, borderRadius: 18, backgroundColor: '#2878FF', marginTop: 14 },
+  planModalPayBtnText: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#fff' },
+  fullLoading: { flex: 1, justifyContent: 'center', paddingHorizontal: 32, gap: 18 },
+  fullLoadingTitle: { fontFamily: FONT, fontSize: 26, fontWeight: '800', letterSpacing: -.6, color: '#F3F8FC' },
+  fullLoadingList: { gap: 12 },
+  fullLoadingRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  fullLoadingLine: { fontFamily: FONT, fontSize: 15, color: 'rgba(225,239,248,.8)' },
+  fullLoadingTrack: { height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.12)', overflow: 'hidden', marginTop: 8 },
+  fullLoadingFill: { height: '100%', borderRadius: 3, backgroundColor: '#4BD4F8' },
+  fsBrowserBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: Platform.OS === 'ios' ? 56 : 30, paddingBottom: 10, paddingHorizontal: 12, backgroundColor: '#0E1A24', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.08)' },
+  fsBrowserBtn: { width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.06)' },
+  fsBrowserUrl: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, height: 32, paddingHorizontal: 12, borderRadius: 10, backgroundColor: 'rgba(255,255,255,.07)' },
+  fsBrowserUrlText: { flexShrink: 1, fontFamily: FONT, fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,.82)' },
+  fsBrowserRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  fsBrowserTick: { width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#3CAB6A' },
 });
