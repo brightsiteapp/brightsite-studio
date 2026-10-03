@@ -33,10 +33,10 @@
 
   #pricing > .wrap{max-width:860px}
 
-  #pricing .plans{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+  #pricing .plans{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:stretch}
   #pricing .plan{border-color:var(--accent);position:relative;box-sizing:border-box;width:100%;display:flex;flex-direction:column}
+  #pricing .plan ul{flex:1}
 
-  .plan-label{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
   .plan-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:3px 14px;border-radius:999px;white-space:nowrap}
 
   #pricing .plan{padding:28px 24px}
@@ -106,8 +106,7 @@
 
         <!-- Monthly card -->
         <div class="plan feature">
-          <span class="plan-label">Monthly</span>
-          <h4>Free Plan</h4>
+          <h4>Monthly Plan</h4>
           <div class="desc">Website built for free — just pay hosting to go live.</div>
           <div class="price-row">
             <span class="price">Free<small>£19/mo hosting</small></span>
@@ -125,10 +124,9 @@
         </div>
 
         <!-- Annual card -->
-        <div class="plan feature" style="position:relative;margin-top:12px">
+        <div class="plan feature" style="position:relative">
           <span class="plan-badge">BEST VALUE</span>
-          <span class="plan-label">Annual</span>
-          <h4>Free Plan</h4>
+          <h4>Annual Plan</h4>
           <div class="desc">Everything in monthly, plus a free domain and logo.</div>
           <div class="price-row">
             <span class="price">Free<small>£17/mo hosting</small></span>
