@@ -22,7 +22,9 @@ const DOMAIN_API = 'https://api.brightsite.app/api/check-domain';
 const PAYMENT_API = 'https://api.brightsite.app/api/create-payment-intent';
 // Replace with your Stripe publishable key from stripe.com/dashboard
 const STRIPE_KEY = 'pk_live_YOUR_STRIPE_PUBLISHABLE_KEY';
-const CARD = 'rgba(195,202,210,.88)';
+const CARD = '#EFE4DB';
+const FS_SLOT = (SCREEN_WIDTH - 32) / 5;
+const DARK = '#1C2832';
 
 type Step = { id: string; title: string; icon: keyof typeof Ionicons.glyphMap };
 const steps: Step[] = [
@@ -94,7 +96,7 @@ function Hours({ rows, setRows }: any) {
       <Text style={s.hoursDay}>{row.label.slice(0, 3)}</Text>
       <View style={s.hoursTimes}>{row.enabled ? <><TextInput value={row.start} onChangeText={v => setRows(rows.map((x: any, n: number) => n === i ? { ...x, start: v } : x))} style={s.timeInput} /><Text style={s.timeDash}>–</Text><TextInput value={row.end} onChangeText={v => setRows(rows.map((x: any, n: number) => n === i ? { ...x, end: v } : x))} style={s.timeInput} /></> : <><View style={s.timeInputOff}><Text style={s.timeOffText}>—</Text></View><Text style={s.timeDash}>–</Text><View style={s.timeInputOff}><Text style={s.timeOffText}>—</Text></View></>}</View>
       <View style={s.hoursSwitch}><Switch value={row.enabled} onValueChange={() => setRows(rows.map((x: any, n: number) => n === i ? { ...x, enabled: !x.enabled } : x))}
-        trackColor={{ false: '#324254', true: BRAND }} thumbColor="#F7FCFF" /></View></View>)}</View>;
+        trackColor={{ false: '#B8C2C9', true: DARK }} thumbColor="#F7FCFF" /></View></View>)}</View>;
 }
 
 function Services({ items, setItems }: any) {
@@ -130,7 +132,7 @@ function Upload({ icon, title, subtitle, value, onChange, multiple = false, fill
   };
   const preview = Array.isArray(value) ? value[0] : value;
   return <Pressable onPress={chooseImage} style={({ pressed }) => [s.upload, fill && { padding: 0, height: h }, pressed && s.pressed]}>
-    {preview ? <Image source={{ uri: preview }} style={fill ? s.uploadPreviewFill : s.uploadPreview} resizeMode="cover" /> : fill ? <Ionicons name="add" size={26} color="rgba(218,232,244,.45)" /> : <><View style={s.uploadIcon}><Ionicons name={icon} size={22} color={BRAND} /></View><Text style={s.uploadTitle}>{title}</Text><Text style={s.uploadSub}>{subtitle}</Text></>}
+    {preview ? <Image source={{ uri: preview }} style={fill ? s.uploadPreviewFill : s.uploadPreview} resizeMode="cover" /> : fill ? <Ionicons name="add" size={26} color="#2563EB" /> : <><View style={s.uploadIcon}><Ionicons name={icon} size={22} color="#2563EB" /></View><Text style={s.uploadTitle}>{title}</Text><Text style={s.uploadSub}>{subtitle}</Text></>}
   </Pressable>;
 }
 
@@ -183,6 +185,11 @@ function SitePreview({ palette, font, page = 0, onPageChange, editing, siteTexts
         <View style={s.siteStars}>{[0,1,2,3,4].map(i => <Ionicons key={i} name="star" size={7} color={accent} />)}</View>
         <Text style={[s.siteReviewText, fo, { color: textColor }]}>"Amazing results every time."</Text>
         <Text style={[s.siteReviewAuthor, fo, { color: textColor }]}>— Sarah M.</Text>
+        {contactData.reviewSource === 'Trustpilot' && <View style={[s.siteTrustBadge, { borderColor: textColor + '33' }]}>
+          <Text style={[s.siteTrustTitle, fo, { color: textColor }]}>Rated Excellent on Trustpilot</Text>
+          <View style={[s.siteStars, { marginTop: 4 }]}>{[0,1,2,3,4].map(i => <Ionicons key={i} name="star" size={9} color="#00B67A" />)}</View>
+          {!!contactData.reviewLink && <Text style={[s.siteTrustLink, fo, { color: accent }]}>See our reviews →</Text>}
+        </View>}
       </View>;
       case 'Gallery': return <View key="Gallery" style={s.siteGallerySection}>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 5 }}>
@@ -354,14 +361,14 @@ function DesignTools({ active, setActive, palette, setPalette, font, setFont, ed
     <View style={s.toolStack}>{items.map(item => {
       const open = active === item.id;
       return (
-        <Pressable key={item.id} onPress={() => {
+        <View key={item.id} style={s.toolSlot}><Pressable onPress={() => {
           LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
           const next = active === item.id ? null : item.id;
           setActive(next);
           setEditing(next === 'edit');
         }} style={({ pressed }) => [s.toolButton, open && s.toolActive, pressed && s.pressed]}>
           <Ionicons name={item.icon as any} size={19} color={open ? '#fff' : '#2E6C87'} />
-        </Pressable>
+        </Pressable></View>
       );
     })}</View>
     {active && <BlurView intensity={58} tint="light" style={s.toolPanel}>
@@ -408,7 +415,10 @@ function TextEditModal({ visible, value, label, onSave, onClose }: any) {
 }
 
 function FlowBackdrop({ children }: any) {
-  return <View style={{ flex: 1, backgroundColor: '#fff' }}>{children}</View>;
+  return <View style={{ flex: 1, backgroundColor: '#2563EB' }}>
+    <LinearGradient colors={['#6FA8FF', '#3B82F6', '#1D4FD0']} locations={[0, .45, 1]} style={StyleSheet.absoluteFill} />
+    {children}
+  </View>;
 }
 
 const LOADING_MESSAGES = {
@@ -493,7 +503,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           {isBuilding
             ? <View style={s.buildingCard}><ActivityIndicator size="large" color="#4B9BFF" style={{ marginBottom: 14 }} /><Text style={s.buildingText}>Building your preview…</Text><Text style={s.buildingSub}>Tom will send you a message when it’s ready to review.</Text></View>
             : <Pressable onPress={() => isLive ? void Linking.openURL(siteUrl) : undefined} style={s.phoneFrame}>
-                <View pointerEvents="none" style={s.phoneScale}><SitePreview palette={palette} font={font} page={0} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></View>
+                <View pointerEvents="none" style={s.phoneScale}><SitePreview palette={palette} font={font} page={0} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></View>
                 {isLive && <View style={s.previewOpenBadge}><Ionicons name="open-outline" size={12} color="#fff" /><Text style={s.previewOpenText}>Open {domain}{suffix}</Text></View>}
               </Pressable>
           }
@@ -546,20 +556,16 @@ function DesignEditorFullscreen({ domain, suffix, palette, setPalette, font, set
     <StatusBar style="light" />
     <TextEditModal visible={!!editingText} value={editingText ? (siteTexts[editingText.key] ?? '') : ''} label={editingText?.label || ''} onSave={(v: string) => setSiteTexts((t: any) => ({ ...t, [editingText!.key]: v }))} onClose={() => setEditingText(null)} />
     <View style={s.fsBrowserBar}>
-      <Pressable onPress={onBack} style={s.fsBrowserBtn}><Ionicons name="chevron-back" size={20} color="rgba(255,255,255,.82)" /></Pressable>
-      <View style={s.fsBrowserUrl}>
-        <Ionicons name="lock-closed" size={9} color="rgba(255,255,255,.45)" />
-        <Text style={s.fsBrowserUrlText} numberOfLines={1}>{domain}{suffix}</Text>
-      </View>
+      <View style={s.fsSlot}><Pressable onPress={onBack} style={s.fsBackBtn}><Ionicons name="chevron-back" size={22} color="#2563EB" /></Pressable></View>
       <View style={s.fsBrowserRight}>
         <DesignTools active={tool} setActive={setTool} palette={palette} setPalette={setPalette} font={font} setFont={setFont} editing={editing} setEditing={setEditing} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} />
-        <Pressable onPress={onConfirm} style={s.fsBrowserTick}>
-          <Ionicons name="checkmark" size={17} color="#fff" />
-        </Pressable>
+        <View style={s.fsSlot}><Pressable onPress={onConfirm} style={s.fsTickBtn}>
+          <Ionicons name="checkmark" size={22} color="#fff" />
+        </Pressable></View>
       </View>
     </View>
     <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-      <SitePreview palette={palette} font={font} page={previewPage} onPageChange={setPreviewPage} editing={editing} siteTexts={siteTexts} onEditText={(key: string) => { const labels: Record<string, string> = { headline: 'Hero headline', heroBody: 'Hero subtext', aboutTitle: 'About title', aboutBody: 'About description', brand: 'Brand name' }; setEditingText({ key, label: labels[key] || key }); }} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} />
+      <SitePreview palette={palette} font={font} page={previewPage} onPageChange={setPreviewPage} editing={editing} siteTexts={siteTexts} onEditText={(key: string) => { const labels: Record<string, string> = { headline: 'Hero headline', heroBody: 'Hero subtext', aboutTitle: 'About title', aboutBody: 'About description', brand: 'Brand name' }; setEditingText({ key, label: labels[key] || key }); }} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} />
     </ScrollView>
   </View>;
 }
@@ -602,11 +608,12 @@ function AppInner() {
   const [editFrom, setEditFrom] = useState<'onboarding' | 'dashboard'>('onboarding');
   const [buildChoice, setBuildChoice] = useState<'designer' | 'template' | null>(null);
   const [websiteStatus, setWebsiteStatus] = useState<'building' | 'ready' | 'live'>('building');
-  const [data, setData] = useState({ email: '', password: '', businessName: 'Sisko Hairdressing', category: 'Hair & Beauty', fullName: '', contactEmail: '', phone: '', website: '', instagram: '', facebook: '', address: '', services: 'Cut & finish', price: '£45', reviews: '', reviewLink: '' });
+  const [data, setData] = useState({ email: '', password: '', businessName: 'Sisko Hairdressing', category: 'Hair & Beauty', fullName: '', contactEmail: '', phone: '', website: '', instagram: '', facebook: '', address: '', services: 'Cut & finish', price: '£45', reviews: '', reviewLink: '', reviewSource: null as null | 'Google' | 'Trustpilot' });
   const [showFullName, setShowFullName] = useState(false);
+  const [openReview, setOpenReview] = useState<number | null>(null);
   const [hours, setHours] = useState(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((label, i) => ({ label, start: '9:00', end: i === 3 ? '19:00' : '17:30', enabled: i < 6 })));
   const [services, setServices] = useState([{ section: 'Cutting & styling', name: 'Cut & finish', duration: '45 mins', price: '£45' }]);
-  const [reviewsList, setReviewsList] = useState([{ title: '', description: '', name: '' }]);
+  const [reviewsList, setReviewsList] = useState<{ title: string; description: string; name: string }[]>([]);
   const motion = useRef(new Animated.Value(0)).current;
   const loadingProgress = useRef(new Animated.Value(0)).current;
   const loadingFades = useRef([0, 1, 2, 3].map(() => new Animated.Value(0))).current;
@@ -857,18 +864,39 @@ function AppInner() {
             if (!permission.granted) return;
             const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, quality: .82 });
             if (!result.canceled) setMedia(current => ({ ...current, gallery: [...current.gallery, ...result.assets.map(a => a.uri)].slice(0, 20) }));
-          }}><Ionicons name="add" size={26} color="rgba(218,232,244,.5)" /></Pressable>}
+          }}><Ionicons name="add" size={26} color="#2563EB" /></Pressable>}
         </View></>;
-      case 'reviews': return <><Intro>Add customer reviews for your website. Each is optional — leave blank and swipe on, or add more below.</Intro>
-        {reviewsList.map((review, i) => <View key={i} style={s.reviewCard}>
-          <Field label="Review title (optional)" value={review.title} onChangeText={(v: string) => setReviewsList(reviewsList.map((r, n) => n === i ? { ...r, title: v } : r))} placeholder="e.g. Amazing service" />
-          <Field label="Review (optional)" value={review.description} onChangeText={(v: string) => setReviewsList(reviewsList.map((r, n) => n === i ? { ...r, description: v } : r))} multiline />
-          <Field label="Customer name (optional)" value={review.name} onChangeText={(v: string) => setReviewsList(reviewsList.map((r, n) => n === i ? { ...r, name: v } : r))} placeholder="e.g. Jane Smith" />
-        </View>)}
-        <Pressable onPress={() => setReviewsList([...reviewsList, { title: '', description: '', name: '' }])} style={s.addReviewBtn}>
-          <Ionicons name="add" size={16} color={BRAND} /><Text style={s.addReviewText}>Add another review</Text>
+      case 'reviews': return <><Intro>Add customer reviews for your website. Each one is optional.</Intro>
+        {reviewsList.map((review, i) => {
+          const open = openReview === i;
+          const label = review.title.trim() || `Review ${i + 1}`;
+          return <View key={i} style={[s.reviewCard, open && s.reviewCardOpen]}>
+            <Pressable onPress={() => setOpenReview(open ? null : i)} style={s.reviewRow}>
+              <Text style={s.reviewRowText} numberOfLines={1}>{label}</Text>
+              <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={16} color={DARK} />
+            </Pressable>
+            {open && <View style={s.reviewFields}>
+              <Field label="Review title (optional)" value={review.title} onChangeText={(v: string) => setReviewsList(reviewsList.map((r, n) => n === i ? { ...r, title: v } : r))} placeholder="e.g. Amazing service" />
+              <Field label="Review (optional)" value={review.description} onChangeText={(v: string) => setReviewsList(reviewsList.map((r, n) => n === i ? { ...r, description: v } : r))} multiline />
+              <Field label="Customer name (optional)" value={review.name} onChangeText={(v: string) => setReviewsList(reviewsList.map((r, n) => n === i ? { ...r, name: v } : r))} placeholder="e.g. Jane Smith" />
+              <Pressable onPress={() => setOpenReview(null)} style={s.reviewDoneBtn}><Text style={s.reviewDoneText}>Done</Text></Pressable>
+            </View>}
+          </View>;
+        })}
+        <Pressable onPress={() => { setReviewsList([...reviewsList, { title: '', description: '', name: '' }]); setOpenReview(reviewsList.length); }} style={s.addReviewBtn}>
+          <Ionicons name="add" size={16} color={DARK} /><Text style={s.addReviewText}>Add review</Text>
         </Pressable>
-        <Pressable onPress={() => setContactForm(!contactForm)} style={[s.formChoice, contactForm && s.formChoiceOn]}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color={contactForm ? '#fff' : BRAND} /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: '#324254', true: BRAND }} thumbColor="#F7FCFF" /></Pressable></>;
+        <View style={s.reviewSourceCard}>
+          <Text style={s.reviewSourceTitle}>Show reviews from</Text>
+          <Text style={s.reviewSourceSub}>Connect an existing profile so visitors see your full rating.</Text>
+          {(['Google', 'Trustpilot'] as const).map(source => <Pressable key={source} onPress={() => setData({ ...data, reviewSource: data.reviewSource === source ? null : source })} style={[s.reviewSourceRow, data.reviewSource === source && s.reviewSourceRowOn]}>
+            <Ionicons name={source === 'Google' ? 'logo-google' : 'star-outline'} size={16} color={DARK} />
+            <Text style={s.reviewSourceName}>{source === 'Google' ? 'Google Reviews' : 'Trustpilot'}</Text>
+            <Text style={s.reviewSourceAction}>{data.reviewSource === source ? 'Cancel' : 'Connect'}</Text>
+          </Pressable>)}
+          {data.reviewSource && <Field label={`${data.reviewSource} profile link`} value={data.reviewLink} onChangeText={(v: string) => setData({ ...data, reviewLink: v })} placeholder={data.reviewSource === 'Google' ? 'Paste your Google Business link' : 'Paste your Trustpilot link'} />}
+        </View>
+        <Pressable onPress={() => setContactForm(!contactForm)} style={[s.formChoice, contactForm && s.formChoiceOn]}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color={contactForm ? '#fff' : DARK} /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: '#B8C2C9', true: DARK }} thumbColor="#F7FCFF" /></Pressable></>;
       case 'choice': return <View style={s.choiceWrap}>
         <Text style={s.choiceHeading}>How would you like to build your website?</Text>
         <Text style={s.choiceSub}>Either way, you can always make changes later.</Text>
@@ -905,16 +933,16 @@ function AppInner() {
           finally { setDomainChecking(false); }
         };
         return <><Intro>Find the right home for your website. The live registration price comes straight from the registry before payment.</Intro><View style={s.domainSearch}>
-          <TextInput style={s.domainInput} value={domain} onChangeText={(value) => { setDomain(value); clearDomainQuote(); }} autoCapitalize="none" /><View style={{ position: 'relative' }}><Pressable onPress={() => setShowSuffixes(!showSuffixes)} style={s.suffixButton}><Text style={s.domainSuffix}>{suffix}</Text><Ionicons name={showSuffixes ? 'chevron-up' : 'chevron-down'} size={14} color="#C7E4F0" /></Pressable>
+          <TextInput style={s.domainInput} value={domain} onChangeText={(value) => { setDomain(value); clearDomainQuote(); }} autoCapitalize="none" /><View style={{ position: 'relative' }}><Pressable onPress={() => setShowSuffixes(!showSuffixes)} style={s.suffixButton}><Text style={s.domainSuffix}>{suffix}</Text><Ionicons name={showSuffixes ? 'chevron-up' : 'chevron-down'} size={14} color="#1C2832" /></Pressable>
           {showSuffixes && <View style={s.suffixDropdown}>
             {DOMAIN_TLDS.map((item, i) => <Pressable key={item} onPress={() => { setSuffix(item); setShowSuffixes(false); clearDomainQuote(); }} style={[s.suffixDropdownItem, i < DOMAIN_TLDS.length - 1 && s.suffixDropdownDivider, suffix === item && s.suffixDropdownItemOn]}>
               <Text style={s.suffixDropdownText}>{item}</Text>
-              {suffix === item && <Ionicons name="checkmark" size={14} color={BRAND} />}
+              {suffix === item && <Ionicons name="checkmark" size={14} color={DARK} />}
             </Pressable>)}
           </View>}</View></View>
           <Pressable disabled={domainChecking} onPress={checkDomain} style={[s.check, domainChecking && s.checkDisabled]}><Text style={s.checkText}>{domainChecking ? 'Checking live price…' : 'Check availability'}</Text></Pressable>
           {!!domainError && <Text style={s.domainError}>{domainError}</Text>}
-          {domainReady && domainQuote && <Animated.View style={s.domainResult}><Ionicons name="checkmark-circle" size={24} color={BRAND} /><View style={{ flex: 1 }}><Text style={s.domainName}>{domainQuote.domain}</Text><Text style={s.domainPrice}>Available — {domainQuote.priceLabel}</Text></View></Animated.View>}</>;
+          {domainReady && domainQuote && <Animated.View style={s.domainResult}><Ionicons name="checkmark-circle" size={24} color={DARK} /><View style={{ flex: 1 }}><Text style={s.domainName}>{domainQuote.domain}</Text><Text style={s.domainPrice}>Available — {domainQuote.priceLabel}</Text></View></Animated.View>}</>;
       }
     }
   };
@@ -923,7 +951,7 @@ function AppInner() {
     <StatusBar style="dark" />
     <View style={s.loginStage}>
       <View style={[s.card, s.loginCard]}>
-        <BlurView intensity={42} tint="dark" style={StyleSheet.absoluteFill} />
+        
         <View style={s.loginHeader}><Text style={s.cardTitle}>Welcome to BrightSite</Text><Image source={require('./assets/brightsite-icon.png')} style={s.loginAppIcon} /></View>
         <ScrollView contentContainerStyle={[s.content, s.loginContent]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
           {content(steps[0])}
@@ -944,10 +972,12 @@ function AppInner() {
   if (appScreen === 'loading') {
     const messages = buildChoice === 'template' ? LOADING_MESSAGES.template : LOADING_MESSAGES.designer;
     return <FlowBackdrop>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <Animated.View style={[s.fullLoading, { opacity: designReveal.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }]}>
-        <Text style={s.fullLoadingTitle}>{buildChoice === 'template' ? 'Building your template' : 'Setting up your dashboard'}</Text>
-        <View style={s.fullLoadingList}>{messages.map((message, i) => <Animated.View key={message} style={[s.fullLoadingRow, { opacity: loadingFades[i] }]}><Ionicons name="checkmark-circle" size={16} color="#4BD4F8" /><Text style={s.fullLoadingLine}>{message}</Text></Animated.View>)}</View>
+        <Text style={s.fullLoadingBrand}>BRIGHTSITE</Text>
+        <Text style={s.fullLoadingKicker}>GETTING YOUR WEBSITE STARTED</Text>
+        <Text style={s.fullLoadingName}>{(data.businessName || 'YOUR BUSINESS').toUpperCase()}</Text>
+        <View style={s.fullLoadingList}>{messages.map((message, i) => <Animated.View key={message} style={[s.fullLoadingRow, { opacity: loadingFades[i] }]}><Ionicons name="checkmark" size={16} color="#fff" /><Text style={s.fullLoadingLine}>{message}</Text></Animated.View>)}</View>
         <View style={s.fullLoadingTrack}><Animated.View style={[s.fullLoadingFill, { width: loadingProgress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }]} /></View>
       </Animated.View>
     </FlowBackdrop>;
@@ -968,7 +998,7 @@ function AppInner() {
           const travelPosition = isActive && deckDirection !== 0 ? Animated.multiply(cardPosition, 1.06) : cardPosition;
           const cardScale = cardPosition.interpolate({ inputRange: [-CARD_TRAVEL, 0, CARD_TRAVEL], outputRange: [.93, 1, .93], extrapolate: 'clamp' });
           return <Animated.View key={deckStep.id} pointerEvents={isActive ? 'auto' : 'none'} {...(isActive ? pan.panHandlers : {})} style={[s.card, s.deckCard, isActive ? s.deckCardActive : s.deckCardBehind, { zIndex: isIncoming ? 22 : isActive ? 21 : 20 - Math.abs(distance), transform: [{ translateY: travelPosition }, { scale: cardScale }] }]}>
-            <BlurView intensity={42} tint="dark" style={StyleSheet.absoluteFill} />
+            
             <View style={s.cardHeader}><Text style={s.cardTitle}>{deckStep.title}</Text>{deckIndex > 0 && <Text style={s.count}>{deckIndex}/{setupStepIndexes.length}</Text>}</View>
             <ScrollView style={s.cardScroll} contentContainerStyle={[s.content, deckStep.id === 'login' && s.loginContent, deckStep.id === 'hours' && s.hoursContent]}
               scrollEnabled={deckStep.id !== 'hours' || keyboardVisible}
@@ -977,7 +1007,7 @@ function AppInner() {
             </ScrollView>
             <View pointerEvents="none" style={s.fixedPrompt}>
               {!!validationMessage && isActive && <Text style={s.validationText}>{validationMessage}</Text>}
-              <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="arrow-up" size={14} color="rgba(255,255,255,.7)" />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : deckStep.id === 'choice' ? 'Pick an option above' : 'Swipe up to save'}</Text></View>
+              <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="arrow-up" size={14} color="#000" />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : deckStep.id === 'choice' ? 'Pick an option above' : 'Swipe up to save'}</Text></View>
             </View>
           </Animated.View>;
         })}
@@ -1008,45 +1038,45 @@ export default function App() {
 
 const s = StyleSheet.create({
   backdropGlowTop: { position: 'absolute', width: '88%', height: '42%', top: '-9%', left: '-18%', borderRadius: 400, opacity: .86, overflow: 'hidden' }, backdropGlowBottom: { position: 'absolute', width: '94%', height: '46%', bottom: '-12%', right: '-24%', borderRadius: 440, opacity: .74, overflow: 'hidden' },
-  stage: { flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28, paddingBottom: 72, paddingHorizontal: 18 },
+  stage: { flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28, paddingBottom: 72, paddingHorizontal: 0 },
   loginStage: { flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28, paddingBottom: 20, paddingHorizontal: 18 }, loginCard: { flex: 1 },
   loginHeader: { minHeight: 78, paddingLeft: 26, paddingRight: 18, paddingTop: 15, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, loginAppIcon: { width: 48, height: 48, borderRadius: 15, shadowColor: '#1C69E8', shadowOpacity: .28, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } },
   previousPeek: { position: 'absolute', top: -34, left: 34, right: 34, height: 98, borderRadius: 30, backgroundColor: 'rgba(255,255,255,.05)', shadowColor: '#000', shadowOpacity: .16, shadowRadius: 24, shadowOffset: { width: 0, height: 12 } },
   previousCard: { position: 'absolute', zIndex: 1, top: -(SCREEN_HEIGHT - 216), left: 34, right: 34, height: SCREEN_HEIGHT - 126, borderRadius: 26, backgroundColor: 'rgba(255,255,255,.06)', shadowColor: '#000', shadowOpacity: .34, shadowRadius: 28, shadowOffset: { width: 0, height: 16 }, overflow: 'hidden' },
   card: { flex: 1, zIndex: 2, borderRadius: 30, backgroundColor: CARD, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.20)', shadowColor: '#000', shadowOpacity: .62, shadowRadius: 31, shadowOffset: { width: 0, height: 18 }, elevation: 18 },
-  deckCard: { position: 'absolute', top: CARD_TOP, bottom: CARD_BOTTOM, left: 18, right: 18 },
+  deckCard: { position: 'absolute', top: CARD_TOP, bottom: CARD_BOTTOM, left: 6, right: 6 },
   deckCardActive: { shadowColor: '#01070B', shadowOpacity: .7, shadowRadius: 38, shadowOffset: { width: 0, height: 22 }, elevation: 26 }, deckCardBehind: { shadowOpacity: .3, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 4 },
   cardHeader: { minHeight: 72, paddingHorizontal: 26, paddingTop: 22, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', zIndex: 100, elevation: 100 }, designCardHeader: { minHeight: 64, paddingTop: 13, paddingBottom: 10, paddingRight: 14 },
   cardScroll: { flex: 1, zIndex: 1, elevation: 1, overflow: 'hidden' },
-  cardTitle: { fontFamily: FONT, fontSize: 21, fontWeight: '700', letterSpacing: -.4, color: '#F3F8FC' }, count: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: 'rgba(220,238,248,.55)' },
-  content: { padding: 24, paddingBottom: 76 }, loginContent: { flex: 1, paddingTop: 12, paddingBottom: 18 }, intro: { fontFamily: FONT, fontSize: 14, lineHeight: 21, color: 'rgba(225,239,248,.65)', marginBottom: 18 },
-  fieldWrap: { marginBottom: 16 }, fieldLabel: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: 'rgba(223,239,248,.72)', marginBottom: 7 },
-  uploadLabel: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: 'rgba(199,228,240,.6)', marginTop: 6, letterSpacing: 0.3 },
-  uploadLabelSub: { fontFamily: FONT, fontSize: 11, color: 'rgba(199,228,240,.38)', marginTop: 1 },
-  input: { minHeight: 50, borderRadius: 16, paddingHorizontal: 16, fontFamily: FONT, fontSize: 15, color: '#F7FCFF', backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(255,255,255,.32)', outlineWidth: 0 },
+  cardTitle: { fontFamily: FONT, fontSize: 21, fontWeight: '700', letterSpacing: -.4, color: '#1C2832' }, count: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: 'rgba(28,40,50,.7)' },
+  content: { padding: 24, paddingBottom: 76 }, loginContent: { flex: 1, paddingTop: 12, paddingBottom: 18 }, intro: { fontFamily: FONT, fontSize: 14, lineHeight: 21, color: 'rgba(28,40,50,.7)', marginBottom: 18 },
+  fieldWrap: { marginBottom: 16 }, fieldLabel: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: 'rgba(28,40,50,.7)', marginBottom: 7 },
+  uploadLabel: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: 'rgba(28,40,50,.7)', marginTop: 6, letterSpacing: 0.3 },
+  uploadLabelSub: { fontFamily: FONT, fontSize: 11, color: 'rgba(28,40,50,.5)', marginTop: 1 },
+  input: { minHeight: 50, borderRadius: 16, paddingHorizontal: 16, fontFamily: FONT, fontSize: 15, color: '#1C2832', backgroundColor: 'rgba(255,255,255,.42)', borderWidth: 1, borderColor: 'rgba(28,40,50,.16)', outlineWidth: 0 },
   inputMultiline: { minHeight: 92, paddingTop: 14, textAlignVertical: 'top' },
   nameDisplay: { marginTop: -3, marginBottom: 6, flexDirection: 'row', alignItems: 'center', gap: 9 },
-  checkbox: { width: 19, height: 19, borderRadius: 6, borderWidth: 1, borderColor: 'rgba(226,242,250,.35)', backgroundColor: 'rgba(255,255,255,.06)', alignItems: 'center', justifyContent: 'center' },
+  checkbox: { width: 19, height: 19, borderRadius: 6, borderWidth: 1, borderColor: 'rgba(28,40,50,.5)', backgroundColor: 'rgba(255,255,255,.55)', alignItems: 'center', justifyContent: 'center' },
   checkboxOn: { backgroundColor: BRAND, borderColor: BRAND },
-  nameDisplayText: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: 'rgba(223,239,248,.68)' },
+  nameDisplayText: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: 'rgba(28,40,50,.7)' },
   button: { minHeight: 52, paddingHorizontal: 20, borderRadius: 18, backgroundColor: '#E5F9FF', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, shadowColor: BRAND, shadowOpacity: .18, shadowRadius: 18, shadowOffset: { width: 0, height: 8 } },
   buttonText: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#061824' }, secondaryButton: { backgroundColor: 'rgba(255,255,255,.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)' }, pressed: { transform: [{ scale: .96 }], opacity: .86 },
   logo: { width: 52, height: 52, borderRadius: 18, backgroundColor: BRAND, alignItems: 'center', justifyContent: 'center', marginBottom: 14, shadowColor: BRAND, shadowOpacity: .35, shadowRadius: 20 },
   logoText: { fontFamily: FONT, fontSize: 29, fontWeight: '900', color: '#fff' }, logoDot: { position: 'absolute', width: 7, height: 7, borderRadius: 5, backgroundColor: '#fff', top: 8, right: 10 },
-  heroTitle: { fontFamily: FONT, fontSize: 27, lineHeight: 32, fontWeight: '800', letterSpacing: -.9, color: '#F7FBFE', marginBottom: 8 },
-  authModes: { height: 42, padding: 4, borderRadius: 15, flexDirection: 'row', backgroundColor: 'rgba(15,18,21,.28)', marginBottom: 14 }, authMode: { flex: 1, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }, authModeOn: { backgroundColor: 'rgba(255,255,255,.9)' }, authModeText: { fontFamily: FONT, fontSize: 12, fontWeight: '800', color: 'rgba(255,255,255,.62)' }, authModeTextOn: { color: '#25292C' }, authStatus: { marginTop: -3, fontFamily: FONT, fontSize: 11, lineHeight: 16, fontWeight: '700', color: '#FFE1B5', textAlign: 'center' },
+  heroTitle: { fontFamily: FONT, fontSize: 27, lineHeight: 32, fontWeight: '800', letterSpacing: -.9, color: '#1C2832', marginBottom: 8 },
+  authModes: { height: 42, padding: 4, borderRadius: 15, flexDirection: 'row', backgroundColor: 'rgba(15,18,21,.28)', marginBottom: 14 }, authMode: { flex: 1, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }, authModeOn: { backgroundColor: 'rgba(255,255,255,.9)' }, authModeText: { fontFamily: FONT, fontSize: 12, fontWeight: '800', color: 'rgba(28,40,50,.7)' }, authModeTextOn: { color: '#25292C' }, authStatus: { marginTop: -3, fontFamily: FONT, fontSize: 11, lineHeight: 16, fontWeight: '700', color: '#8A4A12', textAlign: 'center' },
   authSubmit: { height: 48, marginTop: 10, borderRadius: 16, backgroundColor: '#F6F2E9', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: .16, shadowRadius: 14, shadowOffset: { width: 0, height: 7 } }, authSubmitDisabled: { opacity: .62 }, authSubmitText: { fontFamily: FONT, fontSize: 14, fontWeight: '900', color: '#24282B' },
   rowsCard: { borderRadius: 20, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,.055)', borderWidth: 1, borderColor: 'rgba(255,255,255,.1)' }, hoursContent: { padding: 0 }, hoursIntro: { paddingHorizontal: 24, paddingTop: 24 }, hoursCard: { minHeight: SCREEN_HEIGHT * .57, overflow: 'hidden' },
-  hoursRow: { flex: 1, minHeight: 58, paddingHorizontal: 17, flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(255,255,255,.14)' }, hoursRowLast: { borderBottomWidth: 0 }, hoursDay: { width: 43, fontFamily: FONT, fontSize: 14, fontWeight: '700', color: '#ECF6FA' }, hoursTimes: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, timeInput: { width: 63, height: 34, borderRadius: 10, paddingHorizontal: 8, backgroundColor: 'transparent', color: '#F7FCFF', fontFamily: FONT, fontSize: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', outlineWidth: 0 }, timeInputOff: { width: 63, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)' }, timeOffText: { fontFamily: FONT, color: 'rgba(235,243,247,.30)', fontSize: 13 }, timeDash: { fontFamily: FONT, fontSize: 13, color: 'rgba(220,236,245,.58)' }, hoursSwitch: { width: 52, alignItems: 'flex-end' }, closedText: { flex: 1, fontFamily: FONT, fontSize: 12, color: 'rgba(220,236,245,.48)' },
-  toggleLabel: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: '#ECF6FA' }, toggleValue: { fontFamily: FONT, fontSize: 12, color: 'rgba(219,235,245,.55)', marginTop: 2 },
+  hoursRow: { flex: 1, minHeight: 58, paddingHorizontal: 17, flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(255,255,255,.14)' }, hoursRowLast: { borderBottomWidth: 0 }, hoursDay: { width: 43, fontFamily: FONT, fontSize: 14, fontWeight: '700', color: '#1C2832' }, hoursTimes: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, timeInput: { width: 63, height: 34, borderRadius: 10, paddingHorizontal: 8, backgroundColor: 'transparent', color: '#1C2832', fontFamily: FONT, fontSize: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', outlineWidth: 0 }, timeInputOff: { width: 63, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(28,40,50,.22)' }, timeOffText: { fontFamily: FONT, color: 'rgba(28,40,50,.5)', fontSize: 13 }, timeDash: { fontFamily: FONT, fontSize: 13, color: 'rgba(28,40,50,.7)' }, hoursSwitch: { width: 52, alignItems: 'flex-end' }, closedText: { flex: 1, fontFamily: FONT, fontSize: 12, color: 'rgba(28,40,50,.5)' },
+  toggleLabel: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: '#ECF6FA' }, toggleValue: { fontFamily: FONT, fontSize: 12, color: 'rgba(28,40,50,.7)', marginTop: 2 },
   inline: { flexDirection: 'row', gap: 10 },
-  upload: { alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.055)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)', overflow: 'hidden' },
+  upload: { alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 16, backgroundColor: '#EFE4DB', borderWidth: 1, borderColor: '#1C2832', overflow: 'hidden' },
   uploadPreview: { width: 52, height: 52, borderRadius: 15, marginBottom: 9 }, uploadPreviewFill: { width: '100%', height: '100%' },
   uploadIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(34,188,231,.12)', marginBottom: 10 },
-  uploadTitle: { fontFamily: FONT, fontWeight: '800', fontSize: 14, color: '#F0F8FC' }, uploadSub: { fontFamily: FONT, fontSize: 11, color: 'rgba(222,238,247,.5)', marginTop: 3 },
-  continue: { marginTop: 24, gap: 16 }, skip: { fontFamily: FONT, fontSize: 12, color: 'rgba(219,235,245,.5)', textAlign: 'center' }, loginSwipe: { marginTop: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 }, designSwipe: { paddingVertical: 22, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 }, swipeHint: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: 'rgba(235,243,247,.76)', textAlign: 'center' },
-  fixedPrompt: { position: 'absolute', left: 18, right: 18, bottom: 14, zIndex: 120, elevation: 120, alignItems: 'center', gap: 7 }, swipeRow: { minHeight: 31, paddingHorizontal: 13, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(25,29,33,.72)' }, validationText: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: '#FFD1D1', textAlign: 'center', paddingHorizontal: 12 },
-  serviceRow: { flexDirection: 'row', gap: 7, marginTop: 5, alignItems: 'center' }, serviceInput: { height: 48, borderRadius: 14, paddingHorizontal: 10, fontFamily: FONT, fontSize: 12, color: '#F7FCFF', backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(255,255,255,.30)', outlineWidth: 0 }, serviceActions: { flexDirection: 'row', gap: 8 }, serviceDelete: { width: 28, height: 48, alignItems: 'center', justifyContent: 'center' }, sectionDivider: { height: StyleSheet.hairlineWidth, backgroundColor: 'rgba(255,255,255,.14)', marginVertical: 16 }, addService: { marginTop: 13, height: 42, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(226,232,235,.42)', backgroundColor: 'rgba(255,255,255,.08)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, addSectionBtn: { marginTop: 8, borderColor: 'rgba(226,232,235,.2)', backgroundColor: 'transparent' }, addServiceText: { fontFamily: FONT, fontWeight: '800', fontSize: 12, color: '#F2F6F8' },
+  uploadTitle: { fontFamily: FONT, fontWeight: '800', fontSize: 14, color: '#1C2832' }, uploadSub: { fontFamily: FONT, fontSize: 11, color: 'rgba(28,40,50,.7)', marginTop: 3 },
+  continue: { marginTop: 24, gap: 16 }, skip: { fontFamily: FONT, fontSize: 12, color: 'rgba(28,40,50,.7)', textAlign: 'center' }, loginSwipe: { marginTop: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 }, designSwipe: { paddingVertical: 22, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 }, swipeHint: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: '#000', textAlign: 'center' },
+  fixedPrompt: { position: 'absolute', left: 18, right: 18, bottom: 14, zIndex: 120, elevation: 120, alignItems: 'center', gap: 7 }, swipeRow: { minHeight: 31, paddingHorizontal: 13, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, }, validationText: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: '#A3261F', textAlign: 'center', paddingHorizontal: 12 },
+  serviceRow: { flexDirection: 'row', gap: 7, marginTop: 5, alignItems: 'center' }, serviceInput: { height: 48, borderRadius: 14, paddingHorizontal: 10, fontFamily: FONT, fontSize: 12, color: '#1C2832', backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(255,255,255,.30)', outlineWidth: 0 }, serviceActions: { flexDirection: 'row', gap: 8 }, serviceDelete: { width: 28, height: 48, alignItems: 'center', justifyContent: 'center' }, sectionDivider: { height: StyleSheet.hairlineWidth, backgroundColor: 'rgba(255,255,255,.14)', marginVertical: 16 }, addService: { marginTop: 13, height: 42, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(226,232,235,.42)', backgroundColor: 'rgba(255,255,255,.08)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, addSectionBtn: { marginTop: 8, borderColor: 'rgba(226,232,235,.2)', backgroundColor: 'transparent' }, addServiceText: { fontFamily: FONT, fontWeight: '800', fontSize: 12, color: '#1C2832' },
   loading: { position: 'absolute', inset: 0, minHeight: SCREEN_HEIGHT * .65, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 44 }, loadingWordmark: { flexDirection: 'row', position: 'relative', marginBottom: 26 }, loadingBrand: { fontFamily: FONT, letterSpacing: 1.6, fontWeight: '900', fontSize: 17, color: '#F7FCFF' }, loadingBrandDot: { position: 'absolute', width: 5, height: 5, borderRadius: 3, backgroundColor: '#4B9BFF', right: 32, top: -1 },
   loadingTitle: { fontFamily: FONT, fontSize: 25, lineHeight: 31, fontWeight: '800', color: '#F5FBFE', textAlign: 'center' }, loadingText: { fontFamily: FONT, fontSize: 13, lineHeight: 19, color: 'rgba(221,237,246,.58)', textAlign: 'center', marginTop: 10 }, loadingSteps: { alignSelf: 'stretch', gap: 10, marginTop: 27 }, loadingStep: { flexDirection: 'row', alignItems: 'center', gap: 9, opacity: .36 }, loadingStepOn: { opacity: 1 }, loadingStepText: { fontFamily: FONT, fontSize: 12, color: 'rgba(222,238,247,.6)' }, loadingStepTextOn: { color: '#EAF9FE', fontWeight: '700' },
   track: { width: '100%', height: 5, borderRadius: 5, backgroundColor: 'rgba(255,255,255,.1)', marginTop: 28, overflow: 'hidden' }, fill: { height: 5, backgroundColor: BRAND, borderRadius: 5 },
@@ -1070,6 +1100,9 @@ const s = StyleSheet.create({
   siteServiceName: { fontFamily: FONT, fontSize: 7, fontWeight: '800', letterSpacing: .3 },
   siteServiceLink: { fontFamily: FONT, fontSize: 6, marginTop: 4, opacity: .6 },
   siteReviewsSection: { padding: 16 },
+  siteTrustBadge: { marginTop: 12, paddingVertical: 10, paddingHorizontal: 12, borderWidth: 1, borderRadius: 10, alignItems: 'flex-start' },
+  siteTrustTitle: { fontSize: 11, fontWeight: '700' },
+  siteTrustLink: { fontSize: 10, fontWeight: '600', marginTop: 6 },
   siteReviewsSectionTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 14, marginBottom: 7 },
   siteStars: { flexDirection: 'row', gap: 2, marginBottom: 6 },
   siteReviewText: { fontFamily: FONT, fontSize: 9, lineHeight: 13, fontStyle: 'italic', marginBottom: 4 },
@@ -1114,42 +1147,55 @@ const s = StyleSheet.create({
   tutorialTitle: { fontFamily: FONT, fontSize: 19, fontWeight: '800', color: '#fff', marginTop: 8 }, tutorialBody: { fontFamily: FONT, fontSize: 11, lineHeight: 16, color: 'rgba(255,255,255,.65)', textAlign: 'center', marginTop: 5 },
   gotIt: { marginTop: 16, minWidth: 118, paddingVertical: 10, borderRadius: 99, backgroundColor: 'rgba(222,247,255,.88)', alignItems: 'center' }, gotItText: { fontFamily: FONT, fontWeight: '800', color: '#123042' },
   templateDots: { position: 'absolute', bottom: 13, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 7 }, templateDot: { width: 7, height: 7, borderRadius: 5, backgroundColor: 'rgba(255,255,255,.35)' }, templateDotOn: { width: 21, backgroundColor: '#fff' },
-  tools: { position: 'relative', zIndex: 30, alignItems: 'flex-end' }, toolStack: { gap: 6, alignItems: 'center', flexDirection: 'row' },
-  toolButton: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(240,250,255,.72)', borderWidth: 1, borderColor: '#fff', alignItems: 'center', justifyContent: 'center', shadowColor: '#207EA0', shadowOpacity: .18, shadowRadius: 12 }, toolActive: { backgroundColor: BRAND, shadowOpacity: .34, shadowRadius: 20 }, toolButtonText: { fontFamily: FONT, fontSize: 12, fontWeight: '800', color: '#fff' },
+  tools: { position: 'relative', zIndex: 30, width: FS_SLOT * 3, alignItems: 'center' }, toolStack: { alignSelf: 'stretch', alignItems: 'center', flexDirection: 'row' }, toolSlot: { width: FS_SLOT, alignItems: 'center' },
+  toolButton: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#fff', borderWidth: 1, borderColor: 'transparent', alignItems: 'center', justifyContent: 'center', shadowColor: '#207EA0', shadowOpacity: .18, shadowRadius: 12 }, toolActive: { backgroundColor: BRAND, shadowOpacity: .34, shadowRadius: 20 }, toolButtonText: { fontFamily: FONT, fontSize: 12, fontWeight: '800', color: '#fff' },
   toolPanel: { position: 'absolute', top: 49, right: 0, width: 186, maxHeight: 400, padding: 12, borderRadius: 23, overflow: 'hidden', borderWidth: 1, borderColor: '#fff', shadowColor: '#174E66', shadowOpacity: .18, shadowRadius: 18, zIndex: 200, elevation: 200 }, paletteWrap: { gap: 5 }, paletteScroll: { maxHeight: 274 }, paletteGroup: { paddingBottom: 12 }, paletteHeading: { paddingTop: 5, paddingBottom: 4 }, paletteHeadingText: { fontFamily: FONT, fontSize: 10, fontWeight: '900', letterSpacing: .8, color: '#345568', textTransform: 'uppercase' },
   toolTitle: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#28495B', textAlign: 'center', marginBottom: 9 }, option: { minHeight: 39, borderRadius: 16, paddingHorizontal: 9, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' },
   dot: { width: 20, height: 20, borderRadius: 10 }, selected: { borderColor: BRAND, backgroundColor: 'rgba(34,188,231,.12)' }, fontOption: { paddingVertical: 10, borderRadius: 14, marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' }, fontOptionText: { fontFamily: FONT, fontSize: 11, fontWeight: '700', textAlign: 'center', color: '#345568' },
   sectionOption: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(66,104,125,.18)' }, sectionText: { flex: 1, fontFamily: FONT, fontSize: 12, fontWeight: '600', color: '#345568', marginHorizontal: 8 },
   sectionEye: { padding: 7 }, sectionDragHandle: { padding: 7 },
-  domainSearch: { flexDirection: 'row', alignItems: 'center', borderRadius: 18, backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(255,255,255,.32)' }, domainInput: { flex: 1, minHeight: 54, paddingHorizontal: 16, fontFamily: FONT, fontSize: 16, color: '#fff', outlineWidth: 0 }, suffixButton: { height: 54, paddingLeft: 8, paddingRight: 13, flexDirection: 'row', alignItems: 'center', gap: 3 }, domainSuffix: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: '#E5EBEE' }, suffixDropdown: { position: 'absolute', top: 58, right: 0, zIndex: 99, minWidth: 120, backgroundColor: '#1A2128', borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,.14)', shadowColor: '#000', shadowOpacity: .4, shadowRadius: 12, elevation: 10, overflow: 'hidden' }, suffixDropdownItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13, paddingHorizontal: 16 }, suffixDropdownDivider: { borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.08)' }, suffixDropdownItemOn: { backgroundColor: 'rgba(75,155,255,.12)' }, suffixDropdownText: { fontFamily: FONT, fontSize: 15, fontWeight: '600', color: '#E5EBEE' },
+  domainSearch: { flexDirection: 'row', alignItems: 'center', borderRadius: 18, backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(28,40,50,.22)' }, domainInput: { flex: 1, minHeight: 54, paddingHorizontal: 16, fontFamily: FONT, fontSize: 16, color: '#1C2832', outlineWidth: 0 }, suffixButton: { height: 54, paddingLeft: 8, paddingRight: 13, flexDirection: 'row', alignItems: 'center', gap: 3 }, domainSuffix: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: '#1C2832' }, suffixDropdown: { position: 'absolute', top: 58, right: 0, zIndex: 99, minWidth: 120, backgroundColor: '#1A2128', borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,.14)', shadowColor: '#000', shadowOpacity: .4, shadowRadius: 12, elevation: 10, overflow: 'hidden' }, suffixDropdownItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13, paddingHorizontal: 16 }, suffixDropdownDivider: { borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.08)' }, suffixDropdownItemOn: { backgroundColor: 'rgba(75,155,255,.12)' }, suffixDropdownText: { fontFamily: FONT, fontSize: 15, fontWeight: '600', color: '#E5EBEE' },
   check: { marginTop: 12, paddingVertical: 15, borderRadius: 17, alignItems: 'center', backgroundColor: 'rgba(34,188,231,.15)', borderWidth: 1, borderColor: 'rgba(34,188,231,.35)' }, checkText: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#DDF8FF' },
-  checkDisabled: { opacity: .58 }, domainError: { marginTop: 10, fontFamily: FONT, fontSize: 12, lineHeight: 17, color: '#FFB6B6' }, domainResult: { marginTop: 14, padding: 15, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: 'rgba(34,188,231,.09)', borderWidth: 1, borderColor: 'rgba(34,188,231,.3)' }, domainName: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#F0FBFF' }, domainPrice: { fontFamily: FONT, fontSize: 11, color: '#76D8F2', marginTop: 2 },
-  formChoice: { padding: 17, borderRadius: 23, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: 'rgba(255,255,255,.055)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)' }, formChoiceOn: { borderColor: BRAND, backgroundColor: 'rgba(34,188,231,.1)' }, formChoiceIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(34,188,231,.14)' }, formChoiceTitle: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#F3FAFD' }, formChoiceText: { fontFamily: FONT, fontSize: 11, color: 'rgba(220,236,245,.58)', marginTop: 3, lineHeight: 16 }, formNote: { fontFamily: FONT, fontSize: 12, color: 'rgba(220,236,245,.52)', textAlign: 'center', marginTop: 18 },
+  checkDisabled: { opacity: .58 }, domainError: { marginTop: 10, fontFamily: FONT, fontSize: 12, lineHeight: 17, color: '#A3261F' }, domainResult: { marginTop: 14, padding: 15, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: 'rgba(34,188,231,.09)', borderWidth: 1, borderColor: 'rgba(34,188,231,.3)' }, domainName: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#1C2832' }, domainPrice: { fontFamily: FONT, fontSize: 11, color: '#76D8F2', marginTop: 2 },
+  formChoice: { padding: 17, borderRadius: 23, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: 'rgba(255,255,255,.055)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)' }, formChoiceOn: { borderColor: BRAND, backgroundColor: 'rgba(34,188,231,.1)' }, formChoiceIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(34,188,231,.14)' }, formChoiceTitle: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#1C2832' }, formChoiceText: { fontFamily: FONT, fontSize: 11, color: 'rgba(28,40,50,.7)', marginTop: 3, lineHeight: 16 }, formNote: { fontFamily: FONT, fontSize: 12, color: 'rgba(28,40,50,.7)', textAlign: 'center', marginTop: 18 },
   planHeading: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#EAF8FD', marginTop: 25, marginBottom: 10 }, plan: { minHeight: 118, padding: 18, borderRadius: 23, backgroundColor: 'rgba(255,255,255,.055)', borderWidth: 1, borderColor: 'rgba(255,255,255,.11)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }, planOn: { borderColor: BRAND, backgroundColor: 'rgba(34,188,231,.1)' },
-  planName: { fontFamily: FONT, fontSize: 18, fontWeight: '800', color: '#F3FAFD' }, planNote: { fontFamily: FONT, fontSize: 11, color: 'rgba(220,236,245,.55)', marginTop: 4 }, planPrice: { fontFamily: FONT, fontSize: 25, fontWeight: '900', color: '#F5FCFF' }, planSmall: { fontSize: 10 }, save: { fontFamily: FONT, fontSize: 8, fontWeight: '900', color: '#07202B', backgroundColor: BRAND, padding: 5, borderRadius: 8, alignSelf: 'flex-start', marginBottom: 8 },
+  planName: { fontFamily: FONT, fontSize: 18, fontWeight: '800', color: '#1C2832' }, planNote: { fontFamily: FONT, fontSize: 11, color: 'rgba(28,40,50,.7)', marginTop: 4 }, planPrice: { fontFamily: FONT, fontSize: 25, fontWeight: '900', color: '#1C2832' }, planSmall: { fontSize: 10 }, save: { fontFamily: FONT, fontSize: 8, fontWeight: '900', color: '#07202B', backgroundColor: BRAND, padding: 5, borderRadius: 8, alignSelf: 'flex-start', marginBottom: 8 },
   secure: { flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 18 }, secureText: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#DDF7FF' },
-  summary: { padding: 17, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.055)', borderWidth: 1, borderColor: 'rgba(255,255,255,.1)', marginBottom: 20 }, summaryLine: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 9 }, summaryLabel: { fontFamily: FONT, fontSize: 12, color: 'rgba(221,237,246,.65)' }, summaryValue: { fontFamily: FONT, fontSize: 12, fontWeight: '800', color: '#F0F8FC' },
+  summary: { padding: 17, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.055)', borderWidth: 1, borderColor: 'rgba(255,255,255,.1)', marginBottom: 20 }, summaryLine: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 9 }, summaryLabel: { fontFamily: FONT, fontSize: 12, color: 'rgba(28,40,50,.7)' }, summaryValue: { fontFamily: FONT, fontSize: 12, fontWeight: '800', color: '#1C2832' },
   total: { marginTop: 7, paddingTop: 15, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(255,255,255,.16)' }, totalLabel: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#fff' }, totalValue: { fontFamily: FONT, fontSize: 18, fontWeight: '900', color: BRAND },
   dashHead: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 18 }, live: { fontFamily: FONT, fontSize: 9, fontWeight: '900', letterSpacing: 1, color: BRAND, marginBottom: 7 }, dashTitle: { fontFamily: FONT, fontSize: 22, fontWeight: '800', color: '#F2FAFD' }, editPill: { paddingVertical: 9, paddingHorizontal: 13, borderRadius: 99, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,.08)' }, editPillText: { fontFamily: FONT, fontSize: 11, fontWeight: '800', color: '#DFF8FF' },
   browser: { height: 390, borderRadius: 23, overflow: 'hidden', backgroundColor: '#0D1721' }, browserBar: { height: 32, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#1C2A37' }, browserDot: { width: 7, height: 7, borderRadius: 5, backgroundColor: 'rgba(255,255,255,.32)' }, dashImage: { width: '100%', height: '100%' },
-  publishOverlay: { position: 'absolute', left: 0, right: 0, top: 32, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(6,14,20,.62)' }, spinner: { width: 36, height: 36, borderRadius: 18, borderWidth: 3, borderColor: 'rgba(255,255,255,.18)', borderTopColor: BRAND, marginBottom: 13 }, publishText: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#F0FAFD' },
+  publishOverlay: { position: 'absolute', left: 0, right: 0, top: 32, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(6,14,20,.62)' }, spinner: { width: 36, height: 36, borderRadius: 18, borderWidth: 3, borderColor: 'rgba(255,255,255,.18)', borderTopColor: BRAND, marginBottom: 13 }, publishText: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#1C2832' },
   tabs: { marginTop: 18, padding: 5, borderRadius: 18, flexDirection: 'row', backgroundColor: 'rgba(255,255,255,.06)' }, tab: { flex: 1, paddingVertical: 11, borderRadius: 14, alignItems: 'center' }, tabOn: { backgroundColor: 'rgba(34,188,231,.18)' }, tabText: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: 'rgba(222,238,247,.5)' }, tabTextOn: { color: '#DFF9FF' },
   nextPeek: { position: 'absolute', zIndex: 1, bottom: -(SCREEN_HEIGHT - 126) + 90, left: 34, right: 34, height: SCREEN_HEIGHT - 126, borderRadius: 26, backgroundColor: 'rgba(8,18,28,.54)', shadowColor: '#020A10', shadowOpacity: .34, shadowRadius: 28, shadowOffset: { width: 0, height: 16 }, overflow: 'hidden' },
   nextPeekTap: { paddingHorizontal: 22, paddingTop: 48, flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   nextLabel: { fontFamily: FONT, fontSize: 8, fontWeight: '900', color: BRAND, marginTop: 5 }, nextTitle: { flex: 1, fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#EFF9FC' },
-  rail: { position: 'absolute', left: 8, top: '25%', bottom: '25%', justifyContent: 'space-between', alignItems: 'center', zIndex: 140, elevation: 140 }, railHidden: { opacity: 0 }, railButton: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }, railNear: { width: 18, height: 18, borderRadius: 9 }, railFar: { width: 18, height: 18, borderRadius: 9 }, railDone: {}, railActive: { position: 'absolute', width: 27, height: 27, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#4B9BFF', borderWidth: 0, shadowColor: '#4B9BFF', shadowOpacity: .45, shadowRadius: 8, elevation: 8 }, railDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#1A1E22', borderWidth: 1, borderColor: 'rgba(0,0,0,.32)', shadowColor: '#000', shadowOpacity: .2, shadowRadius: 2 }, railDotOn: { backgroundColor: '#4B9BFF', borderColor: '#A9C8FF', shadowColor: '#4B9BFF', shadowOpacity: .45, shadowRadius: 5 },
-  reviewCard: { marginBottom: 8, paddingBottom: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(255,255,255,.12)' },
-  addReviewBtn: { height: 44, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(226,232,235,.42)', backgroundColor: 'rgba(255,255,255,.08)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 18 },
-  addReviewText: { fontFamily: FONT, fontWeight: '800', fontSize: 12, color: '#F2F6F8' },
+  rail: { position: 'absolute', left: 12, top: '25%', bottom: '25%', justifyContent: 'space-between', alignItems: 'center', zIndex: 140, elevation: 140 }, railHidden: { opacity: 0 }, railButton: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }, railNear: { width: 18, height: 18, borderRadius: 9 }, railFar: { width: 18, height: 18, borderRadius: 9 }, railDone: {}, railActive: { position: 'absolute', width: 27, height: 27, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#4B9BFF', borderWidth: 0, shadowColor: '#4B9BFF', shadowOpacity: .45, shadowRadius: 8, elevation: 8 }, railDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#1A1E22', borderWidth: 1, borderColor: 'rgba(0,0,0,.32)', shadowColor: '#000', shadowOpacity: .2, shadowRadius: 2 }, railDotOn: { backgroundColor: '#4B9BFF', borderColor: '#A9C8FF', shadowColor: '#4B9BFF', shadowOpacity: .45, shadowRadius: 5 },
+  reviewCard: { marginBottom: 8, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(28,40,50,.18)', backgroundColor: 'rgba(255,255,255,.45)', overflow: 'hidden' },
+  reviewCardOpen: { borderColor: 'rgba(75,212,248,.45)' },
+  reviewRow: { minHeight: 50, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  reviewRowText: { flex: 1, fontFamily: FONT, fontSize: 14, fontWeight: '600', color: '#1C2832' },
+  reviewFields: { paddingHorizontal: 14, paddingBottom: 14 },
+  reviewDoneBtn: { alignSelf: 'flex-end', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: 'rgba(75,212,248,.18)' },
+  reviewDoneText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: '#4BD4F8' },
+  reviewSourceCard: { marginTop: 14, padding: 14, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(28,40,50,.18)', backgroundColor: 'rgba(255,255,255,.45)' },
+  reviewSourceTitle: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: '#1C2832' },
+  reviewSourceSub: { fontFamily: FONT, fontSize: 12, lineHeight: 17, color: 'rgba(28,40,50,.7)', marginTop: 3, marginBottom: 10 },
+  reviewSourceRow: { minHeight: 46, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(28,40,50,.2)', marginBottom: 8 },
+  reviewSourceRowOn: { borderColor: 'rgba(75,212,248,.45)' },
+  reviewSourceName: { flex: 1, fontFamily: FONT, fontSize: 14, fontWeight: '600', color: '#1C2832' },
+  reviewSourceAction: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: '#1C6FD0' },
+  addReviewBtn: { height: 44, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(28,40,50,.3)', backgroundColor: 'rgba(255,255,255,.45)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 18 },
+  addReviewText: { fontFamily: FONT, fontWeight: '800', fontSize: 12, color: '#1C2832' },
   galleryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8, marginBottom: 12 },
   galleryItem: { width: (SCREEN_WIDTH - 96) / 2, height: (SCREEN_WIDTH - 96) / 2, borderRadius: 14, overflow: 'hidden' },
   galleryThumb: { width: '100%', height: '100%' },
-  galleryAdd: { width: (SCREEN_WIDTH - 96) / 2, height: (SCREEN_WIDTH - 96) / 2, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', alignItems: 'center', justifyContent: 'center' },
+  galleryAdd: { width: (SCREEN_WIDTH - 96) / 2, height: (SCREEN_WIDTH - 96) / 2, borderRadius: 14, borderWidth: 1, borderColor: '#1C2832', alignItems: 'center', justifyContent: 'center', backgroundColor: '#EFE4DB'},
   planDomain: { flexDirection: 'row', alignItems: 'center', gap: 9, padding: 14, borderRadius: 14, backgroundColor: 'rgba(34,188,231,.1)', borderWidth: 1, borderColor: 'rgba(34,188,231,.28)', marginBottom: 16 },
   planDomainText: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#DDF8FF' },
   paymentSuccess: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, paddingHorizontal: 24 },
-  paymentSuccessTitle: { fontFamily: FONT, fontSize: 22, fontWeight: '800', color: '#F5FCFF', textAlign: 'center' },
-  paymentSuccessText: { fontFamily: FONT, fontSize: 13, lineHeight: 19, color: 'rgba(221,237,246,.62)', textAlign: 'center' },
+  paymentSuccessTitle: { fontFamily: FONT, fontSize: 22, fontWeight: '800', color: '#1C2832', textAlign: 'center' },
+  paymentSuccessText: { fontFamily: FONT, fontSize: 13, lineHeight: 19, color: 'rgba(28,40,50,.7)', textAlign: 'center' },
   payButton: { marginTop: 20, height: 52, paddingHorizontal: 20, borderRadius: 18, backgroundColor: '#E5F9FF', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
   payButtonText: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#061824' },
   dashboardScreen: { flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28 },
@@ -1180,15 +1226,15 @@ const s = StyleSheet.create({
   messagePlaceholder: { fontFamily: FONT, fontSize: 14, color: 'rgba(28,40,50,.38)' },
 
   choiceWrap: { gap: 0, paddingTop: 4 },
-  choiceHeading: { fontFamily: FONT, fontSize: 22, fontWeight: '800', letterSpacing: -.6, color: '#F3F8FC', marginBottom: 8 },
-  choiceSub: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: 'rgba(225,239,248,.65)', marginBottom: 18 },
+  choiceHeading: { fontFamily: FONT, fontSize: 22, fontWeight: '800', letterSpacing: -.6, color: '#1C2832', marginBottom: 8 },
+  choiceSub: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: 'rgba(28,40,50,.7)', marginBottom: 18 },
   choiceCard: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)', marginBottom: 12 },
   choiceIcon: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  choiceCardTitle: { fontFamily: FONT, fontSize: 16, fontWeight: '700', color: '#F3F8FC' },
-  choiceCardText: { fontFamily: FONT, fontSize: 13, lineHeight: 18, color: 'rgba(225,239,248,.6)', marginTop: 3 },
+  choiceCardTitle: { fontFamily: FONT, fontSize: 16, fontWeight: '700', color: '#1C2832' },
+  choiceCardText: { fontFamily: FONT, fontSize: 13, lineHeight: 18, color: 'rgba(28,40,50,.7)', marginTop: 3 },
   buildingCard: { alignItems: 'center', padding: 28, borderRadius: 22, backgroundColor: 'rgba(255,255,255,.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)', marginTop: 6 },
-  buildingText: { fontFamily: FONT, fontSize: 16, fontWeight: '700', color: '#F3F8FC' },
-  buildingSub: { fontFamily: FONT, fontSize: 13, lineHeight: 19, color: 'rgba(225,239,248,.6)', textAlign: 'center', marginTop: 6 },
+  buildingText: { fontFamily: FONT, fontSize: 16, fontWeight: '700', color: '#1C2832' },
+  buildingSub: { fontFamily: FONT, fontSize: 13, lineHeight: 19, color: 'rgba(28,40,50,.7)', textAlign: 'center', marginTop: 6 },
   makeLiveBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', minHeight: 52, borderRadius: 18, backgroundColor: '#2878FF', marginTop: 16 },
   makeLiveBtnDisabled: { backgroundColor: 'rgba(255,255,255,.06)' },
   makeLiveBtnText: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#fff' },
@@ -1215,17 +1261,22 @@ const s = StyleSheet.create({
   savePillText: { fontFamily: FONT, fontSize: 10, fontWeight: '800', color: '#fff', letterSpacing: .4 },
   planModalPayBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', minHeight: 52, borderRadius: 18, backgroundColor: '#2878FF', marginTop: 14 },
   planModalPayBtnText: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#fff' },
-  fullLoading: { flex: 1, justifyContent: 'center', paddingHorizontal: 32, gap: 18 },
+  fullLoading: { flex: 1, justifyContent: 'center', paddingHorizontal: 32, gap: 14 },
+  fullLoadingBrand: { fontFamily: FONT, fontSize: 34, fontWeight: '900', letterSpacing: 1, color: '#fff', textAlign: 'center', marginBottom: 36 },
+  fullLoadingKicker: { fontFamily: FONT, fontSize: 11, fontWeight: '700', letterSpacing: 3, color: 'rgba(255,255,255,.75)', textAlign: 'center' },
+  fullLoadingName: { fontFamily: FONT, fontSize: 30, fontWeight: '800', color: '#fff', textAlign: 'center', marginBottom: 18 },
   fullLoadingTitle: { fontFamily: FONT, fontSize: 26, fontWeight: '800', letterSpacing: -.6, color: '#F3F8FC' },
   fullLoadingList: { gap: 12 },
-  fullLoadingRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  fullLoadingLine: { fontFamily: FONT, fontSize: 15, color: 'rgba(225,239,248,.8)' },
-  fullLoadingTrack: { height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.12)', overflow: 'hidden', marginTop: 8 },
-  fullLoadingFill: { height: '100%', borderRadius: 3, backgroundColor: '#4BD4F8' },
-  fsBrowserBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: Platform.OS === 'ios' ? 56 : 30, paddingBottom: 10, paddingHorizontal: 12, backgroundColor: '#0E1A24', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.08)' },
+  fullLoadingRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.14)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)' },
+  fullLoadingLine: { flex: 1, fontFamily: FONT, fontSize: 15, fontWeight: '600', color: '#fff' },
+  fullLoadingTrack: { height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,.25)', overflow: 'hidden', marginTop: 10 },
+  fullLoadingFill: { height: '100%', borderRadius: 2, backgroundColor: '#fff' },
+  fsBrowserBar: { flexDirection: 'row', alignItems: 'center', paddingTop: Platform.OS === 'ios' ? 56 : 30, paddingBottom: 12, paddingHorizontal: 16, backgroundColor: '#0E1A24', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.08)' },
+  fsBackBtn: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
+  fsTickBtn: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: '#2563EB' },
   fsBrowserBtn: { width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.06)' },
   fsBrowserUrl: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, height: 32, paddingHorizontal: 12, borderRadius: 10, backgroundColor: 'rgba(255,255,255,.07)' },
   fsBrowserUrlText: { flexShrink: 1, fontFamily: FONT, fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,.82)' },
-  fsBrowserRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  fsBrowserRight: { width: FS_SLOT * 4, flexDirection: 'row', alignItems: 'center' }, fsSlot: { width: FS_SLOT, alignItems: 'center' },
   fsBrowserTick: { width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#3CAB6A' },
 });

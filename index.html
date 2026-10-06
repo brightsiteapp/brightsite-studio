@@ -136,7 +136,7 @@
 <script src="demo-generator.js?v=20260915-1" defer></script>
 <script src="hero-brand-compositor.js?v=20260909-4" defer></script>
 <script src="hero-palette.js?v=20260908-10" defer></script>
-<script src="homepage-builder.js?v=20260915-11" defer></script>
+<script src="homepage-builder.js?v=20260915-13" defer></script>
 <script src="homepage-ui.js?v=20260902-4" defer></script>
 <script src="homepage-examples.js?v=20260909-1" defer></script>
 </head>
@@ -184,7 +184,7 @@
             <div class="glow-box-inner">
               <span class="qa-fill" aria-hidden="true"></span>
               <div class="qa-slide" id="qaSlideName" data-step="2" hidden>
-                <button type="button" class="qa-back" data-qa-back="1" aria-label="Back to website type">←</button>
+                <button type="button" class="qa-back" data-qa-back="type" aria-label="Back to website type">←</button>
                 <div class="qa-field" id="qaFieldName">
                   <span class="qa-ph">What's your business called?</span>
                   <input type="text" id="bizName" name="business_name" required autocomplete="organization" autocapitalize="words" aria-label="Business name" placeholder="What's your business called?">
@@ -202,7 +202,7 @@
                 <div class="qa-type-grid" id="qaTypeGrid" role="listbox" aria-label="Business type"></div>
               </div>
               <div class="qa-slide" id="qaSlideLocation" data-step="3" hidden>
-                <button type="button" class="qa-back" data-qa-back="2" aria-label="Back to business type">←</button>
+                <button type="button" class="qa-back" data-qa-back="type" aria-label="Back to business type">←</button>
                 <div class="qa-field" id="qaFieldLocation">
                   <span class="qa-ph">Where are you based?</span>
                   <input type="text" id="bizLocation" required autocomplete="off" autocapitalize="words" aria-label="Business location" placeholder="Where are you based?">
@@ -211,7 +211,7 @@
                 <ul class="qa-suggest" id="qaSuggest" role="listbox" aria-label="Matching businesses" hidden></ul>
               </div>
               <div class="qa-slide" id="qaSlideEmail" data-step="3" hidden>
-                <button type="button" class="qa-back" data-qa-back="2" aria-label="Back to business name">←</button>
+                <button type="button" class="qa-back" data-qa-back="name" aria-label="Back to business name">←</button>
                 <div class="qa-field" id="qaFieldEmail">
                   <span class="qa-ph">What's your email address?</span>
                   <input type="email" id="bizEmail" required autocomplete="email" inputmode="email" aria-label="Email address" placeholder="What's your email address?">
@@ -226,7 +226,7 @@
             <span class="ri-item"><svg class="ri" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10.5 L8.2 15 L16 5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Built with a real developer</span>
             <span class="ri-item"><svg class="ri" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10.5 L8.2 15 L16 5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><a href="terms.html#privacy" style="color:inherit;text-decoration:none;border-bottom:1px dotted currentColor">UK GDPR compliant</a></span>
           </div>
-          <div class="qa-rating">
+          <a class="qa-rating" href="https://uk.trustpilot.com/review/brightsite.app" target="_blank" rel="noopener">
             <span class="qa-rating-stars" aria-hidden="true" style="color:#00b67a">
               <svg viewBox="0 0 20 20" fill="#00b67a"><path d="M10 1.5l2.6 5.4 5.9.7-4.3 4.2 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.2 5.9-.7z"/></svg>
               <svg viewBox="0 0 20 20" fill="#00b67a"><path d="M10 1.5l2.6 5.4 5.9.7-4.3 4.2 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.2 5.9-.7z"/></svg>
@@ -234,8 +234,8 @@
               <svg viewBox="0 0 20 20" fill="#00b67a"><path d="M10 1.5l2.6 5.4 5.9.7-4.3 4.2 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.2 5.9-.7z"/></svg>
               <svg viewBox="0 0 20 20" fill="#00b67a"><path d="M10 1.5l2.6 5.4 5.9.7-4.3 4.2 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.2 5.9-.7z"/></svg>
             </span>
-            <span class="qa-rating-text"><b>5.0</b> on Trustpilot</span>
-          </div>
+            <span class="qa-rating-text">Rated <b>Excellent</b> on Trustpilot</span>
+          </a>
           <div id="quickLeadStatus" class="quick-lead-status"></div>
           <input type="hidden" id="bizServices">
           <input type="hidden" id="bizPrices">
@@ -329,7 +329,7 @@
       </article>
     </div>
     <div style="text-align:center;margin-top:20px">
-      <a href="https://www.trustpilot.com/review/brightsite.app" target="_blank" rel="noopener" style="font-size:13px;color:#00b67a;font-weight:600;text-decoration:none">Read all reviews on Trustpilot →</a>
+      <a href="https://uk.trustpilot.com/review/brightsite.app" target="_blank" rel="noopener" style="font-size:13px;color:#00b67a;font-weight:600;text-decoration:none">Read all reviews on Trustpilot →</a>
     </div>
   </div>
 </section>

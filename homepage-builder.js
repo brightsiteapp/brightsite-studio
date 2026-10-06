@@ -374,7 +374,6 @@ document.addEventListener('DOMContentLoaded', () => {
     qaBox.classList.remove('qa-box-done', 'qa-box-finish');
     builderOverlay.hidden = true;
     setDocumentScrollLock(false);
-    resetBuilderBar();
   }
   function removePillsFrom(step) {
     [1, 2, 3, 4].forEach((s) => { if (s >= step && pills[s]) { pills[s].remove(); delete pills[s]; } });
@@ -494,14 +493,14 @@ document.addEventListener('DOMContentLoaded', () => {
   })();
   bizTagline.addEventListener('change', () => { if (!qaIsAnimating) finishType(); });
   qaTypeGo.addEventListener('click', finishType);
-  const qaBackActions = { 1: goBackToType, 2: goBackToName };
+  const qaBackActions = { type: goBackToType, name: goBackToName };
   document.querySelectorAll('[data-qa-back]').forEach(button => button.addEventListener('click', (event) => {
     // The arrow is nested in the live input bar. Stopping the event here
     // keeps the field wrapper from immediately reclaiming focus on touch.
     event.preventDefault();
     event.stopPropagation();
     if (qaIsAnimating) return;
-    qaBackActions[Number(button.dataset.qaBack)]?.();
+    qaBackActions[button.dataset.qaBack]?.();
   }));
 
   let isCreatingPreview = false;
