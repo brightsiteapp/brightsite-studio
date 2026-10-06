@@ -82,12 +82,6 @@ function Field({ label, value, onChangeText, placeholder, keyboardType = 'defaul
   </View>;
 }
 
-function Button({ label, onPress, secondary = false }: any) {
-  return <Pressable onPress={onPress} style={({ pressed }) => [s.button, secondary && s.secondaryButton, pressed && s.pressed]}>
-    <Text style={[s.buttonText, secondary && { color: '#DDF3FC' }]}>{label}</Text>
-    {!secondary && <Ionicons name="arrow-up" size={17} color="#03111C" />}
-  </Pressable>;
-}
 const Intro = ({ children }: any) => <Text style={s.intro}>{children}</Text>;
 
 function Hours({ rows, setRows }: any) {
@@ -344,7 +338,7 @@ function SectionDragList({ sections, setSections, sectionVisible, onToggle }: an
   </View>;
 }
 
-function DesignTools({ active, setActive, palette, setPalette, font, setFont, editing, setEditing,
+function DesignTools({ active, setActive, palette, setPalette, font, setFont, setEditing,
   homeSections, setHomeSections, servicesSections, setServicesSections, contactSections, setContactSections }: any) {
   const items = [{ id: 'colour', icon: 'color-palette-outline' }, { id: 'font', icon: 'text-outline' }, { id: 'edit', icon: 'create-outline' }];
   const [paletteSection, setPaletteSection] = useState(0);
@@ -385,14 +379,6 @@ function DesignTools({ active, setActive, palette, setPalette, font, setFont, ed
       </>}
     </BlurView>}
   </View>;
-}
-
-function Tutorial({ close }: any) {
-  return <BlurView intensity={42} tint="dark" style={s.tutorial}>
-    <Ionicons name="swap-horizontal" size={27} color="#EAF8FF" /><Text style={s.tutorialTitle}>Swipe to explore designs</Text>
-    <Text style={s.tutorialBody}>Use the controls to change colour, font and content.</Text>
-    <Pressable onPress={close} style={s.gotIt}><Text style={s.gotItText}>Got it</Text></Pressable>
-  </BlurView>;
 }
 
 function TextEditModal({ visible, value, label, onSave, onClose }: any) {
@@ -547,7 +533,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
   </FlowBackdrop>;
 }
 
-function DesignEditorFullscreen({ domain, suffix, palette, setPalette, font, setFont, siteTexts, setSiteTexts, homeSections, setHomeSections, servicesSections, setServicesSections, contactSections, setContactSections, data, services, hours, contactForm, onBack, onConfirm }: any) {
+function DesignEditorFullscreen({ palette, setPalette, font, setFont, siteTexts, setSiteTexts, homeSections, setHomeSections, servicesSections, setServicesSections, contactSections, setContactSections, data, services, hours, contactForm, onBack, onConfirm }: any) {
   const [tool, setTool] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [previewPage, setPreviewPage] = useState(0);
@@ -558,7 +544,7 @@ function DesignEditorFullscreen({ domain, suffix, palette, setPalette, font, set
     <View style={s.fsBrowserBar}>
       <View style={s.fsSlot}><Pressable onPress={onBack} style={s.fsBackBtn}><Ionicons name="chevron-back" size={22} color="#2563EB" /></Pressable></View>
       <View style={s.fsBrowserRight}>
-        <DesignTools active={tool} setActive={setTool} palette={palette} setPalette={setPalette} font={font} setFont={setFont} editing={editing} setEditing={setEditing} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} />
+        <DesignTools active={tool} setActive={setTool} palette={palette} setPalette={setPalette} font={font} setFont={setFont} setEditing={setEditing} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} />
         <View style={s.fsSlot}><Pressable onPress={onConfirm} style={s.fsTickBtn}>
           <Ionicons name="checkmark" size={22} color="#fff" />
         </Pressable></View>
@@ -578,13 +564,8 @@ function AppInner() {
   const [authSession, setAuthSession] = useState(false);
   const [authStatus, setAuthStatus] = useState('');
   const [complete, setComplete] = useState<Set<number>>(new Set());
-  const [tutorial, setTutorial] = useState(true);
   const [palette, setPalette] = useState(0);
   const [font, setFont] = useState(0);
-  const [previewPage, setPreviewPage] = useState(0);
-  const [tool, setTool] = useState<string | null>(null);
-  const [editing, setEditing] = useState(false);
-  const [showRail, setShowRail] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [deckDirection, setDeckDirection] = useState<-1 | 0 | 1>(0);
   const [designReady, setDesignReady] = useState(false);
@@ -600,7 +581,6 @@ function AppInner() {
   const [contactForm, setContactForm] = useState(true);
   const [tab, setTab] = useState('Website');
   const [siteTexts, setSiteTexts] = useState<Record<string, string>>({});
-  const [editingText, setEditingText] = useState<{ key: string; label: string } | null>(null);
   const [homeSections, setHomeSections] = useState([...HOME_SECTIONS_DEFAULT]);
   const [servicesSections, setServicesSections] = useState([...SERVICES_SECTIONS_DEFAULT]);
   const [contactSections, setContactSections] = useState([...CONTACT_SECTIONS_DEFAULT]);
@@ -619,10 +599,9 @@ function AppInner() {
   const loadingFades = useRef([0, 1, 2, 3].map(() => new Animated.Value(0))).current;
   const designReveal = useRef(new Animated.Value(0)).current;
   const transitioning = useRef(false);
-  const railTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const step = steps[index];
 
-  const loadAccountDestination = async (session: any, animate = false) => {
+  const loadAccountDestination = async (session: any) => {
     const email = session?.user?.email || data.email.trim();
     setAuthSession(true);
     setData(current => ({ ...current, email, contactEmail: current.contactEmail || email }));
@@ -659,14 +638,6 @@ function AppInner() {
     return () => { show.remove(); hide.remove(); };
   }, []);
 
-  const revealRail = () => {
-    if (railTimer.current) clearTimeout(railTimer.current);
-    setShowRail(true);
-  };
-  const hideRailSoon = () => {
-    if (railTimer.current) clearTimeout(railTimer.current);
-    railTimer.current = setTimeout(() => setShowRail(false), 900);
-  };
 
   const minimumInfoComplete = (stepId = step.id) => {
     switch (stepId) {
@@ -735,7 +706,7 @@ function AppInner() {
     }
     try {
       setAuthStatus('');
-      await loadAccountDestination(result.data.session, true);
+      await loadAccountDestination(result.data.session);
     } catch {
       setAuthStatus('You’re logged in, but we couldn’t load your account. Please try again.');
     } finally {
@@ -798,7 +769,7 @@ function AppInner() {
       const inFooter = g.y0 > SCREEN_HEIGHT - CARD_BOTTOM - 70;
       return (inHeader || inFooter) && Math.abs(g.dy) > 12;
     },
-    onPanResponderGrant: revealRail,
+    
     onPanResponderMove: (_, g) => {
       if (Math.abs(g.dy) > Math.abs(g.dx)) {
         if (Math.abs(g.dy) > 12) setDeckDirection(g.dy < 0 ? 1 : -1);
@@ -807,18 +778,16 @@ function AppInner() {
     },
     onPanResponderRelease: (_, g) => {
       if (g.dy < -48 || g.vy < -.55) go(index + 1); else if (g.dy > 48 || g.vy > .55) go(index - 1); else Animated.spring(motion, { toValue: index * CARD_TRAVEL, damping: 20, stiffness: 210, useNativeDriver: true }).start(() => setDeckDirection(0));
-      hideRailSoon();
     },
     onPanResponderTerminate: () => Animated.spring(motion, { toValue: index * CARD_TRAVEL, damping: 20, stiffness: 210, useNativeDriver: true }).start(() => setDeckDirection(0)),
   }), [index, step.id, data, hours, services, domainReady, designReady, keyboardVisible]);
 
   const railPan = useMemo(() => PanResponder.create({
-    onStartShouldSetPanResponder: () => true, onMoveShouldSetPanResponder: () => true, onPanResponderGrant: revealRail,
+    onStartShouldSetPanResponder: () => true, onMoveShouldSetPanResponder: () => true, 
     onPanResponderMove: () => {},
     onPanResponderRelease: (_, g) => {
       if (g.dy < -42) go(index + 1);
       else if (g.dy > 42) go(index - 1);
-      hideRailSoon();
     },
   }), [index, data, hours, services, domainReady, designReady]);
 
@@ -962,7 +931,7 @@ function AppInner() {
 
   if (appScreen === 'dashboard') return <FadeIn><DashboardHome tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} onMakeLive={() => setWebsiteStatus('live')} onTakeOffline={() => setWebsiteStatus('ready')} onEdit={() => { setEditFrom('dashboard'); setAppScreen('design-editor'); }} /></FadeIn>;
 
-  if (appScreen === 'design-editor') return <FadeIn><DesignEditorFullscreen domain={domain} suffix={suffix} palette={palette} setPalette={setPalette} font={font} setFont={setFont} siteTexts={siteTexts} setSiteTexts={setSiteTexts} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} data={data} services={services} hours={hours} contactForm={contactForm} onBack={() => {
+  if (appScreen === 'design-editor') return <FadeIn><DesignEditorFullscreen palette={palette} setPalette={setPalette} font={font} setFont={setFont} siteTexts={siteTexts} setSiteTexts={setSiteTexts} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} data={data} services={services} hours={hours} contactForm={contactForm} onBack={() => {
     if (editFrom === 'dashboard') { setAppScreen('dashboard'); return; }
     setAppScreen('onboarding');
     setIndex(steps.findIndex(item => item.id === 'domain'));
