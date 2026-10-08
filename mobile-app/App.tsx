@@ -791,6 +791,7 @@ function Logo({ height = 18, tint }: { height?: number; tint?: string }) {
 }
 
 const DESKTOP_WIDTH = 960;
+const MOBILE_WIDTH = 390;
 const DESKTOP_VIEW_W = SCREEN_WIDTH - 52;
 const DESKTOP_VIEW_H = Math.round(DESKTOP_VIEW_W * 0.68);
 function ScaledView({ virtualWidth, width, children }: { virtualWidth: number; width: number; children: React.ReactNode }) {
@@ -1111,19 +1112,12 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
                 {isLive && <View style={s.previewOpenBadge}><Ionicons name="open-outline" size={12} color="#fff" /><Text style={s.previewOpenText}>Open site</Text></View>}
               </Pressable>
               : <Pressable onPress={() => isLive ? void Linking.openURL(siteUrl) : onEdit?.()} style={s.phoneFrame}>
-                <View pointerEvents="none" style={s.phoneScale}><SitePreview palette={palette} font={font} page={0} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} media={media} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></View>
+                <View pointerEvents="none" style={{ overflow: 'hidden', flex: 1 }}>
+                  <ScaledView virtualWidth={MOBILE_WIDTH} width={Math.round(SCREEN_WIDTH * .6) - 12}><SitePreview palette={palette} font={font} page={0} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} media={media} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></ScaledView>
+                </View>
                 {isLive && <View style={s.previewOpenBadge}><Ionicons name="open-outline" size={12} color="#fff" /><Text style={s.previewOpenText}>Open site</Text></View>}
               </Pressable>}
             </>}
-          {isReady && <Pressable onPress={goLive} style={({ pressed }) => [s.primaryBtn, pressed && s.pressed]}>
-            <Ionicons name="rocket-outline" size={18} color="#fff" /><Text style={s.primaryBtnText}>{isPaying ? 'Put website live' : 'Make it live'}</Text>
-          </Pressable>}
-          {isLive && <Pressable onPress={confirmOffline} style={({ pressed }) => [s.secondaryBtn, pressed && s.pressed]}>
-            <Ionicons name="cloud-offline-outline" size={16} color={C.danger} /><Text style={[s.secondaryBtnText, { color: C.danger }]}>Take website offline</Text>
-          </Pressable>}
-          {!isLive && <Pressable onPress={() => { void notifyStage('changes_requested', data.businessName || 'Unnamed business', data.contactEmail || data.email, slug || ''); setTab('Messages'); }} style={({ pressed }) => [s.secondaryBtn, pressed && s.pressed]}>
-            <Ionicons name="chatbubble-outline" size={15} color={C.ink} /><Text style={s.secondaryBtnText}>Ask Tom for changes</Text>
-          </Pressable>}
         </>}
         {tab === 'Messages' && <>
           <View style={[s.messageBubble, s.messageBubbleReceived]}><Text style={s.messageText}>{`Hey ${data.fullName?.trim().split(' ')[0] || 'there'}, welcome to BrightSite! My name is Tom and I’ll be your ${buildChoice === 'designer' ? 'designer and support' : 'support'}. ${buildChoice === 'designer' ? 'I’m working on your preview now, so let me know if you have any requests or questions.' : 'Love your design! Let me know if you have any requests or questions.'} When you’re ready, just hit Make Live to put your website online!`}</Text></View>
@@ -1143,6 +1137,17 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           })}
         </>}
       </ScrollView>
+      {tab === 'Website' && <View style={s.websiteFooter}>
+        {isReady && <Pressable onPress={goLive} style={({ pressed }) => [s.primaryBtn, { marginTop: 0 }, pressed && s.pressed]}>
+          <Ionicons name="rocket-outline" size={18} color="#fff" /><Text style={s.primaryBtnText}>{isPaying ? 'Put website live' : 'Make it live'}</Text>
+        </Pressable>}
+        {isLive && <Pressable onPress={confirmOffline} style={({ pressed }) => [s.secondaryBtn, { marginTop: 0 }, pressed && s.pressed]}>
+          <Ionicons name="cloud-offline-outline" size={16} color={C.danger} /><Text style={[s.secondaryBtnText, { color: C.danger }]}>Take website offline</Text>
+        </Pressable>}
+        {!isLive && <Pressable onPress={() => { void notifyStage('changes_requested', data.businessName || 'Unnamed business', data.contactEmail || data.email, slug || ''); setTab('Messages'); }} style={({ pressed }) => [s.secondaryBtn, { marginTop: 0 }, pressed && s.pressed]}>
+          <Ionicons name="chatbubble-outline" size={15} color={C.ink} /><Text style={s.secondaryBtnText}>Ask Tom for changes</Text>
+        </Pressable>}
+      </View>}
       {tab === 'Messages' && <View style={[s.messageInputFixed, kbOpen && { paddingBottom: 10 }]}>
         <Pressable onPress={() => void attachImage()} hitSlop={10} style={s.messageIconBtn} accessibilityLabel="Attach photo">
           <Ionicons name="image-outline" size={22} color={C.inkSoft} />
@@ -1921,59 +1926,59 @@ const s = StyleSheet.create({
   previewPageTab: { flex: 1, paddingVertical: 6, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
   previewPageTabText: { fontFamily: FONT, fontSize: 8, fontWeight: '700', color: 'rgba(255,255,255,.45)', letterSpacing: .5 },
   siteHero: { height: SCREEN_HEIGHT * .36, padding: 18, justifyContent: 'space-between' },
-  siteHeroImg: { width: '100%', height: SCREEN_HEIGHT * .3 },
-  siteHeroImgDesktop: { height: 400 },
-  siteHeroCopy: { paddingHorizontal: 20, paddingVertical: 18 },
-  siteTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, siteKicker: { fontFamily: FONT, fontSize: 11, letterSpacing: 2, fontWeight: '700' }, siteNav: { flexDirection: 'row', alignItems: 'center', gap: 10 }, siteNavText: { fontFamily: FONT, fontSize: 7, letterSpacing: .7, color: 'rgba(255,255,255,.78)' }, siteCopy: { maxWidth: '76%' },
-  siteHeadline: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 24, lineHeight: 28, marginBottom: 7 },
-  siteBody: { fontFamily: FONT, fontSize: 10, lineHeight: 15 }, editing: { borderWidth: 1, borderColor: BRAND, borderRadius: 4, padding: 2 },
-  siteCta: { marginTop: 10, alignSelf: 'flex-start', paddingVertical: 7, paddingHorizontal: 11, borderWidth: 1 }, siteCtaText: { fontFamily: FONT, fontSize: 7, fontWeight: '800', letterSpacing: 1.4, color: '#fff' },
-  siteCtaFilled: { paddingVertical: 9, paddingHorizontal: 16, borderRadius: 6, alignItems: 'center', alignSelf: 'flex-start' }, siteCtaFilledText: { fontFamily: FONT, fontSize: 8, fontWeight: '800', color: '#fff' }, siteSectionTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 16, marginBottom: 5 }, siteSectionBody: { fontFamily: FONT, fontSize: 9, lineHeight: 14, opacity: .68 },
-  siteEyebrow: { fontSize: 6, fontWeight: '700', letterSpacing: 2.5, textTransform: 'uppercase' as any, marginBottom: 6 },
-  heroButtons: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
-  heroTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 },
-  heroTag: { paddingVertical: 3, paddingHorizontal: 8, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.15)' },
-  heroTagText: { fontSize: 6, color: 'rgba(255,255,255,.8)', letterSpacing: .4 },
-  siteSection: { padding: 16 },
-  siteAboutDesktopRow: { flexDirection: 'row', gap: 14 },
-  siteAboutCard: { padding: 12, borderRadius: 10, borderWidth: 1 },
-  siteAboutCardLabel: { fontSize: 5.5, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' as any, marginBottom: 3 },
-  siteAboutCardTitle: { fontSize: 10, fontWeight: '700', marginBottom: 5 },
-  siteAboutCardCta: { fontSize: 7, fontWeight: '600' },
-  siteReviewGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  siteReviewCard: { flex: 1, minWidth: '28%', padding: 10, borderRadius: 10 },
-  siteGalleryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'center' },
-  siteCTABand: { alignItems: 'center', paddingVertical: 22 },
-  siteFooter: { padding: 16, paddingBottom: 20 },
-  siteFooterCols: { flexDirection: 'row', gap: 14, marginTop: 10 },
-  siteReviewsSection: { padding: 16 },
-  siteTrustBadge: { marginTop: 12, paddingVertical: 10, paddingHorizontal: 12, borderWidth: 1, borderRadius: 10, alignItems: 'flex-start' },
-  siteTrustTitle: { fontSize: 11, fontWeight: '700' },
-  siteTrustLink: { fontSize: 10, fontWeight: '600', marginTop: 6 },
-  siteStars: { flexDirection: 'row', gap: 2, marginBottom: 6 },
-  siteReviewText: { fontFamily: FONT, fontSize: 9, lineHeight: 13, fontStyle: 'italic', marginBottom: 4 },
-  siteReviewAuthor: { fontFamily: FONT, fontSize: 7, opacity: .6 },
-  siteContactCta: { padding: 16, borderTopWidth: 1, alignItems: 'center', gap: 10 },
-  siteContactCtaTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 16 },
-  siteSvcsListSection: { padding: 14 },
-  siteSvcRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth },
-  siteSvcRowName: { fontFamily: FONT, fontSize: 9, fontWeight: '700' },
-  siteSvcRowDetail: { fontFamily: FONT, fontSize: 7, opacity: .55, marginTop: 2 },
-  siteSvcRowPrice: { fontFamily: FONT, fontSize: 9, fontWeight: '800' },
-  siteContactInfoRow: { flexDirection: 'row', padding: 14, gap: 10 },
+  siteHeroImg: { width: '100%', height: 260 },
+  siteHeroImgDesktop: { height: 520 },
+  siteHeroCopy: { paddingHorizontal: 28, paddingVertical: 28 },
+  siteTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, siteKicker: { fontFamily: FONT, fontSize: 14, letterSpacing: 2, fontWeight: '700' }, siteNav: { flexDirection: 'row', alignItems: 'center', gap: 10 }, siteNavText: { fontFamily: FONT, fontSize: 12, letterSpacing: .7, color: 'rgba(255,255,255,.78)' }, siteCopy: { maxWidth: '76%' },
+  siteHeadline: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 38, lineHeight: 44, marginBottom: 10 },
+  siteBody: { fontFamily: FONT, fontSize: 16, lineHeight: 24 }, editing: { borderWidth: 1, borderColor: BRAND, borderRadius: 4, padding: 2 },
+  siteCta: { marginTop: 0, alignSelf: 'flex-start', paddingVertical: 14, paddingHorizontal: 22, borderWidth: 1.5 }, siteCtaText: { fontFamily: FONT, fontSize: 13, fontWeight: '800', letterSpacing: 1.4 },
+  siteCtaFilled: { paddingVertical: 14, paddingHorizontal: 24, borderRadius: 6, alignItems: 'center', alignSelf: 'flex-start' }, siteCtaFilledText: { fontFamily: FONT, fontSize: 14, fontWeight: '800' }, siteSectionTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 30, lineHeight: 36, marginBottom: 8 }, siteSectionBody: { fontFamily: FONT, fontSize: 15, lineHeight: 22, opacity: .68 },
+  siteEyebrow: { fontSize: 11, fontWeight: '700', letterSpacing: 3, textTransform: 'uppercase' as any, marginBottom: 8 },
+  heroButtons: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 10 },
+  heroTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 18 },
+  heroTag: { paddingVertical: 5, paddingHorizontal: 14, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.15)' },
+  heroTagText: { fontSize: 11, color: 'rgba(255,255,255,.8)', letterSpacing: .4 },
+  siteSection: { padding: 28 },
+  siteAboutDesktopRow: { flexDirection: 'row', gap: 24 },
+  siteAboutCard: { padding: 18, borderRadius: 12, borderWidth: 1 },
+  siteAboutCardLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' as any, marginBottom: 5 },
+  siteAboutCardTitle: { fontSize: 17, fontWeight: '700', marginBottom: 7 },
+  siteAboutCardCta: { fontSize: 13, fontWeight: '600' },
+  siteReviewGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  siteReviewCard: { flex: 1, minWidth: '28%', padding: 16, borderRadius: 12 },
+  siteGalleryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
+  siteCTABand: { alignItems: 'center', paddingVertical: 40 },
+  siteFooter: { padding: 28, paddingBottom: 32 },
+  siteFooterCols: { flexDirection: 'row', gap: 24, marginTop: 16 },
+  siteReviewsSection: { padding: 28 },
+  siteTrustBadge: { marginTop: 16, paddingVertical: 14, paddingHorizontal: 16, borderWidth: 1, borderRadius: 14, alignItems: 'flex-start' },
+  siteTrustTitle: { fontSize: 16, fontWeight: '700' },
+  siteTrustLink: { fontSize: 14, fontWeight: '600', marginTop: 8 },
+  siteStars: { flexDirection: 'row', gap: 3, marginBottom: 10 },
+  siteReviewText: { fontFamily: FONT, fontSize: 14, lineHeight: 20, fontStyle: 'italic', marginBottom: 6 },
+  siteReviewAuthor: { fontFamily: FONT, fontSize: 12, opacity: .6 },
+  siteContactCta: { padding: 28, borderTopWidth: 1, alignItems: 'center', gap: 14 },
+  siteContactCtaTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 26 },
+  siteSvcsListSection: { padding: 28 },
+  siteSvcRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth },
+  siteSvcRowName: { fontFamily: FONT, fontSize: 15, fontWeight: '700' },
+  siteSvcRowDetail: { fontFamily: FONT, fontSize: 12, opacity: .55, marginTop: 2 },
+  siteSvcRowPrice: { fontFamily: FONT, fontSize: 15, fontWeight: '800' },
+  siteContactInfoRow: { flexDirection: 'row', padding: 24, gap: 16 },
   siteContactInfoCol: { flex: 1 }, siteHoursCol: { flex: 1 },
-  siteContactInfoTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 13, marginBottom: 7 },
-  siteContactItem: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 5 },
-  siteContactItemText: { fontFamily: FONT, fontSize: 7, lineHeight: 11, flex: 1 },
-  siteHoursRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  siteHoursDay: { fontFamily: FONT, fontSize: 7, fontWeight: '700', width: 24 },
-  siteHoursTime: { fontFamily: FONT, fontSize: 7, opacity: .7 },
-  siteMockMap: { margin: 14, marginTop: 0, borderRadius: 10, borderWidth: 1, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 52 },
-  siteMockMapAddr: { fontFamily: FONT, fontSize: 8, fontWeight: '700' },
-  siteMockMapSub: { fontFamily: FONT, fontSize: 7, opacity: .5, marginTop: 2 },
-  siteFormSection: { padding: 14 },
-  siteFormField: { borderWidth: 1, borderRadius: 7, padding: 8, marginBottom: 6, minHeight: 26 },
-  siteFormPh: { fontFamily: FONT, fontSize: 7, opacity: .45 },
+  siteContactInfoTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 20, marginBottom: 10 },
+  siteContactItem: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  siteContactItemText: { fontFamily: FONT, fontSize: 13, lineHeight: 18, flex: 1 },
+  siteHoursRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  siteHoursDay: { fontFamily: FONT, fontSize: 13, fontWeight: '700', width: 36 },
+  siteHoursTime: { fontFamily: FONT, fontSize: 13, opacity: .7 },
+  siteMockMap: { margin: 24, marginTop: 0, borderRadius: 14, borderWidth: 1, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 72 },
+  siteMockMapAddr: { fontFamily: FONT, fontSize: 14, fontWeight: '700' },
+  siteMockMapSub: { fontFamily: FONT, fontSize: 12, opacity: .5, marginTop: 2 },
+  siteFormSection: { padding: 24 },
+  siteFormField: { borderWidth: 1, borderRadius: 10, padding: 14, marginBottom: 10, minHeight: 48 },
+  siteFormPh: { fontFamily: FONT, fontSize: 14, opacity: .45 },
   editPageTabs: { flexDirection: 'row', marginBottom: 8, borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(66,104,125,.18)' },
   editPageTab: { flex: 1, paddingVertical: 6, alignItems: 'center' },
   editPageTabOn: { backgroundColor: 'rgba(59,130,246,.18)' },
@@ -2038,8 +2043,8 @@ const s = StyleSheet.create({
   dashboardWebsiteHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   dashboardEdit: { minHeight: 38, paddingHorizontal: 14, borderRadius: 999, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.surface, borderWidth: 1, borderColor: C.line },
   dashboardEditText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.ink },
-  phoneFrame: { width: SCREEN_WIDTH * .5, height: 440, alignSelf: 'center', borderRadius: 26, borderWidth: 6, borderColor: '#141A1E', overflow: 'hidden', marginBottom: 18, backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .18, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } },
-  phoneScale: { width: SCREEN_WIDTH, height: 428 / .5 * 1.05, transform: [{ scale: (SCREEN_WIDTH * .5 - 12) / SCREEN_WIDTH }], transformOrigin: 'top left' },
+  phoneFrame: { width: Math.round(SCREEN_WIDTH * .6), height: SCREEN_HEIGHT - 430, alignSelf: 'center', borderRadius: 26, borderWidth: 6, borderColor: '#141A1E', overflow: 'hidden', marginBottom: 8, backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .18, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } },
+  websiteFooter: { paddingHorizontal: 20, paddingBottom: Platform.OS === 'ios' ? 28 : 16, paddingTop: 10, gap: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(28,40,50,.12)', backgroundColor: C.canvas },
   messageDay: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, textAlign: 'center', marginTop: 14, marginBottom: 10 },
   messageMeta: { fontFamily: FONT, fontSize: 11, color: C.inkMuted, marginTop: 3, marginBottom: 12 },
   messageMetaSent: { alignSelf: 'flex-end', marginRight: 4 },
