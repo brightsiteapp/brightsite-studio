@@ -244,6 +244,8 @@ function Hours({ rows, setRows }: any) {
 let cidSeed = 0;
 const newCid = () => `c${Date.now()}${cidSeed++}`;
 function Services({ items, setItems }: any) {
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const toggleCollapse = (cid: string) => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setCollapsed(c => ({ ...c, [cid]: !c[cid] })); };
   const update = (i: number, key: string, value: string) => setItems(items.map((item: any, n: number) => n === i ? { ...item, [key]: value } : item));
   const remove = (i: number) => {
     const cid = items[i].cid;
@@ -257,28 +259,39 @@ function Services({ items, setItems }: any) {
     } }]);
   };
   const addServiceTo = (cid: string, afterIndex: number) => {
+    setCollapsed(c => ({ ...c, [cid]: false }));
     const next = [...items];
     next.splice(afterIndex + 1, 0, { cid, section: items[afterIndex].section, name: '', duration: '', price: '' });
     setItems(next);
   };
-  const addSection = () => setItems([...items, { cid: newCid(), section: '', name: '', duration: '', price: '' }]);
+  const addSection = () => { const cid = newCid(); setCollapsed(c => ({ ...c, [cid]: false })); setItems([...items, { cid, section: '', name: '', duration: '', price: '' }]); };
+  const cids = items.reduce((acc: string[], it: any) => { if (!acc.length || acc[acc.length - 1] !== it.cid) acc.push(it.cid); return acc; }, [] as string[]);
   return <View>
-    {items.map((item: any, i: number) => {
-      const isNewSection = i === 0 || item.cid !== items[i - 1].cid;
-      const isLastInSection = i === items.length - 1 || items[i + 1].cid !== item.cid;
-      return <View key={item.cid + i}>
-        {isNewSection && <View style={[s.sectionHeader, i > 0 && { marginTop: 22 }]}>
-          <View style={{ flex: 1 }}><Field label="Category" value={item.section} onChangeText={(v: string) => setItems(items.map((it: any) => it.cid === item.cid ? { ...it, section: v } : it))} placeholder={i === 0 ? 'e.g. Massages' : 'e.g. Waxing'} /></View>
-          {i > 0 && <Pressable onPress={() => removeSection(item.cid)} style={s.sectionDelete} hitSlop={8} accessibilityLabel="Remove category"><Ionicons name="trash-outline" size={17} color={C.danger} /></Pressable>}
+    {cids.map((cid: string, ci: number) => {
+      const sectionItems = items.map((it: any, idx: number) => ({ ...it, _idx: idx })).filter((it: any) => it.cid === cid);
+      const svcCount = sectionItems.filter((it: any) => it.name).length;
+      const isOpen = !collapsed[cid];
+      const sectionName = sectionItems[0]?.section || '';
+      return <View key={cid} style={[ci > 0 && { marginTop: 14 }, { backgroundColor: '#fff', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: C.line }]}>
+        <Pressable onPress={() => toggleCollapse(cid)} style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Ionicons name={isOpen ? 'chevron-down' : 'chevron-forward'} size={16} color={C.inkSoft} style={{ marginRight: 6 }} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontFamily: FONT, fontWeight: '700', fontSize: 15, color: C.ink }}>{sectionName || (ci === 0 ? 'Category' : `Category ${ci + 1}`)}</Text>
+            {!isOpen && <Text style={{ fontFamily: FONT, fontSize: 12, color: C.inkMuted, marginTop: 2 }}>{svcCount} service{svcCount !== 1 ? 's' : ''}</Text>}
+          </View>
+          {ci > 0 && <Pressable onPress={() => removeSection(cid)} hitSlop={8} accessibilityLabel="Remove category"><Ionicons name="trash-outline" size={17} color={C.danger} /></Pressable>}
+        </Pressable>
+        {isOpen && <View style={{ marginTop: 12 }}>
+          <Field label="Category name" value={sectionName} onChangeText={(v: string) => setItems(items.map((it: any) => it.cid === cid ? { ...it, section: v } : it))} placeholder={ci === 0 ? 'e.g. Massages' : 'e.g. Waxing'} />
+          <View style={[s.serviceHeadRow, { marginTop: 10 }]}><Text style={[s.serviceHead, { flex: 1.9 }]}>Service</Text><Text style={[s.serviceHead, { flex: 1.2 }]}>Time</Text><Text style={[s.serviceHead, { flex: .95 }]}>Price</Text><View style={{ width: 28 }} /></View>
+          {sectionItems.map((item: any) => <View key={item._idx} style={s.serviceRow}>
+            <TextInput value={item.name} onChangeText={v => update(item._idx, 'name', v)} placeholder="e.g. Haircut" placeholderTextColor={C.placeholder} style={[s.serviceInput, { flex: 1.9 }]} />
+            <TextInput value={item.duration} onChangeText={v => update(item._idx, 'duration', v)} placeholder="45 mins" placeholderTextColor={C.placeholder} style={[s.serviceInput, { flex: 1.2 }]} />
+            <TextInput value={item.price} onChangeText={v => update(item._idx, 'price', v)} placeholder="£30" placeholderTextColor={C.placeholder} style={[s.serviceInput, { flex: .95 }]} />
+            <Pressable onPress={() => remove(item._idx)} style={s.serviceDelete} hitSlop={8} accessibilityLabel="Remove service"><Ionicons name="close" size={16} color={C.inkMuted} /></Pressable>
+          </View>)}
+          <Pressable onPress={() => addServiceTo(cid, sectionItems[sectionItems.length - 1]._idx)} style={s.addService}><Ionicons name="add" size={16} color={C.primary} /><Text style={s.addServiceText}>Add service</Text></Pressable>
         </View>}
-        {isNewSection && <View style={s.serviceHeadRow}><Text style={[s.serviceHead, { flex: 1.9 }]}>Service</Text><Text style={[s.serviceHead, { flex: 1.2 }]}>Time</Text><Text style={[s.serviceHead, { flex: .95 }]}>Price</Text><View style={{ width: 28 }} /></View>}
-        <View style={s.serviceRow}>
-          <TextInput value={item.name} onChangeText={v => update(i, 'name', v)} placeholder="e.g. Haircut" placeholderTextColor={C.placeholder} style={[s.serviceInput, { flex: 1.9 }]} />
-          <TextInput value={item.duration} onChangeText={v => update(i, 'duration', v)} placeholder="45 mins" placeholderTextColor={C.placeholder} style={[s.serviceInput, { flex: 1.2 }]} />
-          <TextInput value={item.price} onChangeText={v => update(i, 'price', v)} placeholder="£30" placeholderTextColor={C.placeholder} style={[s.serviceInput, { flex: .95 }]} />
-          <Pressable onPress={() => remove(i)} style={s.serviceDelete} hitSlop={8} accessibilityLabel="Remove service"><Ionicons name="close" size={16} color={C.inkMuted} /></Pressable>
-        </View>
-        {isLastInSection && <Pressable onPress={() => addServiceTo(item.cid, i)} style={s.addService}><Ionicons name="add" size={16} color={C.primary} /><Text style={s.addServiceText}>Add service</Text></Pressable>}
       </View>;
     })}
     <Pressable onPress={addSection} style={[s.addService, s.addSectionBtn]}><Ionicons name="add" size={16} color={C.ink} /><Text style={s.addServiceText}>Add category</Text></Pressable>
@@ -1777,7 +1790,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
               keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
               {content(deckStep)}
             </ScrollView>
-            <LinearGradient pointerEvents="none" colors={['transparent', 'rgba(255,255,255,.95)']} style={s.cardFade} />
+            <LinearGradient pointerEvents="none" colors={['transparent', CARD]} style={s.cardFade} />
             <View pointerEvents="none" style={s.fixedPrompt}>
               {!!validationMessage && isActive && <Text style={s.validationText}>{validationMessage}</Text>}
               <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : deckStep.id === 'choice' ? (editingInfo ? 'Tap Save changes above' : 'Pick an option above') : 'Swipe up to save'}</Text></View>
