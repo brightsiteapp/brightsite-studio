@@ -334,25 +334,22 @@ function SitePreview({ palette, font, page = 0, onPageChange, editing, siteTexts
 
   const renderHome = (name: string) => {
     switch (name) {
-      case 'Hero': return <ImageBackground key="Hero" source={media.hero ? { uri: media.hero } : require('./assets/hair-beauty-hero.jpg')} style={[s.siteHero, desktop && s.siteHeroDesktop]}>
-        <LinearGradient colors={['rgba(5,7,9,.05)', 'rgba(5,7,9,.78)']} style={StyleSheet.absoluteFill} />
-        <View style={s.siteTop}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>{!!media.logo && <Image source={{ uri: media.logo }} style={s.siteLogo} />}<Text style={[s.siteKicker, fo, editing && s.editing]} onPress={ep('brand')} numberOfLines={1}>{tx('brand', biz.toUpperCase())}</Text></View>
-          <View style={s.siteNav}><Text style={[s.siteNavText, fo]}>TREATMENTS</Text><Text style={[s.siteNavText, fo]}>CONTACT</Text><Ionicons name="menu" size={18} color="#fff" /></View>
+      case 'Hero': return <View key="Hero" style={{ backgroundColor: bg }}>
+        <View style={[s.siteTop, { paddingHorizontal: 14, paddingVertical: 10, backgroundColor: bg }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>{!!media.logo && <Image source={{ uri: media.logo }} style={s.siteLogo} />}<Text style={[s.siteKicker, fo, { color: textColor }, editing && s.editing]} onPress={ep('brand')} numberOfLines={1}>{tx('brand', biz.toUpperCase())}</Text></View>
+          <Ionicons name="menu" size={18} color={textColor} />
         </View>
-        <View style={[s.siteCopy, desktop && { maxWidth: '55%' }]}>
-          <Text style={[s.siteEyebrow, fo, { color: 'rgba(255,255,255,.7)' }]}>{contactData.address ? contactData.address.split(',').pop()?.trim() || category : category}</Text>
-          <Text style={[s.siteHeadline, tf, editing && s.editing]} onPress={ep('headline')}>{tx('headline', preset.heroTitle)}</Text>
-          <Text style={[s.siteBody, fo, editing && s.editing]} onPress={ep('heroBody')}>{tx('heroBody', preset.heroBody)}</Text>
-          <View style={s.heroButtons}>
-            <View style={[s.siteCtaFilled, { backgroundColor: '#fff' }]}><Text style={[s.siteCtaFilledText, fo, { color: textColor }]}>Book Now</Text></View>
-            <View style={[s.siteCta, { borderColor: 'rgba(255,255,255,.7)' }]}><Text style={[s.siteCtaText, fo]}>View Treatments</Text></View>
-          </View>
-          <View style={s.heroTags}>
-            {displaySvcs.map((sv: string, i: number) => <View key={i} style={s.heroTag}><Text style={[s.heroTagText, fo]}>{sv}</Text></View>)}
+        <Image source={media.hero ? { uri: media.hero } : require('./assets/hair-beauty-hero.jpg')} style={[s.siteHeroImg, desktop && s.siteHeroImgDesktop]} resizeMode="cover" />
+        <View style={[s.siteHeroCopy, { backgroundColor: bg }]}>
+          <Text style={[s.siteEyebrow, fo, { color: accent, textAlign: 'center', marginBottom: 8 }]}>{contactData.address ? contactData.address.split(',').slice(-2).join(' · ').trim() || category : category}</Text>
+          <Text style={[s.siteHeadline, tf, { color: textColor, textAlign: 'center' }, editing && s.editing]} onPress={ep('headline')}>{tx('headline', preset.heroTitle)}</Text>
+          <Text style={[s.siteBody, fo, { color: textColor, opacity: .65, textAlign: 'center', marginTop: 6 }, editing && s.editing]} onPress={ep('heroBody')}>{tx('heroBody', preset.heroBody)}</Text>
+          <View style={[s.heroButtons, { justifyContent: 'center', marginTop: 14 }]}>
+            <View style={[s.siteCtaFilled, { backgroundColor: textColor }]}><Text style={[s.siteCtaFilledText, fo, { color: bg }]}>Book Now</Text></View>
+            <View style={[s.siteCta, { borderColor: textColor, marginTop: 0 }]}><Text style={[s.siteCtaText, fo, { color: textColor }]}>View Treatments</Text></View>
           </View>
         </View>
-      </ImageBackground>;
+      </View>;
       case 'About & Services': return <View key="About & Services" style={[s.siteSection, { backgroundColor: bg }]}>
         {desktop ? <View style={s.siteAboutDesktopRow}>
           <View style={{ flex: 1 }}>
@@ -1857,7 +1854,6 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
               keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
               {content(deckStep)}
             </ScrollView>
-            <LinearGradient pointerEvents="none" colors={['transparent', CARD]} style={s.cardFade} />
             <View pointerEvents="none" style={s.fixedPrompt}>
               {!!validationMessage && isActive && <Text style={s.validationText}>{validationMessage}</Text>}
               <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : deckStep.id === 'choice' ? (editingInfo ? 'Tap Save changes above' : 'Pick an option above') : 'Swipe up to save'}</Text></View>
@@ -1925,9 +1921,12 @@ const s = StyleSheet.create({
   previewPageTab: { flex: 1, paddingVertical: 6, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
   previewPageTabText: { fontFamily: FONT, fontSize: 8, fontWeight: '700', color: 'rgba(255,255,255,.45)', letterSpacing: .5 },
   siteHero: { height: SCREEN_HEIGHT * .36, padding: 18, justifyContent: 'space-between' },
-  siteTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, siteKicker: { fontFamily: FONT, fontSize: 11, letterSpacing: 2, fontWeight: '700', color: '#fff' }, siteNav: { flexDirection: 'row', alignItems: 'center', gap: 10 }, siteNavText: { fontFamily: FONT, fontSize: 7, letterSpacing: .7, color: 'rgba(255,255,255,.78)' }, siteCopy: { maxWidth: '76%' },
-  siteHeadline: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 24, lineHeight: 28, color: '#fff', marginBottom: 7 },
-  siteBody: { fontFamily: FONT, fontSize: 10, lineHeight: 15, color: 'rgba(255,255,255,.76)' }, editing: { borderWidth: 1, borderColor: BRAND, borderRadius: 4, padding: 2 },
+  siteHeroImg: { width: '100%', height: SCREEN_HEIGHT * .3 },
+  siteHeroImgDesktop: { height: 400 },
+  siteHeroCopy: { paddingHorizontal: 20, paddingVertical: 18 },
+  siteTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, siteKicker: { fontFamily: FONT, fontSize: 11, letterSpacing: 2, fontWeight: '700' }, siteNav: { flexDirection: 'row', alignItems: 'center', gap: 10 }, siteNavText: { fontFamily: FONT, fontSize: 7, letterSpacing: .7, color: 'rgba(255,255,255,.78)' }, siteCopy: { maxWidth: '76%' },
+  siteHeadline: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 24, lineHeight: 28, marginBottom: 7 },
+  siteBody: { fontFamily: FONT, fontSize: 10, lineHeight: 15 }, editing: { borderWidth: 1, borderColor: BRAND, borderRadius: 4, padding: 2 },
   siteCta: { marginTop: 10, alignSelf: 'flex-start', paddingVertical: 7, paddingHorizontal: 11, borderWidth: 1 }, siteCtaText: { fontFamily: FONT, fontSize: 7, fontWeight: '800', letterSpacing: 1.4, color: '#fff' },
   siteCtaFilled: { paddingVertical: 9, paddingHorizontal: 16, borderRadius: 6, alignItems: 'center', alignSelf: 'flex-start' }, siteCtaFilledText: { fontFamily: FONT, fontSize: 8, fontWeight: '800', color: '#fff' }, siteSectionTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 16, marginBottom: 5 }, siteSectionBody: { fontFamily: FONT, fontSize: 9, lineHeight: 14, opacity: .68 },
   siteEyebrow: { fontSize: 6, fontWeight: '700', letterSpacing: 2.5, textTransform: 'uppercase' as any, marginBottom: 6 },
