@@ -1051,7 +1051,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
         {tab === 'Messages' && <>
           <View style={[s.messageBubble, s.messageBubbleReceived]}><Text style={s.messageText}>{`Hey ${data.fullName?.trim().split(' ')[0] || 'there'}, welcome to BrightSite! My name is Tom and I’ll be your ${buildChoice === 'designer' ? 'designer and support' : 'support'}. ${buildChoice === 'designer' ? 'I’m working on your preview now, so let me know if you have any requests or questions.' : 'Love your design! Let me know if you have any requests or questions.'} When you’re ready, just hit Make Live to put your website online!`}</Text></View>
           <Text style={[s.messageMeta, s.messageMetaReceived]}>Tom · BrightSite</Text>
-          {messages.map((m, i) => {
+          {messages.filter(m => !(m.sender === 'admin' && m.body.startsWith('Welcome to BrightSite'))).map((m, i) => {
             const mine = m.sender === 'customer';
             const showDay = i === 0 || dayLabel(m.created_at) !== dayLabel(messages[i - 1].created_at);
             const lastOfRun = i === messages.length - 1 || messages[i + 1].sender !== m.sender || dayLabel(messages[i + 1].created_at) !== dayLabel(m.created_at);
