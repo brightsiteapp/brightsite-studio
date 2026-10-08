@@ -1084,18 +1084,18 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
         </>}
         {tab === 'Website' && <>
           <View style={[s.dashboardWebsiteHead, { zIndex: 20 }]}>
+            {(isReady || isLive) && !isBuilding
+              ? <Pressable onPress={isLive ? confirmOffline : goLive} style={({ pressed }) => [s.makeLiveBtn, isLive && s.makeLiveBtnLive, pressed && s.pressed]}>
+                  <Ionicons name={isLive ? 'cloud-offline-outline' : 'rocket-outline'} size={13} color="#fff" />
+                  <Text style={s.makeLiveBtnText}>{isLive ? 'Take Offline' : 'Make Live'}</Text>
+                </Pressable>
+              : <View />}
             {!isBuilding && <View style={{ position: 'absolute', left: 0, right: 0, alignItems: 'center', pointerEvents: 'box-none' as any }}><DeviceToggle mode={previewMode} setMode={setPreviewMode} /></View>}
-            <View style={{ flex: 1 }} />
             <View>
-              {isReady || isLive
-                ? <><Pressable onPress={isLive ? confirmOffline : goLive} style={({ pressed }) => [s.makeLiveBtn, isLive && s.makeLiveBtnLive, pressed && s.pressed]}>
-                    <Ionicons name={isLive ? 'cloud-offline-outline' : 'rocket-outline'} size={13} color="#fff" />
-                    <Text style={s.makeLiveBtnText}>{isLive ? 'Take Offline' : 'Make Live'}</Text>
-                  </Pressable></>
-                : <Pressable onPress={() => isBuilding ? onEditInfo?.() : setShowEditMenu(v => !v)} style={({ pressed }) => [s.dashboardEdit, pressed && s.pressed]}>
-                    <Ionicons name="create-outline" size={15} color={C.ink} /><Text style={s.dashboardEditText}>{isBuilding ? 'Edit info' : 'Edit'}</Text>
-                    {!isBuilding && <Ionicons name={showEditMenu ? 'chevron-up' : 'chevron-down'} size={14} color={C.inkMuted} />}
-                  </Pressable>}
+              <Pressable onPress={() => isBuilding ? onEditInfo?.() : setShowEditMenu(v => !v)} style={({ pressed }) => [s.dashboardEdit, pressed && s.pressed]}>
+                <Ionicons name="create-outline" size={15} color={C.ink} /><Text style={s.dashboardEditText}>{isBuilding ? 'Edit info' : 'Edit'}</Text>
+                {!isBuilding && <Ionicons name={showEditMenu ? 'chevron-up' : 'chevron-down'} size={14} color={C.inkMuted} />}
+              </Pressable>
               {showEditMenu && <View style={s.editMenu}>
                 <Pressable onPress={() => { setShowEditMenu(false); onEdit?.(); }} style={({ pressed }) => [s.editMenuItem, pressed && { backgroundColor: C.primarySoft }]}>
                   <Ionicons name="color-palette-outline" size={17} color={C.primary} /><View><Text style={s.editMenuTitle}>Design</Text><Text style={s.editMenuSub}>Colours, fonts, text and sections</Text></View>
