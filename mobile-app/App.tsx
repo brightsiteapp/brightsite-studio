@@ -908,7 +908,19 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
       const confirm = await fetch(CONFIRM_PAYMENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscriptionId: json.subscriptionId }) });
       if (confirm.ok) { onPaid?.(annual); Alert.alert('You’re live! 🎉', `Your website is now online${domain ? ` at ${domain}${suffix}` : ''}. It can take a few minutes for a new domain to start working.`); }
       else Alert.alert('Payment received', 'Thanks! We’re finishing setting up your website and will message you as soon as it’s live.');
-    } catch (err: any) { setPayError(err.message || 'Payment failed. Please try again.'); }
+    } catch (err: any) {
+      try {
+        const email = session?.user?.email || data.contactEmail || data.email;
+        const fb = await fetch('https://api.brightsite.app/api/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ plan: 'essential', billing: annual ? 'annual' : 'monthly', email, slug, domain: domain ? domain + suffix : '', ui_mode: 'hosted' }),
+        });
+        const fbJson = await fb.json();
+        if (fb.ok && fbJson.url) { await Linking.openURL(fbJson.url); setShowPlanModal(false); return; }
+      } catch { /* fallback also failed */ }
+      setPayError(err.message || 'Payment failed. Please try again.');
+    }
     finally { setPayBusy(false); }
   };
 
