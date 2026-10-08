@@ -6,8 +6,10 @@ import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator, Alert, Animated, AppState, Dimensions, Easing, Image, ImageBackground, Keyboard, KeyboardAvoidingView, LayoutAnimation, Modal, PanResponder,
-  Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View,
+  Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, useWindowDimensions,
 } from 'react-native';
+import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import { supabase } from './lib/supabase';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -16,7 +18,7 @@ const CARD_BOTTOM = 72;
 const CARD_TRAVEL = SCREEN_HEIGHT - 190;
 const FONT = Platform.select({ ios: 'Avenir Next', android: 'sans-serif', default: 'sans-serif' });
 const C = {
-  primary: '#2563EB', primaryPressed: '#1D4FD0', primarySoft: 'rgba(37,99,235,.10)', primaryBorder: 'rgba(37,99,235,.35)',
+  primary: '#3B82F6', primaryPressed: '#2563EB', primarySoft: 'rgba(59,130,246,.10)', primaryBorder: 'rgba(59,130,246,.38)',
   ink: '#1C2832', inkSoft: 'rgba(28,40,50,.72)', inkMuted: 'rgba(28,40,50,.52)', placeholder: 'rgba(28,40,50,.38)',
   line: 'rgba(28,40,50,.14)', lineStrong: 'rgba(28,40,50,.24)', field: 'rgba(255,255,255,.6)',
   canvas: '#F4EDE6', surface: '#FFFFFF', card: '#EFE4DB',
@@ -25,7 +27,9 @@ const C = {
 const BRAND = C.primary;
 const DOMAIN_TLDS = ['.com', '.co.uk', '.net', '.org', '.io', '.co', '.uk', '.app'];
 const DOMAIN_API = 'https://api.brightsite.app/api/check-domain';
-const CHECKOUT_API = 'https://api.brightsite.app/api/create-checkout-session';
+const PAYMENT_SHEET_API = 'https://api.brightsite.app/api/create-payment-sheet';
+const CONFIRM_PAYMENT_API = 'https://api.brightsite.app/api/confirm-app-payment';
+const STRIPE_PUBLISHABLE_KEY = 'pk_live_51UFf7iGqCP7G2YApFHjoKMHkxsEIrf0SJiBpxeTR2MRZ4zs26OQ5jjBClWu8OvZXGXAZvMectFW0zLEuGFFKC7CA008zYaYMzc';
 // Same Supabase project, R2 bucket and Cloudflare worker the account
 // dashboard (account/dashboard.html) uses — so a business created or edited
 // in the app is the exact same row the website's dashboard reads and writes,
@@ -131,6 +135,20 @@ async function upsertBusiness(session: any, id: string, name: string, record: Re
   return json;
 }
 
+function dayLabel(iso: string) {
+  const d = new Date(iso); const now = new Date();
+  const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diff = Math.round((startOf(now) - startOf(d)) / 86400000);
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Yesterday';
+  if (diff < 7) return d.toLocaleDateString('en-GB', { weekday: 'long' });
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', ...(d.getFullYear() !== now.getFullYear() && { year: 'numeric' }) });
+}
+
+function timeLabel(iso: string) {
+  return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+
 function isImageMessage(body: string) {
   return /^https?:\/\//.test(body) && (body.includes(R2_PUBLIC_URL) || /\.(png|jpe?g|webp|gif)(\?|$)/i.test(body));
 }
@@ -170,6 +188,7 @@ const paletteGroups = [
 ];
 const palettes = paletteGroups.flatMap(group => group.options);
 const fonts = ['Editorial', 'Rounded', 'Modern', 'Thin', 'Classic'];
+const BUSINESS_TYPES = ['Hair & Beauty', 'Aesthetics', 'Health & Wellness', 'Fitness', 'Automotive', 'Trades', 'Home & Garden', 'Food & Drink', 'Professional Services', 'Creative', 'Pets', 'Other'];
 const HOME_SECTIONS_DEFAULT = ['Hero', 'About & Services', 'Reviews', 'Gallery', 'Contact'];
 const SERVICES_SECTIONS_DEFAULT = ['Services List', 'Contact CTA'];
 const CONTACT_SECTIONS_DEFAULT = ['Info & Hours', 'Map', 'Contact Form'];
@@ -185,6 +204,15 @@ const CATEGORY_PRESETS: Record<string, { topServices: string[]; about: string; h
   'Photography': { topServices: ['Portraits', 'Events', 'Commercial'], about: 'Capturing the moments that matter most in your most authentic light.', heroTitle: 'Your story, beautifully told.', heroBody: 'Natural light portraits, events and commercial photography.' },
   'Dental': { topServices: ['Check-ups', 'Whitening', 'Orthodontics'], about: 'Gentle, professional dental care for the whole family.', heroTitle: "A smile you’re proud of.", heroBody: 'Expert dental care delivered with warmth and attention to detail.' },
   'Plumbing': { topServices: ['Boiler Repair', 'Installation', 'Emergency'], about: 'Reliable, qualified plumbers for every job big or small.', heroTitle: 'Plumbing you can count on.', heroBody: 'Fast, professional service from fully qualified engineers.' },
+  'Aesthetics': { topServices: ['Skin Treatments', 'Injectables', 'Consultations'], about: 'Advanced aesthetic treatments delivered with care, safety and natural-looking results.', heroTitle: 'Look like you, only refreshed.', heroBody: 'Expert aesthetic treatments in a calm, clinical setting.' },
+  'Health': { topServices: ['Treatments', 'Therapies', 'Consultations'], about: 'Caring, qualified practitioners focused on how you feel day to day.', heroTitle: 'Feel better, live better.', heroBody: 'Professional care that puts your wellbeing first.' },
+  'Automotive': { topServices: ['Servicing', 'Repairs', 'MOT'], about: 'Honest, reliable work on your vehicle with clear prices and no surprises.', heroTitle: 'Keeping you on the road.', heroBody: 'Trusted servicing and repairs from experienced technicians.' },
+  'Trades': { topServices: ['Installations', 'Repairs', 'Free Quotes'], about: 'Qualified, insured and proud of a job done properly the first time.', heroTitle: 'Quality work, done right.', heroBody: 'Reliable local tradespeople with fair, upfront pricing.' },
+  'Home': { topServices: ['Garden Design', 'Maintenance', 'Landscaping'], about: 'Making homes and gardens look their best, season after season.', heroTitle: 'Love where you live.', heroBody: 'Friendly, reliable home and garden services near you.' },
+  'Food': { topServices: ['Menu', 'Takeaway', 'Private Hire'], about: 'Freshly prepared food made with good ingredients and real care.', heroTitle: 'Good food, made with love.', heroBody: 'Fresh, seasonal food and a warm welcome every time.' },
+  'Professional': { topServices: ['Consultations', 'Advice', 'Ongoing Support'], about: 'Clear, expert advice from people who take the time to understand you.', heroTitle: 'Expertise you can trust.', heroBody: 'Professional services built around your goals.' },
+  'Creative': { topServices: ['Projects', 'Commissions', 'Packages'], about: 'Creative work with a clear eye for detail and a personal approach.', heroTitle: 'Ideas, beautifully made.', heroBody: 'Thoughtful creative work that tells your story.' },
+  'Pets': { topServices: ['Grooming', 'Walking', 'Boarding'], about: 'Caring for your pets like they’re our own.', heroTitle: 'Happy pets, happy owners.', heroBody: 'Trusted, loving care for your four-legged family.' },
   'Cleaning': { topServices: ['Domestic', 'Commercial', 'Deep Clean'], about: 'Professional cleaning services for homes and businesses.', heroTitle: 'Spotlessly clean, every time.', heroBody: 'Reliable, thorough cleaning using eco-friendly products.' },
 };
 function getPreset(category: string) {
@@ -213,39 +241,47 @@ function Hours({ rows, setRows }: any) {
         trackColor={{ false: 'rgba(28,40,50,.18)', true: C.primary }} thumbColor="#fff" {...({ activeThumbColor: '#fff' } as any)} /></View></View>)}</View>;
 }
 
+let cidSeed = 0;
+const newCid = () => `c${Date.now()}${cidSeed++}`;
 function Services({ items, setItems }: any) {
   const update = (i: number, key: string, value: string) => setItems(items.map((item: any, n: number) => n === i ? { ...item, [key]: value } : item));
   const remove = (i: number) => {
-    if (items.length <= 1) return;
+    const cid = items[i].cid;
+    if (items.filter((it: any) => it.cid === cid).length <= 1) return;
     Alert.alert('Remove this service?', '', [{ text: 'Cancel', style: 'cancel' }, { text: 'Remove', style: 'destructive', onPress: () => setItems(items.filter((_: any, n: number) => n !== i)) }]);
   };
-  const removeSection = (section: string) => {
-    Alert.alert('Remove this section?', 'This removes every service in it.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Remove', style: 'destructive', onPress: () => {
-      const remaining = items.filter((it: any) => it.section !== section);
-      setItems(remaining.length ? remaining : [{ section: '', name: '', duration: '', price: '' }]);
+  const removeSection = (cid: string) => {
+    Alert.alert('Remove this category?', 'This removes every service in it.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Remove', style: 'destructive', onPress: () => {
+      const remaining = items.filter((it: any) => it.cid !== cid);
+      setItems(remaining.length ? remaining : [{ cid: newCid(), section: '', name: '', duration: '', price: '' }]);
     } }]);
   };
-  const addService = () => setItems([...items, { section: items[items.length - 1]?.section || '', name: '', duration: '', price: '' }]);
-  const addSection = () => setItems([...items, { section: '', name: '', duration: '', price: '' }]);
+  const addServiceTo = (cid: string, afterIndex: number) => {
+    const next = [...items];
+    next.splice(afterIndex + 1, 0, { cid, section: items[afterIndex].section, name: '', duration: '', price: '' });
+    setItems(next);
+  };
+  const addSection = () => setItems([...items, { cid: newCid(), section: '', name: '', duration: '', price: '' }]);
   return <View>
     {items.map((item: any, i: number) => {
-      const isNewSection = i === 0 || item.section !== items[i - 1].section;
-      return <View key={i}>
-        {isNewSection && i > 0 && <View style={s.sectionDivider} />}
-        {isNewSection && <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
-          <View style={{ flex: 1 }}><Field label="Service section name" value={item.section} onChangeText={(v: string) => update(i, 'section', v)} placeholder="e.g. Cutting & styling" /></View>
-          <Pressable onPress={() => removeSection(item.section)} style={s.sectionDelete} hitSlop={8}><Ionicons name="close" size={16} color={C.ink} /></Pressable>
+      const isNewSection = i === 0 || item.cid !== items[i - 1].cid;
+      const isLastInSection = i === items.length - 1 || items[i + 1].cid !== item.cid;
+      return <View key={item.cid + i}>
+        {isNewSection && <View style={[s.sectionHeader, i > 0 && { marginTop: 22 }]}>
+          <View style={{ flex: 1 }}><Field label="Category" value={item.section} onChangeText={(v: string) => setItems(items.map((it: any) => it.cid === item.cid ? { ...it, section: v } : it))} placeholder={i === 0 ? 'e.g. Massages' : 'e.g. Waxing'} /></View>
+          {i > 0 && <Pressable onPress={() => removeSection(item.cid)} style={s.sectionDelete} hitSlop={8} accessibilityLabel="Remove category"><Ionicons name="trash-outline" size={17} color={C.danger} /></Pressable>}
         </View>}
+        {isNewSection && <View style={s.serviceHeadRow}><Text style={[s.serviceHead, { flex: 1.9 }]}>Service</Text><Text style={[s.serviceHead, { flex: 1.2 }]}>Time</Text><Text style={[s.serviceHead, { flex: .95 }]}>Price</Text><View style={{ width: 28 }} /></View>}
         <View style={s.serviceRow}>
-          <TextInput value={item.name} onChangeText={v => update(i, 'name', v)} placeholder="Service" placeholderTextColor={C.placeholder} style={[s.serviceInput, { flex: 1.9 }]} />
-          <TextInput value={item.duration} onChangeText={v => update(i, 'duration', v)} placeholder="Time" placeholderTextColor={C.placeholder} style={[s.serviceInput, { flex: 1.2 }]} />
-          <TextInput value={item.price} onChangeText={v => update(i, 'price', v)} placeholder="Price" placeholderTextColor={C.placeholder} style={[s.serviceInput, { flex: .95 }]} />
-          <Pressable onPress={() => remove(i)} style={s.serviceDelete} hitSlop={8}><Ionicons name="close" size={16} color={C.ink} /></Pressable>
+          <TextInput value={item.name} onChangeText={v => update(i, 'name', v)} placeholder="e.g. Haircut" placeholderTextColor={C.placeholder} style={[s.serviceInput, { flex: 1.9 }]} />
+          <TextInput value={item.duration} onChangeText={v => update(i, 'duration', v)} placeholder="45 mins" placeholderTextColor={C.placeholder} style={[s.serviceInput, { flex: 1.2 }]} />
+          <TextInput value={item.price} onChangeText={v => update(i, 'price', v)} placeholder="£30" placeholderTextColor={C.placeholder} style={[s.serviceInput, { flex: .95 }]} />
+          <Pressable onPress={() => remove(i)} style={s.serviceDelete} hitSlop={8} accessibilityLabel="Remove service"><Ionicons name="close" size={16} color={C.inkMuted} /></Pressable>
         </View>
+        {isLastInSection && <Pressable onPress={() => addServiceTo(item.cid, i)} style={s.addService}><Ionicons name="add" size={16} color={C.primary} /><Text style={s.addServiceText}>Add service</Text></Pressable>}
       </View>;
     })}
-    <Pressable onPress={addService} style={s.addService}><Ionicons name="add" size={16} color={BRAND} /><Text style={s.addServiceText}>Add service</Text></Pressable>
-    <Pressable onPress={addSection} style={[s.addService, s.addSectionBtn]}><Ionicons name="add" size={16} color={BRAND} /><Text style={s.addServiceText}>Add section</Text></Pressable>
+    <Pressable onPress={addSection} style={[s.addService, s.addSectionBtn]}><Ionicons name="add" size={16} color={C.ink} /><Text style={s.addServiceText}>Add category</Text></Pressable>
   </View>;
 }
 
@@ -265,7 +301,7 @@ function Upload({ icon, title, subtitle, value, onChange, multiple = false, fill
 function SitePreview({ palette, font, page = 0, onPageChange, editing, siteTexts = {}, onEditText,
   businessName = '', category = '', servicesData = [], hoursData = [],
   contactData = {} as any, contactForm = true,
-  homeSections = HOME_SECTIONS_DEFAULT, servicesSections = SERVICES_SECTIONS_DEFAULT, contactSections = CONTACT_SECTIONS_DEFAULT, media = { gallery: [] } as any,
+  homeSections = HOME_SECTIONS_DEFAULT, servicesSections = SERVICES_SECTIONS_DEFAULT, contactSections = CONTACT_SECTIONS_DEFAULT, media = { gallery: [] } as any, desktop = false,
 }: any) {
   const colors = palettes[palette];
   const [accent, bg, textColor] = colors;
@@ -275,20 +311,21 @@ function SitePreview({ palette, font, page = 0, onPageChange, editing, siteTexts
   const fo: any = { fontFamily: FONT, ...(fw && { fontWeight: fw }), ...(font === 2 && { letterSpacing: 1.2 }), ...(font === 3 && { letterSpacing: 1.8 }), ...(font === 4 && { letterSpacing: -0.5 }) };
   const tf: any = { ...fo, fontFamily: titleFamily };
   const tx = (key: string, fallback: string) => (siteTexts as any)[key] || fallback;
-  const ep = (key: string) => editing ? () => onEditText?.(key) : undefined;
   const biz = businessName || 'Business';
+  const fallbacks: Record<string, string> = { brand: biz.toUpperCase(), headline: preset.heroTitle, heroBody: preset.heroBody, aboutTitle: biz, aboutBody: preset.about };
+  const ep = (key: string) => editing ? () => onEditText?.(key, tx(key, fallbacks[key] || '')) : undefined;
   const topSvcs = servicesData?.filter((sv: any) => sv.name).slice(0, 3).map((sv: any) => sv.name);
   const displaySvcs = topSvcs?.length ? topSvcs : preset.topServices;
 
   const renderHome = (name: string) => {
     switch (name) {
-      case 'Hero': return <ImageBackground key="Hero" source={media.hero ? { uri: media.hero } : require('./assets/hair-beauty-hero.jpg')} style={s.siteHero}>
+      case 'Hero': return <ImageBackground key="Hero" source={media.hero ? { uri: media.hero } : require('./assets/hair-beauty-hero.jpg')} style={[s.siteHero, desktop && s.siteHeroDesktop]}>
         <LinearGradient colors={['rgba(5,7,9,.08)', 'rgba(5,7,9,.84)']} style={StyleSheet.absoluteFill} />
         <View style={s.siteTop}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>{!!media.logo && <Image source={{ uri: media.logo }} style={s.siteLogo} />}<Text style={[s.siteKicker, fo, editing && s.editing]} onPress={ep('brand')} numberOfLines={1}>{tx('brand', biz.toUpperCase())}</Text></View>
           <View style={s.siteNav}><Text style={[s.siteNavText, fo]}>SERVICES</Text><Text style={[s.siteNavText, fo]}>CONTACT</Text><Ionicons name="menu" size={18} color="#fff" /></View>
         </View>
-        <View style={s.siteCopy}>
+        <View style={[s.siteCopy, desktop && { maxWidth: '55%' }]}>
           <Text style={[s.siteHeadline, tf, editing && s.editing]} onPress={ep('headline')}>{tx('headline', preset.heroTitle)}</Text>
           <Text style={[s.siteBody, fo, editing && s.editing]} onPress={ep('heroBody')}>{tx('heroBody', preset.heroBody)}</Text>
           <View style={[s.siteCta, { borderColor: accent }]}><Text style={[s.siteCtaText, fo]}>BOOK NOW</Text></View>
@@ -388,7 +425,7 @@ function SitePreview({ palette, font, page = 0, onPageChange, editing, siteTexts
 
   return <View style={[s.site, { backgroundColor: bg }]}>
     <View style={s.previewBrowserWrap}>
-      <View style={s.previewBrowser}><View style={s.previewDots}><View style={s.previewDot} /><View style={s.previewDot} /><View style={s.previewDot} /></View><Text style={s.previewAddress}>{biz.toLowerCase().replace(/\s+/g, '')}.co.uk</Text></View>
+      {!desktop && <View style={s.previewBrowser}><View style={s.previewDots}><View style={s.previewDot} /><View style={s.previewDot} /><View style={s.previewDot} /></View><Text style={s.previewAddress}>{biz.toLowerCase().replace(/\s+/g, '')}.co.uk</Text></View>}
       <View style={[s.previewPageNav, { borderBottomColor: accent + '33' }]}>
         {['Home', 'Services', 'Contact'].map((name, i) => <Pressable key={name} onPress={() => onPageChange?.(i)} style={[s.previewPageTab, page === i && { borderBottomColor: accent, borderBottomWidth: 2 }]}>
           <Text style={[s.previewPageTabText, fo, page === i && { color: accent }]}>{name}</Text>
@@ -552,10 +589,9 @@ function SectionDragList({ sections, setSections, sectionVisible, onToggle }: an
   </View>;
 }
 
-function DesignTools({ active, setActive, palette, setPalette, font, setFont, setEditing,
+function DesignTools({ landscape = false, active, setActive, palette, setPalette, font, setFont, setEditing,
   homeSections, setHomeSections, servicesSections, setServicesSections, contactSections, setContactSections }: any) {
   const items = [{ id: 'colour', icon: 'color-palette-outline' }, { id: 'font', icon: 'text-outline' }, { id: 'edit', icon: 'create-outline' }];
-  const [paletteSection, setPaletteSection] = useState(0);
   const [sectionVisible, setSectionVisible] = useState<Record<string, boolean>>({});
   const [editPage, setEditPage] = useState(0);
   const pageSections = [homeSections, servicesSections, contactSections];
@@ -565,23 +601,23 @@ function DesignTools({ active, setActive, palette, setPalette, font, setFont, se
   const handleToggle = (idx: number) => {
     const name = curSections[idx]; setSectionVisible((v: any) => ({ ...v, [name]: v[name] === false ? true : false }));
   };
-  return <View style={s.tools}>
+  return <View style={landscape ? s.toolsLandscape : s.tools}>
     <View style={s.toolStack}>{items.map(item => {
       const open = active === item.id;
       return (
-        <View key={item.id} style={s.toolSlot}><Pressable onPress={() => {
+        <View key={item.id} style={landscape ? s.toolSlotLandscape : s.toolSlot}><Pressable onPress={() => {
           LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
           const next = active === item.id ? null : item.id;
           setActive(next);
           setEditing(next === 'edit');
-        }} style={({ pressed }) => [s.toolButton, open && s.toolActive, pressed && s.pressed]}>
+        }} style={({ pressed }) => [s.toolButton, landscape && s.toolButtonSmall, open && s.toolActive, pressed && s.pressed]}>
           <Ionicons name={item.icon as any} size={19} color={open ? '#fff' : C.primary} />
         </Pressable></View>
       );
     })}</View>
-    {active && <BlurView intensity={58} tint="light" style={s.toolPanel}>
+    {active && !landscape && <BlurView intensity={58} tint="light" style={s.toolPanel}>
       <Text style={s.toolTitle}>{active === 'colour' ? 'Colour' : active === 'font' ? 'Font' : 'Edit site'}</Text>
-      {active === 'colour' && <View style={s.paletteWrap}><Text style={s.paletteHeadingText}>{paletteGroups[paletteSection].name}</Text><ScrollView style={s.paletteScroll} onScroll={event => { const next = Math.min(paletteGroups.length - 1, Math.floor(event.nativeEvent.contentOffset.y / 286)); if (next !== paletteSection) { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setPaletteSection(next); } }} scrollEventThrottle={16}>{paletteGroups.map((group, groupIndex) => <View key={group.name} style={s.paletteGroup}>{group.options.map((colors, i) => { const paletteIndex = paletteGroups.slice(0, groupIndex).reduce((total, section) => total + section.options.length, 0) + i; return <Pressable key={colors.join()} onPress={() => setPalette(paletteIndex)} style={[s.option, palette === paletteIndex && s.selected]}>{colors.map(c => <View key={c} style={[s.dot, { backgroundColor: c }]} />)}</Pressable>; })}</View>)}</ScrollView></View>}
+      {active === 'colour' && <View style={s.paletteWrap}><ScrollView style={s.paletteScroll} showsVerticalScrollIndicator={false}>{paletteGroups.map((group, groupIndex) => <View key={group.name} style={s.paletteGroup}><Text style={[s.paletteHeadingText, { marginTop: groupIndex ? 4 : 0, marginBottom: 2 }]}>{group.name}</Text>{group.options.map((colors, i) => { const paletteIndex = paletteGroups.slice(0, groupIndex).reduce((total, section) => total + section.options.length, 0) + i; return <Pressable key={colors.join()} onPress={() => setPalette(paletteIndex)} style={[s.option, palette === paletteIndex && s.selected]}>{colors.map(c => <View key={c} style={[s.dot, { backgroundColor: c }]} />)}</Pressable>; })}</View>)}</ScrollView></View>}
       {active === 'font' && fonts.map((name, i) => <Pressable key={name} onPress={() => setFont(i)} style={[s.fontOption, font === i && s.selected]}><Text style={s.fontOptionText}>{name}</Text></Pressable>)}
       {active === 'edit' && <>
         <View style={s.editPageTabs}>
@@ -592,6 +628,38 @@ function DesignTools({ active, setActive, palette, setPalette, font, setFont, se
         <SectionDragList sections={curSections} setSections={setCurSections} sectionVisible={sectionVisible} onToggle={handleToggle} />
       </>}
     </BlurView>}
+  </View>;
+}
+
+function LandscapeToolStrip({ active, palette, setPalette, font, setFont, homeSections, setHomeSections, servicesSections, setServicesSections, contactSections, setContactSections }: any) {
+  const [editPage, setEditPage] = useState(0);
+  const pages = [[homeSections, setHomeSections], [servicesSections, setServicesSections], [contactSections, setContactSections]];
+  const [secs, setSecs] = pages[editPage];
+  const move = (i: number, dir: -1 | 1) => {
+    const j = i + dir; if (j < 0 || j >= secs.length) return;
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    const next = [...secs]; [next[i], next[j]] = [next[j], next[i]]; setSecs(next);
+  };
+  return <View style={s.stripPanel}>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.stripContent}>
+      {active === 'colour' && paletteGroups.map((group, g) => <View key={group.name} style={s.stripGroup}>
+        <Text style={s.stripGroupLabel}>{group.name}</Text>
+        <View style={{ flexDirection: 'row', gap: 8 }}>{group.options.map((colors, i) => {
+          const idx = paletteGroups.slice(0, g).reduce((t, x) => t + x.options.length, 0) + i;
+          return <Pressable key={colors.join()} onPress={() => setPalette(idx)} style={[s.stripChip, palette === idx && s.stripChipOn]}>{colors.map(c => <View key={c} style={[s.dot, { width: 16, height: 16 }, { backgroundColor: c }]} />)}</Pressable>;
+        })}</View>
+      </View>)}
+      {active === 'font' && fonts.map((name, i) => <Pressable key={name} onPress={() => setFont(i)} style={[s.stripChip, { paddingHorizontal: 18 }, font === i && s.stripChipOn]}><Text style={s.fontOptionText}>{name}</Text></Pressable>)}
+      {active === 'edit' && <>
+        <View style={[s.editPageTabs, { marginBottom: 0, alignSelf: 'center' }]}>{['Home', 'Services', 'Contact'].map((name, i) => <Pressable key={name} onPress={() => setEditPage(i)} style={[s.editPageTab, { paddingHorizontal: 12 }, editPage === i && s.editPageTabOn]}><Text style={[s.editPageTabText, editPage === i && s.editPageTabTextOn]}>{name}</Text></Pressable>)}</View>
+        {secs.map((name: string, i: number) => <View key={name} style={[s.stripChip, { gap: 4, paddingHorizontal: 6 }]}>
+          <Pressable onPress={() => move(i, -1)} hitSlop={6} disabled={i === 0} style={{ opacity: i === 0 ? .3 : 1, padding: 4 }}><Ionicons name="chevron-back" size={16} color={C.inkSoft} /></Pressable>
+          <Text style={s.fontOptionText}>{name}</Text>
+          <Pressable onPress={() => move(i, 1)} hitSlop={6} disabled={i === secs.length - 1} style={{ opacity: i === secs.length - 1 ? .3 : 1, padding: 4 }}><Ionicons name="chevron-forward" size={16} color={C.inkSoft} /></Pressable>
+        </View>)}
+        <Text style={s.stripHint}>Tap text on the page to edit it</Text>
+      </>}
+    </ScrollView>
   </View>;
 }
 
@@ -616,9 +684,70 @@ function TextEditModal({ visible, value, label, onSave, onClose }: any) {
 
 function FlowBackdrop({ children }: any) {
   return <View style={{ flex: 1, backgroundColor: C.primary }}>
-    <LinearGradient colors={['#6FA8FF', '#3B82F6', '#1D4FD0']} locations={[0, .45, 1]} style={StyleSheet.absoluteFill} />
+    <LinearGradient colors={['#7DB0FA', '#3B82F6', '#2563EB']} locations={[0, .45, 1]} style={StyleSheet.absoluteFill} />
     {children}
   </View>;
+}
+
+const LOGO = require('./assets/brightsite-logo.png');
+const LOGO_RATIO = 515 / 72;
+function Logo({ height = 18, tint }: { height?: number; tint?: string }) {
+  return <Image source={LOGO} accessibilityLabel="BrightSite" style={{ height, width: height * LOGO_RATIO, ...(tint ? { tintColor: tint } : null) }} resizeMode="contain" />;
+}
+
+const DESKTOP_WIDTH = 960;
+const DESKTOP_VIEW_W = SCREEN_WIDTH - 52;
+const DESKTOP_VIEW_H = Math.round(DESKTOP_VIEW_W * 0.68);
+function ScaledView({ virtualWidth, width, children }: { virtualWidth: number; width: number; children: React.ReactNode }) {
+  const [innerHeight, setInnerHeight] = useState(0);
+  const scale = width / virtualWidth;
+  return <View style={{ width, height: innerHeight * scale, overflow: 'hidden' }}>
+    <View onLayout={e => setInnerHeight(e.nativeEvent.layout.height)} style={{ position: 'absolute', top: 0, left: 0, width: virtualWidth, transform: [{ scale }], transformOrigin: 'top left' }}>{children}</View>
+  </View>;
+}
+
+function DeviceToggle({ mode, setMode, dark = false }: { mode: 'mobile' | 'desktop'; setMode: (m: 'mobile' | 'desktop') => void; dark?: boolean }) {
+  return <View style={[s.deviceToggle, dark && s.deviceToggleDark]}>
+    {(['mobile', 'desktop'] as const).map(m => <Pressable key={m} onPress={() => setMode(m)} style={[s.deviceToggleBtn, mode === m && (dark ? s.deviceToggleBtnOnDark : s.deviceToggleBtnOn)]} accessibilityLabel={`${m} preview`}>
+      <Ionicons name={m === 'mobile' ? 'phone-portrait-outline' : 'desktop-outline'} size={15} color={mode === m ? (dark ? C.ink : C.ink) : dark ? 'rgba(255,255,255,.7)' : C.inkMuted} />
+      <Text style={[s.deviceToggleText, dark && { color: 'rgba(255,255,255,.7)' }, mode === m && { color: C.ink }]}>{m === 'mobile' ? 'Mobile' : 'Desktop'}</Text>
+    </Pressable>)}
+  </View>;
+}
+
+function ChangePasswordModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const [pw, setPw] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+  useEffect(() => { if (visible) { setPw(''); setConfirm(''); setMsg(''); } }, [visible]);
+  const save = async () => {
+    if (pw.length < 8) { setMsg('Use at least 8 characters.'); return; }
+    if (pw !== confirm) { setMsg('Those passwords don’t match.'); return; }
+    setBusy(true); setMsg('');
+    const { error } = await supabase.auth.updateUser({ password: pw });
+    setBusy(false);
+    if (error) { setMsg(/different from the old/i.test(error.message) ? 'Choose a password you haven’t used before.' : 'Couldn’t change your password. Please try again.'); return; }
+    onClose();
+    Alert.alert('Password changed', 'Use your new password next time you log in.');
+  };
+  return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+      <Pressable style={s.modalOverlay} onPress={onClose}>
+        <Pressable onPress={() => {}} style={s.modalBox}>
+          <Text style={s.planModalTitle}>Change password</Text>
+          <View style={{ height: 14 }} />
+          <Field label="New password" value={pw} onChangeText={setPw} secureTextEntry textContentType="newPassword" placeholder="At least 8 characters" autoFocus />
+          <Field label="Confirm new password" value={confirm} onChangeText={setConfirm} secureTextEntry textContentType="newPassword" onSubmitEditing={() => void save()} />
+          {!!msg && <Text style={[s.authStatus, { marginBottom: 10 }]}>{msg}</Text>}
+          <View style={s.modalButtons}>
+            <Pressable onPress={onClose} style={[s.modalButton, s.modalButtonCancel]}><Text style={s.modalButtonText}>Cancel</Text></Pressable>
+            <Pressable onPress={() => void save()} disabled={busy} style={[s.modalButton, s.modalButtonSave, busy && { opacity: .6 }]}>{busy ? <ActivityIndicator color="#fff" /> : <Text style={[s.modalButtonText, { color: '#fff' }]}>Save</Text>}</Pressable>
+          </View>
+        </Pressable>
+      </Pressable>
+    </KeyboardAvoidingView>
+  </Modal>;
 }
 
 const LOADING_MESSAGES = {
@@ -634,7 +763,10 @@ function FadeIn({ children }: { children: React.ReactNode }) {
   return <Animated.View style={{ flex: 1, opacity }}>{children}</Animated.View>;
 }
 
-function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, onEdit, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, saveError, planAnnual, media, isPaying, session, slug }: any) {
+function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, onEdit, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, onPaid, saveError, planAnnual, media, isPaying, buildChoice, session, slug }: any) {
+  const [previewMode, setPreviewMode] = useState<'mobile' | 'desktop'>('mobile');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showEditMenu, setShowEditMenu] = useState(false);
   const siteUrl = data.website?.trim() || `https://${domain}${suffix}`;
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [domainPriceLabel, setDomainPriceLabel] = useState<string | null>(null);
@@ -656,6 +788,15 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
   const [messages, setMessages] = useState<{ id: string; sender: string; body: string; created_at: string }[]>([]);
   const [sendingMessage, setSendingMessage] = useState(false);
   const lastMessageTs = useRef<string | undefined>(undefined);
+  const scrollRef = useRef<ScrollView>(null);
+  const [kbOpen, setKbOpen] = useState(false);
+  const scrollToLatest = (animated = true) => requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated }));
+  useEffect(() => {
+    const show = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => { setKbOpen(true); if (tab === 'Messages') setTimeout(() => scrollToLatest(), 60); });
+    const hide = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKbOpen(false));
+    return () => { show.remove(); hide.remove(); };
+  }, [tab]);
+  useEffect(() => { if (tab === 'Messages') scrollToLatest(false); }, [tab]);
 
   const loadMessagesNow = async () => {
     if (!session?.access_token || !slug) return;
@@ -663,7 +804,11 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
       const rows = await fetchMessages(session.access_token, slug, lastMessageTs.current);
       if (rows.length) {
         lastMessageTs.current = rows[rows.length - 1].created_at;
-        setMessages(current => [...current, ...rows]);
+        setMessages(current => {
+          const ids = new Set(current.map(m => m.id));
+          const pending = current.filter(m => m.id.startsWith('local-') && !rows.some(r => r.sender === m.sender && r.body === m.body));
+          return [...current.filter(m => !m.id.startsWith('local-')), ...rows.filter(r => !ids.has(r.id)), ...pending];
+        });
       }
     } catch { /* same best-effort polling as the website's messages tab */ }
   };
@@ -720,28 +865,49 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
     const text = (body ?? messageDraft).trim();
     if (!text || sendingMessage || !session?.access_token || !slug) return;
     setSendingMessage(true);
+    const localId = `local-${Date.now()}`;
+    setMessages(current => [...current, { id: localId, sender: 'customer', body: text, created_at: new Date().toISOString() }]);
+    if (!body) setMessageDraft('');
+    scrollToLatest();
     try {
       await postMessage(session.access_token, slug, text, 'customer');
-      if (!body) setMessageDraft('');
       await loadMessagesNow();
-    } catch { Alert.alert('Message not sent', 'Check your connection and try again.'); }
+    } catch {
+      setMessages(current => current.filter(m => m.id !== localId));
+      if (!body) setMessageDraft(text);
+      Alert.alert('Message not sent', 'Check your connection and try again.');
+    }
     finally { setSendingMessage(false); }
   };
 
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const handlePay = async () => {
     setPayBusy(true); setPayError('');
     try {
-      // Same Stripe account, prices and endpoint the website's checkout page uses —
-      // just opened as a hosted Checkout page since Expo has no embedded web view for it.
-      const res = await fetch(CHECKOUT_API, {
+      const email = session?.user?.email || data.contactEmail || data.email;
+      const res = await fetch(PAYMENT_SHEET_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: 'essential', billing: annual ? 'annual' : 'monthly', email: data.contactEmail || data.email, slug: slug || domain, domain: domain + suffix, ui_mode: 'hosted' }),
+        body: JSON.stringify({ plan: 'essential', billing: annual ? 'annual' : 'monthly', email, slug, domain: domain ? domain + suffix : '' }),
       });
       const json = await res.json();
-      if (!res.ok || !json.url) throw new Error(json.error || 'Could not set up payment.');
+      if (!res.ok || !json.paymentIntentClientSecret) throw new Error(json.error || 'Could not set up payment.');
+      const init = await initPaymentSheet({
+        merchantDisplayName: 'BrightSite',
+        customerId: json.customerId,
+        customerEphemeralKeySecret: json.ephemeralKey,
+        paymentIntentClientSecret: json.paymentIntentClientSecret,
+        defaultBillingDetails: { email },
+        returnURL: 'app.brightsite.mobile://stripe-redirect',
+        appearance: { colors: { primary: C.primary }, shapes: { borderRadius: 12 } },
+      });
+      if (init.error) throw new Error(init.error.message);
+      const result = await presentPaymentSheet();
+      if (result.error) { if (result.error.code !== 'Canceled') setPayError(result.error.message); return; }
       setShowPlanModal(false);
-      await Linking.openURL(json.url);
+      const confirm = await fetch(CONFIRM_PAYMENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscriptionId: json.subscriptionId }) });
+      if (confirm.ok) { onPaid?.(annual); Alert.alert('You’re live! 🎉', `Your website is now online${domain ? ` at ${domain}${suffix}` : ''}. It can take a few minutes for a new domain to start working.`); }
+      else Alert.alert('Payment received', 'Thanks! We’re finishing setting up your website and will message you as soon as it’s live.');
     } catch (err: any) { setPayError(err.message || 'Payment failed. Please try again.'); }
     finally { setPayBusy(false); }
   };
@@ -784,18 +950,13 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
     <StatusBar style="dark" />
     <View style={s.dashboardScreen}>
       <View style={s.dashboardBrandRow}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Image source={require('./assets/brightsite-icon.png')} style={s.dashboardLogo} />
-          <Text style={s.dashboardBrand}>BrightSite</Text>
-        </View>
+        <Logo height={17} />
         <View style={[s.statusPill, { backgroundColor: status.bg }]}><View style={[s.statusDot, { backgroundColor: status.color }]} /><Text style={[s.statusPillText, { color: status.color }]}>{status.label}</Text></View>
       </View>
       <View style={s.dashboardTabsTop}>{['Website', 'Messages', 'Account'].map(name => <Pressable key={name} onPress={() => setTab(name)} style={[s.dashboardTab, tab === name && s.dashboardTabOn]}><Text style={[s.dashboardTabText, tab === name && s.dashboardTabTextOn]}>{name}</Text></Pressable>)}</View>
       {!!saveError && <View style={s.saveBanner}><Ionicons name="alert-circle" size={16} color={C.danger} /><Text style={s.saveBannerText}>{saveError}</Text></View>}
-      <ScrollView contentContainerStyle={s.dashboardContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={scrollRef} contentContainerStyle={s.dashboardContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" onContentSizeChange={() => { if (tab === 'Messages') scrollToLatest(); }}>
         {tab === 'Account' && <>
-          <Text style={s.dashboardTitle}>Account</Text>
-          <Text style={s.dashboardIntro}>Everything for {data.businessName || 'your business'} in one place.</Text>
           <View style={s.dashboardInfoCard}>
             <Text style={s.dashboardCardLabel}>Plan</Text>
             <Text style={s.dashboardCardTitle}>{isPaying ? (planAnnual ? 'Essential · Annual' : 'Essential · Monthly') : 'No plan yet'}</Text>
@@ -809,21 +970,44 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           <View style={s.dashboardInfoCard}>
             <Text style={s.dashboardCardLabel}>Login email</Text>
             <Text style={s.dashboardCardTitle}>{session?.user?.email || data.email || '—'}</Text>
+            <Pressable onPress={() => setShowPassword(true)} style={s.cardLink} hitSlop={8}><Ionicons name="key-outline" size={15} color={C.primary} /><Text style={s.cardLinkText}>Change password</Text></Pressable>
           </View>
+          <ChangePasswordModal visible={showPassword} onClose={() => setShowPassword(false)} />
           <Pressable onPress={confirmSignOut} style={({ pressed }) => [s.secondaryBtn, pressed && s.pressed]}><Ionicons name="log-out-outline" size={17} color={C.danger} /><Text style={[s.secondaryBtnText, { color: C.danger }]}>Log out</Text></Pressable>
         </>}
         {tab === 'Website' && <>
-          <View style={s.dashboardWebsiteHead}>
-            <Text style={s.dashboardTitle}>Your website</Text>
-            {!isBuilding && <Pressable onPress={onEdit} style={({ pressed }) => [s.dashboardEdit, pressed && s.pressed]}><Ionicons name="color-palette-outline" size={15} color={C.ink} /><Text style={s.dashboardEditText}>Edit design</Text></Pressable>}
+          <View style={[s.dashboardWebsiteHead, { zIndex: 20 }]}>
+            {isBuilding ? <View /> : <DeviceToggle mode={previewMode} setMode={setPreviewMode} />}
+            <View>
+              <Pressable onPress={() => isBuilding ? onEditInfo?.() : setShowEditMenu(v => !v)} style={({ pressed }) => [s.dashboardEdit, pressed && s.pressed]}>
+                <Ionicons name="create-outline" size={15} color={C.ink} /><Text style={s.dashboardEditText}>{isBuilding ? 'Edit info' : 'Edit'}</Text>
+                {!isBuilding && <Ionicons name={showEditMenu ? 'chevron-up' : 'chevron-down'} size={14} color={C.inkMuted} />}
+              </Pressable>
+              {showEditMenu && <View style={s.editMenu}>
+                <Pressable onPress={() => { setShowEditMenu(false); onEdit?.(); }} style={({ pressed }) => [s.editMenuItem, pressed && { backgroundColor: C.primarySoft }]}>
+                  <Ionicons name="color-palette-outline" size={17} color={C.primary} /><View><Text style={s.editMenuTitle}>Design</Text><Text style={s.editMenuSub}>Colours, fonts, text and sections</Text></View>
+                </Pressable>
+                <Pressable onPress={() => { setShowEditMenu(false); onEditInfo?.(); }} style={({ pressed }) => [s.editMenuItem, pressed && { backgroundColor: C.primarySoft }]}>
+                  <Ionicons name="storefront-outline" size={17} color={C.primary} /><View><Text style={s.editMenuTitle}>Business info</Text><Text style={s.editMenuSub}>Details, hours, services and photos</Text></View>
+                </Pressable>
+              </View>}
+            </View>
           </View>
-          <Text style={s.dashboardIntro}>{isBuilding ? 'Tom is building your website. Your preview is usually ready in 1–2 days.' : isLive ? `Live at ${domainLabel}. Tap the preview to open it.` : 'Here’s how your website looks. Put it live when you’re happy.'}</Text>
           {isBuilding
             ? <View style={s.buildingCard}><ActivityIndicator size="large" color={C.primary} style={{ marginBottom: 14 }} /><Text style={s.buildingText}>Building your preview</Text><Text style={s.buildingSub}>You’ll get a message here as soon as it’s ready to review.</Text></View>
-            : <Pressable onPress={() => isLive ? void Linking.openURL(siteUrl) : onEdit?.()} style={s.phoneFrame}>
+            : <>
+              {previewMode === 'desktop' ? <Pressable onPress={() => isLive ? void Linking.openURL(siteUrl) : onEdit?.()} style={s.desktopFrame}>
+                <View style={s.desktopBar}><View style={s.previewDots}><View style={s.previewDot} /><View style={s.previewDot} /><View style={s.previewDot} /></View><Text style={s.desktopBarUrl} numberOfLines={1}>{domain ? `${domain}${suffix}` : 'yourwebsite.co.uk'}</Text></View>
+                <View pointerEvents="none" style={{ height: DESKTOP_VIEW_H, overflow: 'hidden' }}>
+                  <ScaledView virtualWidth={DESKTOP_WIDTH} width={DESKTOP_VIEW_W}><SitePreview desktop palette={palette} font={font} page={0} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} media={media} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></ScaledView>
+                </View>
+                {isLive && <View style={s.previewOpenBadge}><Ionicons name="open-outline" size={12} color="#fff" /><Text style={s.previewOpenText}>Open site</Text></View>}
+              </Pressable>
+              : <Pressable onPress={() => isLive ? void Linking.openURL(siteUrl) : onEdit?.()} style={s.phoneFrame}>
                 <View pointerEvents="none" style={s.phoneScale}><SitePreview palette={palette} font={font} page={0} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} media={media} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></View>
                 {isLive && <View style={s.previewOpenBadge}><Ionicons name="open-outline" size={12} color="#fff" /><Text style={s.previewOpenText}>Open site</Text></View>}
               </Pressable>}
+            </>}
           {isReady && <Pressable onPress={goLive} style={({ pressed }) => [s.primaryBtn, pressed && s.pressed]}>
             <Ionicons name="rocket-outline" size={18} color="#fff" /><Text style={s.primaryBtnText}>{isPaying ? 'Put website live' : 'Make it live'}</Text>
           </Pressable>}
@@ -835,20 +1019,28 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           </Pressable>}
         </>}
         {tab === 'Messages' && <>
-          <Text style={s.dashboardTitle}>Messages</Text>
-          <Text style={s.dashboardIntro}>Chat with Tom about your website. Replies arrive here.</Text>
-          <View style={[s.messageBubble, s.messageBubbleReceived]}><Text style={s.messageSender}>Tom · BrightSite</Text><Text style={s.messageText}>Hi {data.fullName?.split(' ')[0] || data.businessName || 'there'}! I’m Tom. Send me a message any time and I’ll get back to you.</Text></View>
-          {messages.map((m) => <Pressable key={m.id} onLongPress={() => handleLongPressMessage(m)} style={[s.messageBubble, m.sender === 'customer' ? s.messageBubbleSent : s.messageBubbleReceived]}>
-            {m.sender !== 'customer' && <Text style={s.messageSender}>Tom · BrightSite</Text>}
-            {isImageMessage(m.body) ? <Image source={{ uri: m.body }} style={s.messageImage} resizeMode="cover" /> : <Text style={[s.messageText, m.sender === 'customer' && { color: '#fff' }]}>{m.body}</Text>}
-          </Pressable>)}
+          <View style={[s.messageBubble, s.messageBubbleReceived]}><Text style={s.messageText}>{`Hey ${data.fullName?.trim().split(' ')[0] || 'there'}, welcome to BrightSite! My name is Tom and I’ll be your ${buildChoice === 'designer' ? 'designer and support' : 'support'}. ${buildChoice === 'designer' ? 'I’m working on your preview now, so let me know if you have any requests or questions.' : 'Love your design! Let me know if you have any requests or questions.'} When you’re ready, just hit Make Live to put your website online!`}</Text></View>
+          <Text style={[s.messageMeta, s.messageMetaReceived]}>Tom · BrightSite</Text>
+          {messages.map((m, i) => {
+            const mine = m.sender === 'customer';
+            const showDay = i === 0 || dayLabel(m.created_at) !== dayLabel(messages[i - 1].created_at);
+            const lastOfRun = i === messages.length - 1 || messages[i + 1].sender !== m.sender || dayLabel(messages[i + 1].created_at) !== dayLabel(m.created_at);
+            const pending = m.id.startsWith('local-');
+            return <React.Fragment key={m.id}>
+              {showDay && <Text style={s.messageDay}>{dayLabel(m.created_at)}</Text>}
+              <Pressable onLongPress={() => handleLongPressMessage(m)} style={[s.messageBubble, mine ? s.messageBubbleSent : s.messageBubbleReceived, !lastOfRun && { marginBottom: 3 }]}>
+                {isImageMessage(m.body) ? <Image source={{ uri: m.body }} style={s.messageImage} resizeMode="cover" /> : <Text style={[s.messageText, mine && { color: '#fff' }]}>{m.body}</Text>}
+              </Pressable>
+              {lastOfRun && <Text style={[s.messageMeta, mine ? s.messageMetaSent : s.messageMetaReceived]}>{mine ? 'You' : 'Tom'} · {pending ? 'Sending…' : timeLabel(m.created_at)}</Text>}
+            </React.Fragment>;
+          })}
         </>}
       </ScrollView>
-      {tab === 'Messages' && <View style={s.messageInputFixed}>
+      {tab === 'Messages' && <View style={[s.messageInputFixed, kbOpen && { paddingBottom: 10 }]}>
         <Pressable onPress={() => void attachImage()} hitSlop={10} style={s.messageIconBtn} accessibilityLabel="Attach photo">
           <Ionicons name="image-outline" size={22} color={C.inkSoft} />
         </Pressable>
-        <TextInput style={s.messageInputField} value={messageDraft} onChangeText={setMessageDraft} placeholder="Message Tom…" placeholderTextColor={C.placeholder} autoCapitalize="sentences" multiline />
+        <TextInput style={s.messageInputField} value={messageDraft} onChangeText={setMessageDraft} placeholder="Message Tom…" placeholderTextColor={C.placeholder} autoCapitalize="sentences" autoCorrect spellCheck keyboardType="default" enablesReturnKeyAutomatically multiline />
         <Pressable onPress={() => void sendMessage(undefined)} disabled={!messageDraft.trim() || sendingMessage} hitSlop={10} style={[s.messageSendBtn, (!messageDraft.trim() || sendingMessage) && { opacity: .35 }]} accessibilityLabel="Send message">
           {sendingMessage ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={18} color="#fff" />}
         </Pressable>
@@ -876,7 +1068,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           </Pressable>
           {!!payError && <Text style={{ fontFamily: FONT, fontSize: 12, color: C.danger, marginTop: 8 }}>{payError}</Text>}
           <Pressable onPress={() => void handlePay()} disabled={payBusy} style={[s.planModalPayBtn, payBusy && { opacity: .6 }]}>
-            {payBusy ? <ActivityIndicator size="small" color="#fff" /> : <><Ionicons name="lock-closed" size={15} color="#fff" /><Text style={s.planModalPayBtnText}>Continue to secure payment</Text></>}
+            {payBusy ? <ActivityIndicator size="small" color="#fff" /> : <><Ionicons name="lock-closed" size={15} color="#fff" /><Text style={s.planModalPayBtnText}>Pay securely</Text></>}
           </Pressable>
         </View>
       </View>
@@ -888,22 +1080,54 @@ function DesignEditorFullscreen({ media, palette, setPalette, font, setFont, sit
   const [tool, setTool] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [previewPage, setPreviewPage] = useState(0);
-  const [editingText, setEditingText] = useState<{ key: string; label: string } | null>(null);
+  const [editingText, setEditingText] = useState<{ key: string; label: string; current: string } | null>(null);
+  const [previewMode, setPreviewMode] = useState<'mobile' | 'desktop'>('mobile');
+  const { width: winW, height: winH } = useWindowDimensions();
+  const landscape = winW > winH;
+  useEffect(() => {
+    void ScreenOrientation.lockAsync(previewMode === 'desktop' ? ScreenOrientation.OrientationLock.LANDSCAPE : ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+  }, [previewMode]);
+  useEffect(() => () => { void ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {}); }, []);
+  const urlLabel = `${(data.businessName || 'yourwebsite').toLowerCase().replace(/[^a-z0-9]/g, '')}.co.uk`;
+  const toolProps = { active: tool, setActive: setTool, palette, setPalette, font, setFont, setEditing, homeSections, setHomeSections, servicesSections, setServicesSections, contactSections, setContactSections };
+  const preview = (desktop: boolean) => <SitePreview desktop={desktop} palette={palette} font={font} page={previewPage} onPageChange={setPreviewPage} editing={editing} siteTexts={siteTexts} onEditText={(key: string, current: string) => { const labels: Record<string, string> = { headline: 'Hero headline', heroBody: 'Hero subtext', aboutTitle: 'About title', aboutBody: 'About description', brand: 'Brand name' }; setEditingText({ key, label: labels[key] || key, current }); }} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} media={media} />;
+  const frameW = landscape ? winW - 120 : DESKTOP_VIEW_W;
+  const desktopFrame = <View style={[s.desktopFrame, { marginBottom: 0, width: frameW + 12, alignSelf: 'center' }, landscape && { flex: 1 }]}>
+    <View style={s.desktopBar}><View style={s.previewDots}><View style={s.previewDot} /><View style={s.previewDot} /><View style={s.previewDot} /></View><Text style={s.desktopBarUrl} numberOfLines={1}>{urlLabel}</Text></View>
+    <ScrollView style={landscape ? { flex: 1 } : { height: DESKTOP_VIEW_H }} showsVerticalScrollIndicator={false}><ScaledView virtualWidth={DESKTOP_WIDTH} width={frameW}>{preview(true)}</ScaledView></ScrollView>
+  </View>;
+  const editModal = <TextEditModal visible={!!editingText} value={editingText ? (siteTexts[editingText.key] || editingText.current) : ''} label={editingText?.label || ''} onSave={(v: string) => setSiteTexts((t: any) => ({ ...t, [editingText!.key]: v }))} onClose={() => setEditingText(null)} />;
+
+  if (landscape) return <View style={{ flex: 1, backgroundColor: '#070D12' }}>
+    <StatusBar hidden />
+    {editModal}
+    <View style={s.landBar}>
+      <Pressable onPress={onBack} style={[s.fsBackBtn, s.toolButtonSmall]} accessibilityLabel="Back"><Ionicons name="chevron-back" size={20} color={C.primary} /></Pressable>
+      <DesignTools landscape {...toolProps} />
+      <View style={{ flex: 1 }} />
+      <DeviceToggle dark mode={previewMode} setMode={setPreviewMode} />
+      <Pressable onPress={onConfirm} style={[s.fsTickBtn, s.toolButtonSmall]} accessibilityLabel="Save design"><Ionicons name="checkmark" size={20} color="#fff" /></Pressable>
+    </View>
+    {!!tool && <LandscapeToolStrip {...toolProps} />}
+    <View style={{ flex: 1, paddingHorizontal: 54, paddingBottom: 14, paddingTop: 6 }}>{desktopFrame}</View>
+  </View>;
+
   return <View style={{ flex: 1, backgroundColor: '#070D12' }}>
     <StatusBar style="light" />
-    <TextEditModal visible={!!editingText} value={editingText ? (siteTexts[editingText.key] ?? '') : ''} label={editingText?.label || ''} onSave={(v: string) => setSiteTexts((t: any) => ({ ...t, [editingText!.key]: v }))} onClose={() => setEditingText(null)} />
+    {editModal}
     <View style={s.fsBrowserBar}>
       <View style={s.fsSlot}><Pressable onPress={onBack} style={s.fsBackBtn}><Ionicons name="chevron-back" size={22} color={C.primary} /></Pressable></View>
       <View style={s.fsBrowserRight}>
-        <DesignTools active={tool} setActive={setTool} palette={palette} setPalette={setPalette} font={font} setFont={setFont} setEditing={setEditing} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} />
+        <DesignTools {...toolProps} />
         <View style={s.fsSlot}><Pressable onPress={onConfirm} style={s.fsTickBtn}>
           <Ionicons name="checkmark" size={22} color="#fff" />
         </Pressable></View>
       </View>
     </View>
-    <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-      <SitePreview palette={palette} font={font} page={previewPage} onPageChange={setPreviewPage} editing={editing} siteTexts={siteTexts} onEditText={(key: string) => { const labels: Record<string, string> = { headline: 'Hero headline', heroBody: 'Hero subtext', aboutTitle: 'About title', aboutBody: 'About description', brand: 'Brand name' }; setEditingText({ key, label: labels[key] || key }); }} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} media={media} />
-    </ScrollView>
+    <View style={s.editorToggleRow}><DeviceToggle dark mode={previewMode} setMode={setPreviewMode} /></View>
+    {previewMode === 'desktop'
+      ? <View style={s.editorDesktopStage}>{desktopFrame}</View>
+      : <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>{preview(false)}</ScrollView>}
   </View>;
 }
 
@@ -941,6 +1165,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [contactSections, setContactSections] = useState([...CONTACT_SECTIONS_DEFAULT]);
   const [appScreen, setAppScreen] = useState<'onboarding' | 'loading' | 'design-editor' | 'dashboard'>('onboarding');
   const [editFrom, setEditFrom] = useState<'onboarding' | 'dashboard'>('onboarding');
+  const [editingInfo, setEditingInfo] = useState(false);
+  const [savingInfo, setSavingInfo] = useState(false);
   const [buildChoice, setBuildChoice] = useState<'designer' | 'template' | null>(null);
   const [websiteStatus, setWebsiteStatus] = useState<'building' | 'ready' | 'live'>('building');
   const [session, setSession] = useState<any>(null);
@@ -950,10 +1176,11 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [saveError, setSaveError] = useState('');
   const businessRecord = useRef<Record<string, any>>({});
   const [showFullName, setShowFullName] = useState(false);
+  const [showTypes, setShowTypes] = useState(false);
   const [galleryWidth, setGalleryWidth] = useState(0);
   const [openReview, setOpenReview] = useState<number | null>(null);
   const [hours, setHours] = useState(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((label, i) => ({ label, start: '9:00', end: i === 3 ? '19:00' : '17:30', enabled: i < 6 })));
-  const [services, setServices] = useState([{ section: '', name: '', duration: '', price: '' }]);
+  const [services, setServices] = useState([{ cid: newCid(), section: '', name: '', duration: '', price: '' }]);
   const [reviewsList, setReviewsList] = useState<{ title: string; description: string; name: string }[]>([]);
   const motion = useRef(new Animated.Value(0)).current;
   const loadingProgress = useRef(new Animated.Value(0)).current;
@@ -984,7 +1211,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       setHours(raw.hoursStructured.map((h: any) => ({ label: h.day, start: h.from || '', end: h.to || '', enabled: !!h.open })));
     }
     if (Array.isArray(raw.serviceGroups) && raw.serviceGroups.length) {
-      const rows = raw.serviceGroups.flatMap((g: any) => (g.items || []).map((it: any) => ({ section: g.name === 'Services' ? '' : g.name, name: it[0] || '', price: it[1] || '', duration: it[2] || '' })));
+      const rows = raw.serviceGroups.flatMap((g: any) => { const cid = newCid(); return (g.items || []).map((it: any) => ({ cid, section: g.name || 'Services', name: it[0] || '', price: it[1] || '', duration: it[2] || '' })); });
       if (rows.length) setServices(rows);
     }
     if (Array.isArray(raw.reviewItems)) setReviewsList(raw.reviewItems);
@@ -1068,7 +1295,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       case 'business': return !!data.fullName.trim() && !!data.businessName.trim() && !!data.category.trim();
       case 'contact': return /\S+@\S+\.\S+/.test(data.contactEmail.trim()) || data.phone.replace(/\D/g, '').length >= 7;
       case 'hours': return hours.some(row => row.enabled && row.start.trim() && row.end.trim());
-      case 'prices': return true;
+      case 'prices': return services.some(it => it.name.trim()) && services.every(it => !it.name.trim() || it.section.trim());
       case 'domain': return domainReady;
       case 'choice': return false;
       default: return true;
@@ -1079,7 +1306,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     business: 'Add your full name, business name and business type first',
     contact: 'Add an email address or phone number first',
     hours: 'Keep at least one day open and add its times',
-    prices: 'Add at least one service and its price first',
+    prices: 'Add at least one service, and give each category a name',
     domain: 'Check and select an available domain first',
     choice: 'Choose an option above to continue',
   } as Record<string, string>)[step.id] || 'Complete the required details first';
@@ -1161,8 +1388,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     const hoursStructured = hours.map(h => ({ day: h.label, open: h.enabled, from: h.start, to: h.end }));
     const groups: Record<string, { name: string; items: [string, string, string][] }> = {};
     services.filter(item => item.name.trim()).forEach(item => {
-      const key = item.section.trim() || 'Services';
-      if (!groups[key]) groups[key] = { name: key, items: [] };
+      const key = item.cid;
+      if (!groups[key]) groups[key] = { name: item.section.trim() || 'Services', items: [] };
       groups[key].items.push([item.name, item.price, item.duration || '']);
     });
     const reviewItems = reviewsList.filter(r => r.title.trim() || r.description.trim());
@@ -1208,7 +1435,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         setMedia({ logo: raw.logoImage, hero: raw.heroImage, gallery: raw.gallery });
         const failedUploads = [media.logo && !logoImage, media.hero && !heroImage, ...media.gallery.map((u, i) => u && !galleryImages[i])].filter(Boolean).length;
         if (failedUploads) setSaveError(`${failedUploads} photo${failedUploads > 1 ? 's' : ''} couldn’t upload. You can add them again from Edit.`);
-        await notifyStage('new_signup', data.businessName || 'Unnamed business', data.contactEmail || data.email, chosenSlug);
+        if (!editingInfo) await notifyStage('new_signup', data.businessName || 'Unnamed business', data.contactEmail || data.email, chosenSlug);
         return;
       } catch (err: any) {
         if (err?.conflict && !slug) continue;
@@ -1322,7 +1549,25 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         <Field label="Full name" value={data.fullName} onChangeText={(v: string) => setData({ ...data, fullName: v })} placeholder="e.g. Jane Smith" />
         <Pressable onPress={() => setShowFullName(!showFullName)} style={s.nameDisplay} hitSlop={8}><View style={[s.checkbox, showFullName && s.checkboxOn]}>{showFullName && <Ionicons name="checkmark" size={13} color="#fff" />}</View><Text style={s.nameDisplayText}>Display full name on website</Text></Pressable>
         <Field label="Business name" value={data.businessName} onChangeText={(v: string) => setData({ ...data, businessName: v })} />
-        <Field label="Business type" value={data.category} onChangeText={(v: string) => setData({ ...data, category: v })} />
+        <Text style={s.fieldLabel}>Business type</Text>
+        <Pressable onPress={() => { Keyboard.dismiss(); setShowTypes(true); }} style={({ pressed }) => [s.input, s.selectInput, pressed && { opacity: .8 }]}>
+          <Text style={[s.selectText, !data.category && { color: C.placeholder }]}>{data.category || 'Select your business type'}</Text>
+          <Ionicons name="chevron-down" size={18} color={C.inkMuted} />
+        </Pressable>
+        <View style={{ height: 16 }} />
+        <Modal visible={showTypes} transparent animationType="slide" onRequestClose={() => setShowTypes(false)}>
+          <Pressable style={s.modalOverlay} onPress={() => setShowTypes(false)}>
+            <Pressable onPress={() => {}} style={s.modalBox}>
+              <Text style={s.modalLabel}>Business type</Text>
+              <ScrollView style={{ maxHeight: SCREEN_HEIGHT * .55 }}>
+                {BUSINESS_TYPES.map(type => <Pressable key={type} onPress={() => { setData({ ...data, category: type }); setShowTypes(false); }} style={[s.typeRow, data.category === type && s.typeRowOn]}>
+                  <Text style={[s.typeRowText, data.category === type && { color: C.primary }]}>{type}</Text>
+                  {data.category === type && <Ionicons name="checkmark" size={18} color={C.primary} />}
+                </Pressable>)}
+              </ScrollView>
+            </Pressable>
+          </Pressable>
+        </Modal>
         <Field label="Address" value={data.address} onChangeText={(v: string) => setData({ ...data, address: v })} placeholder="e.g. 12 High Street, London" /></>;
       case 'contact': return <><Intro>Add whichever ways customers should contact you.</Intro>
         <Field label="Email" value={data.contactEmail} onChangeText={(v: string) => setData({ ...data, contactEmail: v })} keyboardType="email-address" />
@@ -1331,7 +1576,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         <Field label="Instagram (optional)" value={data.instagram} onChangeText={(v: string) => setData({ ...data, instagram: v })} placeholder="@yourbusiness" />
         <Field label="Facebook (optional)" value={data.facebook} onChangeText={(v: string) => setData({ ...data, facebook: v })} placeholder="facebook.com/yourbusiness" /></>;
       case 'hours': return <><View style={s.hoursIntro}><Intro>Switch off days you’re closed. Times can be changed later.</Intro></View><Hours rows={hours} setRows={setHours} /></>;
-      case 'prices': return <><Intro>Add your sections and services. Anything left blank will stay off your website.</Intro><Services items={services} setItems={setServices} /></>;
+      case 'prices': return <><Intro>Add a category (e.g. Massages), then the services in it with their prices.</Intro><Services items={services} setItems={setServices} /></>;
       case 'media': return <><Intro>Add the images you want to use. Everything here is optional and can be changed later.</Intro>
         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
           <View style={{ flex: 1 }}>
@@ -1387,11 +1632,18 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           {data.reviewSource && <Field label={`${data.reviewSource} profile link`} value={data.reviewLink} onChangeText={(v: string) => setData({ ...data, reviewLink: v })} placeholder={data.reviewSource === 'Google' ? 'Paste your Google Business link' : 'Paste your Trustpilot link'} />}
         </View>
         <Pressable onPress={() => setContactForm(!contactForm)} style={s.formChoice}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color={C.primary} /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: 'rgba(28,40,50,.18)', true: C.primary }} thumbColor="#fff" {...({ activeThumbColor: '#fff' } as any)} /></Pressable></>;
-      case 'choice': return <View style={s.choiceWrap}>
+      case 'choice': if (editingInfo) return <View style={s.choiceWrap}>
+        <Text style={s.choiceHeading}>All done?</Text>
+        <Text style={s.choiceSub}>Save your changes and they’ll update on your website.</Text>
+        <Pressable disabled={savingInfo} onPress={async () => { setSavingInfo(true); await syncOnboardingToBackend(buildChoice || 'template'); setSavingInfo(false); setEditingInfo(false); setTab('Website'); setAppScreen('dashboard'); }} style={({ pressed }) => [s.primaryBtn, pressed && s.pressed, savingInfo && { opacity: .6 }]}>
+          {savingInfo ? <ActivityIndicator color="#fff" /> : <><Ionicons name="checkmark" size={18} color="#fff" /><Text style={s.primaryBtnText}>Save changes</Text></>}
+        </Pressable>
+      </View>;
+      return <View style={s.choiceWrap}>
         <Text style={s.choiceHeading}>How would you like to build your website?</Text>
         <Text style={s.choiceSub}>Either way, you can always make changes later.</Text>
         <Pressable onPress={() => { void syncOnboardingToBackend('template'); setBuildChoice('template'); setAppScreen('loading'); }} style={s.choiceCard}>
-          <View style={[s.choiceIcon, { backgroundColor: 'rgba(37,99,235,.14)' }]}><Ionicons name="layers-outline" size={26} color={C.primary} /></View>
+          <View style={[s.choiceIcon, { backgroundColor: 'rgba(59,130,246,.14)' }]}><Ionicons name="layers-outline" size={26} color={C.primary} /></View>
           <View style={{ flex: 1 }}>
             <Text style={s.choiceCardTitle}>Build with Template</Text>
             <Text style={s.choiceCardText}>Choose a design, pick your colours and font — goes live today.</Text>
@@ -1442,7 +1694,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     <View style={s.loginStage}>
       <View style={[s.card, s.loginCard]}>
         
-        <View style={s.loginHeader}><Text style={s.cardTitle}>Welcome to BrightSite</Text><Image source={require('./assets/brightsite-icon.png')} style={s.loginAppIcon} /></View>
+        <View style={s.loginHeader}><Logo height={20} /><Image source={require('./assets/brightsite-icon.png')} style={s.loginAppIcon} /></View>
         <ScrollView contentContainerStyle={[s.content, s.loginContent]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
           {content(steps[0])}
         </ScrollView>
@@ -1450,7 +1702,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     </View>
   </FlowBackdrop>;
 
-  if (appScreen === 'dashboard') return <FadeIn><DashboardHome tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={signOut} saveError={saveError} planAnnual={planAnnual} media={media} isPaying={!!businessRecord.current.planActive} onEdit={() => { setEditFrom('dashboard'); setAppScreen('design-editor'); }} /></FadeIn>;
+  if (appScreen === 'dashboard') return <FadeIn><DashboardHome tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true, published: true }; setPlanAnnual(isAnnual); setWebsiteStatus('live'); }} onEditInfo={() => { setEditingInfo(true); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={signOut} saveError={saveError} planAnnual={planAnnual} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onEdit={() => { setEditFrom('dashboard'); setAppScreen('design-editor'); }} /></FadeIn>;
 
   if (appScreen === 'design-editor') return <FadeIn><DesignEditorFullscreen palette={palette} setPalette={setPalette} font={font} setFont={setFont} siteTexts={siteTexts} setSiteTexts={setSiteTexts} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} data={data} services={services} hours={hours} contactForm={contactForm} onBack={() => {
     if (editFrom === 'dashboard') { setAppScreen('dashboard'); return; }
@@ -1464,7 +1716,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     return <FlowBackdrop>
       <StatusBar style="light" />
       <Animated.View style={[s.fullLoading, { opacity: designReveal.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }]}>
-        <Text style={s.fullLoadingBrand}>BRIGHTSITE</Text>
+        <View style={{ alignItems: 'center', marginBottom: 36 }}><Logo height={30} tint="#fff" /></View>
         <Text style={s.fullLoadingKicker}>GETTING YOUR WEBSITE STARTED</Text>
         <Text style={s.fullLoadingName}>{(data.businessName || 'YOUR BUSINESS').toUpperCase()}</Text>
         <View style={s.fullLoadingList}>{messages.map((message, i) => <Animated.View key={message} style={[s.fullLoadingRow, { opacity: loadingFades[i] }]}><Ionicons name="checkmark" size={16} color="#fff" /><Text style={s.fullLoadingLine}>{message}</Text></Animated.View>)}</View>
@@ -1487,17 +1739,18 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           // edge before the next card reaches it, rather than blending through it.
           const travelPosition = isActive && deckDirection !== 0 ? Animated.multiply(cardPosition, 1.06) : cardPosition;
           const cardScale = cardPosition.interpolate({ inputRange: [-CARD_TRAVEL, 0, CARD_TRAVEL], outputRange: [.93, 1, .93], extrapolate: 'clamp' });
-          return <Animated.View key={deckStep.id} pointerEvents={isActive ? 'auto' : 'none'} {...(isActive ? pan.panHandlers : {})} style={[s.card, s.deckCard, isActive ? s.deckCardActive : s.deckCardBehind, { zIndex: isIncoming ? 22 : isActive ? 21 : 20 - Math.abs(distance), transform: [{ translateY: travelPosition }, { scale: cardScale }] }]}>
-            
-            <View style={s.cardHeader}><Text style={s.cardTitle}>{deckStep.title}</Text>{deckIndex > 0 && <Text style={s.count}>{deckIndex}/{setupStepIndexes.length}</Text>}</View>
+          return <Animated.View key={deckStep.id} pointerEvents={isActive ? 'auto' : 'none'} {...(isActive ? pan.panHandlers : {})} style={[s.card, s.deckCard, isActive ? s.deckCardActive : s.deckCardBehind, { zIndex: isActive ? 22 : 20 - Math.abs(distance), transform: [{ translateY: travelPosition }, { scale: cardScale }] }]}>
+
+            <View style={s.cardHeader}><Text style={s.cardTitle}>{editingInfo && deckStep.id === 'choice' ? 'Save changes' : deckStep.title}</Text>{editingInfo ? <Pressable onPress={() => { setEditingInfo(false); setAppScreen('dashboard'); }} hitSlop={10} style={s.closeEditBtn} accessibilityLabel="Close without saving"><Ionicons name="close" size={20} color={C.ink} /></Pressable> : deckIndex > 0 && <Text style={s.count}>{deckIndex}/{setupStepIndexes.length}</Text>}</View>
             <ScrollView style={s.cardScroll} contentContainerStyle={[s.content, deckStep.id === 'login' && s.loginContent, deckStep.id === 'hours' && s.hoursContent]}
               scrollEnabled={deckStep.id !== 'hours' || keyboardVisible}
               keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
               {content(deckStep)}
             </ScrollView>
+            <LinearGradient pointerEvents="none" colors={['transparent', 'rgba(255,255,255,.95)']} style={s.cardFade} />
             <View pointerEvents="none" style={s.fixedPrompt}>
               {!!validationMessage && isActive && <Text style={s.validationText}>{validationMessage}</Text>}
-              <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : deckStep.id === 'choice' ? 'Pick an option above' : 'Swipe up to save'}</Text></View>
+              <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : deckStep.id === 'choice' ? (editingInfo ? 'Tap Save changes above' : 'Pick an option above') : 'Swipe up to save'}</Text></View>
             </View>
           </Animated.View>;
         })}
@@ -1520,7 +1773,10 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
 
 export default function App() {
   const [generation, setGeneration] = useState(0);
-  return <AppInner key={generation} onSignedOut={() => setGeneration(g => g + 1)} />;
+  useEffect(() => { void ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {}); }, []);
+  return <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY} merchantIdentifier="merchant.app.brightsite.mobile" urlScheme="app.brightsite.mobile">
+    <AppInner key={generation} onSignedOut={() => setGeneration(g => g + 1)} />
+  </StripeProvider>;
 }
 
 const s = StyleSheet.create({
@@ -1529,7 +1785,7 @@ const s = StyleSheet.create({
   loginHeader: { minHeight: 78, paddingLeft: 26, paddingRight: 18, paddingTop: 15, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, loginAppIcon: { width: 48, height: 48, borderRadius: 15, shadowColor: '#1C69E8', shadowOpacity: .28, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } },
   card: { flex: 1, zIndex: 2, borderRadius: 30, backgroundColor: CARD, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.20)', shadowColor: '#000', shadowOpacity: .62, shadowRadius: 31, shadowOffset: { width: 0, height: 18 }, elevation: 18 },
   deckCard: { position: 'absolute', top: CARD_TOP, bottom: CARD_BOTTOM, left: 6, right: 6 },
-  deckCardActive: { shadowColor: '#01070B', shadowOpacity: .7, shadowRadius: 38, shadowOffset: { width: 0, height: 22 }, elevation: 26 }, deckCardBehind: { shadowOpacity: .3, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 4 },
+  deckCardActive: { shadowColor: '#13306B', shadowOpacity: .3, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 12 }, deckCardBehind: { shadowOpacity: .12, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
   cardHeader: { minHeight: 72, paddingHorizontal: 26, paddingTop: 22, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', zIndex: 100, elevation: 100 },
   cardScroll: { flex: 1, zIndex: 1, elevation: 1, overflow: 'hidden' },
   cardTitle: { fontFamily: FONT, fontSize: 22, fontWeight: '800', letterSpacing: -.5, color: C.ink }, count: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.inkMuted },
@@ -1547,8 +1803,9 @@ const s = StyleSheet.create({
   hoursRow: { flex: 1, minHeight: 58, paddingLeft: 30, paddingRight: 20, flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.lineStrong }, hoursRowLast: { borderBottomWidth: 0 }, hoursDay: { width: 43, fontFamily: FONT, fontSize: 14, fontWeight: '700', color: '#1C2832' }, hoursTimes: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, timeInput: { width: 66, height: 36, borderRadius: 10, paddingHorizontal: 8, backgroundColor: C.field, color: C.ink, fontFamily: FONT, fontSize: 14, textAlign: 'center', borderWidth: 1, borderColor: C.line, outlineWidth: 0 }, timeInputOff: { width: 66, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.line }, timeOffText: { fontFamily: FONT, color: C.inkMuted, fontSize: 13 }, timeDash: { fontFamily: FONT, fontSize: 13, color: C.inkSoft }, hoursSwitch: { width: 52, alignItems: 'flex-end' },
   upload: { alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 14, backgroundColor: C.field, borderWidth: 1, borderStyle: 'dashed', borderColor: C.lineStrong, overflow: 'hidden' },
   uploadPreview: { width: 52, height: 52, borderRadius: 15, marginBottom: 9 }, uploadPreviewFill: { width: '100%', height: '100%' },
-  uploadIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(37,99,235,.12)', marginBottom: 10 },
+  uploadIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(59,130,246,.12)', marginBottom: 10 },
   uploadTitle: { fontFamily: FONT, fontWeight: '800', fontSize: 14, color: '#1C2832' }, uploadSub: { fontFamily: FONT, fontSize: 11, color: C.inkSoft, marginTop: 3 }, swipeHint: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.ink, textAlign: 'center' },
+  cardFade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 80, zIndex: 110, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
   fixedPrompt: { position: 'absolute', left: 18, right: 18, bottom: 14, zIndex: 120, elevation: 120, alignItems: 'center', gap: 7 }, swipeRow: { minHeight: 34, paddingHorizontal: 14, borderRadius: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,.7)' }, validationText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.danger, textAlign: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: C.dangerSoft, overflow: 'hidden' },
   serviceRow: { flexDirection: 'row', gap: 10, marginTop: 5, alignItems: 'center' }, serviceInput: { minWidth: 0, height: 48, borderRadius: 12, paddingHorizontal: 10, fontFamily: FONT, fontSize: 14, color: C.ink, backgroundColor: C.field, borderWidth: 1, borderColor: C.line, outlineWidth: 0 }, serviceDelete: { width: 28, height: 48, alignItems: 'center', justifyContent: 'center' }, sectionDelete: { width: 28, height: 50, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }, sectionDivider: { height: StyleSheet.hairlineWidth, backgroundColor: C.lineStrong, marginVertical: 16 }, addService: { marginTop: 14, height: 46, borderRadius: 12, borderWidth: 1, borderColor: C.primaryBorder, backgroundColor: C.primarySoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, addSectionBtn: { marginTop: 8, borderColor: C.lineStrong, backgroundColor: 'transparent' }, addServiceText: { fontFamily: FONT, fontWeight: '700', fontSize: 14, color: C.ink }, site: { overflow: 'hidden' },
   previewBrowserWrap: { backgroundColor: 'rgba(8,15,20,.9)' },
@@ -1600,7 +1857,7 @@ const s = StyleSheet.create({
   siteFormPh: { fontFamily: FONT, fontSize: 7, opacity: .45 },
   editPageTabs: { flexDirection: 'row', marginBottom: 8, borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(66,104,125,.18)' },
   editPageTab: { flex: 1, paddingVertical: 6, alignItems: 'center' },
-  editPageTabOn: { backgroundColor: 'rgba(37,99,235,.18)' },
+  editPageTabOn: { backgroundColor: 'rgba(59,130,246,.18)' },
   editPageTabText: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: C.inkSoft },
   editPageTabTextOn: { color: C.primary },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,.45)', justifyContent: 'flex-end', cursor: 'default' as any },
@@ -1616,13 +1873,13 @@ const s = StyleSheet.create({
   toolButton: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' }, toolActive: { backgroundColor: C.primary },
   toolPanel: { position: 'absolute', top: 49, right: 0, width: 186, maxHeight: 400, padding: 12, borderRadius: 23, overflow: 'hidden', borderWidth: 1, borderColor: '#fff', backgroundColor: 'rgba(255,255,255,.92)', shadowColor: '#174E66', shadowOpacity: .18, shadowRadius: 18, zIndex: 200, elevation: 200 }, paletteWrap: { gap: 5 }, paletteScroll: { maxHeight: 274 }, paletteGroup: { paddingBottom: 12 }, paletteHeadingText: { fontFamily: FONT, fontSize: 11, fontWeight: '800', letterSpacing: .8, color: C.inkSoft, textTransform: 'uppercase' },
   toolTitle: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: C.ink, textAlign: 'center', marginBottom: 9 }, option: { minHeight: 44, borderRadius: 16, paddingHorizontal: 9, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' },
-  dot: { width: 20, height: 20, borderRadius: 10 }, selected: { borderColor: BRAND, backgroundColor: 'rgba(37,99,235,.12)' }, fontOption: { paddingVertical: 10, borderRadius: 14, marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' }, fontOptionText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', textAlign: 'center', color: C.ink },
+  dot: { width: 20, height: 20, borderRadius: 10 }, selected: { borderColor: BRAND, backgroundColor: 'rgba(59,130,246,.12)' }, fontOption: { paddingVertical: 10, borderRadius: 14, marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' }, fontOptionText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', textAlign: 'center', color: C.ink },
   sectionOption: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(28,40,50,.18)' }, sectionText: { flex: 1, fontFamily: FONT, fontSize: 12, fontWeight: '600', color: '#1C2832', marginHorizontal: 8 },
   sectionEye: { padding: 7 }, sectionDragHandle: { padding: 7 },
-  domainSearch: { flexDirection: 'row', alignItems: 'center', borderRadius: 14, backgroundColor: C.field, borderWidth: 1, borderColor: C.line }, domainInput: { flex: 1, minHeight: 54, paddingHorizontal: 16, fontFamily: FONT, fontSize: 16, color: '#1C2832', outlineWidth: 0 }, suffixButton: { height: 54, paddingLeft: 8, paddingRight: 13, flexDirection: 'row', alignItems: 'center', gap: 3 }, domainSuffix: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: '#1C2832' }, suffixDropdown: { position: 'absolute', top: 58, right: 0, zIndex: 99, minWidth: 130, backgroundColor: '#fff', borderRadius: 14, borderWidth: 1, borderColor: C.line, shadowColor: '#000', shadowOpacity: .14, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 10, overflow: 'hidden' }, suffixDropdownItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13, paddingHorizontal: 16 }, suffixDropdownDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.line }, suffixDropdownItemOn: { backgroundColor: 'rgba(37,99,235,.12)' }, suffixDropdownText: { fontFamily: FONT, fontSize: 15, fontWeight: '600', color: C.ink },
+  domainSearch: { flexDirection: 'row', alignItems: 'center', borderRadius: 14, backgroundColor: C.field, borderWidth: 1, borderColor: C.line }, domainInput: { flex: 1, minHeight: 54, paddingHorizontal: 16, fontFamily: FONT, fontSize: 16, color: '#1C2832', outlineWidth: 0 }, suffixButton: { height: 54, paddingLeft: 8, paddingRight: 13, flexDirection: 'row', alignItems: 'center', gap: 3 }, domainSuffix: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: '#1C2832' }, suffixDropdown: { position: 'absolute', top: 58, right: 0, zIndex: 99, minWidth: 130, backgroundColor: '#fff', borderRadius: 14, borderWidth: 1, borderColor: C.line, shadowColor: '#000', shadowOpacity: .14, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 10, overflow: 'hidden' }, suffixDropdownItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13, paddingHorizontal: 16 }, suffixDropdownDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.line }, suffixDropdownItemOn: { backgroundColor: 'rgba(59,130,246,.12)' }, suffixDropdownText: { fontFamily: FONT, fontSize: 15, fontWeight: '600', color: C.ink },
   check: { marginTop: 12, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: C.primary }, checkText: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#fff' },
   checkDisabled: { opacity: .58 }, domainError: { marginTop: 10, fontFamily: FONT, fontSize: 13, lineHeight: 18, color: C.danger }, domainResult: { marginTop: 14, padding: 15, borderRadius: 14, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: C.successSoft, borderWidth: 1, borderColor: 'rgba(31,138,84,.3)' }, domainName: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#1C2832' }, domainPrice: { fontFamily: FONT, fontSize: 13, color: C.success, fontWeight: '600', marginTop: 2 },
-  formChoice: { marginTop: 22, padding: 17, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: 'rgba(255,255,255,.45)', borderWidth: 1, borderColor: 'rgba(28,40,50,.16)' }, formChoiceIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(37,99,235,.12)' }, formChoiceTitle: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#1C2832' }, formChoiceText: { fontFamily: FONT, fontSize: 13, color: C.inkSoft, marginTop: 3, lineHeight: 18 },
+  formChoice: { marginTop: 22, padding: 17, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: 'rgba(255,255,255,.45)', borderWidth: 1, borderColor: 'rgba(28,40,50,.16)' }, formChoiceIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(59,130,246,.12)' }, formChoiceTitle: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#1C2832' }, formChoiceText: { fontFamily: FONT, fontSize: 13, color: C.inkSoft, marginTop: 3, lineHeight: 18 },
   rail: { position: 'absolute', left: 12, top: '25%', bottom: '25%', justifyContent: 'space-between', alignItems: 'center', zIndex: 140, elevation: 140 }, railButton: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }, railActive: { position: 'absolute', width: 27, height: 27, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: C.primary, borderWidth: 0, shadowColor: C.primary, shadowOpacity: .45, shadowRadius: 8, elevation: 8 }, railDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#1A1E22', borderWidth: 1, borderColor: 'rgba(0,0,0,.32)', shadowColor: '#000', shadowOpacity: .2, shadowRadius: 2 }, railDotOn: { backgroundColor: C.primary, borderColor: '#A9C8FF', shadowColor: C.primary, shadowOpacity: .45, shadowRadius: 5 },
   reviewCard: { marginBottom: 8, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(28,40,50,.18)', backgroundColor: 'rgba(255,255,255,.45)', overflow: 'hidden' },
   reviewCardOpen: { borderColor: C.primaryBorder },
@@ -1649,9 +1906,9 @@ const s = StyleSheet.create({
   dashboardBrand: { fontFamily: FONT, fontSize: 18, fontWeight: '800', letterSpacing: -.3, color: C.ink },
   dashboardTabsTop: { flexDirection: 'row', marginHorizontal: 20, padding: 4, borderRadius: 14, backgroundColor: 'rgba(28,40,50,.07)', marginBottom: 18 },
   dashboardTab: { flex: 1, minHeight: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  dashboardTabOn: { backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 } },
+  dashboardTabOn: { backgroundColor: C.primary },
   dashboardTabText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.inkMuted },
-  dashboardTabTextOn: { color: C.ink },
+  dashboardTabTextOn: { color: '#fff' },
   dashboardContent: { paddingHorizontal: 20, paddingBottom: 48 },
   dashboardTitle: { fontFamily: FONT, fontSize: 26, fontWeight: '800', letterSpacing: -.6, color: C.ink, marginBottom: 6 },
   dashboardIntro: { fontFamily: FONT, fontSize: 15, lineHeight: 21, color: C.inkSoft, marginBottom: 18 },
@@ -1664,7 +1921,11 @@ const s = StyleSheet.create({
   dashboardEditText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.ink },
   phoneFrame: { width: SCREEN_WIDTH * .5, height: 440, alignSelf: 'center', borderRadius: 26, borderWidth: 6, borderColor: '#141A1E', overflow: 'hidden', marginBottom: 18, backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .18, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } },
   phoneScale: { width: SCREEN_WIDTH, height: 428 / .5 * 1.05, transform: [{ scale: (SCREEN_WIDTH * .5 - 12) / SCREEN_WIDTH }], transformOrigin: 'top left' },
-  messageBubble: { padding: 12, paddingHorizontal: 15, borderRadius: 18, maxWidth: '82%', backgroundColor: C.surface, marginBottom: 8 },
+  messageDay: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, textAlign: 'center', marginTop: 14, marginBottom: 10 },
+  messageMeta: { fontFamily: FONT, fontSize: 11, color: C.inkMuted, marginTop: 3, marginBottom: 12 },
+  messageMetaSent: { alignSelf: 'flex-end', marginRight: 4 },
+  messageMetaReceived: { alignSelf: 'flex-start', marginLeft: 4 },
+  messageBubble: { padding: 12, paddingHorizontal: 15, borderRadius: 18, maxWidth: '82%', backgroundColor: C.surface },
   messageImage: { width: 180, height: 180, borderRadius: 12 },
   messageBubbleReceived: { alignSelf: 'flex-start', borderBottomLeftRadius: 6 },
   messageSender: { fontFamily: FONT, fontSize: 12, fontWeight: '800', color: C.primary, marginBottom: 4 },
@@ -1689,7 +1950,7 @@ const s = StyleSheet.create({
   planModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   planModalTitle: { fontFamily: FONT, fontSize: 20, fontWeight: '800', color: '#1C2832' },
   planModalSub: { fontFamily: FONT, fontSize: 14, color: C.inkSoft, marginBottom: 12 },
-  planModalDomain: { flexDirection: 'row', gap: 6, alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(37,99,235,.12)', marginBottom: 14 },
+  planModalDomain: { flexDirection: 'row', gap: 6, alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(59,130,246,.12)', marginBottom: 14 },
   planModalDomainText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.primary },
   planModalFeeNote: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 14 },
   planModalFeeText: { flex: 1, fontFamily: FONT, fontSize: 13, lineHeight: 18, color: C.inkSoft },
@@ -1729,4 +1990,43 @@ const s = StyleSheet.create({
   messageSendBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: C.primary },
   siteLogo: { width: 18, height: 18, borderRadius: 4 },
   siteGalleryImg: { width: '31.5%', aspectRatio: 1, borderRadius: 6 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
+  serviceHeadRow: { flexDirection: 'row', gap: 10, marginTop: -4, marginBottom: 2 },
+  serviceHead: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, paddingLeft: 4 },
+  selectInput: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  selectText: { fontFamily: FONT, fontSize: 16, color: C.ink },
+  typeRow: { minHeight: 50, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderRadius: 12 },
+  typeRowOn: { backgroundColor: C.primarySoft },
+  typeRowText: { fontFamily: FONT, fontSize: 16, fontWeight: '600', color: C.ink },
+  deviceToggle: { flexDirection: 'row', padding: 3, borderRadius: 12, backgroundColor: 'rgba(28,40,50,.07)' },
+  deviceToggleDark: { backgroundColor: 'rgba(255,255,255,.12)' },
+  deviceToggleBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 34, paddingHorizontal: 14, borderRadius: 9 },
+  deviceToggleBtnOn: { backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 } },
+  deviceToggleBtnOnDark: { backgroundColor: '#fff' },
+  deviceToggleText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.inkMuted },
+  desktopFrame: { alignSelf: 'stretch', marginHorizontal: 0, borderRadius: 12, overflow: 'hidden', marginBottom: 18, backgroundColor: '#fff', borderWidth: 6, borderColor: '#141A1E', shadowColor: '#000', shadowOpacity: .18, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } },
+  desktopBar: { height: 26, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#E9ECEF' },
+  desktopBarUrl: { fontFamily: FONT, fontSize: 11, color: C.inkMuted, maxWidth: '60%' },
+  editorToggleRow: { alignItems: 'center', paddingVertical: 10, backgroundColor: '#0E1A24' },
+  editorDesktop: { borderRadius: 10, overflow: 'hidden' },
+  siteHeroDesktop: { height: 520, padding: 40 },
+  cardLink: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, alignSelf: 'flex-start' },
+  cardLinkText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.primary },
+  editMenu: { position: 'absolute', top: 46, right: 0, width: 250, padding: 6, borderRadius: 14, backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .14, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 12, zIndex: 50 },
+  editMenuItem: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 10 },
+  editMenuTitle: { fontFamily: FONT, fontSize: 15, fontWeight: '700', color: C.ink },
+  editMenuSub: { fontFamily: FONT, fontSize: 12, color: C.inkMuted, marginTop: 1 },
+  closeEditBtn: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(28,40,50,.08)' },
+  editorDesktopStage: { flex: 1, justifyContent: 'center', paddingHorizontal: 20 },
+  toolsLandscape: { flexDirection: 'row', alignItems: 'center' },
+  toolSlotLandscape: { marginHorizontal: 5 },
+  toolButtonSmall: { width: 38, height: 38, borderRadius: 19 },
+  landBar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 54, paddingVertical: 8, backgroundColor: '#0E1A24', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.08)' },
+  stripPanel: { backgroundColor: 'rgba(255,255,255,.96)', borderBottomWidth: 1, borderBottomColor: C.line },
+  stripContent: { alignItems: 'center', gap: 10, paddingHorizontal: 54, paddingVertical: 8 },
+  stripGroup: { gap: 4 },
+  stripGroupLabel: { fontFamily: FONT, fontSize: 10, fontWeight: '800', letterSpacing: .8, color: C.inkSoft, textTransform: 'uppercase' },
+  stripChip: { minHeight: 38, paddingHorizontal: 10, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderColor: C.line, backgroundColor: '#fff' },
+  stripChipOn: { borderColor: C.primary, backgroundColor: C.primarySoft },
+  stripHint: { fontFamily: FONT, fontSize: 12, color: C.inkMuted, marginLeft: 6 },
 });

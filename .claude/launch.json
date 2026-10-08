@@ -61,6 +61,19 @@
       ],
       "cwd": "mobile-app",
       "port": 8099
+    },
+    {
+      "name": "bayar-template",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8935",
+        "--directory",
+        "/private/tmp/claude-501/-Users-tomconroy-Documents-Websites-brightsiteapp/adc99c8d-488d-472e-872f-5e9be712abfb/scratchpad/bayar/bayar-beauty"
+      ],
+      "port": 8935,
+      "cwd": "/private/tmp/claude-501/-Users-tomconroy-Documents-Websites-brightsiteapp/adc99c8d-488d-472e-872f-5e9be712abfb/scratchpad/bayar/bayar-beauty"
     }
   ]
 }
