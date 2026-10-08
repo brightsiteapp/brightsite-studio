@@ -388,7 +388,7 @@ function SitePreview({ palette, font, page = 0, onPageChange, editing, siteTexts
           {eyebrow('Client Reviews')}
           <Text style={[s.siteSectionTitle, tf, { color: textColor, textAlign: 'center' }]}>What our clients say</Text>
         </View>
-        <View style={s.siteReviewGrid}>
+        <View style={desktop ? s.siteReviewGrid : { gap: 8 }}>
           {[{ text: '"Amazing results every time. Highly recommend."', name: 'Sarah M.', type: category || 'Facial' },
             { text: '"Wonderful experience and great service."', name: 'Linda B.', type: 'Treatment' },
             { text: '"Blown away! I look and feel fantastic."', name: 'Carol H.', type: category || 'Facial' }].map((r, i) => <View key={i} style={[s.siteReviewCard, { backgroundColor: bg }]}>
