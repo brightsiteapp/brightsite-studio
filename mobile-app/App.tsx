@@ -535,14 +535,15 @@ function SectionDragList({ sections, setSections, sectionVisible, onToggle }: an
   const pans = useMemo(() => Object.fromEntries(ALL_PAGE_SECTIONS.map(name => [name, PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 4,
-    onPanResponderGrant: () => { hoverRef.current = currentIdxRef.current[name]; setActiveName(name); },
+    onPanResponderGrant: () => { if (name === 'Hero') return; hoverRef.current = currentIdxRef.current[name]; setActiveName(name); },
     // Animated.event links gesture.dy directly to itemDys[name] — moves immediately, no re-render needed
     onPanResponderMove: Animated.event([null, { dy: itemDys[name] }], {
       useNativeDriver: false,
       listener: ((_: any, g: any) => {
         const fromIdx = currentIdxRef.current[name];
         const secs = sectionsRef.current;
-        const newHover = Math.max(0, Math.min(secs.length - 1, fromIdx + Math.round(g.dy / ITEM_H)));
+        const minIdx = secs[0] === 'Hero' ? 1 : 0;
+        const newHover = Math.max(minIdx, Math.min(secs.length - 1, fromIdx + Math.round(g.dy / ITEM_H)));
         if (newHover !== hoverRef.current) {
           hoverRef.current = newHover;
           secs.forEach((sName: string, i: number) => {
@@ -558,7 +559,8 @@ function SectionDragList({ sections, setSections, sectionVisible, onToggle }: an
     onPanResponderRelease: (_, g) => {
       const secs = sectionsRef.current;
       const fromIdx = currentIdxRef.current[name];
-      const to = Math.max(0, Math.min(secs.length - 1, fromIdx + Math.round(g.dy / ITEM_H)));
+      const minIdx = secs[0] === 'Hero' ? 1 : 0;
+      const to = Math.max(minIdx, Math.min(secs.length - 1, fromIdx + Math.round(g.dy / ITEM_H)));
       resetAll(); setActiveName(null);
       if (to !== fromIdx) {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -570,6 +572,12 @@ function SectionDragList({ sections, setSections, sectionVisible, onToggle }: an
 
   return <View>
     {sections.map((name: string, i: number) => {
+      const isHero = name === 'Hero';
+      if (isHero) return <View key={name} style={[s.sectionOption, { opacity: 0.55 }]}>
+        <View style={s.sectionEye}><Ionicons name="eye-outline" size={21} color="#436172" /></View>
+        <Text style={s.sectionText}>{name}</Text>
+        <View style={s.sectionDragHandle}><Ionicons name="lock-closed-outline" size={18} color={C.inkSoft} /></View>
+      </View>;
       const isActive = activeName === name;
       return <Animated.View key={name} style={[s.sectionOption, {
         transform: [{ translateY: itemDys[name] }],
@@ -599,7 +607,8 @@ function DesignTools({ landscape = false, active, setActive, palette, setPalette
   const curSections = pageSections[editPage];
   const setCurSections = setPageSections[editPage];
   const handleToggle = (idx: number) => {
-    const name = curSections[idx]; setSectionVisible((v: any) => ({ ...v, [name]: v[name] === false ? true : false }));
+    const name = curSections[idx]; if (name === 'Hero') return;
+    setSectionVisible((v: any) => ({ ...v, [name]: v[name] === false ? true : false }));
   };
   return <View style={landscape ? s.toolsLandscape : s.tools}>
     <View style={s.toolStack}>{items.map(item => {
