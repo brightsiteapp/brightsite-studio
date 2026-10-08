@@ -330,51 +330,96 @@ function SitePreview({ palette, font, page = 0, onPageChange, editing, siteTexts
   const topSvcs = servicesData?.filter((sv: any) => sv.name).slice(0, 3).map((sv: any) => sv.name);
   const displaySvcs = topSvcs?.length ? topSvcs : preset.topServices;
 
+  const eyebrow = (text: string) => <Text style={[s.siteEyebrow, fo, { color: accent }]}>{text}</Text>;
+
   const renderHome = (name: string) => {
     switch (name) {
       case 'Hero': return <ImageBackground key="Hero" source={media.hero ? { uri: media.hero } : require('./assets/hair-beauty-hero.jpg')} style={[s.siteHero, desktop && s.siteHeroDesktop]}>
-        <LinearGradient colors={['rgba(5,7,9,.08)', 'rgba(5,7,9,.84)']} style={StyleSheet.absoluteFill} />
+        <LinearGradient colors={['rgba(5,7,9,.05)', 'rgba(5,7,9,.78)']} style={StyleSheet.absoluteFill} />
         <View style={s.siteTop}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>{!!media.logo && <Image source={{ uri: media.logo }} style={s.siteLogo} />}<Text style={[s.siteKicker, fo, editing && s.editing]} onPress={ep('brand')} numberOfLines={1}>{tx('brand', biz.toUpperCase())}</Text></View>
-          <View style={s.siteNav}><Text style={[s.siteNavText, fo]}>SERVICES</Text><Text style={[s.siteNavText, fo]}>CONTACT</Text><Ionicons name="menu" size={18} color="#fff" /></View>
+          <View style={s.siteNav}><Text style={[s.siteNavText, fo]}>TREATMENTS</Text><Text style={[s.siteNavText, fo]}>CONTACT</Text><Ionicons name="menu" size={18} color="#fff" /></View>
         </View>
         <View style={[s.siteCopy, desktop && { maxWidth: '55%' }]}>
+          <Text style={[s.siteEyebrow, fo, { color: 'rgba(255,255,255,.7)' }]}>{contactData.address ? contactData.address.split(',').pop()?.trim() || category : category}</Text>
           <Text style={[s.siteHeadline, tf, editing && s.editing]} onPress={ep('headline')}>{tx('headline', preset.heroTitle)}</Text>
           <Text style={[s.siteBody, fo, editing && s.editing]} onPress={ep('heroBody')}>{tx('heroBody', preset.heroBody)}</Text>
-          <View style={[s.siteCta, { borderColor: accent }]}><Text style={[s.siteCtaText, fo]}>BOOK NOW</Text></View>
+          <View style={s.heroButtons}>
+            <View style={[s.siteCtaFilled, { backgroundColor: '#fff' }]}><Text style={[s.siteCtaFilledText, fo, { color: textColor }]}>Book Now</Text></View>
+            <View style={[s.siteCta, { borderColor: 'rgba(255,255,255,.7)' }]}><Text style={[s.siteCtaText, fo]}>View Treatments</Text></View>
+          </View>
+          <View style={s.heroTags}>
+            {displaySvcs.map((sv: string, i: number) => <View key={i} style={s.heroTag}><Text style={[s.heroTagText, fo]}>{sv}</Text></View>)}
+          </View>
         </View>
       </ImageBackground>;
-      case 'About & Services': return <View key="About & Services" style={s.siteAboutServRow}>
-        <View style={s.siteAboutCol}>
-          <Text style={[s.siteSectionTitle, tf, { color: textColor }, editing && s.editing]} onPress={ep('aboutTitle')}>{tx('aboutTitle', biz)}</Text>
+      case 'About & Services': return <View key="About & Services" style={[s.siteSection, { backgroundColor: bg }]}>
+        {desktop ? <View style={s.siteAboutDesktopRow}>
+          <View style={{ flex: 1 }}>
+            {eyebrow(`Welcome to ${biz}`)}
+            <Text style={[s.siteSectionTitle, tf, { color: textColor }, editing && s.editing]} onPress={ep('aboutTitle')}>{tx('aboutTitle', `${category || 'Everything'}, all under one roof`)}</Text>
+            <Text style={[s.siteSectionBody, fo, { color: textColor }, editing && s.editing]} onPress={ep('aboutBody')}>{tx('aboutBody', preset.about)}</Text>
+            <View style={[s.heroButtons, { marginTop: 10 }]}>
+              <View style={[s.siteCta, { borderColor: textColor }]}><Text style={[s.siteCtaText, fo, { color: textColor }]}>Browse Treatments</Text></View>
+            </View>
+          </View>
+          <View style={{ flex: 1, gap: 8 }}>
+            {displaySvcs.map((sv: string, i: number) => <View key={i} style={[s.siteAboutCard, { borderColor: textColor + '14' }]}>
+              <Text style={[s.siteAboutCardLabel, fo, { color: accent }]}>Most Popular</Text>
+              <Text style={[s.siteAboutCardTitle, fo, { color: textColor }]}>{sv}</Text>
+              <Text style={[s.siteAboutCardCta, fo, { color: accent }]}>View treatments</Text>
+            </View>)}
+          </View>
+        </View> : <View>
+          {eyebrow(`Welcome to ${biz}`)}
+          <Text style={[s.siteSectionTitle, tf, { color: textColor }, editing && s.editing]} onPress={ep('aboutTitle')}>{tx('aboutTitle', `${category || 'Everything'}, all under one roof`)}</Text>
           <Text style={[s.siteSectionBody, fo, { color: textColor }, editing && s.editing]} onPress={ep('aboutBody')}>{tx('aboutBody', preset.about)}</Text>
-        </View>
-        <View style={s.siteSvcsCol}>
-          {displaySvcs.map((sv: string, i: number) => <View key={i} style={[s.siteServiceCard, { borderColor: accent + '55' }]}>
-            <Text style={[s.siteServiceName, fo, { color: accent }]}>{sv}</Text>
-            <Text style={[s.siteServiceLink, fo, { color: textColor }]}>View →</Text>
-          </View>)}
-        </View>
-      </View>;
-      case 'Reviews': return <View key="Reviews" style={[s.siteReviewsSection, { backgroundColor: accent + '14' }]}>
-        <Text style={[s.siteReviewsSectionTitle, tf, { color: textColor }]}>What clients say</Text>
-        <View style={s.siteStars}>{[0,1,2,3,4].map(i => <Ionicons key={i} name="star" size={7} color={accent} />)}</View>
-        <Text style={[s.siteReviewText, fo, { color: textColor }]}>"Amazing results every time."</Text>
-        <Text style={[s.siteReviewAuthor, fo, { color: textColor }]}>— Sarah M.</Text>
-        {contactData.reviewSource === 'Trustpilot' && <View style={[s.siteTrustBadge, { borderColor: textColor + '33' }]}>
-          <Text style={[s.siteTrustTitle, fo, { color: textColor }]}>Rated Excellent on Trustpilot</Text>
-          <View style={[s.siteStars, { marginTop: 4 }]}>{[0,1,2,3,4].map(i => <Ionicons key={i} name="star" size={9} color="#00B67A" />)}</View>
-          {!!contactData.reviewLink && <Text style={[s.siteTrustLink, fo, { color: accent }]}>See our reviews →</Text>}
+          <View style={{ gap: 8, marginTop: 14 }}>
+            {displaySvcs.map((sv: string, i: number) => <View key={i} style={[s.siteAboutCard, { borderColor: textColor + '14' }]}>
+              <Text style={[s.siteAboutCardLabel, fo, { color: accent }]}>Most Popular</Text>
+              <Text style={[s.siteAboutCardTitle, fo, { color: textColor }]}>{sv}</Text>
+              <Text style={[s.siteAboutCardCta, fo, { color: accent }]}>View treatments</Text>
+            </View>)}
+          </View>
         </View>}
       </View>;
-      case 'Gallery': return <View key="Gallery" style={s.siteGallerySection}>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-          {media.gallery?.length ? media.gallery.slice(0, 6).map((uri: string) => <Image key={uri} source={{ uri }} style={s.siteGalleryImg} />) : Array.from({ length: 6 }, (_, i) => <View key={i} style={[s.siteGalleryImg, { backgroundColor: i % 2 === 0 ? accent + '55' : textColor + '1A' }]} />)}
+      case 'Reviews': return <View key="Reviews" style={[s.siteSection, { backgroundColor: accent + '14' }]}>
+        <View style={{ alignItems: 'center', marginBottom: 12 }}>
+          {eyebrow('Client Reviews')}
+          <Text style={[s.siteSectionTitle, tf, { color: textColor, textAlign: 'center' }]}>What our clients say</Text>
+        </View>
+        <View style={s.siteReviewGrid}>
+          {[{ text: '"Amazing results every time. Highly recommend."', name: 'Sarah M.', type: category || 'Facial' },
+            { text: '"Wonderful experience and great service."', name: 'Linda B.', type: 'Treatment' },
+            { text: '"Blown away! I look and feel fantastic."', name: 'Carol H.', type: category || 'Facial' }].map((r, i) => <View key={i} style={[s.siteReviewCard, { backgroundColor: bg }]}>
+            <View style={s.siteStars}>{[0,1,2,3,4].map(j => <Ionicons key={j} name="star" size={8} color={accent} />)}</View>
+            <Text style={[s.siteReviewText, fo, { color: textColor }]}>{r.text}</Text>
+            <Text style={[s.siteReviewAuthor, fo, { color: textColor }]}>{r.name}<Text style={{ color: accent, fontSize: 6 }}>  {r.type}</Text></Text>
+          </View>)}
+        </View>
+        {contactData.reviewSource === 'Trustpilot' && <View style={[s.siteTrustBadge, { borderColor: textColor + '33', marginTop: 10 }]}>
+          <Text style={[s.siteTrustTitle, fo, { color: textColor }]}>Rated Excellent on Trustpilot</Text>
+          <View style={[s.siteStars, { marginTop: 4 }]}>{[0,1,2,3,4].map(i => <Ionicons key={i} name="star" size={9} color="#00B67A" />)}</View>
+          {!!contactData.reviewLink && <Text style={[s.siteTrustLink, fo, { color: accent }]}>See our reviews</Text>}
+        </View>}
+      </View>;
+      case 'Gallery': return <View key="Gallery" style={[s.siteSection, { backgroundColor: bg }]}>
+        <View style={{ alignItems: 'center', marginBottom: 12 }}>
+          {eyebrow('Gallery')}
+          <Text style={[s.siteSectionTitle, tf, { color: textColor, textAlign: 'center' }]}>Inside the studio</Text>
+        </View>
+        <View style={s.siteGalleryGrid}>
+          {media.gallery?.length ? media.gallery.slice(0, 6).map((uri: string, i: number) => <Image key={uri} source={{ uri }} style={[s.siteGalleryImg, i < 2 && desktop && { flex: 1 }]} />) : Array.from({ length: 6 }, (_, i) => <View key={i} style={[s.siteGalleryImg, { backgroundColor: i % 2 === 0 ? accent + '44' : textColor + '14' }]} />)}
         </View>
       </View>;
-      case 'Contact': return <View key="Contact" style={[s.siteContactCta, { borderTopColor: accent + '33' }]}>
-        <Text style={[s.siteContactCtaTitle, tf, { color: textColor }]}>Ready to book?</Text>
-        <View style={[s.siteCtaFilled, { backgroundColor: accent }]}><Text style={[s.siteCtaFilledText, fo]}>Book Now</Text></View>
+      case 'Contact': return <View key="Contact" style={[s.siteSection, s.siteCTABand, { backgroundColor: textColor }]}>
+        {eyebrow('Ready when you are')}
+        <Text style={[s.siteSectionTitle, tf, { color: '#fff' }]}>Book your appointment</Text>
+        <Text style={[s.siteSectionBody, fo, { color: 'rgba(255,255,255,.7)' }]}>Get in touch to find a time that works for you.</Text>
+        <View style={[s.heroButtons, { marginTop: 6 }]}>
+          <View style={[s.siteCtaFilled, { backgroundColor: '#fff' }]}><Text style={[s.siteCtaFilledText, fo, { color: textColor }]}>Book Now</Text></View>
+          <View style={[s.siteCta, { borderColor: 'rgba(255,255,255,.6)' }]}><Text style={[s.siteCtaText, fo]}>Get in Touch</Text></View>
+        </View>
       </View>;
       default: return null;
     }
@@ -401,7 +446,9 @@ function SitePreview({ palette, font, page = 0, onPageChange, editing, siteTexts
 
   const renderContact = (name: string) => {
     switch (name) {
-      case 'Info & Hours': return <View key="Info & Hours" style={s.siteContactInfoRow}>
+      case 'Info & Hours': return <View key="Info & Hours" style={[s.siteSection, { backgroundColor: accent + '14' }]}>
+        {eyebrow('Find Us')}
+        <View style={s.siteContactInfoRow}>
         <View style={s.siteContactInfoCol}>
           <Text style={[s.siteContactInfoTitle, tf, { color: textColor }]}>Contact</Text>
           {!!contactData.phone && <View style={s.siteContactItem}><Ionicons name="call-outline" size={8} color={accent} /><Text style={[s.siteContactItemText, fo, { color: textColor }]}>{contactData.phone}</Text></View>}
@@ -415,6 +462,7 @@ function SitePreview({ palette, font, page = 0, onPageChange, editing, siteTexts
             <Text style={[s.siteHoursDay, fo, { color: textColor }]}>{(row.label || row).slice(0, 3)}</Text>
             <Text style={[s.siteHoursTime, fo, { color: textColor }]}>{row.enabled ? `${row.start}–${row.end}` : 'Closed'}</Text>
           </View>)}
+        </View>
         </View>
       </View>;
       case 'Map': return <View key="Map" style={[s.siteMockMap, { backgroundColor: accent + '14', borderColor: accent + '28' }]}>
@@ -445,10 +493,29 @@ function SitePreview({ palette, font, page = 0, onPageChange, editing, siteTexts
         </Pressable>)}
       </View>
     </View>
-    {page === 0 && <View>{homeSections.map((n: string) => renderHome(n))}</View>}
-    {page === 1 && <View>{servicesSections.map((n: string) => renderServices(n))}</View>}
-    {page === 2 && <View>{contactSections.map((n: string) => renderContact(n))}</View>}
+    {page === 0 && <View>{homeSections.map((n: string) => renderHome(n))}{renderFooter()}</View>}
+    {page === 1 && <View>{servicesSections.map((n: string) => renderServices(n))}{renderFooter()}</View>}
+    {page === 2 && <View>{contactSections.map((n: string) => renderContact(n))}{renderFooter()}</View>}
   </View>;
+
+  function renderFooter() {
+    return <View style={[s.siteFooter, { backgroundColor: textColor }]}>
+      {!!media.logo && <Image source={{ uri: media.logo }} style={[s.siteLogo, { tintColor: '#fff', marginBottom: 6 }]} />}
+      <Text style={[fo, { color: 'rgba(255,255,255,.5)', fontSize: 7 }]}>{biz}</Text>
+      <View style={s.siteFooterCols}>
+        <View style={{ flex: 1 }}>
+          <Text style={[fo, { color: 'rgba(255,255,255,.4)', fontSize: 6, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4 }]}>Pages</Text>
+          {['Home', 'Treatments', 'Contact'].map(p => <Text key={p} style={[fo, { color: 'rgba(255,255,255,.6)', fontSize: 7, marginBottom: 2 }]}>{p}</Text>)}
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[fo, { color: 'rgba(255,255,255,.4)', fontSize: 6, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4 }]}>Get in touch</Text>
+          {!!contactData.phone && <Text style={[fo, { color: 'rgba(255,255,255,.6)', fontSize: 7, marginBottom: 2 }]}>{contactData.phone}</Text>}
+          {!!contactData.address && <Text style={[fo, { color: 'rgba(255,255,255,.6)', fontSize: 7 }]}>{contactData.address}</Text>}
+        </View>
+      </View>
+      <Text style={[fo, { color: 'rgba(255,255,255,.3)', fontSize: 6, marginTop: 10 }]}>{'©'} 2026 {biz}. All rights reserved.</Text>
+    </View>;
+  }
 }
 
 function GalleryGrid({ gallery, setGallery, containerWidth }: any) {
@@ -1863,20 +1930,30 @@ const s = StyleSheet.create({
   siteBody: { fontFamily: FONT, fontSize: 10, lineHeight: 15, color: 'rgba(255,255,255,.76)' }, editing: { borderWidth: 1, borderColor: BRAND, borderRadius: 4, padding: 2 },
   siteCta: { marginTop: 10, alignSelf: 'flex-start', paddingVertical: 7, paddingHorizontal: 11, borderWidth: 1 }, siteCtaText: { fontFamily: FONT, fontSize: 7, fontWeight: '800', letterSpacing: 1.4, color: '#fff' },
   siteCtaFilled: { paddingVertical: 9, paddingHorizontal: 16, borderRadius: 6, alignItems: 'center', alignSelf: 'flex-start' }, siteCtaFilledText: { fontFamily: FONT, fontSize: 8, fontWeight: '800', color: '#fff' }, siteSectionTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 16, marginBottom: 5 }, siteSectionBody: { fontFamily: FONT, fontSize: 9, lineHeight: 14, opacity: .68 },
-  siteAboutServRow: { flexDirection: 'row', padding: 14, paddingTop: 16, gap: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(0,0,0,.08)' },
-  siteAboutCol: { flex: 1.2 }, siteSvcsCol: { flex: 1, gap: 6 },
-  siteServiceCard: { padding: 9, borderRadius: 9, borderWidth: 1 },
-  siteServiceName: { fontFamily: FONT, fontSize: 7, fontWeight: '800', letterSpacing: .3 },
-  siteServiceLink: { fontFamily: FONT, fontSize: 6, marginTop: 4, opacity: .6 },
+  siteEyebrow: { fontSize: 6, fontWeight: '700', letterSpacing: 2.5, textTransform: 'uppercase' as any, marginBottom: 6 },
+  heroButtons: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
+  heroTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 },
+  heroTag: { paddingVertical: 3, paddingHorizontal: 8, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.15)' },
+  heroTagText: { fontSize: 6, color: 'rgba(255,255,255,.8)', letterSpacing: .4 },
+  siteSection: { padding: 16 },
+  siteAboutDesktopRow: { flexDirection: 'row', gap: 14 },
+  siteAboutCard: { padding: 12, borderRadius: 10, borderWidth: 1 },
+  siteAboutCardLabel: { fontSize: 5.5, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' as any, marginBottom: 3 },
+  siteAboutCardTitle: { fontSize: 10, fontWeight: '700', marginBottom: 5 },
+  siteAboutCardCta: { fontSize: 7, fontWeight: '600' },
+  siteReviewGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  siteReviewCard: { flex: 1, minWidth: '28%', padding: 10, borderRadius: 10 },
+  siteGalleryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'center' },
+  siteCTABand: { alignItems: 'center', paddingVertical: 22 },
+  siteFooter: { padding: 16, paddingBottom: 20 },
+  siteFooterCols: { flexDirection: 'row', gap: 14, marginTop: 10 },
   siteReviewsSection: { padding: 16 },
   siteTrustBadge: { marginTop: 12, paddingVertical: 10, paddingHorizontal: 12, borderWidth: 1, borderRadius: 10, alignItems: 'flex-start' },
   siteTrustTitle: { fontSize: 11, fontWeight: '700' },
   siteTrustLink: { fontSize: 10, fontWeight: '600', marginTop: 6 },
-  siteReviewsSectionTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 14, marginBottom: 7 },
   siteStars: { flexDirection: 'row', gap: 2, marginBottom: 6 },
   siteReviewText: { fontFamily: FONT, fontSize: 9, lineHeight: 13, fontStyle: 'italic', marginBottom: 4 },
   siteReviewAuthor: { fontFamily: FONT, fontSize: 7, opacity: .6 },
-  siteGallerySection: { padding: 14 },
   siteContactCta: { padding: 16, borderTopWidth: 1, alignItems: 'center', gap: 10 },
   siteContactCtaTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 16 },
   siteSvcsListSection: { padding: 14 },
