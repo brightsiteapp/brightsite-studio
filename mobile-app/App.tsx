@@ -3,10 +3,9 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Animated, Dimensions, Easing, Image, ImageBackground, Keyboard, KeyboardAvoidingView, LayoutAnimation, Modal, PanResponder,
+  ActivityIndicator, Alert, Animated, AppState, Dimensions, Easing, Image, ImageBackground, Keyboard, KeyboardAvoidingView, LayoutAnimation, Modal, PanResponder,
   Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View,
 } from 'react-native';
 import { supabase } from './lib/supabase';
@@ -19,12 +18,108 @@ const FONT = Platform.select({ ios: 'Avenir Next', android: 'sans-serif', defaul
 const BRAND = '#E2E8EB';
 const DOMAIN_TLDS = ['.com', '.co.uk', '.net', '.org', '.io', '.co', '.uk', '.app'];
 const DOMAIN_API = 'https://api.brightsite.app/api/check-domain';
-const PAYMENT_API = 'https://api.brightsite.app/api/create-payment-intent';
+const CHECKOUT_API = 'https://api.brightsite.app/api/create-checkout-session';
+// Same Supabase project, R2 bucket and Cloudflare worker the account
+// dashboard (account/dashboard.html) uses — so a business created or edited
+// in the app is the exact same row the website's dashboard reads and writes,
+// not a separate system. Checked that file's own fetch calls to get these
+// constants and request shapes right rather than inventing a parallel one.
+const SUPABASE_URL = 'https://vlisyfshmxdsjuybirxe.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_gYdn5HCo63B0qZj3tG-7ow_myAMHeEB';
+const UPLOAD_WORKER = 'https://brightsite-upload.notify-lead-worker.workers.dev';
+const R2_PUBLIC_URL = 'https://pub-38c2019362f64b6780e0b217ba84be8c.r2.dev';
+const NOTIFY_API = 'https://brightsite-notify-lead.notify-lead-worker.workers.dev/';
+
+function slugify(value: string) {
+  return (value || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+}
+
+function guessMime(uri: string) {
+  const ext = (uri.split('.').pop() || '').toLowerCase();
+  if (ext === 'png') return 'image/png';
+  if (ext === 'heic') return 'image/heic';
+  return 'image/jpeg';
+}
+
+function authHeaders(accessToken: string, extra: Record<string, string> = {}) {
+  return { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${accessToken}`, ...extra };
+}
+
+async function uploadMediaToR2(accessToken: string, slug: string, type: string, uri?: string): Promise<string | null> {
+  if (!uri) return null;
+  try {
+    const blob = await (await fetch(uri)).blob();
+    const ext = (uri.split('.').pop() || 'jpg').toLowerCase();
+    const key = `${slug}/${type}_${Date.now()}.${ext}`;
+    const res = await fetch(`${UPLOAD_WORKER}/upload`, {
+      method: 'POST',
+      headers: { 'x-file-name': key, 'Content-Type': guessMime(uri), Authorization: `Bearer ${accessToken}` },
+      body: blob,
+    });
+    const d = await res.json();
+    return `${R2_PUBLIC_URL}/${d.key || key}`;
+  } catch {
+    return null;
+  }
+}
+
+async function notifyStage(stage: string, businessName: string, email: string, slug: string) {
+  const fd = new FormData();
+  fd.append('Stage', stage);
+  fd.append('Business', businessName);
+  fd.append('Email', email);
+  fd.append('Slug', slug);
+  try { await fetch(NOTIFY_API, { method: 'POST', body: fd as any }); } catch {}
+}
+
+async function fetchMessages(accessToken: string, slug: string, afterTs?: string) {
+  let url = `${SUPABASE_URL}/rest/v1/messages?select=id,business_id,sender,body,created_at&business_id=eq.${encodeURIComponent(slug)}&order=created_at.asc`;
+  if (afterTs) url += `&created_at=gt.${encodeURIComponent(afterTs)}`;
+  const res = await fetch(url, { headers: authHeaders(accessToken) });
+  if (!res.ok) throw new Error('Could not load messages');
+  return res.json() as Promise<{ id: string; sender: string; body: string; created_at: string }[]>;
+}
+
+async function postMessage(accessToken: string, slug: string, body: string, sender = 'customer') {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/messages`, {
+    method: 'POST',
+    headers: authHeaders(accessToken, { 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+    body: JSON.stringify({ business_id: slug, sender, body }),
+  });
+  if (!res.ok) throw new Error('Message could not be sent.');
+}
+
+async function editMessage(accessToken: string, id: string, body: string) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/messages?id=eq.${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: authHeaders(accessToken, { 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+    body: JSON.stringify({ body }),
+  });
+  if (!res.ok) throw new Error('Message could not be edited.');
+}
+
+async function deleteMessageRow(accessToken: string, id: string) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/messages?id=eq.${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: authHeaders(accessToken),
+  });
+  if (!res.ok) throw new Error('Message could not be deleted.');
+}
+
+function isImageMessage(body: string) {
+  return /^https?:\/\//.test(body) && (body.includes(R2_PUBLIC_URL) || /\.(png|jpe?g|webp|gif)(\?|$)/i.test(body));
+}
 // Replace with your Stripe publishable key from stripe.com/dashboard
-const STRIPE_KEY = 'pk_live_YOUR_STRIPE_PUBLISHABLE_KEY';
 const CARD = '#EFE4DB';
 const FS_SLOT = (SCREEN_WIDTH - 32) / 5;
 const DARK = '#1C2832';
+const GALLERY_COLS = 4;
+const GALLERY_GAP = 8;
+// Deck card insets (6+6) plus card content padding (24+24) = 60 total
+function galleryTileSize(containerWidth: number) {
+  const size = containerWidth ? Math.floor((containerWidth - GALLERY_GAP * (GALLERY_COLS - 1)) / GALLERY_COLS) : 80;
+  return { width: size, height: size };
+}
 
 type Step = { id: string; title: string; icon: keyof typeof Ionicons.glyphMap };
 const steps: Step[] = [
@@ -95,7 +190,16 @@ function Hours({ rows, setRows }: any) {
 
 function Services({ items, setItems }: any) {
   const update = (i: number, key: string, value: string) => setItems(items.map((item: any, n: number) => n === i ? { ...item, [key]: value } : item));
-  const remove = (i: number) => { if (items.length > 1) setItems(items.filter((_: any, n: number) => n !== i)); };
+  const remove = (i: number) => {
+    if (items.length <= 1) return;
+    Alert.alert('Remove this service?', '', [{ text: 'Cancel', style: 'cancel' }, { text: 'Remove', style: 'destructive', onPress: () => setItems(items.filter((_: any, n: number) => n !== i)) }]);
+  };
+  const removeSection = (section: string) => {
+    Alert.alert('Remove this section?', 'This removes every service in it.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Remove', style: 'destructive', onPress: () => {
+      const remaining = items.filter((it: any) => it.section !== section);
+      setItems(remaining.length ? remaining : [{ section: '', name: '', duration: '', price: '' }]);
+    } }]);
+  };
   const addService = () => setItems([...items, { section: items[items.length - 1]?.section || '', name: '', duration: '', price: '' }]);
   const addSection = () => setItems([...items, { section: '', name: '', duration: '', price: '' }]);
   return <View>
@@ -103,12 +207,15 @@ function Services({ items, setItems }: any) {
       const isNewSection = i === 0 || item.section !== items[i - 1].section;
       return <View key={i}>
         {isNewSection && i > 0 && <View style={s.sectionDivider} />}
-        {isNewSection && <Field label="Service section name" value={item.section} onChangeText={(v: string) => update(i, 'section', v)} placeholder="e.g. Cutting & styling" />}
+        {isNewSection && <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+          <View style={{ flex: 1 }}><Field label="Service section name" value={item.section} onChangeText={(v: string) => update(i, 'section', v)} placeholder="e.g. Cutting & styling" /></View>
+          <Pressable onPress={() => removeSection(item.section)} style={s.sectionDelete} hitSlop={8}><Ionicons name="close" size={16} color="#1C2832" /></Pressable>
+        </View>}
         <View style={s.serviceRow}>
-          <TextInput value={item.name} onChangeText={v => update(i, 'name', v)} placeholder="Service" placeholderTextColor="rgba(218,232,244,.35)" style={[s.serviceInput, { flex: 1.6 }]} />
-          <TextInput value={item.duration} onChangeText={v => update(i, 'duration', v)} placeholder="Time" placeholderTextColor="rgba(218,232,244,.35)" style={[s.serviceInput, { flex: 1 }]} />
-          <TextInput value={item.price} onChangeText={v => update(i, 'price', v)} placeholder="Price" placeholderTextColor="rgba(218,232,244,.35)" style={[s.serviceInput, { flex: .8 }]} />
-          <Pressable onPress={() => remove(i)} style={s.serviceDelete}><Ionicons name="close" size={13} color="rgba(220,232,242,.42)" /></Pressable>
+          <TextInput value={item.name} onChangeText={v => update(i, 'name', v)} placeholder="Service" placeholderTextColor="rgba(218,232,244,.35)" style={[s.serviceInput, { flex: 1.9 }]} />
+          <TextInput value={item.duration} onChangeText={v => update(i, 'duration', v)} placeholder="Time" placeholderTextColor="rgba(218,232,244,.35)" style={[s.serviceInput, { flex: 1.2 }]} />
+          <TextInput value={item.price} onChangeText={v => update(i, 'price', v)} placeholder="Price" placeholderTextColor="rgba(218,232,244,.35)" style={[s.serviceInput, { flex: .95 }]} />
+          <Pressable onPress={() => remove(i)} style={s.serviceDelete} hitSlop={8}><Ionicons name="close" size={16} color="#1C2832" /></Pressable>
         </View>
       </View>;
     })}
@@ -269,6 +376,88 @@ function SitePreview({ palette, font, page = 0, onPageChange, editing, siteTexts
   </View>;
 }
 
+function GalleryGrid({ gallery, setGallery, containerWidth }: any) {
+  const tile = containerWidth ? Math.floor((containerWidth - GALLERY_GAP * (GALLERY_COLS - 1)) / GALLERY_COLS) : 80;
+  const STEP = tile + GALLERY_GAP;
+  const posOf = (i: number) => ({ x: (i % GALLERY_COLS) * STEP, y: Math.floor(i / GALLERY_COLS) * STEP });
+  const cellRef = useRef<Record<string, { x: Animated.Value; y: Animated.Value }>>({});
+  const galleryRef = useRef(gallery);
+  galleryRef.current = gallery;
+  const hoverRef = useRef<number | null>(null);
+  const [draggingUri, setDraggingUri] = useState<string | null>(null);
+  const getCell = (uri: string) => {
+    if (!cellRef.current[uri]) cellRef.current[uri] = { x: new Animated.Value(0), y: new Animated.Value(0) };
+    return cellRef.current[uri];
+  };
+  const resetAllCells = () => { galleryRef.current.forEach((uri: string) => { const c = getCell(uri); c.x.setValue(0); c.y.setValue(0); }); };
+  const removePhoto = (uri: string) => {
+    Alert.alert('Remove this photo?', '', [{ text: 'Cancel', style: 'cancel' }, { text: 'Remove', style: 'destructive', onPress: () => setGallery(galleryRef.current.filter((u: string) => u !== uri)) }]);
+  };
+  const pans = useMemo(() => Object.fromEntries(gallery.map((uri: string) => {
+    const cell = getCell(uri);
+    return [uri, PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 6 || Math.abs(g.dy) > 6,
+      onPanResponderGrant: () => {
+        hoverRef.current = galleryRef.current.indexOf(uri);
+        setDraggingUri(uri);
+      },
+      onPanResponderMove: Animated.event([null, { dx: cell.x, dy: cell.y }], {
+        useNativeDriver: false,
+        listener: ((_: any, g: any) => {
+          const list = galleryRef.current;
+          const fromIdx = list.indexOf(uri);
+          const colDelta = Math.round(g.dx / STEP);
+          const rowDelta = Math.round(g.dy / STEP);
+          const newHover = Math.max(0, Math.min(list.length - 1, fromIdx + rowDelta * GALLERY_COLS + colDelta));
+          if (newHover !== hoverRef.current) {
+            hoverRef.current = newHover;
+            list.forEach((otherUri: string, i: number) => {
+              if (otherUri === uri) return;
+              let target = i;
+              if (fromIdx < newHover && i > fromIdx && i <= newHover) target = i - 1;
+              else if (fromIdx > newHover && i < fromIdx && i >= newHover) target = i + 1;
+              const from = posOf(i);
+              const to = posOf(target);
+              const otherCell = getCell(otherUri);
+              Animated.spring(otherCell.x, { toValue: to.x - from.x, useNativeDriver: false, damping: 20, stiffness: 220 }).start();
+              Animated.spring(otherCell.y, { toValue: to.y - from.y, useNativeDriver: false, damping: 20, stiffness: 220 }).start();
+            });
+          }
+        }) as any,
+      }),
+      onPanResponderRelease: () => {
+        const list = galleryRef.current;
+        const fromIdx = list.indexOf(uri);
+        const toIdx = Math.max(0, Math.min(list.length - 1, hoverRef.current ?? fromIdx));
+        setDraggingUri(null);
+        resetAllCells();
+        if (toIdx !== fromIdx) {
+          const next = [...list];
+          const [item] = next.splice(fromIdx, 1);
+          next.splice(toIdx, 0, item);
+          setGallery(next);
+        }
+      },
+      onPanResponderTerminate: () => { setDraggingUri(null); resetAllCells(); },
+    })];
+  })), [gallery]);
+
+  return <>
+    {gallery.map((uri: string) => {
+      const cell = getCell(uri);
+      const isDragging = draggingUri === uri;
+      return <Animated.View key={uri} {...(pans[uri]?.panHandlers || {})} style={[s.galleryItem, { width: tile, height: tile }, {
+        transform: [{ translateX: cell.x }, { translateY: cell.y }, { scale: isDragging ? 1.08 : 1 }],
+        zIndex: isDragging ? 10 : 1, opacity: isDragging ? 0.75 : 1,
+        shadowColor: '#000', shadowOpacity: isDragging ? .3 : 0, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: isDragging ? 8 : 0,
+      }]}>
+        <Pressable onPress={() => removePhoto(uri)} style={{ flex: 1 }}><Image source={{ uri }} style={s.galleryThumb} /></Pressable>
+      </Animated.View>;
+    })}
+  </>;
+}
+
 function SectionDragList({ sections, setSections, sectionVisible, onToggle }: any) {
   const ITEM_H = 50;
   const [activeName, setActiveName] = useState<string | null>(null);
@@ -420,36 +609,139 @@ function FadeIn({ children }: { children: React.ReactNode }) {
   return <Animated.View style={{ flex: 1, opacity }}>{children}</Animated.View>;
 }
 
-function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, onEdit, websiteStatus, onMakeLive, onTakeOffline }: any) {
+function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, onEdit, websiteStatus, onMakeLive, onTakeOffline, session, slug }: any) {
   const siteUrl = data.website?.trim() || `https://${domain}${suffix}`;
   const [showLiveDropdown, setShowLiveDropdown] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
+  const [domainPriceLabel, setDomainPriceLabel] = useState<string | null>(null);
+  const [domainPriceLoading, setDomainPriceLoading] = useState(false);
+  const openPlanModal = async () => {
+    setShowPlanModal(true);
+    setDomainPriceLoading(true);
+    try {
+      const res = await fetch(`${DOMAIN_API}?domain=${encodeURIComponent(domain + suffix)}`);
+      const result = await res.json();
+      setDomainPriceLabel(res.ok && result.priceLabel ? result.priceLabel : null);
+    } catch { setDomainPriceLabel(null); }
+    finally { setDomainPriceLoading(false); }
+  };
   const [annual, setAnnual] = useState(false);
   const [payBusy, setPayBusy] = useState(false);
   const [payError, setPayError] = useState('');
-  const { initPaymentSheet, presentPaymentSheet } = useStripe();
+  const [messageDraft, setMessageDraft] = useState('');
+  const [messages, setMessages] = useState<{ id: string; sender: string; body: string; created_at: string }[]>([]);
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const lastMessageTs = useRef<string | undefined>(undefined);
+
+  const loadMessagesNow = async () => {
+    if (!session?.access_token || !slug) return;
+    try {
+      const rows = await fetchMessages(session.access_token, slug, lastMessageTs.current);
+      if (rows.length) {
+        lastMessageTs.current = rows[rows.length - 1].created_at;
+        setMessages(current => [...current, ...rows]);
+      }
+    } catch { /* same best-effort polling as the website's messages tab */ }
+  };
+  useEffect(() => {
+    if (tab !== 'Messages') return;
+    void loadMessagesNow();
+    const timer = setInterval(() => { void loadMessagesNow(); }, 4000);
+    return () => clearInterval(timer);
+  }, [tab, slug, session?.access_token]);
+
+  const handleLongPressMessage = (m: { id: string; sender: string; body: string }) => {
+    if (m.sender !== 'customer' || !session?.access_token) return;
+    const isImage = isImageMessage(m.body);
+    const options: any[] = [{ text: 'Cancel', style: 'cancel' }];
+    if (!isImage) {
+      options.push({
+        text: 'Edit',
+        onPress: () => {
+          if (Platform.OS === 'ios') {
+            (Alert as any).prompt('Edit message', '', (newBody: string) => {
+              const trimmed = (newBody || '').trim();
+              if (!trimmed || !session?.access_token) return;
+              editMessage(session.access_token, m.id, trimmed)
+                .then(() => setMessages(current => current.map(row => row.id === m.id ? { ...row, body: trimmed } : row)))
+                .catch(() => {});
+            }, 'plain-text', m.body);
+          } else {
+            setMessageDraft(m.body);
+          }
+        },
+      });
+    }
+    options.push({
+      text: 'Delete', style: 'destructive', onPress: () => {
+        if (!session?.access_token) return;
+        deleteMessageRow(session.access_token, m.id)
+          .then(() => setMessages(current => current.filter(row => row.id !== m.id)))
+          .catch(() => {});
+      },
+    });
+    Alert.alert('Message', undefined, options);
+  };
+  const attachImage = async () => {
+    if (!session?.access_token || !slug) return;
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) return;
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: .82 });
+    if (result.canceled || !result.assets[0]) return;
+    const url = await uploadMediaToR2(session.access_token, slug, `msg_${Date.now()}`, result.assets[0].uri);
+    if (url) void sendMessage(url);
+  };
+  const sendMessage = async (body?: string) => {
+    const text = (body ?? messageDraft).trim();
+    if (!text || sendingMessage || !session?.access_token || !slug) return;
+    setSendingMessage(true);
+    try {
+      await postMessage(session.access_token, slug, text, 'customer');
+      if (!body) setMessageDraft('');
+      await loadMessagesNow();
+    } catch { /* best-effort, same as the website's messages tab */ }
+    finally { setSendingMessage(false); }
+  };
 
   const handlePay = async () => {
     setPayBusy(true); setPayError('');
     try {
-      const res = await fetch(PAYMENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan: annual ? 'annual' : 'monthly', domain: domain + suffix }) });
+      // Same Stripe account, prices and endpoint the website's checkout page uses —
+      // just opened as a hosted Checkout page since Expo has no embedded web view for it.
+      const res = await fetch(CHECKOUT_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: 'essential', billing: annual ? 'annual' : 'monthly', email: data.contactEmail || data.email, slug: slug || domain, domain: domain + suffix, ui_mode: 'hosted' }),
+      });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Could not set up payment.');
-      const { error: initErr } = await initPaymentSheet({ merchantDisplayName: 'BrightSite', paymentIntentClientSecret: json.clientSecret, allowsDelayedPaymentMethods: false });
-      if (initErr) throw new Error(initErr.message);
-      const { error: presentErr } = await presentPaymentSheet();
-      if (presentErr) { if (presentErr.code !== 'Canceled') setPayError(presentErr.message); return; }
+      if (!res.ok || !json.url) throw new Error(json.error || 'Could not set up payment.');
       setShowPlanModal(false);
-      onMakeLive?.();
+      await Linking.openURL(json.url);
     } catch (err: any) { setPayError(err.message || 'Payment failed. Please try again.'); }
     finally { setPayBusy(false); }
   };
 
+  const checkIfNowLive = async () => {
+    if (!session?.access_token || !slug) return;
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/businesses?select=data&id=eq.${encodeURIComponent(slug)}`, { headers: authHeaders(session.access_token) });
+      const rows = await res.json();
+      const row = Array.isArray(rows) ? rows[0] : null;
+      if (row?.data?.published || row?.data?.planActive) onMakeLive?.();
+    } catch { /* webhook may not have landed yet — the user can just reopen the app */ }
+  };
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => { if (state === 'active' && (isReadyRef.current)) void checkIfNowLive(); });
+    return () => sub.remove();
+  }, [session?.access_token, slug]);
+
   const isLive = websiteStatus === 'live';
   const isBuilding = websiteStatus === 'building';
   const isReady = websiteStatus === 'ready';
+  const isReadyRef = useRef(isReady);
+  useEffect(() => { isReadyRef.current = isReady; }, [isReady]);
 
-  return <FlowBackdrop>
+  return <KeyboardAvoidingView style={{ flex: 1, backgroundColor: CARD }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : undefined}>
     <StatusBar style="dark" />
     <View style={s.dashboardScreen}>
       <View style={s.dashboardBrandRow}>
@@ -466,13 +758,11 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           <View style={s.dashboardInfoCard}><Text style={s.dashboardCardLabel}>ACCOUNT EMAIL</Text><Text style={s.dashboardCardTitle}>{data.email || data.contactEmail || 'Add an email address'}</Text></View>
         </>}
         {tab === 'Website' && <>
+          {isLive && <Text style={s.dashboardLive}>● LIVE</Text>}
+          {isBuilding && <Text style={[s.dashboardLive, { color: '#F0A030' }]}>⏳ BUILDING</Text>}
+          {isReady && <Text style={[s.dashboardLive, { color: '#4B9BFF' }]}>● READY TO PUBLISH</Text>}
           <View style={s.dashboardWebsiteHead}>
-            <View>
-              {isLive && <Text style={s.dashboardLive}>● LIVE</Text>}
-              {isBuilding && <Text style={[s.dashboardLive, { color: '#F0A030' }]}>⏳ BUILDING</Text>}
-              {isReady && <Text style={[s.dashboardLive, { color: '#4B9BFF' }]}>● READY TO PUBLISH</Text>}
-              <Text style={s.dashboardTitle}>Your website</Text>
-            </View>
+            <Text style={s.dashboardTitle}>Your website</Text>
             <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
               {!isBuilding && <Pressable onPress={onEdit} style={s.dashboardEdit}><Ionicons name="create-outline" size={15} color="#fff" /><Text style={s.dashboardEditText}>Edit</Text></Pressable>}
               {isLive && <Pressable onPress={() => setShowLiveDropdown(!showLiveDropdown)} style={[s.dashboardEdit, { backgroundColor: '#3CAB6A' }]}>
@@ -493,21 +783,32 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
                 {isLive && <View style={s.previewOpenBadge}><Ionicons name="open-outline" size={12} color="#fff" /><Text style={s.previewOpenText}>Open {domain}{suffix}</Text></View>}
               </Pressable>
           }
-          {(isReady || isBuilding) && !isLive && <Pressable onPress={() => { if (isReady) setShowPlanModal(true); }} style={[s.makeLiveBtn, !isReady && s.makeLiveBtnDisabled]}>
+          {(isReady || isBuilding) && !isLive && <Pressable onPress={() => { if (isReady) void openPlanModal(); }} style={[s.makeLiveBtn, !isReady && s.makeLiveBtnDisabled]}>
             <Ionicons name="rocket-outline" size={18} color={isReady ? '#fff' : 'rgba(255,255,255,.4)'} />
             <Text style={[s.makeLiveBtnText, !isReady && { color: 'rgba(255,255,255,.4)' }]}>{isBuilding ? 'Make Live (pending review)' : 'Make Live'}</Text>
           </Pressable>}
-          {isReady && !isLive && <Pressable onPress={() => setTab('Messages')} style={s.requestChangesBtn}>
+          {isReady && !isLive && <Pressable onPress={() => { void notifyStage('changes_requested', data.businessName || 'Unnamed business', data.contactEmail || data.email, slug || ''); void sendMessage("I'd like to make changes."); setTab('Messages'); }} style={s.requestChangesBtn}>
             <Ionicons name="chatbubble-outline" size={15} color="#4B9BFF" />
             <Text style={s.requestChangesText}>Request Changes</Text>
           </Pressable>}
         </>}
         {tab === 'Messages' && <>
           <Text style={s.dashboardTitle}>Messages</Text>
-          <View style={s.messageBubble}><Text style={s.messageSender}>Tom · BrightSite</Text><Text style={s.messageText}>Welcome to BrightSite, {data.businessName || 'there'}! I’m Tom. Your website is live, and you can message me here whenever you need a hand.</Text></View>
-          <View style={s.messageInput}><Text style={s.messagePlaceholder}>Message BrightSite…</Text><Ionicons name="arrow-up-circle" size={24} color="#2878FF" /></View>
+          <View style={s.messageBubble}><Text style={s.messageSender}>Tom · BrightSite</Text><Text style={s.messageText}>Welcome to BrightSite, {data.businessName || 'there'}! I’m Tom. Send a message below and I’ll get it by email.</Text></View>
+          {messages.map((m) => <Pressable key={m.id} onLongPress={() => handleLongPressMessage(m)} style={[s.messageBubble, m.sender === 'customer' ? s.messageBubbleSent : s.messageBubbleReceived]}>
+            {isImageMessage(m.body) ? <Image source={{ uri: m.body }} style={s.messageImage} resizeMode="cover" /> : <Text style={s.messageText}>{m.body}</Text>}
+          </Pressable>)}
         </>}
       </ScrollView>
+      {tab === 'Messages' && <View style={s.messageInputFixed}>
+        <Pressable onPress={() => void attachImage()} hitSlop={8}>
+          <Ionicons name="image-outline" size={24} color="#2878FF" />
+        </Pressable>
+        <TextInput style={s.messageInputField} value={messageDraft} onChangeText={setMessageDraft} placeholder="Message BrightSite…" placeholderTextColor="rgba(28,40,50,.4)" autoCapitalize="sentences" multiline />
+        <Pressable onPress={() => void sendMessage(undefined)} disabled={!messageDraft.trim() || sendingMessage} hitSlop={8}>
+          <Ionicons name="arrow-up-circle" size={24} color={messageDraft.trim() ? '#2878FF' : 'rgba(40,120,255,.35)'} />
+        </Pressable>
+      </View>}
     </View>
     <Modal visible={showPlanModal} transparent animationType="slide" onRequestClose={() => setShowPlanModal(false)}>
       <View style={s.planModalOverlay}>
@@ -515,6 +816,12 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           <View style={s.planModalHeader}><Text style={s.planModalTitle}>Choose your plan</Text><Pressable onPress={() => setShowPlanModal(false)} hitSlop={10}><Ionicons name="close" size={22} color="#1C2832" /></Pressable></View>
           <Text style={s.planModalSub}>Your website is free. You only pay for hosting.</Text>
           <View style={s.planModalDomain}><Ionicons name="globe-outline" size={14} color="#4B9BFF" /><Text style={s.planModalDomainText}>{domain}{suffix}</Text></View>
+          <View style={s.planModalFeeNote}>
+            <Ionicons name="information-circle-outline" size={14} color="#5B6B78" />
+            <Text style={s.planModalFeeText}>
+              {domainPriceLoading ? 'Checking domain registration price…' : domainPriceLabel ? `Plus ${domainPriceLabel} to register ${domain}${suffix} (charged today, renews yearly).` : `A separate domain registration fee for ${domain}${suffix} is charged at checkout.`}
+            </Text>
+          </View>
           <Pressable onPress={() => setAnnual(false)} style={[s.planModalOption, !annual && s.planModalOptionOn]}>
             <View><Text style={s.planModalOptionName}>Monthly</Text><Text style={s.planModalOptionNote}>Cancel any time</Text></View>
             <Text style={s.planModalOptionPrice}>£19<Text style={{ fontSize: 12 }}>/mo</Text></Text>
@@ -530,7 +837,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
         </View>
       </View>
     </Modal>
-  </FlowBackdrop>;
+  </KeyboardAvoidingView>;
 }
 
 function DesignEditorFullscreen({ palette, setPalette, font, setFont, siteTexts, setSiteTexts, homeSections, setHomeSections, servicesSections, setServicesSections, contactSections, setContactSections, data, services, hours, contactForm, onBack, onConfirm }: any) {
@@ -568,6 +875,10 @@ function AppInner() {
   const [font, setFont] = useState(0);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [deckDirection, setDeckDirection] = useState<-1 | 0 | 1>(0);
+  const railOpacity = useRef(new Animated.Value(.32)).current;
+  const revealRail = () => { if (railTimer.current) clearTimeout(railTimer.current); Animated.timing(railOpacity, { toValue: 1, duration: 120, useNativeDriver: true }).start(); };
+  const hideRailSoon = () => { railTimer.current = setTimeout(() => { Animated.timing(railOpacity, { toValue: .32, duration: 1100, useNativeDriver: true }).start(); }, 900); };
+  const railTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [designReady, setDesignReady] = useState(false);
   const [validationMessage, setValidationMessage] = useState('');
   const [media, setMedia] = useState<{ logo?: string; hero?: string; gallery: string[] }>({ gallery: [] });
@@ -578,7 +889,7 @@ function AppInner() {
   const [domainChecking, setDomainChecking] = useState(false);
   const [domainQuote, setDomainQuote] = useState<{ domain: string; priceLabel: string } | null>(null);
   const [domainError, setDomainError] = useState('');
-  const [contactForm, setContactForm] = useState(true);
+  const [contactForm, setContactForm] = useState(false);
   const [tab, setTab] = useState('Website');
   const [siteTexts, setSiteTexts] = useState<Record<string, string>>({});
   const [homeSections, setHomeSections] = useState([...HOME_SECTIONS_DEFAULT]);
@@ -588,8 +899,11 @@ function AppInner() {
   const [editFrom, setEditFrom] = useState<'onboarding' | 'dashboard'>('onboarding');
   const [buildChoice, setBuildChoice] = useState<'designer' | 'template' | null>(null);
   const [websiteStatus, setWebsiteStatus] = useState<'building' | 'ready' | 'live'>('building');
+  const [session, setSession] = useState<any>(null);
+  const [slug, setSlug] = useState<string | null>(null);
   const [data, setData] = useState({ email: '', password: '', businessName: 'Sisko Hairdressing', category: 'Hair & Beauty', fullName: '', contactEmail: '', phone: '', website: '', instagram: '', facebook: '', address: '', services: 'Cut & finish', price: '£45', reviews: '', reviewLink: '', reviewSource: null as null | 'Google' | 'Trustpilot' });
   const [showFullName, setShowFullName] = useState(false);
+  const [galleryWidth, setGalleryWidth] = useState(0);
   const [openReview, setOpenReview] = useState<number | null>(null);
   const [hours, setHours] = useState(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((label, i) => ({ label, start: '9:00', end: i === 3 ? '19:00' : '17:30', enabled: i < 6 })));
   const [services, setServices] = useState([{ section: 'Cutting & styling', name: 'Cut & finish', duration: '45 mins', price: '£45' }]);
@@ -601,18 +915,20 @@ function AppInner() {
   const transitioning = useRef(false);
   const step = steps[index];
 
-  const loadAccountDestination = async (session: any) => {
-    const email = session?.user?.email || data.email.trim();
+  const loadAccountDestination = async (authedSession: any) => {
+    const email = authedSession?.user?.email || data.email.trim();
     setAuthSession(true);
+    setSession(authedSession);
     setData(current => ({ ...current, email, contactEmail: current.contactEmail || email }));
     const { data: rows, error } = await supabase
       .from('businesses')
       .select('id,data,user_id')
-      .eq('user_id', session.user.id)
+      .eq('user_id', authedSession.user.id)
       .limit(10);
     if (error) throw error;
-    const hasWebsite = !!rows?.some((row: any) => !(row.data && row.data.stub));
-    if (hasWebsite) {
+    const realRow = rows?.find((row: any) => !(row.data && row.data.stub)) || rows?.[0];
+    if (realRow && !(realRow.data && realRow.data.stub)) {
+      setSlug(realRow.id);
       Keyboard.dismiss();
       setWebsiteStatus('ready');
       setAppScreen('dashboard');
@@ -642,10 +958,10 @@ function AppInner() {
   const minimumInfoComplete = (stepId = step.id) => {
     switch (stepId) {
       case 'login': return /\S+@\S+\.\S+/.test(data.email.trim()) && data.password.length >= 8;
-      case 'business': return !!data.businessName.trim() && !!data.category.trim();
+      case 'business': return !!data.fullName.trim() && !!data.businessName.trim() && !!data.category.trim();
       case 'contact': return /\S+@\S+\.\S+/.test(data.contactEmail.trim()) || data.phone.replace(/\D/g, '').length >= 7;
       case 'hours': return hours.some(row => row.enabled && row.start.trim() && row.end.trim());
-      case 'prices': return services.some(item => item.name.trim() && item.price.trim());
+      case 'prices': return true;
       case 'domain': return domainReady;
       case 'choice': return false;
       default: return true;
@@ -653,7 +969,7 @@ function AppInner() {
   };
   const missingInfoText = () => ({
     login: 'Add a valid email and an 8 character password first',
-    business: 'Add your business name and business type first',
+    business: 'Add your full name, business name and business type first',
     contact: 'Add an email address or phone number first',
     hours: 'Keep at least one day open and add its times',
     prices: 'Add at least one service and its price first',
@@ -730,19 +1046,79 @@ function AppInner() {
     transitionTo(next);
   };
 
+  const syncOnboardingToBackend = async (choice: 'designer' | 'template') => {
+    // Writes to the same `businesses` and `messages` tables, and the same R2
+    // bucket via the same upload worker, that account/dashboard.html uses —
+    // so a site started in the app shows up in the website's own dashboard.
+    if (!session?.user?.id) return;
+    const chosenSlug = slug || slugify(domainReady ? domain : data.businessName) || `site-${session.user.id.slice(0, 8)}`;
+    const [logoImage, heroImage, ...galleryImages] = await Promise.all([
+      uploadMediaToR2(session.access_token, chosenSlug, 'logo', media.logo),
+      uploadMediaToR2(session.access_token, chosenSlug, 'hero', media.hero),
+      ...media.gallery.map((uri, i) => uploadMediaToR2(session.access_token, chosenSlug, `gallery_${i}`, uri)),
+    ]);
+    const hoursStructured = hours.map(h => ({ day: h.label, open: h.enabled, from: h.start, to: h.end }));
+    const groups: Record<string, { name: string; items: [string, string, string][] }> = {};
+    services.forEach(item => {
+      const key = item.section || 'Services';
+      if (!groups[key]) groups[key] = { name: key, items: [] };
+      groups[key].items.push([item.name, item.price, item.duration || '']);
+    });
+    const raw: Record<string, any> = {
+      name: data.businessName,
+      tagline: data.category,
+      phone: data.phone,
+      email: data.contactEmail || data.email,
+      website: data.website,
+      instagram: data.instagram,
+      facebook: data.facebook,
+      fullName: data.fullName,
+      fullNameDisplay: showFullName,
+      address: data.address,
+      notes: `Build choice: ${choice}`,
+      reviewLink: data.reviewLink || '',
+      reviewQuotes: reviewsList.map(r => [r.title, r.description, r.name].filter(Boolean).join(' — ')).filter(Boolean),
+      hours: hoursStructured.map(d => `${d.day}: ${d.open ? `${d.from || '?'}–${d.to || '?'}` : 'Closed'}`),
+      hoursStructured,
+      serviceGroups: Object.values(groups),
+      logoImage: logoImage || undefined,
+      heroImage: heroImage || undefined,
+      gallery: galleryImages.filter((url): url is string => !!url),
+      chosenDomain: domainReady ? domain + suffix : undefined,
+    };
+    const record = { slug: chosenSlug, name: data.businessName, raw, updatedAt: new Date().toISOString() };
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/businesses`, {
+        method: 'POST',
+        headers: authHeaders(session.access_token, { 'Content-Type': 'application/json', Prefer: 'return=representation,resolution=merge-duplicates' }),
+        body: JSON.stringify({ id: chosenSlug, name: data.businessName, user_id: session.user.id, data: record, updated_at: record.updatedAt }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      setSlug(chosenSlug);
+      await notifyStage('new_signup', data.businessName || 'Unnamed business', data.contactEmail || data.email, chosenSlug);
+    } catch (err) {
+      console.error('[sync] could not save business', err);
+    }
+  };
+
   useEffect(() => {
     if (appScreen !== 'loading') return;
     loadingProgress.setValue(0);
     designReveal.setValue(0);
     loadingFades.forEach(value => value.setValue(0));
     const isTemplate = buildChoice === 'template';
-    const timers = [520, 1100, 1720, 2350].map((delay, i) => setTimeout(() => {
+    // One continuous Animated sequence, not four independent setTimeouts —
+    // a run of unlinked timers each firing its own Animated.timing is fragile
+    // under Fast Refresh and easy to leave half-run if the effect is ever
+    // re-entered, which is what made only the first checklist line animate in.
+    const checklist = Animated.sequence([0, 1, 2, 3].map(i => Animated.sequence([
+      Animated.delay(i === 0 ? 520 : 580),
       Animated.parallel([
         Animated.timing(loadingFades[i], { toValue: 1, duration: 360, useNativeDriver: true }),
         Animated.timing(loadingProgress, { toValue: (i + 1) / 4, duration: 460, useNativeDriver: false }),
-      ]).start();
-    }, delay));
-    const done = setTimeout(() => {
+      ]),
+    ])));
+    checklist.start(() => {
       setDesignReady(true);
       Animated.timing(designReveal, { toValue: 1, duration: 700, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(() => {
         if (isTemplate) {
@@ -752,8 +1128,8 @@ function AppInner() {
           setAppScreen('dashboard');
         }
       });
-    }, 3250);
-    return () => { timers.forEach(clearTimeout); clearTimeout(done); };
+    });
+    return () => checklist.stop();
   }, [appScreen, buildChoice]);
 
   useEffect(() => {
@@ -769,25 +1145,33 @@ function AppInner() {
       const inFooter = g.y0 > SCREEN_HEIGHT - CARD_BOTTOM - 70;
       return (inHeader || inFooter) && Math.abs(g.dy) > 12;
     },
-    
+    onPanResponderGrant: revealRail,
     onPanResponderMove: (_, g) => {
       if (Math.abs(g.dy) > Math.abs(g.dx)) {
+        const minIndex = authSession ? 1 : 0;
+        if (g.dy > 0 && index <= minIndex) return;
         if (Math.abs(g.dy) > 12) setDeckDirection(g.dy < 0 ? 1 : -1);
         motion.setValue(index * CARD_TRAVEL - g.dy);
       }
     },
     onPanResponderRelease: (_, g) => {
       if (g.dy < -48 || g.vy < -.55) go(index + 1); else if (g.dy > 48 || g.vy > .55) go(index - 1); else Animated.spring(motion, { toValue: index * CARD_TRAVEL, damping: 20, stiffness: 210, useNativeDriver: true }).start(() => setDeckDirection(0));
+      hideRailSoon();
     },
-    onPanResponderTerminate: () => Animated.spring(motion, { toValue: index * CARD_TRAVEL, damping: 20, stiffness: 210, useNativeDriver: true }).start(() => setDeckDirection(0)),
+    onPanResponderTerminate: () => {
+      Animated.spring(motion, { toValue: index * CARD_TRAVEL, damping: 20, stiffness: 210, useNativeDriver: true }).start(() => setDeckDirection(0));
+      hideRailSoon();
+    },
   }), [index, step.id, data, hours, services, domainReady, designReady, keyboardVisible]);
 
   const railPan = useMemo(() => PanResponder.create({
-    onStartShouldSetPanResponder: () => true, onMoveShouldSetPanResponder: () => true, 
+    onStartShouldSetPanResponder: () => true, onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: revealRail,
     onPanResponderMove: () => {},
     onPanResponderRelease: (_, g) => {
       if (g.dy < -42) go(index + 1);
       else if (g.dy > 42) go(index - 1);
+      hideRailSoon();
     },
   }), [index, data, hours, services, domainReady, designReady]);
 
@@ -801,7 +1185,7 @@ function AppInner() {
         {!!authStatus && <Text style={s.authStatus}>{authStatus}</Text>}
         <Pressable disabled={authBusy || authChecking} onPress={() => void authenticate()} style={({ pressed }) => [s.authSubmit, pressed && s.pressed, (authBusy || authChecking) && s.authSubmitDisabled]}>{authBusy || authChecking ? <ActivityIndicator size="small" color="#24282B" /> : <Text style={s.authSubmitText}>{authMode === 'signup' ? 'Create account' : 'Log in'}</Text>}</Pressable></>;
       case 'business': return <><Intro>Tell us the essentials. Anything you leave blank simply won’t appear on your website.</Intro>
-        <Field label="Full name (optional)" value={data.fullName} onChangeText={(v: string) => setData({ ...data, fullName: v })} placeholder="e.g. Jane Smith" />
+        <Field label="Full name" value={data.fullName} onChangeText={(v: string) => setData({ ...data, fullName: v })} placeholder="e.g. Jane Smith" />
         <Pressable onPress={() => setShowFullName(!showFullName)} style={s.nameDisplay} hitSlop={8}><View style={[s.checkbox, showFullName && s.checkboxOn]}>{showFullName && <Ionicons name="checkmark" size={13} color="#071923" />}</View><Text style={s.nameDisplayText}>Display full name on website</Text></Pressable>
         <Field label="Business name" value={data.businessName} onChangeText={(v: string) => setData({ ...data, businessName: v })} />
         <Field label="Business type" value={data.category} onChangeText={(v: string) => setData({ ...data, category: v })} />
@@ -826,29 +1210,32 @@ function AppInner() {
           </View>
         </View>
         <Text style={s.fieldLabel}>Gallery</Text>
-        <View style={s.galleryGrid}>
-          {media.gallery.map((uri, i) => <View key={i} style={s.galleryItem}><Image source={{ uri }} style={s.galleryThumb} /></View>)}
-          {media.gallery.length < 20 && <Pressable style={s.galleryAdd} onPress={async () => {
+        <View style={s.galleryGrid} onLayout={(e: any) => setGalleryWidth(e.nativeEvent.layout.width)}>
+          <GalleryGrid gallery={media.gallery} setGallery={(gallery: string[]) => setMedia(current => ({ ...current, gallery }))} containerWidth={galleryWidth} />
+          {media.gallery.length < 16 && <Pressable style={[s.galleryAdd, galleryTileSize(galleryWidth)]} onPress={async () => {
             const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (!permission.granted) return;
             const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, quality: .82 });
-            if (!result.canceled) setMedia(current => ({ ...current, gallery: [...current.gallery, ...result.assets.map(a => a.uri)].slice(0, 20) }));
+            if (!result.canceled) setMedia(current => ({ ...current, gallery: [...current.gallery, ...result.assets.map(a => a.uri)].slice(0, 16) }));
           }}><Ionicons name="add" size={26} color="#2563EB" /></Pressable>}
         </View></>;
       case 'reviews': return <><Intro>Add customer reviews for your website. Each one is optional.</Intro>
         {reviewsList.map((review, i) => {
           const open = openReview === i;
-          const label = review.title.trim() || `Review ${i + 1}`;
+          const label = review.title.trim() || 'New review';
           return <View key={i} style={[s.reviewCard, open && s.reviewCardOpen]}>
             <Pressable onPress={() => setOpenReview(open ? null : i)} style={s.reviewRow}>
               <Text style={s.reviewRowText} numberOfLines={1}>{label}</Text>
               <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={16} color={DARK} />
             </Pressable>
             {open && <View style={s.reviewFields}>
-              <Field label="Review title (optional)" value={review.title} onChangeText={(v: string) => setReviewsList(reviewsList.map((r, n) => n === i ? { ...r, title: v } : r))} placeholder="e.g. Amazing service" />
-              <Field label="Review (optional)" value={review.description} onChangeText={(v: string) => setReviewsList(reviewsList.map((r, n) => n === i ? { ...r, description: v } : r))} multiline />
-              <Field label="Customer name (optional)" value={review.name} onChangeText={(v: string) => setReviewsList(reviewsList.map((r, n) => n === i ? { ...r, name: v } : r))} placeholder="e.g. Jane Smith" />
-              <Pressable onPress={() => setOpenReview(null)} style={s.reviewDoneBtn}><Text style={s.reviewDoneText}>Done</Text></Pressable>
+              <Field label="Review title" value={review.title} onChangeText={(v: string) => setReviewsList(reviewsList.map((r, n) => n === i ? { ...r, title: v } : r))} placeholder="e.g. Amazing service" />
+              <Field label="Review" value={review.description} onChangeText={(v: string) => setReviewsList(reviewsList.map((r, n) => n === i ? { ...r, description: v } : r))} multiline />
+              <Field label="Customer name" value={review.name} onChangeText={(v: string) => setReviewsList(reviewsList.map((r, n) => n === i ? { ...r, name: v } : r))} placeholder="e.g. Jane Smith" />
+              <View style={s.reviewActionsRow}>
+                <Pressable onPress={() => { Alert.alert('Remove this review?', '', [{ text: 'Cancel', style: 'cancel' }, { text: 'Remove', style: 'destructive', onPress: () => { setReviewsList(reviewsList.filter((_, n) => n !== i)); setOpenReview(null); } }]); }} style={s.reviewDeleteBtn}><Ionicons name="trash-outline" size={15} color="#A3261F" /><Text style={s.reviewDeleteText}>Remove</Text></Pressable>
+                <Pressable onPress={() => setOpenReview(null)} style={s.reviewDoneBtn}><Text style={s.reviewDoneText}>Done</Text></Pressable>
+              </View>
             </View>}
           </View>;
         })}
@@ -865,11 +1252,11 @@ function AppInner() {
           </Pressable>)}
           {data.reviewSource && <Field label={`${data.reviewSource} profile link`} value={data.reviewLink} onChangeText={(v: string) => setData({ ...data, reviewLink: v })} placeholder={data.reviewSource === 'Google' ? 'Paste your Google Business link' : 'Paste your Trustpilot link'} />}
         </View>
-        <Pressable onPress={() => setContactForm(!contactForm)} style={[s.formChoice, contactForm && s.formChoiceOn]}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color={contactForm ? '#fff' : DARK} /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: '#B8C2C9', true: DARK }} thumbColor="#F7FCFF" /></Pressable></>;
+        <Pressable onPress={() => setContactForm(!contactForm)} style={s.formChoice}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color="#2563EB" /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: '#B8C2C9', true: DARK }} thumbColor="#F7FCFF" /></Pressable></>;
       case 'choice': return <View style={s.choiceWrap}>
         <Text style={s.choiceHeading}>How would you like to build your website?</Text>
         <Text style={s.choiceSub}>Either way, you can always make changes later.</Text>
-        <Pressable onPress={() => { setBuildChoice('template'); setAppScreen('loading'); }} style={s.choiceCard}>
+        <Pressable onPress={() => { void syncOnboardingToBackend('template'); setBuildChoice('template'); setAppScreen('loading'); }} style={s.choiceCard}>
           <View style={[s.choiceIcon, { backgroundColor: 'rgba(34,188,231,.14)' }]}><Ionicons name="layers-outline" size={26} color="#4BD4F8" /></View>
           <View style={{ flex: 1 }}>
             <Text style={s.choiceCardTitle}>Build with Template</Text>
@@ -877,7 +1264,7 @@ function AppInner() {
           </View>
           <Ionicons name="chevron-forward" size={18} color="rgba(220,238,248,.4)" />
         </Pressable>
-        <Pressable onPress={() => { setBuildChoice('designer'); setAppScreen('loading'); }} style={s.choiceCard}>
+        <Pressable onPress={() => { void syncOnboardingToBackend('designer'); setBuildChoice('designer'); setAppScreen('loading'); }} style={s.choiceCard}>
           <View style={[s.choiceIcon, { backgroundColor: 'rgba(120,190,120,.14)' }]}><Ionicons name="person-outline" size={26} color="#79D7A2" /></View>
           <View style={{ flex: 1 }}>
             <Text style={s.choiceCardTitle}>Send to Designer</Text>
@@ -916,7 +1303,7 @@ function AppInner() {
     }
   };
 
-  if (index === 0) return <FlowBackdrop>
+  if (index === 0 && appScreen === 'onboarding') return <FlowBackdrop>
     <StatusBar style="dark" />
     <View style={s.loginStage}>
       <View style={[s.card, s.loginCard]}>
@@ -929,7 +1316,7 @@ function AppInner() {
     </View>
   </FlowBackdrop>;
 
-  if (appScreen === 'dashboard') return <FadeIn><DashboardHome tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} onMakeLive={() => setWebsiteStatus('live')} onTakeOffline={() => setWebsiteStatus('ready')} onEdit={() => { setEditFrom('dashboard'); setAppScreen('design-editor'); }} /></FadeIn>;
+  if (appScreen === 'dashboard') return <FadeIn><DashboardHome tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onTakeOffline={() => setWebsiteStatus('ready')} onEdit={() => { setEditFrom('dashboard'); setAppScreen('design-editor'); }} /></FadeIn>;
 
   if (appScreen === 'design-editor') return <FadeIn><DesignEditorFullscreen palette={palette} setPalette={setPalette} font={font} setFont={setFont} siteTexts={siteTexts} setSiteTexts={setSiteTexts} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} data={data} services={services} hours={hours} contactForm={contactForm} onBack={() => {
     if (editFrom === 'dashboard') { setAppScreen('dashboard'); return; }
@@ -981,7 +1368,7 @@ function AppInner() {
           </Animated.View>;
         })}
       </View>
-      <View style={s.rail} {...railPan.panHandlers}>{setupStepIndexes.map((actual) => {
+      <Animated.View style={[s.rail, { opacity: railOpacity }]} {...railPan.panHandlers}>{setupStepIndexes.map((actual) => {
         const item = steps[actual], done = complete.has(actual);
         const dotScale = motion.interpolate({
           inputRange: [Math.max(0, actual - 1) * CARD_TRAVEL, actual * CARD_TRAVEL, (actual + 1) * CARD_TRAVEL],
@@ -992,16 +1379,14 @@ function AppInner() {
           <Animated.View style={[s.railDot, done && s.railDotOn, { transform: [{ scale: dotScale }] }]} />
           <Animated.View pointerEvents="none" style={[s.railActive, { opacity: dotScale.interpolate({ inputRange: [1, 1.75], outputRange: [0, 1], extrapolate: 'clamp' }), transform: [{ scale: dotScale.interpolate({ inputRange: [1, 1.75], outputRange: [0, 1], extrapolate: 'clamp' }) }] }]}><Ionicons name={item.icon} size={15} color="#fff" /></Animated.View>
         </View>;
-      })}</View>
+      })}</Animated.View>
     </View>
   </FlowBackdrop>;
 }
 
 export default function App() {
   return (
-    <StripeProvider publishableKey={STRIPE_KEY}>
-      <AppInner />
-    </StripeProvider>
+    <AppInner />
   );
 }
 
@@ -1045,7 +1430,7 @@ const s = StyleSheet.create({
   uploadTitle: { fontFamily: FONT, fontWeight: '800', fontSize: 14, color: '#1C2832' }, uploadSub: { fontFamily: FONT, fontSize: 11, color: 'rgba(28,40,50,.7)', marginTop: 3 },
   continue: { marginTop: 24, gap: 16 }, skip: { fontFamily: FONT, fontSize: 12, color: 'rgba(28,40,50,.7)', textAlign: 'center' }, loginSwipe: { marginTop: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 }, designSwipe: { paddingVertical: 22, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 }, swipeHint: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: '#000', textAlign: 'center' },
   fixedPrompt: { position: 'absolute', left: 18, right: 18, bottom: 14, zIndex: 120, elevation: 120, alignItems: 'center', gap: 7 }, swipeRow: { minHeight: 31, paddingHorizontal: 13, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, }, validationText: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: '#A3261F', textAlign: 'center', paddingHorizontal: 12 },
-  serviceRow: { flexDirection: 'row', gap: 7, marginTop: 5, alignItems: 'center' }, serviceInput: { height: 48, borderRadius: 14, paddingHorizontal: 10, fontFamily: FONT, fontSize: 12, color: '#1C2832', backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(255,255,255,.30)', outlineWidth: 0 }, serviceActions: { flexDirection: 'row', gap: 8 }, serviceDelete: { width: 28, height: 48, alignItems: 'center', justifyContent: 'center' }, sectionDivider: { height: StyleSheet.hairlineWidth, backgroundColor: 'rgba(255,255,255,.14)', marginVertical: 16 }, addService: { marginTop: 13, height: 42, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(226,232,235,.42)', backgroundColor: 'rgba(255,255,255,.08)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, addSectionBtn: { marginTop: 8, borderColor: 'rgba(226,232,235,.2)', backgroundColor: 'transparent' }, addServiceText: { fontFamily: FONT, fontWeight: '800', fontSize: 12, color: '#1C2832' },
+  serviceRow: { flexDirection: 'row', gap: 10, marginTop: 5, alignItems: 'center' }, serviceInput: { height: 48, borderRadius: 14, paddingHorizontal: 10, fontFamily: FONT, fontSize: 12, color: '#1C2832', backgroundColor: 'rgba(255,255,255,.42)', borderWidth: 1, borderColor: 'rgba(28,40,50,.16)', outlineWidth: 0 }, serviceActions: { flexDirection: 'row', gap: 8 }, serviceDelete: { width: 28, height: 48, alignItems: 'center', justifyContent: 'center' }, sectionDelete: { width: 28, height: 50, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }, sectionDivider: { height: StyleSheet.hairlineWidth, backgroundColor: 'rgba(255,255,255,.14)', marginVertical: 16 }, addService: { marginTop: 13, height: 42, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(226,232,235,.42)', backgroundColor: 'rgba(255,255,255,.08)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, addSectionBtn: { marginTop: 8, borderColor: 'rgba(226,232,235,.2)', backgroundColor: 'transparent' }, addServiceText: { fontFamily: FONT, fontWeight: '800', fontSize: 12, color: '#1C2832' },
   loading: { position: 'absolute', inset: 0, minHeight: SCREEN_HEIGHT * .65, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 44 }, loadingWordmark: { flexDirection: 'row', position: 'relative', marginBottom: 26 }, loadingBrand: { fontFamily: FONT, letterSpacing: 1.6, fontWeight: '900', fontSize: 17, color: '#F7FCFF' }, loadingBrandDot: { position: 'absolute', width: 5, height: 5, borderRadius: 3, backgroundColor: '#4B9BFF', right: 32, top: -1 },
   loadingTitle: { fontFamily: FONT, fontSize: 25, lineHeight: 31, fontWeight: '800', color: '#F5FBFE', textAlign: 'center' }, loadingText: { fontFamily: FONT, fontSize: 13, lineHeight: 19, color: 'rgba(221,237,246,.58)', textAlign: 'center', marginTop: 10 }, loadingSteps: { alignSelf: 'stretch', gap: 10, marginTop: 27 }, loadingStep: { flexDirection: 'row', alignItems: 'center', gap: 9, opacity: .36 }, loadingStepOn: { opacity: 1 }, loadingStepText: { fontFamily: FONT, fontSize: 12, color: 'rgba(222,238,247,.6)' }, loadingStepTextOn: { color: '#EAF9FE', fontWeight: '700' },
   track: { width: '100%', height: 5, borderRadius: 5, backgroundColor: 'rgba(255,255,255,.1)', marginTop: 28, overflow: 'hidden' }, fill: { height: 5, backgroundColor: BRAND, borderRadius: 5 },
@@ -1117,15 +1502,15 @@ const s = StyleSheet.create({
   templateDots: { position: 'absolute', bottom: 13, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 7 }, templateDot: { width: 7, height: 7, borderRadius: 5, backgroundColor: 'rgba(255,255,255,.35)' }, templateDotOn: { width: 21, backgroundColor: '#fff' },
   tools: { position: 'relative', zIndex: 30, width: FS_SLOT * 3, alignItems: 'center' }, toolStack: { alignSelf: 'stretch', alignItems: 'center', flexDirection: 'row' }, toolSlot: { width: FS_SLOT, alignItems: 'center' },
   toolButton: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#fff', borderWidth: 1, borderColor: 'transparent', alignItems: 'center', justifyContent: 'center', shadowColor: '#207EA0', shadowOpacity: .18, shadowRadius: 12 }, toolActive: { backgroundColor: BRAND, shadowOpacity: .34, shadowRadius: 20 }, toolButtonText: { fontFamily: FONT, fontSize: 12, fontWeight: '800', color: '#fff' },
-  toolPanel: { position: 'absolute', top: 49, right: 0, width: 186, maxHeight: 400, padding: 12, borderRadius: 23, overflow: 'hidden', borderWidth: 1, borderColor: '#fff', shadowColor: '#174E66', shadowOpacity: .18, shadowRadius: 18, zIndex: 200, elevation: 200 }, paletteWrap: { gap: 5 }, paletteScroll: { maxHeight: 274 }, paletteGroup: { paddingBottom: 12 }, paletteHeading: { paddingTop: 5, paddingBottom: 4 }, paletteHeadingText: { fontFamily: FONT, fontSize: 10, fontWeight: '900', letterSpacing: .8, color: '#345568', textTransform: 'uppercase' },
-  toolTitle: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#28495B', textAlign: 'center', marginBottom: 9 }, option: { minHeight: 44, borderRadius: 16, paddingHorizontal: 9, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' },
-  dot: { width: 20, height: 20, borderRadius: 10 }, selected: { borderColor: BRAND, backgroundColor: 'rgba(34,188,231,.12)' }, fontOption: { paddingVertical: 10, borderRadius: 14, marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' }, fontOptionText: { fontFamily: FONT, fontSize: 11, fontWeight: '700', textAlign: 'center', color: '#345568' },
-  sectionOption: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(66,104,125,.18)' }, sectionText: { flex: 1, fontFamily: FONT, fontSize: 12, fontWeight: '600', color: '#345568', marginHorizontal: 8 },
+  toolPanel: { position: 'absolute', top: 49, right: 0, width: 186, maxHeight: 400, padding: 12, borderRadius: 23, overflow: 'hidden', borderWidth: 1, borderColor: '#fff', backgroundColor: 'rgba(255,255,255,.92)', shadowColor: '#174E66', shadowOpacity: .18, shadowRadius: 18, zIndex: 200, elevation: 200 }, paletteWrap: { gap: 5 }, paletteScroll: { maxHeight: 274 }, paletteGroup: { paddingBottom: 12 }, paletteHeading: { paddingTop: 5, paddingBottom: 4 }, paletteHeadingText: { fontFamily: FONT, fontSize: 10, fontWeight: '900', letterSpacing: .8, color: '#345568', textTransform: 'uppercase' },
+  toolTitle: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#1C2832', textAlign: 'center', marginBottom: 9 }, option: { minHeight: 44, borderRadius: 16, paddingHorizontal: 9, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' },
+  dot: { width: 20, height: 20, borderRadius: 10 }, selected: { borderColor: BRAND, backgroundColor: 'rgba(34,188,231,.12)' }, fontOption: { paddingVertical: 10, borderRadius: 14, marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' }, fontOptionText: { fontFamily: FONT, fontSize: 11, fontWeight: '700', textAlign: 'center', color: '#1C2832' },
+  sectionOption: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(28,40,50,.18)' }, sectionText: { flex: 1, fontFamily: FONT, fontSize: 12, fontWeight: '600', color: '#1C2832', marginHorizontal: 8 },
   sectionEye: { padding: 7 }, sectionDragHandle: { padding: 7 },
   domainSearch: { flexDirection: 'row', alignItems: 'center', borderRadius: 18, backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(28,40,50,.22)' }, domainInput: { flex: 1, minHeight: 54, paddingHorizontal: 16, fontFamily: FONT, fontSize: 16, color: '#1C2832', outlineWidth: 0 }, suffixButton: { height: 54, paddingLeft: 8, paddingRight: 13, flexDirection: 'row', alignItems: 'center', gap: 3 }, domainSuffix: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: '#1C2832' }, suffixDropdown: { position: 'absolute', top: 58, right: 0, zIndex: 99, minWidth: 120, backgroundColor: '#1A2128', borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,.14)', shadowColor: '#000', shadowOpacity: .4, shadowRadius: 12, elevation: 10, overflow: 'hidden' }, suffixDropdownItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13, paddingHorizontal: 16 }, suffixDropdownDivider: { borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.08)' }, suffixDropdownItemOn: { backgroundColor: 'rgba(75,155,255,.12)' }, suffixDropdownText: { fontFamily: FONT, fontSize: 15, fontWeight: '600', color: '#E5EBEE' },
-  check: { marginTop: 12, paddingVertical: 15, borderRadius: 17, alignItems: 'center', backgroundColor: 'rgba(34,188,231,.15)', borderWidth: 1, borderColor: 'rgba(34,188,231,.35)' }, checkText: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#DDF8FF' },
-  checkDisabled: { opacity: .58 }, domainError: { marginTop: 10, fontFamily: FONT, fontSize: 12, lineHeight: 17, color: '#A3261F' }, domainResult: { marginTop: 14, padding: 15, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: 'rgba(34,188,231,.09)', borderWidth: 1, borderColor: 'rgba(34,188,231,.3)' }, domainName: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#1C2832' }, domainPrice: { fontFamily: FONT, fontSize: 11, color: '#76D8F2', marginTop: 2 },
-  formChoice: { padding: 17, borderRadius: 23, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: 'rgba(255,255,255,.055)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)' }, formChoiceOn: { borderColor: BRAND, backgroundColor: 'rgba(34,188,231,.1)' }, formChoiceIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(34,188,231,.14)' }, formChoiceTitle: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#1C2832' }, formChoiceText: { fontFamily: FONT, fontSize: 11, color: 'rgba(28,40,50,.7)', marginTop: 3, lineHeight: 16 }, formNote: { fontFamily: FONT, fontSize: 12, color: 'rgba(28,40,50,.7)', textAlign: 'center', marginTop: 18 },
+  check: { marginTop: 12, paddingVertical: 15, borderRadius: 17, alignItems: 'center', backgroundColor: '#2563EB', borderWidth: 1, borderColor: '#2563EB' }, checkText: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#fff' },
+  checkDisabled: { opacity: .58 }, domainError: { marginTop: 10, fontFamily: FONT, fontSize: 12, lineHeight: 17, color: '#A3261F' }, domainResult: { marginTop: 14, padding: 15, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: 'rgba(34,188,231,.09)', borderWidth: 1, borderColor: 'rgba(34,188,231,.3)' }, domainName: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#1C2832' }, domainPrice: { fontFamily: FONT, fontSize: 11, color: '#1C2832', marginTop: 2 },
+  formChoice: { marginTop: 22, padding: 17, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: 'rgba(255,255,255,.45)', borderWidth: 1, borderColor: 'rgba(28,40,50,.16)' }, formChoiceIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(37,99,235,.12)' }, formChoiceTitle: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#1C2832' }, formChoiceText: { fontFamily: FONT, fontSize: 11, color: 'rgba(28,40,50,.7)', marginTop: 3, lineHeight: 16 }, formNote: { fontFamily: FONT, fontSize: 12, color: 'rgba(28,40,50,.7)', textAlign: 'center', marginTop: 18 },
   planHeading: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#EAF8FD', marginTop: 25, marginBottom: 10 }, plan: { minHeight: 118, padding: 18, borderRadius: 23, backgroundColor: 'rgba(255,255,255,.055)', borderWidth: 1, borderColor: 'rgba(255,255,255,.11)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }, planOn: { borderColor: BRAND, backgroundColor: 'rgba(34,188,231,.1)' },
   planName: { fontFamily: FONT, fontSize: 18, fontWeight: '800', color: '#1C2832' }, planNote: { fontFamily: FONT, fontSize: 11, color: 'rgba(28,40,50,.7)', marginTop: 4 }, planPrice: { fontFamily: FONT, fontSize: 25, fontWeight: '900', color: '#1C2832' }, planSmall: { fontSize: 10 }, save: { fontFamily: FONT, fontSize: 8, fontWeight: '900', color: '#07202B', backgroundColor: BRAND, padding: 5, borderRadius: 8, alignSelf: 'flex-start', marginBottom: 8 },
   secure: { flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 18 }, secureText: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#DDF7FF' },
@@ -1138,13 +1523,13 @@ const s = StyleSheet.create({
   nextPeek: { position: 'absolute', zIndex: 1, bottom: -(SCREEN_HEIGHT - 126) + 90, left: 34, right: 34, height: SCREEN_HEIGHT - 126, borderRadius: 26, backgroundColor: 'rgba(8,18,28,.54)', shadowColor: '#020A10', shadowOpacity: .34, shadowRadius: 28, shadowOffset: { width: 0, height: 16 }, overflow: 'hidden' },
   nextPeekTap: { paddingHorizontal: 22, paddingTop: 48, flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   nextLabel: { fontFamily: FONT, fontSize: 8, fontWeight: '900', color: BRAND, marginTop: 5 }, nextTitle: { flex: 1, fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#EFF9FC' },
-  rail: { position: 'absolute', left: 12, top: '25%', bottom: '25%', justifyContent: 'space-between', alignItems: 'center', zIndex: 140, elevation: 140 }, railHidden: { opacity: 0 }, railButton: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }, railNear: { width: 18, height: 18, borderRadius: 9 }, railFar: { width: 18, height: 18, borderRadius: 9 }, railDone: {}, railActive: { position: 'absolute', width: 27, height: 27, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#4B9BFF', borderWidth: 0, shadowColor: '#4B9BFF', shadowOpacity: .45, shadowRadius: 8, elevation: 8 }, railDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#1A1E22', borderWidth: 1, borderColor: 'rgba(0,0,0,.32)', shadowColor: '#000', shadowOpacity: .2, shadowRadius: 2 }, railDotOn: { backgroundColor: '#4B9BFF', borderColor: '#A9C8FF', shadowColor: '#4B9BFF', shadowOpacity: .45, shadowRadius: 5 },
+  rail: { position: 'absolute', left: 12, top: '25%', bottom: '25%', justifyContent: 'space-between', alignItems: 'center', zIndex: 140, elevation: 140 }, railButton: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }, railNear: { width: 18, height: 18, borderRadius: 9 }, railFar: { width: 18, height: 18, borderRadius: 9 }, railDone: {}, railActive: { position: 'absolute', width: 27, height: 27, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#4B9BFF', borderWidth: 0, shadowColor: '#4B9BFF', shadowOpacity: .45, shadowRadius: 8, elevation: 8 }, railDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#1A1E22', borderWidth: 1, borderColor: 'rgba(0,0,0,.32)', shadowColor: '#000', shadowOpacity: .2, shadowRadius: 2 }, railDotOn: { backgroundColor: '#4B9BFF', borderColor: '#A9C8FF', shadowColor: '#4B9BFF', shadowOpacity: .45, shadowRadius: 5 },
   reviewCard: { marginBottom: 8, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(28,40,50,.18)', backgroundColor: 'rgba(255,255,255,.45)', overflow: 'hidden' },
   reviewCardOpen: { borderColor: 'rgba(75,212,248,.45)' },
   reviewRow: { minHeight: 50, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   reviewRowText: { flex: 1, fontFamily: FONT, fontSize: 14, fontWeight: '600', color: '#1C2832' },
   reviewFields: { paddingHorizontal: 14, paddingBottom: 14 },
-  reviewDoneBtn: { alignSelf: 'flex-end', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: 'rgba(75,212,248,.18)' },
+  reviewActionsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }, reviewDeleteBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999 }, reviewDeleteText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: '#A3261F' }, reviewDoneBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: 'rgba(75,212,248,.18)' },
   reviewDoneText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: '#4BD4F8' },
   reviewSourceCard: { marginTop: 14, padding: 14, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(28,40,50,.18)', backgroundColor: 'rgba(255,255,255,.45)' },
   reviewSourceTitle: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: '#1C2832' },
@@ -1155,10 +1540,10 @@ const s = StyleSheet.create({
   reviewSourceAction: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: '#1C6FD0' },
   addReviewBtn: { height: 44, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(28,40,50,.3)', backgroundColor: 'rgba(255,255,255,.45)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 18 },
   addReviewText: { fontFamily: FONT, fontWeight: '800', fontSize: 12, color: '#1C2832' },
-  galleryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8, marginBottom: 12 },
-  galleryItem: { width: (SCREEN_WIDTH - 96) / 2, height: (SCREEN_WIDTH - 96) / 2, borderRadius: 14, overflow: 'hidden' },
+  galleryGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 8, marginTop: 8, marginBottom: 12 },
+  galleryItem: { borderRadius: 14, overflow: 'hidden', backgroundColor: '#EFE4DB' },
   galleryThumb: { width: '100%', height: '100%' },
-  galleryAdd: { width: (SCREEN_WIDTH - 96) / 2, height: (SCREEN_WIDTH - 96) / 2, borderRadius: 14, borderWidth: 1, borderColor: '#1C2832', alignItems: 'center', justifyContent: 'center', backgroundColor: '#EFE4DB'},
+  galleryAdd: { borderRadius: 14, borderWidth: 1, borderColor: '#1C2832', alignItems: 'center', justifyContent: 'center', backgroundColor: '#EFE4DB'},
   planDomain: { flexDirection: 'row', alignItems: 'center', gap: 9, padding: 14, borderRadius: 14, backgroundColor: 'rgba(34,188,231,.1)', borderWidth: 1, borderColor: 'rgba(34,188,231,.28)', marginBottom: 16 },
   planDomainText: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#DDF8FF' },
   paymentSuccess: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, paddingHorizontal: 24 },
@@ -1172,7 +1557,7 @@ const s = StyleSheet.create({
   dashboardLive: { fontFamily: FONT, fontSize: 9, fontWeight: '900', letterSpacing: 1, color: '#3CAB6A' },
   dashboardTabsTop: { flexDirection: 'row', paddingHorizontal: 18, gap: 6, marginBottom: 20 },
   dashboardTab: { flex: 1, paddingVertical: 10, borderRadius: 14, alignItems: 'center', backgroundColor: 'rgba(0,0,0,.06)' },
-  dashboardTabOn: { backgroundColor: '#1C2832' },
+  dashboardTabOn: { backgroundColor: '#2563EB' },
   dashboardTabText: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: 'rgba(28,40,50,.48)' },
   dashboardTabTextOn: { color: '#fff' },
   dashboardContent: { paddingHorizontal: 22, paddingBottom: 48 },
@@ -1182,15 +1567,20 @@ const s = StyleSheet.create({
   dashboardCardLabel: { fontFamily: FONT, fontSize: 9, fontWeight: '900', letterSpacing: 1, color: 'rgba(20,26,30,.42)', marginBottom: 5 },
   dashboardCardTitle: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: '#141A1E' },
   dashboardCardText: { fontFamily: FONT, fontSize: 12, color: 'rgba(20,26,30,.48)', marginTop: 3 },
-  dashboardWebsiteHead: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 12 },
+  dashboardWebsiteHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   dashboardEdit: { paddingVertical: 9, paddingHorizontal: 14, borderRadius: 99, flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#1C2832' },
   dashboardEditText: { fontFamily: FONT, fontSize: 11, fontWeight: '800', color: '#fff' },
-  phoneFrame: { height: 420, borderRadius: 20, overflow: 'hidden', marginBottom: 16, backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .12, shadowRadius: 18, shadowOffset: { width: 0, height: 8 } },
-  phoneScale: {},
-  messageBubble: { padding: 16, borderRadius: 18, backgroundColor: '#fff', marginBottom: 12, shadowColor: '#000', shadowOpacity: .06, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } },
+  phoneFrame: { width: SCREEN_WIDTH * .46, height: 420, alignSelf: 'center', borderRadius: 20, overflow: 'hidden', marginBottom: 16, backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .12, shadowRadius: 18, shadowOffset: { width: 0, height: 8 } },
+  phoneScale: { width: SCREEN_WIDTH, height: 420 / .46, transform: [{ scale: .46 }], transformOrigin: 'top left' },
+  messageBubble: { padding: 13, paddingHorizontal: 16, borderRadius: 20, maxWidth: '82%', backgroundColor: '#fff', marginBottom: 10, shadowColor: '#000', shadowOpacity: .06, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } },
+  messageImage: { width: 180, height: 180, borderRadius: 12 },
+  messageBubbleReceived: { alignSelf: 'flex-start', borderBottomLeftRadius: 6 },
   messageSender: { fontFamily: FONT, fontSize: 11, fontWeight: '800', color: '#1C2832', marginBottom: 6 },
   messageText: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: '#2C3E4A' },
   messageInput: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14, borderRadius: 16, backgroundColor: '#fff', borderWidth: 1, borderColor: 'rgba(0,0,0,.1)', marginTop: 8 },
+  messageInputFixed: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingTop: 14, paddingHorizontal: 18, paddingBottom: Platform.OS === 'ios' ? 34 : 18, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,.08)', backgroundColor: '#fff' },
+  messageBubbleSent: { backgroundColor: '#E8F1FF', alignSelf: 'flex-end', borderBottomRightRadius: 6 },
+  messageInputField: { flex: 1, fontFamily: FONT, fontSize: 14, color: '#1C2832', maxHeight: 80, paddingRight: 10 },
   messagePlaceholder: { fontFamily: FONT, fontSize: 14, color: 'rgba(28,40,50,.38)' },
 
   choiceWrap: { gap: 0, paddingTop: 4 },
@@ -1220,6 +1610,8 @@ const s = StyleSheet.create({
   planModalSub: { fontFamily: FONT, fontSize: 13, color: '#5B6B78', marginBottom: 12 },
   planModalDomain: { flexDirection: 'row', gap: 6, alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(75,155,255,.12)', marginBottom: 14 },
   planModalDomainText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: '#2878FF' },
+  planModalFeeNote: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 14 },
+  planModalFeeText: { flex: 1, fontFamily: FONT, fontSize: 11, lineHeight: 15, color: '#5B6B78' },
   planModalOption: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderRadius: 18, borderWidth: 1.5, borderColor: '#D5E0EA', backgroundColor: '#fff', marginBottom: 10 },
   planModalOptionOn: { borderColor: '#2878FF', backgroundColor: '#F0F6FF' },
   planModalOptionName: { fontFamily: FONT, fontSize: 15, fontWeight: '700', color: '#1C2832' },

@@ -42,7 +42,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { plan, billing, email, slug, domain, addon_domain: addonDomain, publish_on_payment: publishOnPayment } = req.body || {};
+  const { plan, billing, email, slug, domain, addon_domain: addonDomain, publish_on_payment: publishOnPayment, ui_mode: uiMode } = req.body || {};
   const selectedDomain = domain || addonDomain || '';
 
   if (!plan || !billing) return res.status(400).json({ error: 'Missing plan or billing' });
@@ -79,6 +79,23 @@ export default async function handler(req, res) {
       });
     }
 
+    const metadata = { plan, billing, slug: slug || '', domain: selectedDomain, publish_on_payment: publishOnPayment ? 'true' : 'false' };
+
+    // The mobile app opens Stripe's hosted Checkout page in the device browser
+    // (there's no embeddable web view in Expo for ui_mode: 'embedded') — same
+    // Stripe account, prices and webhook as the website's embedded checkout.
+    if (uiMode === 'hosted') {
+      const session = await stripe.checkout.sessions.create({
+        mode: 'subscription',
+        line_items: lineItems,
+        success_url: `https://brightsite.app/account/dashboard?slug=${encodeURIComponent(slug || '')}&payment=success`,
+        cancel_url: `https://brightsite.app/account/dashboard?slug=${encodeURIComponent(slug || '')}&payment=cancelled`,
+        customer_email: email || undefined,
+        metadata,
+      });
+      return res.status(200).json({ url: session.url });
+    }
+
     const returnUrl = `https://brightsite.app/account/dashboard?slug=${encodeURIComponent(slug || '')}&payment=success`;
 
     const session = await stripe.checkout.sessions.create({
@@ -87,7 +104,7 @@ export default async function handler(req, res) {
       line_items: lineItems,
       return_url: returnUrl,
       customer_email: email || undefined,
-      metadata: { plan, billing, slug: slug || '', domain: selectedDomain, publish_on_payment: publishOnPayment ? 'true' : 'false' },
+      metadata,
     });
 
     res.status(200).json({ clientSecret: session.client_secret });
