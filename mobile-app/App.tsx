@@ -15,7 +15,14 @@ const CARD_TOP = Platform.OS === 'ios' ? 54 : 28;
 const CARD_BOTTOM = 72;
 const CARD_TRAVEL = SCREEN_HEIGHT - 190;
 const FONT = Platform.select({ ios: 'Avenir Next', android: 'sans-serif', default: 'sans-serif' });
-const BRAND = '#E2E8EB';
+const C = {
+  primary: '#2563EB', primaryPressed: '#1D4FD0', primarySoft: 'rgba(37,99,235,.10)', primaryBorder: 'rgba(37,99,235,.35)',
+  ink: '#1C2832', inkSoft: 'rgba(28,40,50,.72)', inkMuted: 'rgba(28,40,50,.52)', placeholder: 'rgba(28,40,50,.38)',
+  line: 'rgba(28,40,50,.14)', lineStrong: 'rgba(28,40,50,.24)', field: 'rgba(255,255,255,.6)',
+  canvas: '#F4EDE6', surface: '#FFFFFF', card: '#EFE4DB',
+  success: '#1F8A54', successSoft: 'rgba(31,138,84,.12)', warning: '#B26A00', warningSoft: 'rgba(178,106,0,.12)', danger: '#B42318', dangerSoft: 'rgba(180,35,24,.10)',
+};
+const BRAND = C.primary;
 const DOMAIN_TLDS = ['.com', '.co.uk', '.net', '.org', '.io', '.co', '.uk', '.app'];
 const DOMAIN_API = 'https://api.brightsite.app/api/check-domain';
 const CHECKOUT_API = 'https://api.brightsite.app/api/create-checkout-session';
@@ -47,6 +54,7 @@ function authHeaders(accessToken: string, extra: Record<string, string> = {}) {
 
 async function uploadMediaToR2(accessToken: string, slug: string, type: string, uri?: string): Promise<string | null> {
   if (!uri) return null;
+  if (/^https?:\/\//.test(uri)) return uri;
   try {
     const blob = await (await fetch(uri)).blob();
     const ext = (uri.split('.').pop() || 'jpg').toLowerCase();
@@ -56,6 +64,7 @@ async function uploadMediaToR2(accessToken: string, slug: string, type: string, 
       headers: { 'x-file-name': key, 'Content-Type': guessMime(uri), Authorization: `Bearer ${accessToken}` },
       body: blob,
     });
+    if (!res.ok) return null;
     const d = await res.json();
     return `${R2_PUBLIC_URL}/${d.key || key}`;
   } catch {
@@ -104,6 +113,22 @@ async function deleteMessageRow(accessToken: string, id: string) {
     headers: authHeaders(accessToken),
   });
   if (!res.ok) throw new Error('Message could not be deleted.');
+}
+
+// Same SECURITY DEFINER RPC the website dashboard saves through, so ownership checks match.
+async function upsertBusiness(session: any, id: string, name: string, record: Record<string, any>) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/upsert_business`, {
+    method: 'POST',
+    headers: authHeaders(session.access_token, { 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ p_id: id, p_name: name, p_user_id: session.user.id, p_data: record, p_updated_at: record.updatedAt }),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err: any = new Error(json.message || `Save failed (${res.status})`);
+    err.conflict = /another account/i.test(json.message || '');
+    throw err;
+  }
+  return json;
 }
 
 function isImageMessage(body: string) {
@@ -163,16 +188,16 @@ const CATEGORY_PRESETS: Record<string, { topServices: string[]; about: string; h
   'Cleaning': { topServices: ['Domestic', 'Commercial', 'Deep Clean'], about: 'Professional cleaning services for homes and businesses.', heroTitle: 'Spotlessly clean, every time.', heroBody: 'Reliable, thorough cleaning using eco-friendly products.' },
 };
 function getPreset(category: string) {
-  const key = Object.keys(CATEGORY_PRESETS).find(k =>
+  const key = category?.trim() && Object.keys(CATEGORY_PRESETS).find(k =>
     (category || '').toLowerCase().includes(k.toLowerCase()) || k.toLowerCase().includes((category || '').toLowerCase())
   );
-  return key ? CATEGORY_PRESETS[key] : { topServices: ['Our Services', 'Consultations', 'Packages'], about: 'Professional, friendly service tailored to your needs.', heroTitle: 'Welcome.', heroBody: "We’re here to help." };
+  return key ? CATEGORY_PRESETS[key] : { topServices: ['Our Services', 'Consultations', 'Packages'], about: 'Professional, friendly service tailored to your needs.', heroTitle: 'Quality you can count on.', heroBody: 'Friendly, professional service from a local business that cares.' };
 }
 
 function Field({ label, value, onChangeText, placeholder, keyboardType = 'default', multiline = false, ...inputProps }: any) {
   return <View style={s.fieldWrap}>
     <Text style={s.fieldLabel}>{label}</Text>
-    <TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor="rgba(218,232,244,.35)"
+    <TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={C.placeholder}
       keyboardType={keyboardType} multiline={multiline} style={[s.input, multiline && s.inputMultiline]} {...inputProps} />
   </View>;
 }
@@ -185,7 +210,7 @@ function Hours({ rows, setRows }: any) {
       <Text style={s.hoursDay}>{row.label.slice(0, 3)}</Text>
       <View style={s.hoursTimes}>{row.enabled ? <><TextInput value={row.start} onChangeText={v => setRows(rows.map((x: any, n: number) => n === i ? { ...x, start: v } : x))} style={s.timeInput} /><Text style={s.timeDash}>–</Text><TextInput value={row.end} onChangeText={v => setRows(rows.map((x: any, n: number) => n === i ? { ...x, end: v } : x))} style={s.timeInput} /></> : <><View style={s.timeInputOff}><Text style={s.timeOffText}>—</Text></View><Text style={s.timeDash}>–</Text><View style={s.timeInputOff}><Text style={s.timeOffText}>—</Text></View></>}</View>
       <View style={s.hoursSwitch}><Switch value={row.enabled} onValueChange={() => setRows(rows.map((x: any, n: number) => n === i ? { ...x, enabled: !x.enabled } : x))}
-        trackColor={{ false: '#B8C2C9', true: DARK }} thumbColor="#F7FCFF" /></View></View>)}</View>;
+        trackColor={{ false: 'rgba(28,40,50,.18)', true: C.primary }} thumbColor="#fff" {...({ activeThumbColor: '#fff' } as any)} /></View></View>)}</View>;
 }
 
 function Services({ items, setItems }: any) {
@@ -209,13 +234,13 @@ function Services({ items, setItems }: any) {
         {isNewSection && i > 0 && <View style={s.sectionDivider} />}
         {isNewSection && <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
           <View style={{ flex: 1 }}><Field label="Service section name" value={item.section} onChangeText={(v: string) => update(i, 'section', v)} placeholder="e.g. Cutting & styling" /></View>
-          <Pressable onPress={() => removeSection(item.section)} style={s.sectionDelete} hitSlop={8}><Ionicons name="close" size={16} color="#1C2832" /></Pressable>
+          <Pressable onPress={() => removeSection(item.section)} style={s.sectionDelete} hitSlop={8}><Ionicons name="close" size={16} color={C.ink} /></Pressable>
         </View>}
         <View style={s.serviceRow}>
-          <TextInput value={item.name} onChangeText={v => update(i, 'name', v)} placeholder="Service" placeholderTextColor="rgba(218,232,244,.35)" style={[s.serviceInput, { flex: 1.9 }]} />
-          <TextInput value={item.duration} onChangeText={v => update(i, 'duration', v)} placeholder="Time" placeholderTextColor="rgba(218,232,244,.35)" style={[s.serviceInput, { flex: 1.2 }]} />
-          <TextInput value={item.price} onChangeText={v => update(i, 'price', v)} placeholder="Price" placeholderTextColor="rgba(218,232,244,.35)" style={[s.serviceInput, { flex: .95 }]} />
-          <Pressable onPress={() => remove(i)} style={s.serviceDelete} hitSlop={8}><Ionicons name="close" size={16} color="#1C2832" /></Pressable>
+          <TextInput value={item.name} onChangeText={v => update(i, 'name', v)} placeholder="Service" placeholderTextColor={C.placeholder} style={[s.serviceInput, { flex: 1.9 }]} />
+          <TextInput value={item.duration} onChangeText={v => update(i, 'duration', v)} placeholder="Time" placeholderTextColor={C.placeholder} style={[s.serviceInput, { flex: 1.2 }]} />
+          <TextInput value={item.price} onChangeText={v => update(i, 'price', v)} placeholder="Price" placeholderTextColor={C.placeholder} style={[s.serviceInput, { flex: .95 }]} />
+          <Pressable onPress={() => remove(i)} style={s.serviceDelete} hitSlop={8}><Ionicons name="close" size={16} color={C.ink} /></Pressable>
         </View>
       </View>;
     })}
@@ -233,14 +258,14 @@ function Upload({ icon, title, subtitle, value, onChange, multiple = false, fill
   };
   const preview = Array.isArray(value) ? value[0] : value;
   return <Pressable onPress={chooseImage} style={({ pressed }) => [s.upload, fill && { padding: 0, height: h }, pressed && s.pressed]}>
-    {preview ? <Image source={{ uri: preview }} style={fill ? s.uploadPreviewFill : s.uploadPreview} resizeMode="cover" /> : fill ? <Ionicons name="add" size={26} color="#2563EB" /> : <><View style={s.uploadIcon}><Ionicons name={icon} size={22} color="#2563EB" /></View><Text style={s.uploadTitle}>{title}</Text><Text style={s.uploadSub}>{subtitle}</Text></>}
+    {preview ? <Image source={{ uri: preview }} style={fill ? s.uploadPreviewFill : s.uploadPreview} resizeMode="cover" /> : fill ? <Ionicons name="add" size={26} color={C.primary} /> : <><View style={s.uploadIcon}><Ionicons name={icon} size={22} color={C.primary} /></View><Text style={s.uploadTitle}>{title}</Text><Text style={s.uploadSub}>{subtitle}</Text></>}
   </Pressable>;
 }
 
 function SitePreview({ palette, font, page = 0, onPageChange, editing, siteTexts = {}, onEditText,
   businessName = '', category = '', servicesData = [], hoursData = [],
   contactData = {} as any, contactForm = true,
-  homeSections = HOME_SECTIONS_DEFAULT, servicesSections = SERVICES_SECTIONS_DEFAULT, contactSections = CONTACT_SECTIONS_DEFAULT,
+  homeSections = HOME_SECTIONS_DEFAULT, servicesSections = SERVICES_SECTIONS_DEFAULT, contactSections = CONTACT_SECTIONS_DEFAULT, media = { gallery: [] } as any,
 }: any) {
   const colors = palettes[palette];
   const [accent, bg, textColor] = colors;
@@ -257,10 +282,10 @@ function SitePreview({ palette, font, page = 0, onPageChange, editing, siteTexts
 
   const renderHome = (name: string) => {
     switch (name) {
-      case 'Hero': return <ImageBackground key="Hero" source={require('./assets/hair-beauty-hero.jpg')} style={s.siteHero}>
+      case 'Hero': return <ImageBackground key="Hero" source={media.hero ? { uri: media.hero } : require('./assets/hair-beauty-hero.jpg')} style={s.siteHero}>
         <LinearGradient colors={['rgba(5,7,9,.08)', 'rgba(5,7,9,.84)']} style={StyleSheet.absoluteFill} />
         <View style={s.siteTop}>
-          <Text style={[s.siteKicker, fo, editing && s.editing]} onPress={ep('brand')}>{tx('brand', biz.toUpperCase())}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>{!!media.logo && <Image source={{ uri: media.logo }} style={s.siteLogo} />}<Text style={[s.siteKicker, fo, editing && s.editing]} onPress={ep('brand')} numberOfLines={1}>{tx('brand', biz.toUpperCase())}</Text></View>
           <View style={s.siteNav}><Text style={[s.siteNavText, fo]}>SERVICES</Text><Text style={[s.siteNavText, fo]}>CONTACT</Text><Ionicons name="menu" size={18} color="#fff" /></View>
         </View>
         <View style={s.siteCopy}>
@@ -293,8 +318,8 @@ function SitePreview({ palette, font, page = 0, onPageChange, editing, siteTexts
         </View>}
       </View>;
       case 'Gallery': return <View key="Gallery" style={s.siteGallerySection}>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 5 }}>
-          {Array.from({ length: 6 }, (_, i) => <View key={i} style={{ width: 38, height: 38, borderRadius: 8, backgroundColor: i % 2 === 0 ? accent + (i === 0 ? 'FF' : 'AA') : textColor + '33' }} />)}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+          {media.gallery?.length ? media.gallery.slice(0, 6).map((uri: string) => <Image key={uri} source={{ uri }} style={s.siteGalleryImg} />) : Array.from({ length: 6 }, (_, i) => <View key={i} style={[s.siteGalleryImg, { backgroundColor: i % 2 === 0 ? accent + '55' : textColor + '1A' }]} />)}
         </View>
       </View>;
       case 'Contact': return <View key="Contact" style={[s.siteContactCta, { borderTopColor: accent + '33' }]}>
@@ -520,7 +545,7 @@ function SectionDragList({ sections, setSections, sectionVisible, onToggle }: an
         </Pressable>
         <Text style={s.sectionText}>{name}</Text>
         <Animated.View {...pans[name].panHandlers} style={s.sectionDragHandle}>
-          <Ionicons name="reorder-three" size={24} color="#436172" />
+          <Ionicons name="reorder-three" size={24} color={C.inkSoft} />
         </Animated.View>
       </Animated.View>;
     })}
@@ -550,7 +575,7 @@ function DesignTools({ active, setActive, palette, setPalette, font, setFont, se
           setActive(next);
           setEditing(next === 'edit');
         }} style={({ pressed }) => [s.toolButton, open && s.toolActive, pressed && s.pressed]}>
-          <Ionicons name={item.icon as any} size={19} color={open ? '#fff' : '#2E6C87'} />
+          <Ionicons name={item.icon as any} size={19} color={open ? '#fff' : C.primary} />
         </Pressable></View>
       );
     })}</View>
@@ -590,7 +615,7 @@ function TextEditModal({ visible, value, label, onSave, onClose }: any) {
 }
 
 function FlowBackdrop({ children }: any) {
-  return <View style={{ flex: 1, backgroundColor: '#2563EB' }}>
+  return <View style={{ flex: 1, backgroundColor: C.primary }}>
     <LinearGradient colors={['#6FA8FF', '#3B82F6', '#1D4FD0']} locations={[0, .45, 1]} style={StyleSheet.absoluteFill} />
     {children}
   </View>;
@@ -609,9 +634,8 @@ function FadeIn({ children }: { children: React.ReactNode }) {
   return <Animated.View style={{ flex: 1, opacity }}>{children}</Animated.View>;
 }
 
-function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, onEdit, websiteStatus, onMakeLive, onTakeOffline, session, slug }: any) {
+function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, onEdit, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, saveError, planAnnual, media, isPaying, session, slug }: any) {
   const siteUrl = data.website?.trim() || `https://${domain}${suffix}`;
-  const [showLiveDropdown, setShowLiveDropdown] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [domainPriceLabel, setDomainPriceLabel] = useState<string | null>(null);
   const [domainPriceLoading, setDomainPriceLoading] = useState(false);
@@ -625,7 +649,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
     } catch { setDomainPriceLabel(null); }
     finally { setDomainPriceLoading(false); }
   };
-  const [annual, setAnnual] = useState(false);
+  const [annual, setAnnual] = useState(!!planAnnual);
   const [payBusy, setPayBusy] = useState(false);
   const [payError, setPayError] = useState('');
   const [messageDraft, setMessageDraft] = useState('');
@@ -690,6 +714,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
     if (result.canceled || !result.assets[0]) return;
     const url = await uploadMediaToR2(session.access_token, slug, `msg_${Date.now()}`, result.assets[0].uri);
     if (url) void sendMessage(url);
+    else Alert.alert('Photo not sent', 'That photo couldn’t upload. Please try again.');
   };
   const sendMessage = async (body?: string) => {
     const text = (body ?? messageDraft).trim();
@@ -699,7 +724,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
       await postMessage(session.access_token, slug, text, 'customer');
       if (!body) setMessageDraft('');
       await loadMessagesNow();
-    } catch { /* best-effort, same as the website's messages tab */ }
+    } catch { Alert.alert('Message not sent', 'Check your connection and try again.'); }
     finally { setSendingMessage(false); }
   };
 
@@ -740,84 +765,103 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
   const isReady = websiteStatus === 'ready';
   const isReadyRef = useRef(isReady);
   useEffect(() => { isReadyRef.current = isReady; }, [isReady]);
+  const status = isLive ? { label: 'Live', color: C.success, bg: C.successSoft }
+    : isBuilding ? { label: 'Being built', color: C.warning, bg: C.warningSoft }
+    : isPaying ? { label: 'Offline', color: C.danger, bg: C.dangerSoft }
+    : { label: 'Ready to publish', color: C.primary, bg: C.primarySoft };
+  const confirmOffline = () => Alert.alert('Take your website offline?', 'Visitors won’t be able to see it until you put it live again. Your plan and content stay as they are.', [
+    { text: 'Cancel', style: 'cancel' },
+    { text: 'Take offline', style: 'destructive', onPress: () => onTakeOffline?.() },
+  ]);
+  const goLive = () => { if (isPaying) void onGoLive?.(); else void openPlanModal(); };
+  const confirmSignOut = () => Alert.alert('Log out?', 'Your website and details stay saved to your account.', [
+    { text: 'Cancel', style: 'cancel' },
+    { text: 'Log out', style: 'destructive', onPress: () => onSignOut?.() },
+  ]);
+  const domainLabel = domain ? `${domain}${suffix}` : 'Not chosen yet';
 
-  return <KeyboardAvoidingView style={{ flex: 1, backgroundColor: CARD }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : undefined}>
+  return <KeyboardAvoidingView style={{ flex: 1, backgroundColor: C.canvas }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
     <StatusBar style="dark" />
     <View style={s.dashboardScreen}>
       <View style={s.dashboardBrandRow}>
-        <Text style={s.dashboardBrand}>BRIGHTSITE</Text>
-        {isLive && <Text style={s.dashboardLive}>● LIVE</Text>}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Image source={require('./assets/brightsite-icon.png')} style={s.dashboardLogo} />
+          <Text style={s.dashboardBrand}>BrightSite</Text>
+        </View>
+        <View style={[s.statusPill, { backgroundColor: status.bg }]}><View style={[s.statusDot, { backgroundColor: status.color }]} /><Text style={[s.statusPillText, { color: status.color }]}>{status.label}</Text></View>
       </View>
-      <View style={s.dashboardTabsTop}>{['Account', 'Website', 'Messages'].map(name => <Pressable key={name} onPress={() => setTab(name)} style={[s.dashboardTab, tab === name && s.dashboardTabOn]}><Text style={[s.dashboardTabText, tab === name && s.dashboardTabTextOn]}>{name}</Text></Pressable>)}</View>
-      <ScrollView contentContainerStyle={s.dashboardContent} showsVerticalScrollIndicator={false}>
+      <View style={s.dashboardTabsTop}>{['Website', 'Messages', 'Account'].map(name => <Pressable key={name} onPress={() => setTab(name)} style={[s.dashboardTab, tab === name && s.dashboardTabOn]}><Text style={[s.dashboardTabText, tab === name && s.dashboardTabTextOn]}>{name}</Text></Pressable>)}</View>
+      {!!saveError && <View style={s.saveBanner}><Ionicons name="alert-circle" size={16} color={C.danger} /><Text style={s.saveBannerText}>{saveError}</Text></View>}
+      <ScrollView contentContainerStyle={s.dashboardContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {tab === 'Account' && <>
-          <Text style={s.dashboardTitle}>Your account</Text>
+          <Text style={s.dashboardTitle}>Account</Text>
           <Text style={s.dashboardIntro}>Everything for {data.businessName || 'your business'} in one place.</Text>
-          <View style={s.dashboardInfoCard}><Text style={s.dashboardCardLabel}>YOUR PLAN</Text><Text style={s.dashboardCardTitle}>{isLive ? (annual ? 'Annual Plan' : 'Monthly Plan') : 'Free Plan'}</Text><Text style={s.dashboardCardText}>{isLive ? (annual ? '£17/month · £204/year' : '£19/month') : 'Activate to go live'}</Text></View>
-          <View style={s.dashboardInfoCard}><Text style={s.dashboardCardLabel}>YOUR DOMAIN</Text><Text style={s.dashboardCardTitle}>{domain}{suffix}</Text><Text style={s.dashboardCardText}>Connected to your website</Text></View>
-          <View style={s.dashboardInfoCard}><Text style={s.dashboardCardLabel}>ACCOUNT EMAIL</Text><Text style={s.dashboardCardTitle}>{data.email || data.contactEmail || 'Add an email address'}</Text></View>
+          <View style={s.dashboardInfoCard}>
+            <Text style={s.dashboardCardLabel}>Plan</Text>
+            <Text style={s.dashboardCardTitle}>{isPaying ? (planAnnual ? 'Essential · Annual' : 'Essential · Monthly') : 'No plan yet'}</Text>
+            <Text style={s.dashboardCardText}>{isPaying ? (planAnnual ? '£17/month, billed £204 yearly' : '£19/month') : 'Choose a plan when you’re ready to go live.'}</Text>
+          </View>
+          <View style={s.dashboardInfoCard}>
+            <Text style={s.dashboardCardLabel}>Domain</Text>
+            <Text style={s.dashboardCardTitle}>{domainLabel}</Text>
+            <Text style={s.dashboardCardText}>{isLive ? 'Connected to your website' : domain ? 'Connects when your website goes live' : 'You can choose one when you go live'}</Text>
+          </View>
+          <View style={s.dashboardInfoCard}>
+            <Text style={s.dashboardCardLabel}>Login email</Text>
+            <Text style={s.dashboardCardTitle}>{session?.user?.email || data.email || '—'}</Text>
+          </View>
+          <Pressable onPress={confirmSignOut} style={({ pressed }) => [s.secondaryBtn, pressed && s.pressed]}><Ionicons name="log-out-outline" size={17} color={C.danger} /><Text style={[s.secondaryBtnText, { color: C.danger }]}>Log out</Text></Pressable>
         </>}
         {tab === 'Website' && <>
-          {isLive && <Text style={s.dashboardLive}>● LIVE</Text>}
-          {isBuilding && <Text style={[s.dashboardLive, { color: '#F0A030' }]}>⏳ BUILDING</Text>}
-          {isReady && <Text style={[s.dashboardLive, { color: '#4B9BFF' }]}>● READY TO PUBLISH</Text>}
           <View style={s.dashboardWebsiteHead}>
             <Text style={s.dashboardTitle}>Your website</Text>
-            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-              {!isBuilding && <Pressable onPress={onEdit} style={s.dashboardEdit}><Ionicons name="create-outline" size={15} color="#fff" /><Text style={s.dashboardEditText}>Edit</Text></Pressable>}
-              {isLive && <Pressable onPress={() => setShowLiveDropdown(!showLiveDropdown)} style={[s.dashboardEdit, { backgroundColor: '#3CAB6A' }]}>
-                <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: '#fff' }} />
-                <Text style={s.dashboardEditText}>Live</Text>
-                <Ionicons name="chevron-down" size={12} color="#fff" />
-              </Pressable>}
-              {showLiveDropdown && <View style={s.liveDropdown}>
-                <Pressable onPress={() => { setShowLiveDropdown(false); onTakeOffline?.(); }} style={s.liveDropdownItem}><Ionicons name="cloud-offline-outline" size={14} color="#C04040" /><Text style={s.liveDropdownText}>Take offline</Text></Pressable>
-              </View>}
-            </View>
+            {!isBuilding && <Pressable onPress={onEdit} style={({ pressed }) => [s.dashboardEdit, pressed && s.pressed]}><Ionicons name="color-palette-outline" size={15} color={C.ink} /><Text style={s.dashboardEditText}>Edit design</Text></Pressable>}
           </View>
-          <Text style={s.dashboardIntro}>{isBuilding ? 'Your designer preview is being built. This usually takes 1–2 days.' : 'Tap your homepage to open it, or edit its design.'}</Text>
+          <Text style={s.dashboardIntro}>{isBuilding ? 'Tom is building your website. Your preview is usually ready in 1–2 days.' : isLive ? `Live at ${domainLabel}. Tap the preview to open it.` : 'Here’s how your website looks. Put it live when you’re happy.'}</Text>
           {isBuilding
-            ? <View style={s.buildingCard}><ActivityIndicator size="large" color="#4B9BFF" style={{ marginBottom: 14 }} /><Text style={s.buildingText}>Building your preview…</Text><Text style={s.buildingSub}>Tom will send you a message when it’s ready to review.</Text></View>
-            : <Pressable onPress={() => isLive ? void Linking.openURL(siteUrl) : undefined} style={s.phoneFrame}>
-                <View pointerEvents="none" style={s.phoneScale}><SitePreview palette={palette} font={font} page={0} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></View>
-                {isLive && <View style={s.previewOpenBadge}><Ionicons name="open-outline" size={12} color="#fff" /><Text style={s.previewOpenText}>Open {domain}{suffix}</Text></View>}
-              </Pressable>
-          }
-          {(isReady || isBuilding) && !isLive && <Pressable onPress={() => { if (isReady) void openPlanModal(); }} style={[s.makeLiveBtn, !isReady && s.makeLiveBtnDisabled]}>
-            <Ionicons name="rocket-outline" size={18} color={isReady ? '#fff' : 'rgba(255,255,255,.4)'} />
-            <Text style={[s.makeLiveBtnText, !isReady && { color: 'rgba(255,255,255,.4)' }]}>{isBuilding ? 'Make Live (pending review)' : 'Make Live'}</Text>
+            ? <View style={s.buildingCard}><ActivityIndicator size="large" color={C.primary} style={{ marginBottom: 14 }} /><Text style={s.buildingText}>Building your preview</Text><Text style={s.buildingSub}>You’ll get a message here as soon as it’s ready to review.</Text></View>
+            : <Pressable onPress={() => isLive ? void Linking.openURL(siteUrl) : onEdit?.()} style={s.phoneFrame}>
+                <View pointerEvents="none" style={s.phoneScale}><SitePreview palette={palette} font={font} page={0} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} media={media} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></View>
+                {isLive && <View style={s.previewOpenBadge}><Ionicons name="open-outline" size={12} color="#fff" /><Text style={s.previewOpenText}>Open site</Text></View>}
+              </Pressable>}
+          {isReady && <Pressable onPress={goLive} style={({ pressed }) => [s.primaryBtn, pressed && s.pressed]}>
+            <Ionicons name="rocket-outline" size={18} color="#fff" /><Text style={s.primaryBtnText}>{isPaying ? 'Put website live' : 'Make it live'}</Text>
           </Pressable>}
-          {isReady && !isLive && <Pressable onPress={() => { void notifyStage('changes_requested', data.businessName || 'Unnamed business', data.contactEmail || data.email, slug || ''); void sendMessage("I'd like to make changes."); setTab('Messages'); }} style={s.requestChangesBtn}>
-            <Ionicons name="chatbubble-outline" size={15} color="#4B9BFF" />
-            <Text style={s.requestChangesText}>Request Changes</Text>
+          {isLive && <Pressable onPress={confirmOffline} style={({ pressed }) => [s.secondaryBtn, pressed && s.pressed]}>
+            <Ionicons name="cloud-offline-outline" size={16} color={C.danger} /><Text style={[s.secondaryBtnText, { color: C.danger }]}>Take website offline</Text>
+          </Pressable>}
+          {!isLive && <Pressable onPress={() => { void notifyStage('changes_requested', data.businessName || 'Unnamed business', data.contactEmail || data.email, slug || ''); setTab('Messages'); }} style={({ pressed }) => [s.secondaryBtn, pressed && s.pressed]}>
+            <Ionicons name="chatbubble-outline" size={15} color={C.ink} /><Text style={s.secondaryBtnText}>Ask Tom for changes</Text>
           </Pressable>}
         </>}
         {tab === 'Messages' && <>
           <Text style={s.dashboardTitle}>Messages</Text>
-          <View style={s.messageBubble}><Text style={s.messageSender}>Tom · BrightSite</Text><Text style={s.messageText}>Welcome to BrightSite, {data.businessName || 'there'}! I’m Tom. Send a message below and I’ll get it by email.</Text></View>
+          <Text style={s.dashboardIntro}>Chat with Tom about your website. Replies arrive here.</Text>
+          <View style={[s.messageBubble, s.messageBubbleReceived]}><Text style={s.messageSender}>Tom · BrightSite</Text><Text style={s.messageText}>Hi {data.fullName?.split(' ')[0] || data.businessName || 'there'}! I’m Tom. Send me a message any time and I’ll get back to you.</Text></View>
           {messages.map((m) => <Pressable key={m.id} onLongPress={() => handleLongPressMessage(m)} style={[s.messageBubble, m.sender === 'customer' ? s.messageBubbleSent : s.messageBubbleReceived]}>
-            {isImageMessage(m.body) ? <Image source={{ uri: m.body }} style={s.messageImage} resizeMode="cover" /> : <Text style={s.messageText}>{m.body}</Text>}
+            {m.sender !== 'customer' && <Text style={s.messageSender}>Tom · BrightSite</Text>}
+            {isImageMessage(m.body) ? <Image source={{ uri: m.body }} style={s.messageImage} resizeMode="cover" /> : <Text style={[s.messageText, m.sender === 'customer' && { color: '#fff' }]}>{m.body}</Text>}
           </Pressable>)}
         </>}
       </ScrollView>
       {tab === 'Messages' && <View style={s.messageInputFixed}>
-        <Pressable onPress={() => void attachImage()} hitSlop={8}>
-          <Ionicons name="image-outline" size={24} color="#2878FF" />
+        <Pressable onPress={() => void attachImage()} hitSlop={10} style={s.messageIconBtn} accessibilityLabel="Attach photo">
+          <Ionicons name="image-outline" size={22} color={C.inkSoft} />
         </Pressable>
-        <TextInput style={s.messageInputField} value={messageDraft} onChangeText={setMessageDraft} placeholder="Message BrightSite…" placeholderTextColor="rgba(28,40,50,.4)" autoCapitalize="sentences" multiline />
-        <Pressable onPress={() => void sendMessage(undefined)} disabled={!messageDraft.trim() || sendingMessage} hitSlop={8}>
-          <Ionicons name="arrow-up-circle" size={24} color={messageDraft.trim() ? '#2878FF' : 'rgba(40,120,255,.35)'} />
+        <TextInput style={s.messageInputField} value={messageDraft} onChangeText={setMessageDraft} placeholder="Message Tom…" placeholderTextColor={C.placeholder} autoCapitalize="sentences" multiline />
+        <Pressable onPress={() => void sendMessage(undefined)} disabled={!messageDraft.trim() || sendingMessage} hitSlop={10} style={[s.messageSendBtn, (!messageDraft.trim() || sendingMessage) && { opacity: .35 }]} accessibilityLabel="Send message">
+          {sendingMessage ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={18} color="#fff" />}
         </Pressable>
       </View>}
     </View>
     <Modal visible={showPlanModal} transparent animationType="slide" onRequestClose={() => setShowPlanModal(false)}>
       <View style={s.planModalOverlay}>
         <View style={s.planModalBox}>
-          <View style={s.planModalHeader}><Text style={s.planModalTitle}>Choose your plan</Text><Pressable onPress={() => setShowPlanModal(false)} hitSlop={10}><Ionicons name="close" size={22} color="#1C2832" /></Pressable></View>
+          <View style={s.planModalHeader}><Text style={s.planModalTitle}>Choose your plan</Text><Pressable onPress={() => setShowPlanModal(false)} hitSlop={10}><Ionicons name="close" size={22} color={C.ink} /></Pressable></View>
           <Text style={s.planModalSub}>Your website is free. You only pay for hosting.</Text>
-          <View style={s.planModalDomain}><Ionicons name="globe-outline" size={14} color="#4B9BFF" /><Text style={s.planModalDomainText}>{domain}{suffix}</Text></View>
+          <View style={s.planModalDomain}><Ionicons name="globe-outline" size={14} color={C.primary} /><Text style={s.planModalDomainText}>{domain}{suffix}</Text></View>
           <View style={s.planModalFeeNote}>
-            <Ionicons name="information-circle-outline" size={14} color="#5B6B78" />
+            <Ionicons name="information-circle-outline" size={14} color={C.inkMuted} />
             <Text style={s.planModalFeeText}>
               {domainPriceLoading ? 'Checking domain registration price…' : domainPriceLabel ? `Plus ${domainPriceLabel} to register ${domain}${suffix} (charged today, renews yearly).` : `A separate domain registration fee for ${domain}${suffix} is charged at checkout.`}
             </Text>
@@ -830,7 +874,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
             <View><View style={s.savePill}><Text style={s.savePillText}>SAVE £24</Text></View><Text style={s.planModalOptionName}>Annual</Text><Text style={s.planModalOptionNote}>Billed £204 yearly</Text></View>
             <Text style={s.planModalOptionPrice}>£17<Text style={{ fontSize: 12 }}>/mo</Text></Text>
           </Pressable>
-          {!!payError && <Text style={{ fontFamily: FONT, fontSize: 12, color: '#C04040', marginTop: 8 }}>{payError}</Text>}
+          {!!payError && <Text style={{ fontFamily: FONT, fontSize: 12, color: C.danger, marginTop: 8 }}>{payError}</Text>}
           <Pressable onPress={() => void handlePay()} disabled={payBusy} style={[s.planModalPayBtn, payBusy && { opacity: .6 }]}>
             {payBusy ? <ActivityIndicator size="small" color="#fff" /> : <><Ionicons name="lock-closed" size={15} color="#fff" /><Text style={s.planModalPayBtnText}>Continue to secure payment</Text></>}
           </Pressable>
@@ -840,7 +884,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
   </KeyboardAvoidingView>;
 }
 
-function DesignEditorFullscreen({ palette, setPalette, font, setFont, siteTexts, setSiteTexts, homeSections, setHomeSections, servicesSections, setServicesSections, contactSections, setContactSections, data, services, hours, contactForm, onBack, onConfirm }: any) {
+function DesignEditorFullscreen({ media, palette, setPalette, font, setFont, siteTexts, setSiteTexts, homeSections, setHomeSections, servicesSections, setServicesSections, contactSections, setContactSections, data, services, hours, contactForm, onBack, onConfirm }: any) {
   const [tool, setTool] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [previewPage, setPreviewPage] = useState(0);
@@ -849,7 +893,7 @@ function DesignEditorFullscreen({ palette, setPalette, font, setFont, siteTexts,
     <StatusBar style="light" />
     <TextEditModal visible={!!editingText} value={editingText ? (siteTexts[editingText.key] ?? '') : ''} label={editingText?.label || ''} onSave={(v: string) => setSiteTexts((t: any) => ({ ...t, [editingText!.key]: v }))} onClose={() => setEditingText(null)} />
     <View style={s.fsBrowserBar}>
-      <View style={s.fsSlot}><Pressable onPress={onBack} style={s.fsBackBtn}><Ionicons name="chevron-back" size={22} color="#2563EB" /></Pressable></View>
+      <View style={s.fsSlot}><Pressable onPress={onBack} style={s.fsBackBtn}><Ionicons name="chevron-back" size={22} color={C.primary} /></Pressable></View>
       <View style={s.fsBrowserRight}>
         <DesignTools active={tool} setActive={setTool} palette={palette} setPalette={setPalette} font={font} setFont={setFont} setEditing={setEditing} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} />
         <View style={s.fsSlot}><Pressable onPress={onConfirm} style={s.fsTickBtn}>
@@ -858,12 +902,12 @@ function DesignEditorFullscreen({ palette, setPalette, font, setFont, siteTexts,
       </View>
     </View>
     <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-      <SitePreview palette={palette} font={font} page={previewPage} onPageChange={setPreviewPage} editing={editing} siteTexts={siteTexts} onEditText={(key: string) => { const labels: Record<string, string> = { headline: 'Hero headline', heroBody: 'Hero subtext', aboutTitle: 'About title', aboutBody: 'About description', brand: 'Brand name' }; setEditingText({ key, label: labels[key] || key }); }} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} />
+      <SitePreview palette={palette} font={font} page={previewPage} onPageChange={setPreviewPage} editing={editing} siteTexts={siteTexts} onEditText={(key: string) => { const labels: Record<string, string> = { headline: 'Hero headline', heroBody: 'Hero subtext', aboutTitle: 'About title', aboutBody: 'About description', brand: 'Brand name' }; setEditingText({ key, label: labels[key] || key }); }} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} media={media} />
     </ScrollView>
   </View>;
 }
 
-function AppInner() {
+function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [index, setIndex] = useState(0);
   const [authMode, setAuthMode] = useState<'signup' | 'login'>('signup');
   const [authBusy, setAuthBusy] = useState(false);
@@ -877,12 +921,12 @@ function AppInner() {
   const [deckDirection, setDeckDirection] = useState<-1 | 0 | 1>(0);
   const railOpacity = useRef(new Animated.Value(.32)).current;
   const revealRail = () => { if (railTimer.current) clearTimeout(railTimer.current); Animated.timing(railOpacity, { toValue: 1, duration: 120, useNativeDriver: true }).start(); };
-  const hideRailSoon = () => { railTimer.current = setTimeout(() => { Animated.timing(railOpacity, { toValue: .32, duration: 1100, useNativeDriver: true }).start(); }, 900); };
+  const hideRailSoon = () => { railTimer.current = setTimeout(() => { Animated.timing(railOpacity, { toValue: .32, duration: 120, useNativeDriver: true }).start(); }, 900); };
   const railTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [designReady, setDesignReady] = useState(false);
   const [validationMessage, setValidationMessage] = useState('');
   const [media, setMedia] = useState<{ logo?: string; hero?: string; gallery: string[] }>({ gallery: [] });
-  const [domain, setDomain] = useState('siskohair');
+  const [domain, setDomain] = useState('');
   const [suffix, setSuffix] = useState('.co.uk');
   const [showSuffixes, setShowSuffixes] = useState(false);
   const [domainReady, setDomainReady] = useState(false);
@@ -901,12 +945,15 @@ function AppInner() {
   const [websiteStatus, setWebsiteStatus] = useState<'building' | 'ready' | 'live'>('building');
   const [session, setSession] = useState<any>(null);
   const [slug, setSlug] = useState<string | null>(null);
-  const [data, setData] = useState({ email: '', password: '', businessName: 'Sisko Hairdressing', category: 'Hair & Beauty', fullName: '', contactEmail: '', phone: '', website: '', instagram: '', facebook: '', address: '', services: 'Cut & finish', price: '£45', reviews: '', reviewLink: '', reviewSource: null as null | 'Google' | 'Trustpilot' });
+  const [data, setData] = useState({ email: '', password: '', businessName: '', category: '', fullName: '', contactEmail: '', phone: '', website: '', instagram: '', facebook: '', address: '', reviewLink: '', reviewSource: null as null | 'Google' | 'Trustpilot' });
+  const [planAnnual, setPlanAnnual] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const businessRecord = useRef<Record<string, any>>({});
   const [showFullName, setShowFullName] = useState(false);
   const [galleryWidth, setGalleryWidth] = useState(0);
   const [openReview, setOpenReview] = useState<number | null>(null);
   const [hours, setHours] = useState(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((label, i) => ({ label, start: '9:00', end: i === 3 ? '19:00' : '17:30', enabled: i < 6 })));
-  const [services, setServices] = useState([{ section: 'Cutting & styling', name: 'Cut & finish', duration: '45 mins', price: '£45' }]);
+  const [services, setServices] = useState([{ section: '', name: '', duration: '', price: '' }]);
   const [reviewsList, setReviewsList] = useState<{ title: string; description: string; name: string }[]>([]);
   const motion = useRef(new Animated.Value(0)).current;
   const loadingProgress = useRef(new Animated.Value(0)).current;
@@ -914,6 +961,66 @@ function AppInner() {
   const designReveal = useRef(new Animated.Value(0)).current;
   const transitioning = useRef(false);
   const step = steps[index];
+
+  const hydrateFromRecord = (record: Record<string, any>, accountEmail: string) => {
+    businessRecord.current = record;
+    const raw = record.raw || {};
+    setData(current => ({
+      ...current,
+      businessName: raw.name || record.name || '',
+      category: raw.tagline || '',
+      fullName: raw.fullName || '',
+      contactEmail: raw.email || accountEmail,
+      phone: raw.phone || '',
+      website: raw.website || '',
+      instagram: raw.instagram || '',
+      facebook: raw.facebook || '',
+      address: raw.address || '',
+      reviewLink: raw.reviewLink || '',
+      reviewSource: raw.reviewSource || null,
+    }));
+    setShowFullName(!!raw.fullNameDisplay);
+    if (Array.isArray(raw.hoursStructured) && raw.hoursStructured.length) {
+      setHours(raw.hoursStructured.map((h: any) => ({ label: h.day, start: h.from || '', end: h.to || '', enabled: !!h.open })));
+    }
+    if (Array.isArray(raw.serviceGroups) && raw.serviceGroups.length) {
+      const rows = raw.serviceGroups.flatMap((g: any) => (g.items || []).map((it: any) => ({ section: g.name === 'Services' ? '' : g.name, name: it[0] || '', price: it[1] || '', duration: it[2] || '' })));
+      if (rows.length) setServices(rows);
+    }
+    if (Array.isArray(raw.reviewItems)) setReviewsList(raw.reviewItems);
+    setMedia({ logo: raw.logoImage, hero: raw.heroImage, gallery: Array.isArray(raw.gallery) ? raw.gallery : [] });
+    const chosen = record.customDomain || record.domain || raw.chosenDomain || '';
+    const dot = chosen.indexOf('.');
+    if (dot > 0) { setDomain(chosen.slice(0, dot)); setSuffix(chosen.slice(dot)); setDomainReady(true); }
+    const design = raw.design || {};
+    if (typeof design.palette === 'number' && palettes[design.palette]) setPalette(design.palette);
+    if (typeof design.font === 'number' && fonts[design.font]) setFont(design.font);
+    if (design.siteTexts) setSiteTexts(design.siteTexts);
+    if (Array.isArray(design.homeSections)) setHomeSections(design.homeSections);
+    if (Array.isArray(design.servicesSections)) setServicesSections(design.servicesSections);
+    if (Array.isArray(design.contactSections)) setContactSections(design.contactSections);
+    setContactForm(!!(raw.contactForm ?? design.contactForm));
+    setPlanAnnual(!!raw.chosenAnnual);
+    const isDesigner = raw.buildChoice === 'designer' || /Build choice: designer/.test(raw.notes || '');
+    setBuildChoice(isDesigner ? 'designer' : 'template');
+    const hasPreview = !!(record.demoUrl || record.previewUrl || record.liveUrl);
+    setWebsiteStatus(record.published ? 'live' : isDesigner && !hasPreview ? 'building' : 'ready');
+  };
+
+  const saveBusiness = async (id: string, patch: { raw?: Record<string, any>; [key: string]: any }) => {
+    const previous = businessRecord.current;
+    const record = { ...previous, ...patch, slug: id, name: patch.raw?.name || previous.raw?.name || data.businessName, raw: { ...(previous.raw || {}), ...(patch.raw || {}) }, updatedAt: new Date().toISOString() };
+    const row = await upsertBusiness(session, id, record.name, record);
+    businessRecord.current = row?.data || record;
+    return row;
+  };
+
+  const designSnapshot = () => ({ palette, font, siteTexts, homeSections, servicesSections, contactSections, contactForm });
+
+  const signOut = async () => {
+    await supabase.auth.signOut().catch(() => {});
+    onSignedOut();
+  };
 
   const loadAccountDestination = async (authedSession: any) => {
     const email = authedSession?.user?.email || data.email.trim();
@@ -929,8 +1036,8 @@ function AppInner() {
     const realRow = rows?.find((row: any) => !(row.data && row.data.stub)) || rows?.[0];
     if (realRow && !(realRow.data && realRow.data.stub)) {
       setSlug(realRow.id);
+      hydrateFromRecord(realRow.data || {}, email);
       Keyboard.dismiss();
-      setWebsiteStatus('ready');
       setAppScreen('dashboard');
       return;
     }
@@ -980,6 +1087,7 @@ function AppInner() {
     const next = Math.max(authSession ? 1 : 0, Math.min(steps.length - 1, to));
     if (next === index || transitioning.current) return;
     const forward = next > index;
+    if (steps[next].id === 'domain' && !domain.trim()) setDomain(slugify(data.businessName).replace(/-/g, ''));
     Keyboard.dismiss();
     setValidationMessage('');
     setDeckDirection(forward ? 1 : -1);
@@ -1047,24 +1155,18 @@ function AppInner() {
   };
 
   const syncOnboardingToBackend = async (choice: 'designer' | 'template') => {
-    // Writes to the same `businesses` and `messages` tables, and the same R2
-    // bucket via the same upload worker, that account/dashboard.html uses —
-    // so a site started in the app shows up in the website's own dashboard.
     if (!session?.user?.id) return;
-    const chosenSlug = slug || slugify(domainReady ? domain : data.businessName) || `site-${session.user.id.slice(0, 8)}`;
-    const [logoImage, heroImage, ...galleryImages] = await Promise.all([
-      uploadMediaToR2(session.access_token, chosenSlug, 'logo', media.logo),
-      uploadMediaToR2(session.access_token, chosenSlug, 'hero', media.hero),
-      ...media.gallery.map((uri, i) => uploadMediaToR2(session.access_token, chosenSlug, `gallery_${i}`, uri)),
-    ]);
+    setSaveError('');
+    const baseSlug = slug || slugify(domainReady ? domain : data.businessName) || `site-${session.user.id.slice(0, 8)}`;
     const hoursStructured = hours.map(h => ({ day: h.label, open: h.enabled, from: h.start, to: h.end }));
     const groups: Record<string, { name: string; items: [string, string, string][] }> = {};
-    services.forEach(item => {
-      const key = item.section || 'Services';
+    services.filter(item => item.name.trim()).forEach(item => {
+      const key = item.section.trim() || 'Services';
       if (!groups[key]) groups[key] = { name: key, items: [] };
       groups[key].items.push([item.name, item.price, item.duration || '']);
     });
-    const raw: Record<string, any> = {
+    const reviewItems = reviewsList.filter(r => r.title.trim() || r.description.trim());
+    const buildRaw = (logoImage: string | null, heroImage: string | null, gallery: (string | null)[]) => ({
       name: data.businessName,
       tagline: data.category,
       phone: data.phone,
@@ -1076,29 +1178,61 @@ function AppInner() {
       fullNameDisplay: showFullName,
       address: data.address,
       notes: `Build choice: ${choice}`,
+      buildChoice: choice,
       reviewLink: data.reviewLink || '',
-      reviewQuotes: reviewsList.map(r => [r.title, r.description, r.name].filter(Boolean).join(' — ')).filter(Boolean),
+      reviewSource: data.reviewSource,
+      reviewItems,
+      reviewQuotes: reviewItems.map(r => [r.title, r.description, r.name].filter(Boolean).join(' — ')),
       hours: hoursStructured.map(d => `${d.day}: ${d.open ? `${d.from || '?'}–${d.to || '?'}` : 'Closed'}`),
       hoursStructured,
       serviceGroups: Object.values(groups),
+      contactForm,
       logoImage: logoImage || undefined,
       heroImage: heroImage || undefined,
-      gallery: galleryImages.filter((url): url is string => !!url),
+      gallery: gallery.filter((url): url is string => !!url),
       chosenDomain: domainReady ? domain + suffix : undefined,
-    };
-    const record = { slug: chosenSlug, name: data.businessName, raw, updatedAt: new Date().toISOString() };
-    try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/businesses`, {
-        method: 'POST',
-        headers: authHeaders(session.access_token, { 'Content-Type': 'application/json', Prefer: 'return=representation,resolution=merge-duplicates' }),
-        body: JSON.stringify({ id: chosenSlug, name: data.businessName, user_id: session.user.id, data: record, updated_at: record.updatedAt }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      setSlug(chosenSlug);
-      await notifyStage('new_signup', data.businessName || 'Unnamed business', data.contactEmail || data.email, chosenSlug);
-    } catch (err) {
-      console.error('[sync] could not save business', err);
+      design: designSnapshot(),
+    });
+    // A slug owned by another account is rejected by the RPC, so try a few suffixed variants.
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const chosenSlug = attempt === 0 ? baseSlug : `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
+      try {
+        const [logoImage, heroImage, ...galleryImages] = await Promise.all([
+          uploadMediaToR2(session.access_token, chosenSlug, 'logo', media.logo),
+          uploadMediaToR2(session.access_token, chosenSlug, 'hero', media.hero),
+          ...media.gallery.map((uri, i) => uploadMediaToR2(session.access_token, chosenSlug, `gallery_${i}`, uri)),
+        ]);
+        const raw = buildRaw(logoImage, heroImage, galleryImages);
+        await saveBusiness(chosenSlug, { raw });
+        setSlug(chosenSlug);
+        setMedia({ logo: raw.logoImage, hero: raw.heroImage, gallery: raw.gallery });
+        const failedUploads = [media.logo && !logoImage, media.hero && !heroImage, ...media.gallery.map((u, i) => u && !galleryImages[i])].filter(Boolean).length;
+        if (failedUploads) setSaveError(`${failedUploads} photo${failedUploads > 1 ? 's' : ''} couldn’t upload. You can add them again from Edit.`);
+        await notifyStage('new_signup', data.businessName || 'Unnamed business', data.contactEmail || data.email, chosenSlug);
+        return;
+      } catch (err: any) {
+        if (err?.conflict && !slug) continue;
+        console.error('[sync] could not save business', err);
+        setSaveError('We couldn’t save your details. Check your connection — we’ll try again when you tap Save.');
+        return;
+      }
     }
+    setSaveError('We couldn’t save your details. Please try again.');
+  };
+
+  const saveDesign = async () => {
+    if (!slug || !session) return;
+    try { await saveBusiness(slug, { raw: { design: designSnapshot(), contactForm }, needsPublish: websiteStatus === 'live' }); setSaveError(''); }
+    catch { setSaveError('Your design changes couldn’t be saved. Please try again.'); }
+  };
+
+  const setLive = async (live: boolean) => {
+    if (!slug || !session) return false;
+    try {
+      await saveBusiness(slug, live ? { published: true, manuallyOffline: false, needsPublish: false } : { published: false, manuallyOffline: true });
+      setWebsiteStatus(live ? 'live' : 'ready');
+      return true;
+    } catch { Alert.alert('Something went wrong', 'We couldn’t update your website. Please try again.'); return false; }
   };
 
   useEffect(() => {
@@ -1177,16 +1311,16 @@ function AppInner() {
 
   const content = (contentStep = step) => {
     switch (contentStep.id) {
-      case 'login': return <><Text style={s.heroTitle}>{authMode === 'signup' ? 'Your dream website in 10 minutes with FlowBuilder™' : 'Welcome back.'}</Text>
-        <Intro>{authMode === 'signup' ? 'Create your BrightSite account to begin.' : 'Log in to continue managing your website.'}</Intro>
+      case 'login': return <><Text style={s.heroTitle}>{authMode === 'signup' ? 'Your business website, sorted.' : 'Welcome back.'}</Text>
+        <Intro>{authMode === 'signup' ? 'Answer a few quick questions and we’ll build a professional website for you. Takes about 10 minutes.' : 'Log in to continue managing your website.'}</Intro>
         <View style={s.authModes}><Pressable onPress={() => { setAuthMode('signup'); setAuthStatus(''); }} style={[s.authMode, authMode === 'signup' && s.authModeOn]}><Text style={[s.authModeText, authMode === 'signup' && s.authModeTextOn]}>Sign up</Text></Pressable><Pressable onPress={() => { setAuthMode('login'); setAuthStatus(''); }} style={[s.authMode, authMode === 'login' && s.authModeOn]}><Text style={[s.authModeText, authMode === 'login' && s.authModeTextOn]}>Log in</Text></Pressable></View>
         <Field label="Email" value={data.email} onChangeText={(v: string) => setData({ ...data, email: v })} placeholder="you@business.co.uk" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} textContentType="emailAddress" returnKeyType="next" />
         <Field label="Password" value={data.password} onChangeText={(v: string) => setData({ ...data, password: v })} placeholder="At least 8 characters" secureTextEntry textContentType={authMode === 'signup' ? 'newPassword' : 'password'} returnKeyType="done" onSubmitEditing={() => void authenticate()} />
         {!!authStatus && <Text style={s.authStatus}>{authStatus}</Text>}
-        <Pressable disabled={authBusy || authChecking} onPress={() => void authenticate()} style={({ pressed }) => [s.authSubmit, pressed && s.pressed, (authBusy || authChecking) && s.authSubmitDisabled]}>{authBusy || authChecking ? <ActivityIndicator size="small" color="#24282B" /> : <Text style={s.authSubmitText}>{authMode === 'signup' ? 'Create account' : 'Log in'}</Text>}</Pressable></>;
+        <Pressable disabled={authBusy || authChecking} onPress={() => void authenticate()} style={({ pressed }) => [s.authSubmit, pressed && s.pressed, (authBusy || authChecking) && s.authSubmitDisabled]}>{authBusy || authChecking ? <ActivityIndicator size="small" color="#fff" /> : <Text style={s.authSubmitText}>{authMode === 'signup' ? 'Create account' : 'Log in'}</Text>}</Pressable></>;
       case 'business': return <><Intro>Tell us the essentials. Anything you leave blank simply won’t appear on your website.</Intro>
         <Field label="Full name" value={data.fullName} onChangeText={(v: string) => setData({ ...data, fullName: v })} placeholder="e.g. Jane Smith" />
-        <Pressable onPress={() => setShowFullName(!showFullName)} style={s.nameDisplay} hitSlop={8}><View style={[s.checkbox, showFullName && s.checkboxOn]}>{showFullName && <Ionicons name="checkmark" size={13} color="#071923" />}</View><Text style={s.nameDisplayText}>Display full name on website</Text></Pressable>
+        <Pressable onPress={() => setShowFullName(!showFullName)} style={s.nameDisplay} hitSlop={8}><View style={[s.checkbox, showFullName && s.checkboxOn]}>{showFullName && <Ionicons name="checkmark" size={13} color="#fff" />}</View><Text style={s.nameDisplayText}>Display full name on website</Text></Pressable>
         <Field label="Business name" value={data.businessName} onChangeText={(v: string) => setData({ ...data, businessName: v })} />
         <Field label="Business type" value={data.category} onChangeText={(v: string) => setData({ ...data, category: v })} />
         <Field label="Address" value={data.address} onChangeText={(v: string) => setData({ ...data, address: v })} placeholder="e.g. 12 High Street, London" /></>;
@@ -1217,7 +1351,7 @@ function AppInner() {
             if (!permission.granted) return;
             const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, quality: .82 });
             if (!result.canceled) setMedia(current => ({ ...current, gallery: [...current.gallery, ...result.assets.map(a => a.uri)].slice(0, 16) }));
-          }}><Ionicons name="add" size={26} color="#2563EB" /></Pressable>}
+          }}><Ionicons name="add" size={26} color={C.primary} /></Pressable>}
         </View></>;
       case 'reviews': return <><Intro>Add customer reviews for your website. Each one is optional.</Intro>
         {reviewsList.map((review, i) => {
@@ -1252,25 +1386,25 @@ function AppInner() {
           </Pressable>)}
           {data.reviewSource && <Field label={`${data.reviewSource} profile link`} value={data.reviewLink} onChangeText={(v: string) => setData({ ...data, reviewLink: v })} placeholder={data.reviewSource === 'Google' ? 'Paste your Google Business link' : 'Paste your Trustpilot link'} />}
         </View>
-        <Pressable onPress={() => setContactForm(!contactForm)} style={s.formChoice}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color="#2563EB" /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: '#B8C2C9', true: DARK }} thumbColor="#F7FCFF" /></Pressable></>;
+        <Pressable onPress={() => setContactForm(!contactForm)} style={s.formChoice}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color={C.primary} /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: 'rgba(28,40,50,.18)', true: C.primary }} thumbColor="#fff" {...({ activeThumbColor: '#fff' } as any)} /></Pressable></>;
       case 'choice': return <View style={s.choiceWrap}>
         <Text style={s.choiceHeading}>How would you like to build your website?</Text>
         <Text style={s.choiceSub}>Either way, you can always make changes later.</Text>
         <Pressable onPress={() => { void syncOnboardingToBackend('template'); setBuildChoice('template'); setAppScreen('loading'); }} style={s.choiceCard}>
-          <View style={[s.choiceIcon, { backgroundColor: 'rgba(34,188,231,.14)' }]}><Ionicons name="layers-outline" size={26} color="#4BD4F8" /></View>
+          <View style={[s.choiceIcon, { backgroundColor: 'rgba(37,99,235,.14)' }]}><Ionicons name="layers-outline" size={26} color={C.primary} /></View>
           <View style={{ flex: 1 }}>
             <Text style={s.choiceCardTitle}>Build with Template</Text>
             <Text style={s.choiceCardText}>Choose a design, pick your colours and font — goes live today.</Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color="rgba(220,238,248,.4)" />
+          <Ionicons name="chevron-forward" size={18} color={C.inkMuted} />
         </Pressable>
         <Pressable onPress={() => { void syncOnboardingToBackend('designer'); setBuildChoice('designer'); setAppScreen('loading'); }} style={s.choiceCard}>
-          <View style={[s.choiceIcon, { backgroundColor: 'rgba(120,190,120,.14)' }]}><Ionicons name="person-outline" size={26} color="#79D7A2" /></View>
+          <View style={[s.choiceIcon, { backgroundColor: C.successSoft }]}><Ionicons name="person-outline" size={26} color={C.success} /></View>
           <View style={{ flex: 1 }}>
             <Text style={s.choiceCardTitle}>Send to Designer</Text>
             <Text style={s.choiceCardText}>Tom builds your website for you. Preview ready in 1–2 days.</Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color="rgba(220,238,248,.4)" />
+          <Ionicons name="chevron-forward" size={18} color={C.inkMuted} />
         </Pressable>
       </View>;
       case 'domain': {
@@ -1289,7 +1423,7 @@ function AppInner() {
           finally { setDomainChecking(false); }
         };
         return <><Intro>Find the right home for your website. The live registration price comes straight from the registry before payment.</Intro><View style={s.domainSearch}>
-          <TextInput style={s.domainInput} value={domain} onChangeText={(value) => { setDomain(value); clearDomainQuote(); }} autoCapitalize="none" /><View style={{ position: 'relative' }}><Pressable onPress={() => setShowSuffixes(!showSuffixes)} style={s.suffixButton} hitSlop={6}><Text style={s.domainSuffix}>{suffix}</Text><Ionicons name={showSuffixes ? 'chevron-up' : 'chevron-down'} size={14} color="#1C2832" /></Pressable>
+          <TextInput style={s.domainInput} value={domain} placeholder="yourbusiness" placeholderTextColor={C.placeholder} autoCorrect={false} onChangeText={(value) => { setDomain(value); clearDomainQuote(); }} autoCapitalize="none" /><View style={{ position: 'relative' }}><Pressable onPress={() => setShowSuffixes(!showSuffixes)} style={s.suffixButton} hitSlop={6}><Text style={s.domainSuffix}>{suffix}</Text><Ionicons name={showSuffixes ? 'chevron-up' : 'chevron-down'} size={14} color={C.ink} /></Pressable>
           {showSuffixes && <View style={s.suffixDropdown}>
             {DOMAIN_TLDS.map((item, i) => <Pressable key={item} onPress={() => { setSuffix(item); setShowSuffixes(false); clearDomainQuote(); }} style={[s.suffixDropdownItem, i < DOMAIN_TLDS.length - 1 && s.suffixDropdownDivider, suffix === item && s.suffixDropdownItemOn]}>
               <Text style={s.suffixDropdownText}>{item}</Text>
@@ -1316,14 +1450,14 @@ function AppInner() {
     </View>
   </FlowBackdrop>;
 
-  if (appScreen === 'dashboard') return <FadeIn><DashboardHome tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onTakeOffline={() => setWebsiteStatus('ready')} onEdit={() => { setEditFrom('dashboard'); setAppScreen('design-editor'); }} /></FadeIn>;
+  if (appScreen === 'dashboard') return <FadeIn><DashboardHome tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={signOut} saveError={saveError} planAnnual={planAnnual} media={media} isPaying={!!businessRecord.current.planActive} onEdit={() => { setEditFrom('dashboard'); setAppScreen('design-editor'); }} /></FadeIn>;
 
   if (appScreen === 'design-editor') return <FadeIn><DesignEditorFullscreen palette={palette} setPalette={setPalette} font={font} setFont={setFont} siteTexts={siteTexts} setSiteTexts={setSiteTexts} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} data={data} services={services} hours={hours} contactForm={contactForm} onBack={() => {
     if (editFrom === 'dashboard') { setAppScreen('dashboard'); return; }
     setAppScreen('onboarding');
     setIndex(steps.findIndex(item => item.id === 'domain'));
     motion.setValue(steps.findIndex(item => item.id === 'domain') * CARD_TRAVEL);
-  }} onConfirm={() => { setWebsiteStatus('ready'); setTab('Website'); setAppScreen('dashboard'); }} /></FadeIn>;
+  }} media={media} onConfirm={() => { if (websiteStatus !== 'live') setWebsiteStatus('ready'); void saveDesign(); setTab('Website'); setAppScreen('dashboard'); }} /></FadeIn>;
 
   if (appScreen === 'loading') {
     const messages = buildChoice === 'template' ? LOADING_MESSAGES.template : LOADING_MESSAGES.designer;
@@ -1363,7 +1497,7 @@ function AppInner() {
             </ScrollView>
             <View pointerEvents="none" style={s.fixedPrompt}>
               {!!validationMessage && isActive && <Text style={s.validationText}>{validationMessage}</Text>}
-              <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="arrow-up" size={14} color="#000" />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : deckStep.id === 'choice' ? 'Pick an option above' : 'Swipe up to save'}</Text></View>
+              <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : deckStep.id === 'choice' ? 'Pick an option above' : 'Swipe up to save'}</Text></View>
             </View>
           </Animated.View>;
         })}
@@ -1385,56 +1519,38 @@ function AppInner() {
 }
 
 export default function App() {
-  return (
-    <AppInner />
-  );
+  const [generation, setGeneration] = useState(0);
+  return <AppInner key={generation} onSignedOut={() => setGeneration(g => g + 1)} />;
 }
 
 const s = StyleSheet.create({
-  backdropGlowTop: { position: 'absolute', width: '88%', height: '42%', top: '-9%', left: '-18%', borderRadius: 400, opacity: .86, overflow: 'hidden' }, backdropGlowBottom: { position: 'absolute', width: '94%', height: '46%', bottom: '-12%', right: '-24%', borderRadius: 440, opacity: .74, overflow: 'hidden' },
   stage: { flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28, paddingBottom: 72, paddingHorizontal: 0 },
   loginStage: { flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28, paddingBottom: 20, paddingHorizontal: 18 }, loginCard: { flex: 1 },
   loginHeader: { minHeight: 78, paddingLeft: 26, paddingRight: 18, paddingTop: 15, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, loginAppIcon: { width: 48, height: 48, borderRadius: 15, shadowColor: '#1C69E8', shadowOpacity: .28, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } },
-  previousPeek: { position: 'absolute', top: -34, left: 34, right: 34, height: 98, borderRadius: 30, backgroundColor: 'rgba(255,255,255,.05)', shadowColor: '#000', shadowOpacity: .16, shadowRadius: 24, shadowOffset: { width: 0, height: 12 } },
-  previousCard: { position: 'absolute', zIndex: 1, top: -(SCREEN_HEIGHT - 216), left: 34, right: 34, height: SCREEN_HEIGHT - 126, borderRadius: 26, backgroundColor: 'rgba(255,255,255,.06)', shadowColor: '#000', shadowOpacity: .34, shadowRadius: 28, shadowOffset: { width: 0, height: 16 }, overflow: 'hidden' },
   card: { flex: 1, zIndex: 2, borderRadius: 30, backgroundColor: CARD, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.20)', shadowColor: '#000', shadowOpacity: .62, shadowRadius: 31, shadowOffset: { width: 0, height: 18 }, elevation: 18 },
   deckCard: { position: 'absolute', top: CARD_TOP, bottom: CARD_BOTTOM, left: 6, right: 6 },
   deckCardActive: { shadowColor: '#01070B', shadowOpacity: .7, shadowRadius: 38, shadowOffset: { width: 0, height: 22 }, elevation: 26 }, deckCardBehind: { shadowOpacity: .3, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 4 },
-  cardHeader: { minHeight: 72, paddingHorizontal: 26, paddingTop: 22, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', zIndex: 100, elevation: 100 }, designCardHeader: { minHeight: 64, paddingTop: 13, paddingBottom: 10, paddingRight: 14 },
+  cardHeader: { minHeight: 72, paddingHorizontal: 26, paddingTop: 22, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', zIndex: 100, elevation: 100 },
   cardScroll: { flex: 1, zIndex: 1, elevation: 1, overflow: 'hidden' },
-  cardTitle: { fontFamily: FONT, fontSize: 21, fontWeight: '700', letterSpacing: -.4, color: '#1C2832' }, count: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: 'rgba(28,40,50,.7)' },
-  content: { padding: 24, paddingBottom: 76 }, loginContent: { flex: 1, paddingTop: 12, paddingBottom: 18 }, intro: { fontFamily: FONT, fontSize: 14, lineHeight: 21, color: 'rgba(28,40,50,.7)', marginBottom: 18 },
-  fieldWrap: { marginBottom: 16 }, fieldLabel: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: 'rgba(28,40,50,.7)', marginBottom: 7 },
-  uploadLabel: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: 'rgba(28,40,50,.7)', marginTop: 6, letterSpacing: 0.3 },
-  uploadLabelSub: { fontFamily: FONT, fontSize: 11, color: 'rgba(28,40,50,.5)', marginTop: 1 },
-  input: { minHeight: 50, borderRadius: 16, paddingHorizontal: 16, fontFamily: FONT, fontSize: 15, color: '#1C2832', backgroundColor: 'rgba(255,255,255,.42)', borderWidth: 1, borderColor: 'rgba(28,40,50,.16)', outlineWidth: 0 },
+  cardTitle: { fontFamily: FONT, fontSize: 22, fontWeight: '800', letterSpacing: -.5, color: C.ink }, count: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.inkMuted },
+  content: { paddingTop: 24, paddingLeft: 30, paddingRight: 24, paddingBottom: 84 }, loginContent: { flex: 1, paddingTop: 12, paddingBottom: 18 }, intro: { fontFamily: FONT, fontSize: 15, lineHeight: 22, color: C.inkSoft, marginBottom: 20 },
+  fieldWrap: { marginBottom: 16 }, fieldLabel: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.inkSoft, marginBottom: 7 },
+  input: { minHeight: 50, borderRadius: 14, paddingHorizontal: 16, fontFamily: FONT, fontSize: 16, color: C.ink, backgroundColor: C.field, borderWidth: 1, borderColor: C.line, outlineWidth: 0 },
   inputMultiline: { minHeight: 92, paddingTop: 14, textAlignVertical: 'top' },
   nameDisplay: { marginTop: -3, marginBottom: 6, flexDirection: 'row', alignItems: 'center', gap: 9 },
-  checkbox: { width: 19, height: 19, borderRadius: 6, borderWidth: 1, borderColor: 'rgba(28,40,50,.5)', backgroundColor: 'rgba(255,255,255,.55)', alignItems: 'center', justifyContent: 'center' },
+  checkbox: { width: 20, height: 20, borderRadius: 6, borderWidth: 1.5, borderColor: C.lineStrong, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   checkboxOn: { backgroundColor: BRAND, borderColor: BRAND },
-  nameDisplayText: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: 'rgba(28,40,50,.7)' },
-  button: { minHeight: 52, paddingHorizontal: 20, borderRadius: 18, backgroundColor: '#E5F9FF', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, shadowColor: BRAND, shadowOpacity: .18, shadowRadius: 18, shadowOffset: { width: 0, height: 8 } },
-  buttonText: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#061824' }, secondaryButton: { backgroundColor: 'rgba(255,255,255,.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)' }, pressed: { transform: [{ scale: .96 }], opacity: .86 },
-  logo: { width: 52, height: 52, borderRadius: 18, backgroundColor: BRAND, alignItems: 'center', justifyContent: 'center', marginBottom: 14, shadowColor: BRAND, shadowOpacity: .35, shadowRadius: 20 },
-  logoText: { fontFamily: FONT, fontSize: 29, fontWeight: '900', color: '#fff' }, logoDot: { position: 'absolute', width: 7, height: 7, borderRadius: 5, backgroundColor: '#fff', top: 8, right: 10 },
-  heroTitle: { fontFamily: FONT, fontSize: 27, lineHeight: 32, fontWeight: '800', letterSpacing: -.9, color: '#1C2832', marginBottom: 8 },
-  authModes: { height: 42, padding: 4, borderRadius: 15, flexDirection: 'row', backgroundColor: 'rgba(15,18,21,.28)', marginBottom: 14 }, authMode: { flex: 1, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }, authModeOn: { backgroundColor: 'rgba(255,255,255,.9)' }, authModeText: { fontFamily: FONT, fontSize: 12, fontWeight: '800', color: 'rgba(28,40,50,.7)' }, authModeTextOn: { color: '#25292C' }, authStatus: { marginTop: -3, fontFamily: FONT, fontSize: 11, lineHeight: 16, fontWeight: '700', color: '#8A4A12', textAlign: 'center' },
-  authSubmit: { height: 48, marginTop: 10, borderRadius: 16, backgroundColor: '#F6F2E9', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: .16, shadowRadius: 14, shadowOffset: { width: 0, height: 7 } }, authSubmitDisabled: { opacity: .62 }, authSubmitText: { fontFamily: FONT, fontSize: 14, fontWeight: '900', color: '#24282B' },
-  rowsCard: { borderRadius: 20, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,.055)', borderWidth: 1, borderColor: 'rgba(255,255,255,.1)' }, hoursContent: { padding: 0 }, hoursIntro: { paddingHorizontal: 24, paddingTop: 24 }, hoursCard: { minHeight: SCREEN_HEIGHT * .57, overflow: 'hidden' },
-  hoursRow: { flex: 1, minHeight: 58, paddingHorizontal: 17, flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(255,255,255,.14)' }, hoursRowLast: { borderBottomWidth: 0 }, hoursDay: { width: 43, fontFamily: FONT, fontSize: 14, fontWeight: '700', color: '#1C2832' }, hoursTimes: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, timeInput: { width: 63, height: 34, borderRadius: 10, paddingHorizontal: 8, backgroundColor: 'transparent', color: '#1C2832', fontFamily: FONT, fontSize: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', outlineWidth: 0 }, timeInputOff: { width: 63, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(28,40,50,.22)' }, timeOffText: { fontFamily: FONT, color: 'rgba(28,40,50,.5)', fontSize: 13 }, timeDash: { fontFamily: FONT, fontSize: 13, color: 'rgba(28,40,50,.7)' }, hoursSwitch: { width: 52, alignItems: 'flex-end' }, closedText: { flex: 1, fontFamily: FONT, fontSize: 12, color: 'rgba(28,40,50,.5)' },
-  toggleLabel: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: '#ECF6FA' }, toggleValue: { fontFamily: FONT, fontSize: 12, color: 'rgba(28,40,50,.7)', marginTop: 2 },
-  inline: { flexDirection: 'row', gap: 10 },
-  upload: { alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 16, backgroundColor: '#EFE4DB', borderWidth: 1, borderColor: '#1C2832', overflow: 'hidden' },
+  nameDisplayText: { fontFamily: FONT, fontSize: 13, fontWeight: '600', color: C.inkSoft }, pressed: { transform: [{ scale: .96 }], opacity: .86 },
+  heroTitle: { fontFamily: FONT, fontSize: 28, lineHeight: 33, fontWeight: '800', letterSpacing: -.8, color: C.ink, marginBottom: 8 },
+  authModes: { height: 44, padding: 4, borderRadius: 14, flexDirection: 'row', backgroundColor: 'rgba(28,40,50,.08)', marginBottom: 16 }, authMode: { flex: 1, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }, authModeOn: { backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 } }, authModeText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.inkMuted }, authModeTextOn: { color: C.ink }, authStatus: { marginTop: -2, fontFamily: FONT, fontSize: 13, lineHeight: 18, fontWeight: '600', color: C.danger, textAlign: 'center' },
+  authSubmit: { height: 52, marginTop: 12, borderRadius: 14, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' }, authSubmitDisabled: { opacity: .62 }, authSubmitText: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: '#fff' }, hoursContent: { padding: 0 }, hoursIntro: { paddingHorizontal: 30, paddingTop: 24 }, hoursCard: { minHeight: SCREEN_HEIGHT * .57, overflow: 'hidden' },
+  hoursRow: { flex: 1, minHeight: 58, paddingLeft: 30, paddingRight: 20, flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.lineStrong }, hoursRowLast: { borderBottomWidth: 0 }, hoursDay: { width: 43, fontFamily: FONT, fontSize: 14, fontWeight: '700', color: '#1C2832' }, hoursTimes: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, timeInput: { width: 66, height: 36, borderRadius: 10, paddingHorizontal: 8, backgroundColor: C.field, color: C.ink, fontFamily: FONT, fontSize: 14, textAlign: 'center', borderWidth: 1, borderColor: C.line, outlineWidth: 0 }, timeInputOff: { width: 66, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.line }, timeOffText: { fontFamily: FONT, color: C.inkMuted, fontSize: 13 }, timeDash: { fontFamily: FONT, fontSize: 13, color: C.inkSoft }, hoursSwitch: { width: 52, alignItems: 'flex-end' },
+  upload: { alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 14, backgroundColor: C.field, borderWidth: 1, borderStyle: 'dashed', borderColor: C.lineStrong, overflow: 'hidden' },
   uploadPreview: { width: 52, height: 52, borderRadius: 15, marginBottom: 9 }, uploadPreviewFill: { width: '100%', height: '100%' },
-  uploadIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(34,188,231,.12)', marginBottom: 10 },
-  uploadTitle: { fontFamily: FONT, fontWeight: '800', fontSize: 14, color: '#1C2832' }, uploadSub: { fontFamily: FONT, fontSize: 11, color: 'rgba(28,40,50,.7)', marginTop: 3 },
-  continue: { marginTop: 24, gap: 16 }, skip: { fontFamily: FONT, fontSize: 12, color: 'rgba(28,40,50,.7)', textAlign: 'center' }, loginSwipe: { marginTop: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 }, designSwipe: { paddingVertical: 22, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 }, swipeHint: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: '#000', textAlign: 'center' },
-  fixedPrompt: { position: 'absolute', left: 18, right: 18, bottom: 14, zIndex: 120, elevation: 120, alignItems: 'center', gap: 7 }, swipeRow: { minHeight: 31, paddingHorizontal: 13, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, }, validationText: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: '#A3261F', textAlign: 'center', paddingHorizontal: 12 },
-  serviceRow: { flexDirection: 'row', gap: 10, marginTop: 5, alignItems: 'center' }, serviceInput: { height: 48, borderRadius: 14, paddingHorizontal: 10, fontFamily: FONT, fontSize: 12, color: '#1C2832', backgroundColor: 'rgba(255,255,255,.42)', borderWidth: 1, borderColor: 'rgba(28,40,50,.16)', outlineWidth: 0 }, serviceActions: { flexDirection: 'row', gap: 8 }, serviceDelete: { width: 28, height: 48, alignItems: 'center', justifyContent: 'center' }, sectionDelete: { width: 28, height: 50, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }, sectionDivider: { height: StyleSheet.hairlineWidth, backgroundColor: 'rgba(255,255,255,.14)', marginVertical: 16 }, addService: { marginTop: 13, height: 42, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(226,232,235,.42)', backgroundColor: 'rgba(255,255,255,.08)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, addSectionBtn: { marginTop: 8, borderColor: 'rgba(226,232,235,.2)', backgroundColor: 'transparent' }, addServiceText: { fontFamily: FONT, fontWeight: '800', fontSize: 12, color: '#1C2832' },
-  loading: { position: 'absolute', inset: 0, minHeight: SCREEN_HEIGHT * .65, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 44 }, loadingWordmark: { flexDirection: 'row', position: 'relative', marginBottom: 26 }, loadingBrand: { fontFamily: FONT, letterSpacing: 1.6, fontWeight: '900', fontSize: 17, color: '#F7FCFF' }, loadingBrandDot: { position: 'absolute', width: 5, height: 5, borderRadius: 3, backgroundColor: '#4B9BFF', right: 32, top: -1 },
-  loadingTitle: { fontFamily: FONT, fontSize: 25, lineHeight: 31, fontWeight: '800', color: '#F5FBFE', textAlign: 'center' }, loadingText: { fontFamily: FONT, fontSize: 13, lineHeight: 19, color: 'rgba(221,237,246,.58)', textAlign: 'center', marginTop: 10 }, loadingSteps: { alignSelf: 'stretch', gap: 10, marginTop: 27 }, loadingStep: { flexDirection: 'row', alignItems: 'center', gap: 9, opacity: .36 }, loadingStepOn: { opacity: 1 }, loadingStepText: { fontFamily: FONT, fontSize: 12, color: 'rgba(222,238,247,.6)' }, loadingStepTextOn: { color: '#EAF9FE', fontWeight: '700' },
-  track: { width: '100%', height: 5, borderRadius: 5, backgroundColor: 'rgba(255,255,255,.1)', marginTop: 28, overflow: 'hidden' }, fill: { height: 5, backgroundColor: BRAND, borderRadius: 5 },
-  design: { minHeight: SCREEN_HEIGHT * .76, position: 'relative' }, designPreview: {}, site: { overflow: 'hidden' },
+  uploadIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(37,99,235,.12)', marginBottom: 10 },
+  uploadTitle: { fontFamily: FONT, fontWeight: '800', fontSize: 14, color: '#1C2832' }, uploadSub: { fontFamily: FONT, fontSize: 11, color: C.inkSoft, marginTop: 3 }, swipeHint: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.ink, textAlign: 'center' },
+  fixedPrompt: { position: 'absolute', left: 18, right: 18, bottom: 14, zIndex: 120, elevation: 120, alignItems: 'center', gap: 7 }, swipeRow: { minHeight: 34, paddingHorizontal: 14, borderRadius: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,.7)' }, validationText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.danger, textAlign: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: C.dangerSoft, overflow: 'hidden' },
+  serviceRow: { flexDirection: 'row', gap: 10, marginTop: 5, alignItems: 'center' }, serviceInput: { minWidth: 0, height: 48, borderRadius: 12, paddingHorizontal: 10, fontFamily: FONT, fontSize: 14, color: C.ink, backgroundColor: C.field, borderWidth: 1, borderColor: C.line, outlineWidth: 0 }, serviceDelete: { width: 28, height: 48, alignItems: 'center', justifyContent: 'center' }, sectionDelete: { width: 28, height: 50, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }, sectionDivider: { height: StyleSheet.hairlineWidth, backgroundColor: C.lineStrong, marginVertical: 16 }, addService: { marginTop: 14, height: 46, borderRadius: 12, borderWidth: 1, borderColor: C.primaryBorder, backgroundColor: C.primarySoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, addSectionBtn: { marginTop: 8, borderColor: C.lineStrong, backgroundColor: 'transparent' }, addServiceText: { fontFamily: FONT, fontWeight: '700', fontSize: 14, color: C.ink }, site: { overflow: 'hidden' },
   previewBrowserWrap: { backgroundColor: 'rgba(8,15,20,.9)' },
   previewBrowser: { height: 29, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   previewDots: { position: 'absolute', left: 11, flexDirection: 'row', gap: 4 }, previewDot: { width: 6, height: 6, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.35)' }, previewAddress: { fontFamily: FONT, fontSize: 8, color: 'rgba(255,255,255,.54)' },
@@ -1443,11 +1559,10 @@ const s = StyleSheet.create({
   previewPageTabText: { fontFamily: FONT, fontSize: 8, fontWeight: '700', color: 'rgba(255,255,255,.45)', letterSpacing: .5 },
   siteHero: { height: SCREEN_HEIGHT * .36, padding: 18, justifyContent: 'space-between' },
   siteTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, siteKicker: { fontFamily: FONT, fontSize: 11, letterSpacing: 2, fontWeight: '700', color: '#fff' }, siteNav: { flexDirection: 'row', alignItems: 'center', gap: 10 }, siteNavText: { fontFamily: FONT, fontSize: 7, letterSpacing: .7, color: 'rgba(255,255,255,.78)' }, siteCopy: { maxWidth: '76%' },
-  siteHeadline: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 24, lineHeight: 28, color: '#fff', marginBottom: 7 }, rounded: { fontFamily: FONT, fontWeight: '800', letterSpacing: -1 }, modern: { fontFamily: FONT, fontWeight: '400', letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 20 },
+  siteHeadline: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 24, lineHeight: 28, color: '#fff', marginBottom: 7 },
   siteBody: { fontFamily: FONT, fontSize: 10, lineHeight: 15, color: 'rgba(255,255,255,.76)' }, editing: { borderWidth: 1, borderColor: BRAND, borderRadius: 4, padding: 2 },
   siteCta: { marginTop: 10, alignSelf: 'flex-start', paddingVertical: 7, paddingHorizontal: 11, borderWidth: 1 }, siteCtaText: { fontFamily: FONT, fontSize: 7, fontWeight: '800', letterSpacing: 1.4, color: '#fff' },
-  siteCtaFilled: { paddingVertical: 9, paddingHorizontal: 16, borderRadius: 6, alignItems: 'center', alignSelf: 'flex-start' }, siteCtaFilledText: { fontFamily: FONT, fontSize: 8, fontWeight: '800', color: '#fff' },
-  siteSection: { padding: 16 }, siteSectionTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 16, marginBottom: 5 }, siteSectionBody: { fontFamily: FONT, fontSize: 9, lineHeight: 14, opacity: .68 },
+  siteCtaFilled: { paddingVertical: 9, paddingHorizontal: 16, borderRadius: 6, alignItems: 'center', alignSelf: 'flex-start' }, siteCtaFilledText: { fontFamily: FONT, fontSize: 8, fontWeight: '800', color: '#fff' }, siteSectionTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 16, marginBottom: 5 }, siteSectionBody: { fontFamily: FONT, fontSize: 9, lineHeight: 14, opacity: .68 },
   siteAboutServRow: { flexDirection: 'row', padding: 14, paddingTop: 16, gap: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(0,0,0,.08)' },
   siteAboutCol: { flex: 1.2 }, siteSvcsCol: { flex: 1, gap: 6 },
   siteServiceCard: { padding: 9, borderRadius: 9, borderWidth: 1 },
@@ -1485,147 +1600,112 @@ const s = StyleSheet.create({
   siteFormPh: { fontFamily: FONT, fontSize: 7, opacity: .45 },
   editPageTabs: { flexDirection: 'row', marginBottom: 8, borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(66,104,125,.18)' },
   editPageTab: { flex: 1, paddingVertical: 6, alignItems: 'center' },
-  editPageTabOn: { backgroundColor: 'rgba(34,188,231,.18)' },
-  editPageTabText: { fontFamily: FONT, fontSize: 9, fontWeight: '700', color: '#345568' },
-  editPageTabTextOn: { color: '#2878A0' },
+  editPageTabOn: { backgroundColor: 'rgba(37,99,235,.18)' },
+  editPageTabText: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: C.inkSoft },
+  editPageTabTextOn: { color: C.primary },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,.45)', justifyContent: 'flex-end', cursor: 'default' as any },
-  modalBox: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: Platform.OS === 'ios' ? 42 : 24 },
-  modalLabel: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: 'rgba(0,0,0,.45)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.8 },
-  modalInput: { borderWidth: 1, borderColor: 'rgba(0,0,0,.14)', borderRadius: 12, padding: 14, fontFamily: FONT, fontSize: 15, color: '#1A1A1A', minHeight: 80, textAlignVertical: 'top', marginBottom: 16, outlineWidth: 0 },
+  modalBox: { backgroundColor: C.canvas, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: Platform.OS === 'ios' ? 42 : 24 },
+  modalLabel: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.inkSoft, marginBottom: 8 },
+  modalInput: { borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 14, fontFamily: FONT, fontSize: 16, color: C.ink, backgroundColor: '#fff', minHeight: 90, textAlignVertical: 'top', marginBottom: 16, outlineWidth: 0 },
   modalButtons: { flexDirection: 'row', gap: 10 },
   modalButton: { flex: 1, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   modalButtonCancel: { backgroundColor: 'rgba(0,0,0,.06)' },
-  modalButtonSave: { backgroundColor: '#1C2832' },
-  modalButtonText: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#1C2832' }, tutorial: { position: 'absolute', left: 24, right: 24, top: '33%', borderRadius: 27, overflow: 'hidden', padding: 22, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,.4)' },
-  tutorialTitle: { fontFamily: FONT, fontSize: 19, fontWeight: '800', color: '#fff', marginTop: 8 }, tutorialBody: { fontFamily: FONT, fontSize: 11, lineHeight: 16, color: 'rgba(255,255,255,.65)', textAlign: 'center', marginTop: 5 },
-  gotIt: { marginTop: 16, minWidth: 118, paddingVertical: 10, borderRadius: 99, backgroundColor: 'rgba(222,247,255,.88)', alignItems: 'center' }, gotItText: { fontFamily: FONT, fontWeight: '800', color: '#123042' },
-  templateDots: { position: 'absolute', bottom: 13, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 7 }, templateDot: { width: 7, height: 7, borderRadius: 5, backgroundColor: 'rgba(255,255,255,.35)' }, templateDotOn: { width: 21, backgroundColor: '#fff' },
+  modalButtonSave: { backgroundColor: C.primary },
+  modalButtonText: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#1C2832' },
   tools: { position: 'relative', zIndex: 30, width: FS_SLOT * 3, alignItems: 'center' }, toolStack: { alignSelf: 'stretch', alignItems: 'center', flexDirection: 'row' }, toolSlot: { width: FS_SLOT, alignItems: 'center' },
-  toolButton: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#fff', borderWidth: 1, borderColor: 'transparent', alignItems: 'center', justifyContent: 'center', shadowColor: '#207EA0', shadowOpacity: .18, shadowRadius: 12 }, toolActive: { backgroundColor: BRAND, shadowOpacity: .34, shadowRadius: 20 }, toolButtonText: { fontFamily: FONT, fontSize: 12, fontWeight: '800', color: '#fff' },
-  toolPanel: { position: 'absolute', top: 49, right: 0, width: 186, maxHeight: 400, padding: 12, borderRadius: 23, overflow: 'hidden', borderWidth: 1, borderColor: '#fff', backgroundColor: 'rgba(255,255,255,.92)', shadowColor: '#174E66', shadowOpacity: .18, shadowRadius: 18, zIndex: 200, elevation: 200 }, paletteWrap: { gap: 5 }, paletteScroll: { maxHeight: 274 }, paletteGroup: { paddingBottom: 12 }, paletteHeading: { paddingTop: 5, paddingBottom: 4 }, paletteHeadingText: { fontFamily: FONT, fontSize: 10, fontWeight: '900', letterSpacing: .8, color: '#345568', textTransform: 'uppercase' },
-  toolTitle: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#1C2832', textAlign: 'center', marginBottom: 9 }, option: { minHeight: 44, borderRadius: 16, paddingHorizontal: 9, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' },
-  dot: { width: 20, height: 20, borderRadius: 10 }, selected: { borderColor: BRAND, backgroundColor: 'rgba(34,188,231,.12)' }, fontOption: { paddingVertical: 10, borderRadius: 14, marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' }, fontOptionText: { fontFamily: FONT, fontSize: 11, fontWeight: '700', textAlign: 'center', color: '#1C2832' },
+  toolButton: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' }, toolActive: { backgroundColor: C.primary },
+  toolPanel: { position: 'absolute', top: 49, right: 0, width: 186, maxHeight: 400, padding: 12, borderRadius: 23, overflow: 'hidden', borderWidth: 1, borderColor: '#fff', backgroundColor: 'rgba(255,255,255,.92)', shadowColor: '#174E66', shadowOpacity: .18, shadowRadius: 18, zIndex: 200, elevation: 200 }, paletteWrap: { gap: 5 }, paletteScroll: { maxHeight: 274 }, paletteGroup: { paddingBottom: 12 }, paletteHeadingText: { fontFamily: FONT, fontSize: 11, fontWeight: '800', letterSpacing: .8, color: C.inkSoft, textTransform: 'uppercase' },
+  toolTitle: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: C.ink, textAlign: 'center', marginBottom: 9 }, option: { minHeight: 44, borderRadius: 16, paddingHorizontal: 9, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' },
+  dot: { width: 20, height: 20, borderRadius: 10 }, selected: { borderColor: BRAND, backgroundColor: 'rgba(37,99,235,.12)' }, fontOption: { paddingVertical: 10, borderRadius: 14, marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' }, fontOptionText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', textAlign: 'center', color: C.ink },
   sectionOption: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(28,40,50,.18)' }, sectionText: { flex: 1, fontFamily: FONT, fontSize: 12, fontWeight: '600', color: '#1C2832', marginHorizontal: 8 },
   sectionEye: { padding: 7 }, sectionDragHandle: { padding: 7 },
-  domainSearch: { flexDirection: 'row', alignItems: 'center', borderRadius: 18, backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(28,40,50,.22)' }, domainInput: { flex: 1, minHeight: 54, paddingHorizontal: 16, fontFamily: FONT, fontSize: 16, color: '#1C2832', outlineWidth: 0 }, suffixButton: { height: 54, paddingLeft: 8, paddingRight: 13, flexDirection: 'row', alignItems: 'center', gap: 3 }, domainSuffix: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: '#1C2832' }, suffixDropdown: { position: 'absolute', top: 58, right: 0, zIndex: 99, minWidth: 120, backgroundColor: '#1A2128', borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,.14)', shadowColor: '#000', shadowOpacity: .4, shadowRadius: 12, elevation: 10, overflow: 'hidden' }, suffixDropdownItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13, paddingHorizontal: 16 }, suffixDropdownDivider: { borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.08)' }, suffixDropdownItemOn: { backgroundColor: 'rgba(75,155,255,.12)' }, suffixDropdownText: { fontFamily: FONT, fontSize: 15, fontWeight: '600', color: '#E5EBEE' },
-  check: { marginTop: 12, paddingVertical: 15, borderRadius: 17, alignItems: 'center', backgroundColor: '#2563EB', borderWidth: 1, borderColor: '#2563EB' }, checkText: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#fff' },
-  checkDisabled: { opacity: .58 }, domainError: { marginTop: 10, fontFamily: FONT, fontSize: 12, lineHeight: 17, color: '#A3261F' }, domainResult: { marginTop: 14, padding: 15, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: 'rgba(34,188,231,.09)', borderWidth: 1, borderColor: 'rgba(34,188,231,.3)' }, domainName: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#1C2832' }, domainPrice: { fontFamily: FONT, fontSize: 11, color: '#1C2832', marginTop: 2 },
-  formChoice: { marginTop: 22, padding: 17, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: 'rgba(255,255,255,.45)', borderWidth: 1, borderColor: 'rgba(28,40,50,.16)' }, formChoiceIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(37,99,235,.12)' }, formChoiceTitle: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#1C2832' }, formChoiceText: { fontFamily: FONT, fontSize: 11, color: 'rgba(28,40,50,.7)', marginTop: 3, lineHeight: 16 }, formNote: { fontFamily: FONT, fontSize: 12, color: 'rgba(28,40,50,.7)', textAlign: 'center', marginTop: 18 },
-  planHeading: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#EAF8FD', marginTop: 25, marginBottom: 10 }, plan: { minHeight: 118, padding: 18, borderRadius: 23, backgroundColor: 'rgba(255,255,255,.055)', borderWidth: 1, borderColor: 'rgba(255,255,255,.11)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }, planOn: { borderColor: BRAND, backgroundColor: 'rgba(34,188,231,.1)' },
-  planName: { fontFamily: FONT, fontSize: 18, fontWeight: '800', color: '#1C2832' }, planNote: { fontFamily: FONT, fontSize: 11, color: 'rgba(28,40,50,.7)', marginTop: 4 }, planPrice: { fontFamily: FONT, fontSize: 25, fontWeight: '900', color: '#1C2832' }, planSmall: { fontSize: 10 }, save: { fontFamily: FONT, fontSize: 8, fontWeight: '900', color: '#07202B', backgroundColor: BRAND, padding: 5, borderRadius: 8, alignSelf: 'flex-start', marginBottom: 8 },
-  secure: { flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 18 }, secureText: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#DDF7FF' },
-  summary: { padding: 17, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.055)', borderWidth: 1, borderColor: 'rgba(255,255,255,.1)', marginBottom: 20 }, summaryLine: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 9 }, summaryLabel: { fontFamily: FONT, fontSize: 12, color: 'rgba(28,40,50,.7)' }, summaryValue: { fontFamily: FONT, fontSize: 12, fontWeight: '800', color: '#1C2832' },
-  total: { marginTop: 7, paddingTop: 15, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(255,255,255,.16)' }, totalLabel: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#fff' }, totalValue: { fontFamily: FONT, fontSize: 18, fontWeight: '900', color: BRAND },
-  dashHead: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 18 }, live: { fontFamily: FONT, fontSize: 9, fontWeight: '900', letterSpacing: 1, color: BRAND, marginBottom: 7 }, dashTitle: { fontFamily: FONT, fontSize: 22, fontWeight: '800', color: '#F2FAFD' }, editPill: { paddingVertical: 9, paddingHorizontal: 13, borderRadius: 99, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,.08)' }, editPillText: { fontFamily: FONT, fontSize: 11, fontWeight: '800', color: '#DFF8FF' },
-  browser: { height: 390, borderRadius: 23, overflow: 'hidden', backgroundColor: '#0D1721' }, browserBar: { height: 32, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#1C2A37' }, browserDot: { width: 7, height: 7, borderRadius: 5, backgroundColor: 'rgba(255,255,255,.32)' }, dashImage: { width: '100%', height: '100%' },
-  publishOverlay: { position: 'absolute', left: 0, right: 0, top: 32, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(6,14,20,.62)' }, spinner: { width: 36, height: 36, borderRadius: 18, borderWidth: 3, borderColor: 'rgba(255,255,255,.18)', borderTopColor: BRAND, marginBottom: 13 }, publishText: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#1C2832' },
-  tabs: { marginTop: 18, padding: 5, borderRadius: 18, flexDirection: 'row', backgroundColor: 'rgba(255,255,255,.06)' }, tab: { flex: 1, paddingVertical: 11, borderRadius: 14, alignItems: 'center' }, tabOn: { backgroundColor: 'rgba(34,188,231,.18)' }, tabText: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: 'rgba(222,238,247,.5)' }, tabTextOn: { color: '#DFF9FF' },
-  nextPeek: { position: 'absolute', zIndex: 1, bottom: -(SCREEN_HEIGHT - 126) + 90, left: 34, right: 34, height: SCREEN_HEIGHT - 126, borderRadius: 26, backgroundColor: 'rgba(8,18,28,.54)', shadowColor: '#020A10', shadowOpacity: .34, shadowRadius: 28, shadowOffset: { width: 0, height: 16 }, overflow: 'hidden' },
-  nextPeekTap: { paddingHorizontal: 22, paddingTop: 48, flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  nextLabel: { fontFamily: FONT, fontSize: 8, fontWeight: '900', color: BRAND, marginTop: 5 }, nextTitle: { flex: 1, fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#EFF9FC' },
-  rail: { position: 'absolute', left: 12, top: '25%', bottom: '25%', justifyContent: 'space-between', alignItems: 'center', zIndex: 140, elevation: 140 }, railButton: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }, railNear: { width: 18, height: 18, borderRadius: 9 }, railFar: { width: 18, height: 18, borderRadius: 9 }, railDone: {}, railActive: { position: 'absolute', width: 27, height: 27, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#4B9BFF', borderWidth: 0, shadowColor: '#4B9BFF', shadowOpacity: .45, shadowRadius: 8, elevation: 8 }, railDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#1A1E22', borderWidth: 1, borderColor: 'rgba(0,0,0,.32)', shadowColor: '#000', shadowOpacity: .2, shadowRadius: 2 }, railDotOn: { backgroundColor: '#4B9BFF', borderColor: '#A9C8FF', shadowColor: '#4B9BFF', shadowOpacity: .45, shadowRadius: 5 },
+  domainSearch: { flexDirection: 'row', alignItems: 'center', borderRadius: 14, backgroundColor: C.field, borderWidth: 1, borderColor: C.line }, domainInput: { flex: 1, minHeight: 54, paddingHorizontal: 16, fontFamily: FONT, fontSize: 16, color: '#1C2832', outlineWidth: 0 }, suffixButton: { height: 54, paddingLeft: 8, paddingRight: 13, flexDirection: 'row', alignItems: 'center', gap: 3 }, domainSuffix: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: '#1C2832' }, suffixDropdown: { position: 'absolute', top: 58, right: 0, zIndex: 99, minWidth: 130, backgroundColor: '#fff', borderRadius: 14, borderWidth: 1, borderColor: C.line, shadowColor: '#000', shadowOpacity: .14, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 10, overflow: 'hidden' }, suffixDropdownItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13, paddingHorizontal: 16 }, suffixDropdownDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.line }, suffixDropdownItemOn: { backgroundColor: 'rgba(37,99,235,.12)' }, suffixDropdownText: { fontFamily: FONT, fontSize: 15, fontWeight: '600', color: C.ink },
+  check: { marginTop: 12, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: C.primary }, checkText: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#fff' },
+  checkDisabled: { opacity: .58 }, domainError: { marginTop: 10, fontFamily: FONT, fontSize: 13, lineHeight: 18, color: C.danger }, domainResult: { marginTop: 14, padding: 15, borderRadius: 14, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: C.successSoft, borderWidth: 1, borderColor: 'rgba(31,138,84,.3)' }, domainName: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#1C2832' }, domainPrice: { fontFamily: FONT, fontSize: 13, color: C.success, fontWeight: '600', marginTop: 2 },
+  formChoice: { marginTop: 22, padding: 17, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: 'rgba(255,255,255,.45)', borderWidth: 1, borderColor: 'rgba(28,40,50,.16)' }, formChoiceIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(37,99,235,.12)' }, formChoiceTitle: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#1C2832' }, formChoiceText: { fontFamily: FONT, fontSize: 13, color: C.inkSoft, marginTop: 3, lineHeight: 18 },
+  rail: { position: 'absolute', left: 12, top: '25%', bottom: '25%', justifyContent: 'space-between', alignItems: 'center', zIndex: 140, elevation: 140 }, railButton: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }, railActive: { position: 'absolute', width: 27, height: 27, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: C.primary, borderWidth: 0, shadowColor: C.primary, shadowOpacity: .45, shadowRadius: 8, elevation: 8 }, railDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#1A1E22', borderWidth: 1, borderColor: 'rgba(0,0,0,.32)', shadowColor: '#000', shadowOpacity: .2, shadowRadius: 2 }, railDotOn: { backgroundColor: C.primary, borderColor: '#A9C8FF', shadowColor: C.primary, shadowOpacity: .45, shadowRadius: 5 },
   reviewCard: { marginBottom: 8, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(28,40,50,.18)', backgroundColor: 'rgba(255,255,255,.45)', overflow: 'hidden' },
-  reviewCardOpen: { borderColor: 'rgba(75,212,248,.45)' },
+  reviewCardOpen: { borderColor: C.primaryBorder },
   reviewRow: { minHeight: 50, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   reviewRowText: { flex: 1, fontFamily: FONT, fontSize: 14, fontWeight: '600', color: '#1C2832' },
   reviewFields: { paddingHorizontal: 14, paddingBottom: 14 },
-  reviewActionsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }, reviewDeleteBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999 }, reviewDeleteText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: '#A3261F' }, reviewDoneBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: 'rgba(75,212,248,.18)' },
-  reviewDoneText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: '#4BD4F8' },
+  reviewActionsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }, reviewDeleteBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999 }, reviewDeleteText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.danger }, reviewDoneBtn: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 999, backgroundColor: C.primary },
+  reviewDoneText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: '#fff' },
   reviewSourceCard: { marginTop: 14, padding: 14, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(28,40,50,.18)', backgroundColor: 'rgba(255,255,255,.45)' },
   reviewSourceTitle: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: '#1C2832' },
-  reviewSourceSub: { fontFamily: FONT, fontSize: 12, lineHeight: 17, color: 'rgba(28,40,50,.7)', marginTop: 3, marginBottom: 10 },
+  reviewSourceSub: { fontFamily: FONT, fontSize: 12, lineHeight: 17, color: C.inkSoft, marginTop: 3, marginBottom: 10 },
   reviewSourceRow: { minHeight: 46, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(28,40,50,.2)', marginBottom: 8 },
-  reviewSourceRowOn: { borderColor: 'rgba(75,212,248,.45)' },
+  reviewSourceRowOn: { borderColor: C.primary, backgroundColor: C.primarySoft },
   reviewSourceName: { flex: 1, fontFamily: FONT, fontSize: 14, fontWeight: '600', color: '#1C2832' },
-  reviewSourceAction: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: '#1C6FD0' },
-  addReviewBtn: { height: 44, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(28,40,50,.3)', backgroundColor: 'rgba(255,255,255,.45)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 18 },
-  addReviewText: { fontFamily: FONT, fontWeight: '800', fontSize: 12, color: '#1C2832' },
+  reviewSourceAction: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.primary },
+  addReviewBtn: { height: 46, borderRadius: 12, borderWidth: 1, borderColor: C.primaryBorder, backgroundColor: C.primarySoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 18 },
+  addReviewText: { fontFamily: FONT, fontWeight: '700', fontSize: 14, color: C.ink },
   galleryGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 8, marginTop: 8, marginBottom: 12 },
   galleryItem: { borderRadius: 14, overflow: 'hidden', backgroundColor: '#EFE4DB' },
   galleryThumb: { width: '100%', height: '100%' },
-  galleryAdd: { borderRadius: 14, borderWidth: 1, borderColor: '#1C2832', alignItems: 'center', justifyContent: 'center', backgroundColor: '#EFE4DB'},
-  planDomain: { flexDirection: 'row', alignItems: 'center', gap: 9, padding: 14, borderRadius: 14, backgroundColor: 'rgba(34,188,231,.1)', borderWidth: 1, borderColor: 'rgba(34,188,231,.28)', marginBottom: 16 },
-  planDomainText: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#DDF8FF' },
-  paymentSuccess: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, paddingHorizontal: 24 },
-  paymentSuccessTitle: { fontFamily: FONT, fontSize: 22, fontWeight: '800', color: '#1C2832', textAlign: 'center' },
-  paymentSuccessText: { fontFamily: FONT, fontSize: 13, lineHeight: 19, color: 'rgba(28,40,50,.7)', textAlign: 'center' },
-  payButton: { marginTop: 20, height: 52, paddingHorizontal: 20, borderRadius: 18, backgroundColor: '#E5F9FF', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-  payButtonText: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#061824' },
-  dashboardScreen: { flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28 },
-  dashboardBrandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 22, paddingBottom: 12 },
-  dashboardBrand: { fontFamily: FONT, fontSize: 11, fontWeight: '900', letterSpacing: 1.6, color: '#1C2832' },
-  dashboardLive: { fontFamily: FONT, fontSize: 9, fontWeight: '900', letterSpacing: 1, color: '#3CAB6A' },
-  dashboardTabsTop: { flexDirection: 'row', paddingHorizontal: 18, gap: 6, marginBottom: 20 },
-  dashboardTab: { flex: 1, paddingVertical: 10, borderRadius: 14, alignItems: 'center', backgroundColor: 'rgba(0,0,0,.06)' },
-  dashboardTabOn: { backgroundColor: '#2563EB' },
-  dashboardTabText: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: 'rgba(28,40,50,.48)' },
-  dashboardTabTextOn: { color: '#fff' },
-  dashboardContent: { paddingHorizontal: 22, paddingBottom: 48 },
-  dashboardTitle: { fontFamily: FONT, fontSize: 24, fontWeight: '800', letterSpacing: -.5, color: '#141A1E', marginBottom: 6 },
-  dashboardIntro: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: 'rgba(20,26,30,.55)', marginBottom: 18 },
-  dashboardInfoCard: { padding: 18, borderRadius: 18, backgroundColor: '#fff', marginBottom: 12, shadowColor: '#000', shadowOpacity: .07, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } },
-  dashboardCardLabel: { fontFamily: FONT, fontSize: 9, fontWeight: '900', letterSpacing: 1, color: 'rgba(20,26,30,.42)', marginBottom: 5 },
-  dashboardCardTitle: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: '#141A1E' },
-  dashboardCardText: { fontFamily: FONT, fontSize: 12, color: 'rgba(20,26,30,.48)', marginTop: 3 },
+  galleryAdd: { borderRadius: 12, borderWidth: 1, borderStyle: 'dashed', borderColor: C.lineStrong, alignItems: 'center', justifyContent: 'center', backgroundColor: C.field },
+  dashboardScreen: { flex: 1, paddingTop: Platform.OS === 'ios' ? 58 : 32 },
+  dashboardBrandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 16 },
+  dashboardBrand: { fontFamily: FONT, fontSize: 18, fontWeight: '800', letterSpacing: -.3, color: C.ink },
+  dashboardTabsTop: { flexDirection: 'row', marginHorizontal: 20, padding: 4, borderRadius: 14, backgroundColor: 'rgba(28,40,50,.07)', marginBottom: 18 },
+  dashboardTab: { flex: 1, minHeight: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  dashboardTabOn: { backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 } },
+  dashboardTabText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.inkMuted },
+  dashboardTabTextOn: { color: C.ink },
+  dashboardContent: { paddingHorizontal: 20, paddingBottom: 48 },
+  dashboardTitle: { fontFamily: FONT, fontSize: 26, fontWeight: '800', letterSpacing: -.6, color: C.ink, marginBottom: 6 },
+  dashboardIntro: { fontFamily: FONT, fontSize: 15, lineHeight: 21, color: C.inkSoft, marginBottom: 18 },
+  dashboardInfoCard: { padding: 18, borderRadius: 16, backgroundColor: C.surface, marginBottom: 12 },
+  dashboardCardLabel: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, marginBottom: 4 },
+  dashboardCardTitle: { fontFamily: FONT, fontSize: 17, fontWeight: '800', color: C.ink },
+  dashboardCardText: { fontFamily: FONT, fontSize: 14, color: C.inkSoft, marginTop: 3 },
   dashboardWebsiteHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-  dashboardEdit: { paddingVertical: 9, paddingHorizontal: 14, borderRadius: 99, flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#1C2832' },
-  dashboardEditText: { fontFamily: FONT, fontSize: 11, fontWeight: '800', color: '#fff' },
-  phoneFrame: { width: SCREEN_WIDTH * .46, height: 420, alignSelf: 'center', borderRadius: 20, overflow: 'hidden', marginBottom: 16, backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .12, shadowRadius: 18, shadowOffset: { width: 0, height: 8 } },
-  phoneScale: { width: SCREEN_WIDTH, height: 420 / .46, transform: [{ scale: .46 }], transformOrigin: 'top left' },
-  messageBubble: { padding: 13, paddingHorizontal: 16, borderRadius: 20, maxWidth: '82%', backgroundColor: '#fff', marginBottom: 10, shadowColor: '#000', shadowOpacity: .06, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } },
+  dashboardEdit: { minHeight: 38, paddingHorizontal: 14, borderRadius: 999, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.surface, borderWidth: 1, borderColor: C.line },
+  dashboardEditText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.ink },
+  phoneFrame: { width: SCREEN_WIDTH * .5, height: 440, alignSelf: 'center', borderRadius: 26, borderWidth: 6, borderColor: '#141A1E', overflow: 'hidden', marginBottom: 18, backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .18, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } },
+  phoneScale: { width: SCREEN_WIDTH, height: 428 / .5 * 1.05, transform: [{ scale: (SCREEN_WIDTH * .5 - 12) / SCREEN_WIDTH }], transformOrigin: 'top left' },
+  messageBubble: { padding: 12, paddingHorizontal: 15, borderRadius: 18, maxWidth: '82%', backgroundColor: C.surface, marginBottom: 8 },
   messageImage: { width: 180, height: 180, borderRadius: 12 },
   messageBubbleReceived: { alignSelf: 'flex-start', borderBottomLeftRadius: 6 },
-  messageSender: { fontFamily: FONT, fontSize: 11, fontWeight: '800', color: '#1C2832', marginBottom: 6 },
-  messageText: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: '#2C3E4A' },
-  messageInput: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14, borderRadius: 16, backgroundColor: '#fff', borderWidth: 1, borderColor: 'rgba(0,0,0,.1)', marginTop: 8 },
-  messageInputFixed: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingTop: 14, paddingHorizontal: 18, paddingBottom: Platform.OS === 'ios' ? 34 : 18, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,.08)', backgroundColor: '#fff' },
-  messageBubbleSent: { backgroundColor: '#E8F1FF', alignSelf: 'flex-end', borderBottomRightRadius: 6 },
-  messageInputField: { flex: 1, fontFamily: FONT, fontSize: 14, color: '#1C2832', maxHeight: 80, paddingRight: 10 },
-  messagePlaceholder: { fontFamily: FONT, fontSize: 14, color: 'rgba(28,40,50,.38)' },
-
+  messageSender: { fontFamily: FONT, fontSize: 12, fontWeight: '800', color: C.primary, marginBottom: 4 },
+  messageText: { fontFamily: FONT, fontSize: 15, lineHeight: 21, color: C.ink },
+  messageInputFixed: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingTop: 10, paddingHorizontal: 14, paddingBottom: Platform.OS === 'ios' ? 30 : 14, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.lineStrong, backgroundColor: C.surface },
+  messageBubbleSent: { backgroundColor: C.primary, alignSelf: 'flex-end', borderBottomRightRadius: 6 },
+  messageInputField: { flex: 1, minHeight: 40, maxHeight: 110, paddingHorizontal: 14, paddingTop: 10, paddingBottom: 10, borderRadius: 20, backgroundColor: 'rgba(28,40,50,.06)', fontFamily: FONT, fontSize: 15, color: C.ink },
   choiceWrap: { gap: 0, paddingTop: 4 },
   choiceHeading: { fontFamily: FONT, fontSize: 22, lineHeight: 28, fontWeight: '800', letterSpacing: -.6, color: '#1C2832', marginBottom: 8 },
-  choiceSub: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: 'rgba(28,40,50,.7)', marginBottom: 18 },
-  choiceCard: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)', marginBottom: 12 },
+  choiceSub: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: C.inkSoft, marginBottom: 18 },
+  choiceCard: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 18, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, marginBottom: 12, shadowColor: '#000', shadowOpacity: .06, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } },
   choiceIcon: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   choiceCardTitle: { fontFamily: FONT, fontSize: 16, fontWeight: '700', color: '#1C2832' },
-  choiceCardText: { fontFamily: FONT, fontSize: 13, lineHeight: 18, color: 'rgba(28,40,50,.7)', marginTop: 3 },
-  buildingCard: { alignItems: 'center', padding: 28, borderRadius: 22, backgroundColor: 'rgba(255,255,255,.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)', marginTop: 6 },
-  buildingText: { fontFamily: FONT, fontSize: 16, fontWeight: '700', color: '#1C2832' },
-  buildingSub: { fontFamily: FONT, fontSize: 13, lineHeight: 19, color: 'rgba(28,40,50,.7)', textAlign: 'center', marginTop: 6 },
-  makeLiveBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', minHeight: 52, borderRadius: 18, backgroundColor: '#2878FF', marginTop: 16 },
-  makeLiveBtnDisabled: { backgroundColor: 'rgba(255,255,255,.06)' },
-  makeLiveBtnText: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#fff' },
-  requestChangesBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', minHeight: 46, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(75,155,255,.4)', marginTop: 10 },
-  requestChangesText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: '#4B9BFF' },
-  liveDropdown: { position: 'absolute', top: 40, right: 0, minWidth: 150, backgroundColor: '#fff', borderRadius: 14, padding: 6, zIndex: 50, elevation: 10, shadowColor: '#000', shadowOpacity: .2, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } },
-  liveDropdownItem: { flexDirection: 'row', gap: 8, alignItems: 'center', padding: 10, borderRadius: 10 },
-  liveDropdownText: { fontFamily: FONT, fontSize: 14, fontWeight: '600', color: '#C04040' },
+  choiceCardText: { fontFamily: FONT, fontSize: 14, lineHeight: 19, color: C.inkSoft, marginTop: 3 },
+  buildingCard: { alignItems: 'center', padding: 28, borderRadius: 18, backgroundColor: C.surface, marginTop: 6, marginBottom: 12 },
+  buildingText: { fontFamily: FONT, fontSize: 17, fontWeight: '800', color: C.ink },
+  buildingSub: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: C.inkSoft, textAlign: 'center', marginTop: 6 },
   previewOpenBadge: { position: 'absolute', bottom: 12, right: 12, flexDirection: 'row', gap: 6, alignItems: 'center', backgroundColor: 'rgba(0,0,0,.6)', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999 },
   previewOpenText: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: '#fff' },
   planModalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(3,10,16,.6)' },
-  planModalBox: { backgroundColor: '#F7FBFE', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 22, paddingBottom: 36 },
+  planModalBox: { backgroundColor: C.canvas, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 22, paddingBottom: Platform.OS === 'ios' ? 40 : 24 },
   planModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   planModalTitle: { fontFamily: FONT, fontSize: 20, fontWeight: '800', color: '#1C2832' },
-  planModalSub: { fontFamily: FONT, fontSize: 13, color: '#5B6B78', marginBottom: 12 },
-  planModalDomain: { flexDirection: 'row', gap: 6, alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(75,155,255,.12)', marginBottom: 14 },
-  planModalDomainText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: '#2878FF' },
+  planModalSub: { fontFamily: FONT, fontSize: 14, color: C.inkSoft, marginBottom: 12 },
+  planModalDomain: { flexDirection: 'row', gap: 6, alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(37,99,235,.12)', marginBottom: 14 },
+  planModalDomainText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.primary },
   planModalFeeNote: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 14 },
-  planModalFeeText: { flex: 1, fontFamily: FONT, fontSize: 11, lineHeight: 15, color: '#5B6B78' },
-  planModalOption: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderRadius: 18, borderWidth: 1.5, borderColor: '#D5E0EA', backgroundColor: '#fff', marginBottom: 10 },
-  planModalOptionOn: { borderColor: '#2878FF', backgroundColor: '#F0F6FF' },
+  planModalFeeText: { flex: 1, fontFamily: FONT, fontSize: 13, lineHeight: 18, color: C.inkSoft },
+  planModalOption: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderRadius: 14, borderWidth: 1.5, borderColor: C.line, backgroundColor: '#fff', marginBottom: 10 },
+  planModalOptionOn: { borderColor: C.primary, backgroundColor: '#F3F7FF' },
   planModalOptionName: { fontFamily: FONT, fontSize: 15, fontWeight: '700', color: '#1C2832' },
-  planModalOptionNote: { fontFamily: FONT, fontSize: 12, color: '#5B6B78', marginTop: 2 },
+  planModalOptionNote: { fontFamily: FONT, fontSize: 13, color: C.inkMuted, marginTop: 2 },
   planModalOptionPrice: { fontFamily: FONT, fontSize: 22, fontWeight: '800', color: '#1C2832' },
-  savePill: { alignSelf: 'flex-start', backgroundColor: '#3CAB6A', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999, marginBottom: 4 },
+  savePill: { alignSelf: 'flex-start', backgroundColor: C.success, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999, marginBottom: 4 },
   savePillText: { fontFamily: FONT, fontSize: 10, fontWeight: '800', color: '#fff', letterSpacing: .4 },
-  planModalPayBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', minHeight: 52, borderRadius: 18, backgroundColor: '#2878FF', marginTop: 14 },
+  planModalPayBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', minHeight: 54, borderRadius: 14, backgroundColor: C.primary, marginTop: 14 },
   planModalPayBtnText: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#fff' },
   fullLoading: { flex: 1, justifyContent: 'center', paddingHorizontal: 32, gap: 14 },
   fullLoadingBrand: { fontFamily: FONT, fontSize: 34, fontWeight: '900', letterSpacing: 1, color: '#fff', textAlign: 'center', marginBottom: 36 },
   fullLoadingKicker: { fontFamily: FONT, fontSize: 11, fontWeight: '700', letterSpacing: 3, color: 'rgba(255,255,255,.75)', textAlign: 'center' },
   fullLoadingName: { fontFamily: FONT, fontSize: 30, lineHeight: 36, fontWeight: '800', color: '#fff', textAlign: 'center', marginBottom: 18 },
-  fullLoadingTitle: { fontFamily: FONT, fontSize: 26, fontWeight: '800', letterSpacing: -.6, color: '#F3F8FC' },
   fullLoadingList: { gap: 12 },
   fullLoadingRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.14)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)' },
   fullLoadingLine: { flex: 1, fontFamily: FONT, fontSize: 15, fontWeight: '600', color: '#fff' },
@@ -1633,8 +1713,20 @@ const s = StyleSheet.create({
   fullLoadingFill: { height: '100%', borderRadius: 2, backgroundColor: '#fff' },
   fsBrowserBar: { flexDirection: 'row', alignItems: 'center', paddingTop: Platform.OS === 'ios' ? 56 : 30, paddingBottom: 12, paddingHorizontal: 16, backgroundColor: '#0E1A24', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.08)' },
   fsBackBtn: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
-  fsTickBtn: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: '#2563EB' },
-  fsBrowserUrl: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, height: 32, paddingHorizontal: 12, borderRadius: 10, backgroundColor: 'rgba(255,255,255,.07)' },
-  fsBrowserUrlText: { flexShrink: 1, fontFamily: FONT, fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,.82)' },
+  fsTickBtn: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: C.primary },
   fsBrowserRight: { width: FS_SLOT * 4, flexDirection: 'row', alignItems: 'center' }, fsSlot: { width: FS_SLOT, alignItems: 'center' },
+  dashboardLogo: { width: 30, height: 30, borderRadius: 9 },
+  statusPill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 11, paddingVertical: 6, borderRadius: 999 },
+  statusDot: { width: 7, height: 7, borderRadius: 4 },
+  statusPillText: { fontFamily: FONT, fontSize: 12, fontWeight: '800' },
+  saveBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 20, marginBottom: 14, padding: 12, borderRadius: 12, backgroundColor: C.dangerSoft },
+  saveBannerText: { flex: 1, fontFamily: FONT, fontSize: 13, lineHeight: 18, fontWeight: '600', color: C.danger },
+  primaryBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', minHeight: 54, borderRadius: 14, backgroundColor: C.primary, marginTop: 4 },
+  primaryBtnText: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: '#fff' },
+  secondaryBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', minHeight: 50, borderRadius: 14, backgroundColor: C.surface, borderWidth: 1, borderColor: C.line, marginTop: 10 },
+  secondaryBtnText: { fontFamily: FONT, fontSize: 15, fontWeight: '700', color: C.ink },
+  messageIconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  messageSendBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: C.primary },
+  siteLogo: { width: 18, height: 18, borderRadius: 4 },
+  siteGalleryImg: { width: '31.5%', aspectRatio: 1, borderRadius: 6 },
 });

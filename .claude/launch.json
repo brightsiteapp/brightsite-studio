@@ -4,13 +4,21 @@
     {
       "name": "wellness-web",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["-y", "serve", "-l", "8934", "."],
+      "runtimeArgs": [
+        "-y",
+        "serve",
+        "-l",
+        "8934",
+        "."
+      ],
       "port": 8934
     },
     {
       "name": "brightsite-studio",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["desktop-app/server.js"],
+      "runtimeArgs": [
+        "desktop-app/server.js"
+      ],
       "port": 4173
     },
     {
@@ -38,6 +46,21 @@
         "desktop-app-v2/server.js"
       ],
       "port": 4179
+    },
+    {
+      "name": "mobile-app-web",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "--prefix",
+        "mobile-app",
+        "expo",
+        "start",
+        "--web",
+        "--port",
+        "8099"
+      ],
+      "cwd": "mobile-app",
+      "port": 8099
     }
   ]
 }
