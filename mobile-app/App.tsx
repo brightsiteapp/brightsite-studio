@@ -6,7 +6,7 @@ import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator, Alert, Animated, AppState, Dimensions, Easing, Image, ImageBackground, Keyboard, KeyboardAvoidingView, LayoutAnimation, Modal, PanResponder,
-  Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, useWindowDimensions,
+  Linking, Platform, Pressable, ScrollView, SectionList, StyleSheet, Switch, Text, TextInput, View, useWindowDimensions,
 } from 'react-native';
 import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
@@ -626,7 +626,16 @@ function DesignTools({ landscape = false, active, setActive, palette, setPalette
     })}</View>
     {active && !landscape && <BlurView intensity={58} tint="light" style={s.toolPanel}>
       <Text style={s.toolTitle}>{active === 'colour' ? 'Colour' : active === 'font' ? 'Font' : 'Edit site'}</Text>
-      {active === 'colour' && <View style={s.paletteWrap}><ScrollView style={s.paletteScroll} showsVerticalScrollIndicator={false}>{paletteGroups.map((group, groupIndex) => <View key={group.name} style={s.paletteGroup}><Text style={[s.paletteHeadingText, { marginTop: groupIndex ? 4 : 0, marginBottom: 2 }]}>{group.name}</Text>{group.options.map((colors, i) => { const paletteIndex = paletteGroups.slice(0, groupIndex).reduce((total, section) => total + section.options.length, 0) + i; return <Pressable key={colors.join()} onPress={() => setPalette(paletteIndex)} style={[s.option, palette === paletteIndex && s.selected]}>{colors.map(c => <View key={c} style={[s.dot, { backgroundColor: c }]} />)}</Pressable>; })}</View>)}</ScrollView></View>}
+      {active === 'colour' && <View style={s.paletteWrap}><SectionList
+        style={s.paletteScroll}
+        showsVerticalScrollIndicator={false}
+        stickySectionHeadersEnabled
+        sections={paletteGroups.map((group, groupIndex) => ({ title: group.name, data: group.options.map((colors, i) => ({ colors, paletteIndex: paletteGroups.slice(0, groupIndex).reduce((t, g) => t + g.options.length, 0) + i })) }))}
+        keyExtractor={(item) => item.colors.join()}
+        renderSectionHeader={({ section }) => <Text style={[s.paletteHeadingText, s.paletteStickyHeader]}>{section.title}</Text>}
+        renderItem={({ item }) => <Pressable onPress={() => setPalette(item.paletteIndex)} style={[s.option, palette === item.paletteIndex && s.selected]}>{item.colors.map(c => <View key={c} style={[s.dot, { backgroundColor: c }]} />)}</Pressable>}
+        SectionSeparatorComponent={() => <View style={{ height: 8 }} />}
+      /></View>}
       {active === 'font' && fonts.map((name, i) => <Pressable key={name} onPress={() => setFont(i)} style={[s.fontOption, font === i && s.selected]}><Text style={s.fontOptionText}>{name}</Text></Pressable>)}
       {active === 'edit' && <>
         <View style={s.editPageTabs}>
@@ -1892,7 +1901,7 @@ const s = StyleSheet.create({
   modalButtonText: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#1C2832' },
   tools: { position: 'relative', zIndex: 30, width: FS_SLOT * 3, alignItems: 'center' }, toolStack: { alignSelf: 'stretch', alignItems: 'center', flexDirection: 'row' }, toolSlot: { width: FS_SLOT, alignItems: 'center' },
   toolButton: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' }, toolActive: { backgroundColor: C.primary },
-  toolPanel: { position: 'absolute', top: 49, right: 0, width: 186, maxHeight: 400, padding: 12, borderRadius: 23, overflow: 'hidden', borderWidth: 1, borderColor: '#fff', backgroundColor: 'rgba(255,255,255,.92)', shadowColor: '#174E66', shadowOpacity: .18, shadowRadius: 18, zIndex: 200, elevation: 200 }, paletteWrap: { gap: 5 }, paletteScroll: { maxHeight: 274 }, paletteGroup: { paddingBottom: 12 }, paletteHeadingText: { fontFamily: FONT, fontSize: 11, fontWeight: '800', letterSpacing: .8, color: C.inkSoft, textTransform: 'uppercase' },
+  toolPanel: { position: 'absolute', top: 49, right: 0, width: 186, maxHeight: 400, padding: 12, borderRadius: 23, overflow: 'hidden', borderWidth: 1, borderColor: '#fff', backgroundColor: 'rgba(255,255,255,.92)', shadowColor: '#174E66', shadowOpacity: .18, shadowRadius: 18, zIndex: 200, elevation: 200 }, paletteWrap: { gap: 5 }, paletteScroll: { maxHeight: 274 }, paletteGroup: { paddingBottom: 12 }, paletteHeadingText: { fontFamily: FONT, fontSize: 11, fontWeight: '800', letterSpacing: .8, color: C.inkSoft, textTransform: 'uppercase' }, paletteStickyHeader: { backgroundColor: 'rgba(255,255,255,.95)', paddingVertical: 6, marginBottom: 2 },
   toolTitle: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: C.ink, textAlign: 'center', marginBottom: 9 }, option: { minHeight: 44, borderRadius: 16, paddingHorizontal: 9, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' },
   dot: { width: 20, height: 20, borderRadius: 10 }, selected: { borderColor: BRAND, backgroundColor: 'rgba(59,130,246,.12)' }, fontOption: { paddingVertical: 10, borderRadius: 14, marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' }, fontOptionText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', textAlign: 'center', color: C.ink },
   sectionOption: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(28,40,50,.18)' }, sectionText: { flex: 1, fontFamily: FONT, fontSize: 12, fontWeight: '600', color: '#1C2832', marginHorizontal: 8 },
