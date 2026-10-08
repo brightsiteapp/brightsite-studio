@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { registerWithCloudflare, markBusinessLive } from './lib/activate.js';
+import { registerWithCloudflare, markBusinessLive } from './_lib/activate.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });

@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { quoteDomainInGbp } from './lib/domain-pricing.js';
+import { quoteDomainInGbp } from './_lib/domain-pricing.js';
 
 const ALLOWED_ORIGINS = ['https://brightsite.app'];
 export default async function handler(req, res) {

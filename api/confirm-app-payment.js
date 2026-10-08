@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
-import { registerWithCloudflare, markBusinessLive } from './lib/activate.js';
+import { registerWithCloudflare, markBusinessLive } from './_lib/activate.js';
 
 // Called by the mobile app after PaymentSheet succeeds. Trusts nothing from the
 // client except the subscription id: everything else is read back from Stripe.

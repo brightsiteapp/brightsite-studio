@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { quoteDomainInGbp } from './lib/domain-pricing.js';
+import { quoteDomainInGbp } from './_lib/domain-pricing.js';
 
 // Stripe Price IDs for each plan+billing combination.
 // Recurring prices are for hosting; one-time prices are setup fees added to the first invoice.

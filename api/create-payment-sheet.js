@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { quoteDomainInGbp } from './lib/domain-pricing.js';
+import { quoteDomainInGbp } from './_lib/domain-pricing.js';
 
 // Native in-app payment (Stripe PaymentSheet) for the mobile app. Same prices as
 // create-checkout-session.js; activation happens in confirm-app-payment.js once the

@@ -1,5 +1,5 @@
 const ALLOWED_ORIGINS = ['https://brightsite.app'];
-import { quoteDomainInGbp } from './lib/domain-pricing.js';
+import { quoteDomainInGbp } from './_lib/domain-pricing.js';
 
 // Authoritative RDAP servers per TLD — bypasses rdap.org which rate-limits server requests
 const RDAP_SERVERS = {
