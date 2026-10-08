@@ -805,8 +805,7 @@ function ScaledView({ virtualWidth, width, children }: { virtualWidth: number; w
 function DeviceToggle({ mode, setMode, dark = false }: { mode: 'mobile' | 'desktop'; setMode: (m: 'mobile' | 'desktop') => void; dark?: boolean }) {
   return <View style={[s.deviceToggle, dark && s.deviceToggleDark]}>
     {(['mobile', 'desktop'] as const).map(m => <Pressable key={m} onPress={() => setMode(m)} style={[s.deviceToggleBtn, mode === m && (dark ? s.deviceToggleBtnOnDark : s.deviceToggleBtnOn)]} accessibilityLabel={`${m} preview`}>
-      <Ionicons name={m === 'mobile' ? 'phone-portrait-outline' : 'desktop-outline'} size={15} color={mode === m ? (dark ? C.ink : C.ink) : dark ? 'rgba(255,255,255,.7)' : C.inkMuted} />
-      <Text style={[s.deviceToggleText, dark && { color: 'rgba(255,255,255,.7)' }, mode === m && { color: C.ink }]}>{m === 'mobile' ? 'Mobile' : 'Desktop'}</Text>
+      <Ionicons name={m === 'mobile' ? 'phone-portrait-outline' : 'desktop-outline'} size={16} color={mode === m ? C.ink : dark ? 'rgba(255,255,255,.55)' : C.inkMuted} />
     </Pressable>)}
   </View>;
 }
@@ -1085,12 +1084,18 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
         </>}
         {tab === 'Website' && <>
           <View style={[s.dashboardWebsiteHead, { zIndex: 20 }]}>
-            {isBuilding ? <View /> : <DeviceToggle mode={previewMode} setMode={setPreviewMode} />}
+            {!isBuilding && <View style={{ position: 'absolute', left: 0, right: 0, alignItems: 'center', pointerEvents: 'box-none' as any }}><DeviceToggle mode={previewMode} setMode={setPreviewMode} /></View>}
+            <View style={{ flex: 1 }} />
             <View>
-              <Pressable onPress={() => isBuilding ? onEditInfo?.() : setShowEditMenu(v => !v)} style={({ pressed }) => [s.dashboardEdit, pressed && s.pressed]}>
-                <Ionicons name="create-outline" size={15} color={C.ink} /><Text style={s.dashboardEditText}>{isBuilding ? 'Edit info' : 'Edit'}</Text>
-                {!isBuilding && <Ionicons name={showEditMenu ? 'chevron-up' : 'chevron-down'} size={14} color={C.inkMuted} />}
-              </Pressable>
+              {isReady || isLive
+                ? <><Pressable onPress={isLive ? confirmOffline : goLive} style={({ pressed }) => [s.makeLiveBtn, isLive && s.makeLiveBtnLive, pressed && s.pressed]}>
+                    <Ionicons name={isLive ? 'cloud-offline-outline' : 'rocket-outline'} size={13} color="#fff" />
+                    <Text style={s.makeLiveBtnText}>{isLive ? 'Take Offline' : 'Make Live'}</Text>
+                  </Pressable></>
+                : <Pressable onPress={() => isBuilding ? onEditInfo?.() : setShowEditMenu(v => !v)} style={({ pressed }) => [s.dashboardEdit, pressed && s.pressed]}>
+                    <Ionicons name="create-outline" size={15} color={C.ink} /><Text style={s.dashboardEditText}>{isBuilding ? 'Edit info' : 'Edit'}</Text>
+                    {!isBuilding && <Ionicons name={showEditMenu ? 'chevron-up' : 'chevron-down'} size={14} color={C.inkMuted} />}
+                  </Pressable>}
               {showEditMenu && <View style={s.editMenu}>
                 <Pressable onPress={() => { setShowEditMenu(false); onEdit?.(); }} style={({ pressed }) => [s.editMenuItem, pressed && { backgroundColor: C.primarySoft }]}>
                   <Ionicons name="color-palette-outline" size={17} color={C.primary} /><View><Text style={s.editMenuTitle}>Design</Text><Text style={s.editMenuSub}>Colours, fonts, text and sections</Text></View>
@@ -1113,7 +1118,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
               </Pressable>
               : <Pressable onPress={() => isLive ? void Linking.openURL(siteUrl) : onEdit?.()} style={s.phoneFrame}>
                 <View pointerEvents="none" style={{ overflow: 'hidden', flex: 1 }}>
-                  <ScaledView virtualWidth={MOBILE_WIDTH} width={Math.round(SCREEN_WIDTH * .6) - 12}><SitePreview palette={palette} font={font} page={0} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} media={media} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></ScaledView>
+                  <ScaledView virtualWidth={MOBILE_WIDTH} width={Math.round(SCREEN_WIDTH * .72) - 14}><SitePreview palette={palette} font={font} page={0} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} media={media} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></ScaledView>
                 </View>
                 {isLive && <View style={s.previewOpenBadge}><Ionicons name="open-outline" size={12} color="#fff" /><Text style={s.previewOpenText}>Open site</Text></View>}
               </Pressable>}
@@ -1137,17 +1142,6 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           })}
         </>}
       </ScrollView>
-      {tab === 'Website' && <View style={s.websiteFooter}>
-        {isReady && <Pressable onPress={goLive} style={({ pressed }) => [s.primaryBtn, { marginTop: 0 }, pressed && s.pressed]}>
-          <Ionicons name="rocket-outline" size={18} color="#fff" /><Text style={s.primaryBtnText}>{isPaying ? 'Put website live' : 'Make it live'}</Text>
-        </Pressable>}
-        {isLive && <Pressable onPress={confirmOffline} style={({ pressed }) => [s.secondaryBtn, { marginTop: 0 }, pressed && s.pressed]}>
-          <Ionicons name="cloud-offline-outline" size={16} color={C.danger} /><Text style={[s.secondaryBtnText, { color: C.danger }]}>Take website offline</Text>
-        </Pressable>}
-        {!isLive && <Pressable onPress={() => { void notifyStage('changes_requested', data.businessName || 'Unnamed business', data.contactEmail || data.email, slug || ''); setTab('Messages'); }} style={({ pressed }) => [s.secondaryBtn, { marginTop: 0 }, pressed && s.pressed]}>
-          <Ionicons name="chatbubble-outline" size={15} color={C.ink} /><Text style={s.secondaryBtnText}>Ask Tom for changes</Text>
-        </Pressable>}
-      </View>}
       {tab === 'Messages' && <View style={[s.messageInputFixed, kbOpen && { paddingBottom: 10 }]}>
         <Pressable onPress={() => void attachImage()} hitSlop={10} style={s.messageIconBtn} accessibilityLabel="Attach photo">
           <Ionicons name="image-outline" size={22} color={C.inkSoft} />
@@ -2043,8 +2037,10 @@ const s = StyleSheet.create({
   dashboardWebsiteHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   dashboardEdit: { minHeight: 38, paddingHorizontal: 14, borderRadius: 999, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.surface, borderWidth: 1, borderColor: C.line },
   dashboardEditText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.ink },
-  phoneFrame: { width: Math.round(SCREEN_WIDTH * .6), height: SCREEN_HEIGHT - 430, alignSelf: 'center', borderRadius: 26, borderWidth: 6, borderColor: '#141A1E', overflow: 'hidden', marginBottom: 8, backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .18, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } },
-  websiteFooter: { paddingHorizontal: 20, paddingBottom: Platform.OS === 'ios' ? 28 : 16, paddingTop: 10, gap: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(28,40,50,.12)', backgroundColor: C.canvas },
+  phoneFrame: { width: Math.round(SCREEN_WIDTH * .72), height: SCREEN_HEIGHT - 330, alignSelf: 'center', borderRadius: 28, borderWidth: 7, borderColor: '#141A1E', overflow: 'hidden', marginBottom: 8, backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .18, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } },
+  makeLiveBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 7, paddingHorizontal: 13, borderRadius: 20, backgroundColor: C.primary },
+  makeLiveBtnLive: { backgroundColor: C.danger },
+  makeLiveBtnText: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#fff' },
   messageDay: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, textAlign: 'center', marginTop: 14, marginBottom: 10 },
   messageMeta: { fontFamily: FONT, fontSize: 11, color: C.inkMuted, marginTop: 3, marginBottom: 12 },
   messageMetaSent: { alignSelf: 'flex-end', marginRight: 4 },
@@ -2124,7 +2120,7 @@ const s = StyleSheet.create({
   typeRowText: { fontFamily: FONT, fontSize: 16, fontWeight: '600', color: C.ink },
   deviceToggle: { flexDirection: 'row', padding: 3, borderRadius: 12, backgroundColor: 'rgba(28,40,50,.07)' },
   deviceToggleDark: { backgroundColor: 'rgba(255,255,255,.12)' },
-  deviceToggleBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 34, paddingHorizontal: 14, borderRadius: 9 },
+  deviceToggleBtn: { alignItems: 'center', justifyContent: 'center', width: 36, height: 34, borderRadius: 9 },
   deviceToggleBtnOn: { backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 } },
   deviceToggleBtnOnDark: { backgroundColor: '#fff' },
   deviceToggleText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.inkMuted },
