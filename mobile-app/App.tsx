@@ -512,7 +512,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
     <Modal visible={showPlanModal} transparent animationType="slide" onRequestClose={() => setShowPlanModal(false)}>
       <View style={s.planModalOverlay}>
         <View style={s.planModalBox}>
-          <View style={s.planModalHeader}><Text style={s.planModalTitle}>Choose your plan</Text><Pressable onPress={() => setShowPlanModal(false)}><Ionicons name="close" size={22} color="#1C2832" /></Pressable></View>
+          <View style={s.planModalHeader}><Text style={s.planModalTitle}>Choose your plan</Text><Pressable onPress={() => setShowPlanModal(false)} hitSlop={10}><Ionicons name="close" size={22} color="#1C2832" /></Pressable></View>
           <Text style={s.planModalSub}>Your website is free. You only pay for hosting.</Text>
           <View style={s.planModalDomain}><Ionicons name="globe-outline" size={14} color="#4B9BFF" /><Text style={s.planModalDomainText}>{domain}{suffix}</Text></View>
           <Pressable onPress={() => setAnnual(false)} style={[s.planModalOption, !annual && s.planModalOptionOn]}>
@@ -802,7 +802,7 @@ function AppInner() {
         <Pressable disabled={authBusy || authChecking} onPress={() => void authenticate()} style={({ pressed }) => [s.authSubmit, pressed && s.pressed, (authBusy || authChecking) && s.authSubmitDisabled]}>{authBusy || authChecking ? <ActivityIndicator size="small" color="#24282B" /> : <Text style={s.authSubmitText}>{authMode === 'signup' ? 'Create account' : 'Log in'}</Text>}</Pressable></>;
       case 'business': return <><Intro>Tell us the essentials. Anything you leave blank simply won’t appear on your website.</Intro>
         <Field label="Full name (optional)" value={data.fullName} onChangeText={(v: string) => setData({ ...data, fullName: v })} placeholder="e.g. Jane Smith" />
-        <Pressable onPress={() => setShowFullName(!showFullName)} style={s.nameDisplay}><View style={[s.checkbox, showFullName && s.checkboxOn]}>{showFullName && <Ionicons name="checkmark" size={13} color="#071923" />}</View><Text style={s.nameDisplayText}>Display full name on website</Text></Pressable>
+        <Pressable onPress={() => setShowFullName(!showFullName)} style={s.nameDisplay} hitSlop={8}><View style={[s.checkbox, showFullName && s.checkboxOn]}>{showFullName && <Ionicons name="checkmark" size={13} color="#071923" />}</View><Text style={s.nameDisplayText}>Display full name on website</Text></Pressable>
         <Field label="Business name" value={data.businessName} onChangeText={(v: string) => setData({ ...data, businessName: v })} />
         <Field label="Business type" value={data.category} onChangeText={(v: string) => setData({ ...data, category: v })} />
         <Field label="Address" value={data.address} onChangeText={(v: string) => setData({ ...data, address: v })} placeholder="e.g. 12 High Street, London" /></>;
@@ -902,7 +902,7 @@ function AppInner() {
           finally { setDomainChecking(false); }
         };
         return <><Intro>Find the right home for your website. The live registration price comes straight from the registry before payment.</Intro><View style={s.domainSearch}>
-          <TextInput style={s.domainInput} value={domain} onChangeText={(value) => { setDomain(value); clearDomainQuote(); }} autoCapitalize="none" /><View style={{ position: 'relative' }}><Pressable onPress={() => setShowSuffixes(!showSuffixes)} style={s.suffixButton}><Text style={s.domainSuffix}>{suffix}</Text><Ionicons name={showSuffixes ? 'chevron-up' : 'chevron-down'} size={14} color="#1C2832" /></Pressable>
+          <TextInput style={s.domainInput} value={domain} onChangeText={(value) => { setDomain(value); clearDomainQuote(); }} autoCapitalize="none" /><View style={{ position: 'relative' }}><Pressable onPress={() => setShowSuffixes(!showSuffixes)} style={s.suffixButton} hitSlop={6}><Text style={s.domainSuffix}>{suffix}</Text><Ionicons name={showSuffixes ? 'chevron-up' : 'chevron-down'} size={14} color="#1C2832" /></Pressable>
           {showSuffixes && <View style={s.suffixDropdown}>
             {DOMAIN_TLDS.map((item, i) => <Pressable key={item} onPress={() => { setSuffix(item); setShowSuffixes(false); clearDomainQuote(); }} style={[s.suffixDropdownItem, i < DOMAIN_TLDS.length - 1 && s.suffixDropdownDivider, suffix === item && s.suffixDropdownItemOn]}>
               <Text style={s.suffixDropdownText}>{item}</Text>
@@ -1103,7 +1103,6 @@ const s = StyleSheet.create({
   editPageTabOn: { backgroundColor: 'rgba(34,188,231,.18)' },
   editPageTabText: { fontFamily: FONT, fontSize: 9, fontWeight: '700', color: '#345568' },
   editPageTabTextOn: { color: '#2878A0' },
-  swatches: { flexDirection: 'row', marginTop: 2, gap: 7 }, swatch: { width: 22, height: 22, borderRadius: 11 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,.45)', justifyContent: 'flex-end', cursor: 'default' as any },
   modalBox: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: Platform.OS === 'ios' ? 42 : 24 },
   modalLabel: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: 'rgba(0,0,0,.45)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.8 },
@@ -1119,7 +1118,7 @@ const s = StyleSheet.create({
   tools: { position: 'relative', zIndex: 30, width: FS_SLOT * 3, alignItems: 'center' }, toolStack: { alignSelf: 'stretch', alignItems: 'center', flexDirection: 'row' }, toolSlot: { width: FS_SLOT, alignItems: 'center' },
   toolButton: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#fff', borderWidth: 1, borderColor: 'transparent', alignItems: 'center', justifyContent: 'center', shadowColor: '#207EA0', shadowOpacity: .18, shadowRadius: 12 }, toolActive: { backgroundColor: BRAND, shadowOpacity: .34, shadowRadius: 20 }, toolButtonText: { fontFamily: FONT, fontSize: 12, fontWeight: '800', color: '#fff' },
   toolPanel: { position: 'absolute', top: 49, right: 0, width: 186, maxHeight: 400, padding: 12, borderRadius: 23, overflow: 'hidden', borderWidth: 1, borderColor: '#fff', shadowColor: '#174E66', shadowOpacity: .18, shadowRadius: 18, zIndex: 200, elevation: 200 }, paletteWrap: { gap: 5 }, paletteScroll: { maxHeight: 274 }, paletteGroup: { paddingBottom: 12 }, paletteHeading: { paddingTop: 5, paddingBottom: 4 }, paletteHeadingText: { fontFamily: FONT, fontSize: 10, fontWeight: '900', letterSpacing: .8, color: '#345568', textTransform: 'uppercase' },
-  toolTitle: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#28495B', textAlign: 'center', marginBottom: 9 }, option: { minHeight: 39, borderRadius: 16, paddingHorizontal: 9, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' },
+  toolTitle: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#28495B', textAlign: 'center', marginBottom: 9 }, option: { minHeight: 44, borderRadius: 16, paddingHorizontal: 9, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' },
   dot: { width: 20, height: 20, borderRadius: 10 }, selected: { borderColor: BRAND, backgroundColor: 'rgba(34,188,231,.12)' }, fontOption: { paddingVertical: 10, borderRadius: 14, marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' }, fontOptionText: { fontFamily: FONT, fontSize: 11, fontWeight: '700', textAlign: 'center', color: '#345568' },
   sectionOption: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(66,104,125,.18)' }, sectionText: { flex: 1, fontFamily: FONT, fontSize: 12, fontWeight: '600', color: '#345568', marginHorizontal: 8 },
   sectionEye: { padding: 7 }, sectionDragHandle: { padding: 7 },
@@ -1195,7 +1194,7 @@ const s = StyleSheet.create({
   messagePlaceholder: { fontFamily: FONT, fontSize: 14, color: 'rgba(28,40,50,.38)' },
 
   choiceWrap: { gap: 0, paddingTop: 4 },
-  choiceHeading: { fontFamily: FONT, fontSize: 22, fontWeight: '800', letterSpacing: -.6, color: '#1C2832', marginBottom: 8 },
+  choiceHeading: { fontFamily: FONT, fontSize: 22, lineHeight: 28, fontWeight: '800', letterSpacing: -.6, color: '#1C2832', marginBottom: 8 },
   choiceSub: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: 'rgba(28,40,50,.7)', marginBottom: 18 },
   choiceCard: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)', marginBottom: 12 },
   choiceIcon: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
@@ -1233,7 +1232,7 @@ const s = StyleSheet.create({
   fullLoading: { flex: 1, justifyContent: 'center', paddingHorizontal: 32, gap: 14 },
   fullLoadingBrand: { fontFamily: FONT, fontSize: 34, fontWeight: '900', letterSpacing: 1, color: '#fff', textAlign: 'center', marginBottom: 36 },
   fullLoadingKicker: { fontFamily: FONT, fontSize: 11, fontWeight: '700', letterSpacing: 3, color: 'rgba(255,255,255,.75)', textAlign: 'center' },
-  fullLoadingName: { fontFamily: FONT, fontSize: 30, fontWeight: '800', color: '#fff', textAlign: 'center', marginBottom: 18 },
+  fullLoadingName: { fontFamily: FONT, fontSize: 30, lineHeight: 36, fontWeight: '800', color: '#fff', textAlign: 'center', marginBottom: 18 },
   fullLoadingTitle: { fontFamily: FONT, fontSize: 26, fontWeight: '800', letterSpacing: -.6, color: '#F3F8FC' },
   fullLoadingList: { gap: 12 },
   fullLoadingRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.14)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)' },
@@ -1243,9 +1242,7 @@ const s = StyleSheet.create({
   fsBrowserBar: { flexDirection: 'row', alignItems: 'center', paddingTop: Platform.OS === 'ios' ? 56 : 30, paddingBottom: 12, paddingHorizontal: 16, backgroundColor: '#0E1A24', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.08)' },
   fsBackBtn: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
   fsTickBtn: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: '#2563EB' },
-  fsBrowserBtn: { width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.06)' },
   fsBrowserUrl: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, height: 32, paddingHorizontal: 12, borderRadius: 10, backgroundColor: 'rgba(255,255,255,.07)' },
   fsBrowserUrlText: { flexShrink: 1, fontFamily: FONT, fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,.82)' },
   fsBrowserRight: { width: FS_SLOT * 4, flexDirection: 'row', alignItems: 'center' }, fsSlot: { width: FS_SLOT, alignItems: 'center' },
-  fsBrowserTick: { width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#3CAB6A' },
 });
