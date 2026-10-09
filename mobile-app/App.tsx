@@ -182,9 +182,8 @@ const steps: Step[] = [
   { id: 'media', title: 'Photos & logo', icon: 'images-outline' },
   { id: 'reviews', title: 'Reviews', icon: 'star-outline' },
   { id: 'domain', title: 'Choose a domain', icon: 'globe-outline' },
-  { id: 'choice', title: 'Build your website', icon: 'construct-outline' },
 ];
-const setupStepIndexes = Array.from({ length: 8 }, (_, i) => i + 1);
+const setupStepIndexes = Array.from({ length: 7 }, (_, i) => i + 1);
 const paletteGroups = [
   { name: 'Light', options: [['#B98B5F', '#F5EFE5', '#201B18'], ['#C78561', '#FFF5EC', '#2D1811'], ['#8E9B7A', '#F2F5EC', '#20321D'], ['#A47A57', '#F6F0E8', '#271C15'], ['#7697A6', '#EDF6F7', '#162D35'], ['#C59C7B', '#FCF8F2', '#302015']] },
   { name: 'Dark', options: [['#D6A56B', '#15110E', '#F3EADF'], ['#78BDCF', '#0C2028', '#E7F8FC'], ['#B2C798', '#142016', '#F2F6ED'], ['#CE8471', '#261412', '#FAEDEA'], ['#A19BDB', '#171529', '#F2F1FF'], ['#D7B179', '#211A11', '#FBF1DF']] },
@@ -1402,8 +1401,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       case 'contact': return /\S+@\S+\.\S+/.test(data.contactEmail.trim()) || data.phone.replace(/\D/g, '').length >= 7;
       case 'hours': return hours.some(row => row.enabled && row.start.trim() && row.end.trim());
       case 'prices': return services.some(it => it.name.trim()) && services.every(it => !it.name.trim() || it.section.trim());
-      case 'domain': return domainReady;
-      case 'choice': return false;
+      case 'domain': return domainReady || editingInfo;
       default: return true;
     }
   };
@@ -1743,26 +1741,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           <Field label="Trustpilot link" value={data.reviewSource === 'Trustpilot' ? data.reviewLink : ''} onChangeText={(v: string) => setData({ ...data, reviewLink: v, reviewSource: v.trim() ? 'Trustpilot' : (data.reviewSource === 'Trustpilot' ? null : data.reviewSource) })} placeholder="https://uk.trustpilot.com/review/..." />
         </View>
         <Pressable onPress={() => setContactForm(!contactForm)} style={s.formChoice}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color={C.primary} /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: 'rgba(28,40,50,.18)', true: C.primary }} thumbColor="#fff" {...({ activeThumbColor: '#fff' } as any)} /></Pressable></>;
-      case 'choice': if (editingInfo) return <View style={s.choiceWrap}>
-        <Text style={s.choiceHeading}>All done?</Text>
-        <Text style={s.choiceSub}>Save your changes and they’ll update on your website.</Text>
-        <Pressable disabled={savingInfo} onPress={async () => { setSavingInfo(true); await syncOnboardingToBackend(buildChoice || 'template'); setSavingInfo(false); setEditingInfo(false); setTab('Website'); setAppScreen('dashboard'); }} style={({ pressed }) => [s.primaryBtn, pressed && s.pressed, savingInfo && { opacity: .6 }]}>
-          {savingInfo ? <ActivityIndicator color="#fff" /> : <><Ionicons name="checkmark" size={18} color="#fff" /><Text style={s.primaryBtnText}>Save changes</Text></>}
-        </Pressable>
-      </View>;
-      return <View style={s.choiceWrap}>
-        <Text style={s.choiceHeading}>You're all set!</Text>
-        <Text style={s.choiceSub}>Your details have been sent to our designer. Your preview will be ready in 1–2 days.</Text>
-        <Pressable onPress={() => { void syncOnboardingToBackend('designer'); setBuildChoice('designer'); setAppScreen('loading'); }} style={s.choiceCard}>
-          <View style={[s.choiceIcon, { backgroundColor: C.successSoft }]}><Ionicons name="person-outline" size={26} color={C.success} /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={s.choiceCardTitle}>Send to Designer</Text>
-            <Text style={s.choiceCardText}>Tom builds your website for you. Preview ready in 1–2 days.</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={C.inkMuted} />
-        </Pressable>
-      </View>;
-      case 'domain': {
+      case ‘domain’: {
         const clearDomainQuote = () => { setDomainReady(false); setDomainQuote(null); setDomainError(''); };
         const checkDomain = async () => {
           const name = domain.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
@@ -1787,7 +1766,16 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           </View>}</View></View>
           <Pressable disabled={domainChecking} onPress={checkDomain} style={[s.check, domainChecking && s.checkDisabled]}><Text style={s.checkText}>{domainChecking ? 'Checking live price…' : 'Check availability'}</Text></Pressable>
           {!!domainError && <Text style={s.domainError}>{domainError}</Text>}
-          {domainReady && domainQuote && <Animated.View style={s.domainResult}><Ionicons name="checkmark-circle" size={24} color={DARK} /><View style={{ flex: 1 }}><Text style={s.domainName}>{domainQuote.domain}</Text><Text style={s.domainPrice}>Available — {domainQuote.priceLabel}</Text></View></Animated.View>}</>;
+          {domainReady && domainQuote && <Animated.View style={s.domainResult}><Ionicons name="checkmark-circle" size={24} color={DARK} /><View style={{ flex: 1 }}><Text style={s.domainName}>{domainQuote.domain}</Text><Text style={s.domainPrice}>Available — {domainQuote.priceLabel}</Text></View></Animated.View>}
+          {editingInfo
+            ? <Pressable disabled={savingInfo} onPress={async () => { setSavingInfo(true); await syncOnboardingToBackend(buildChoice || 'designer'); setSavingInfo(false); setEditingInfo(false); setTab('Website'); setAppScreen('dashboard'); }} style={({ pressed }) => [s.primaryBtn, { marginTop: 20 }, pressed && s.pressed, savingInfo && { opacity: .6 }]}>
+                {savingInfo ? <ActivityIndicator color="#fff" /> : <><Ionicons name="checkmark" size={18} color="#fff" /><Text style={s.primaryBtnText}>Save changes</Text></>}
+              </Pressable>
+            : domainReady && <Pressable onPress={() => { void syncOnboardingToBackend('designer'); setBuildChoice('designer'); setAppScreen('loading'); }} style={[s.primaryBtn, { marginTop: 20 }]}>
+                <Ionicons name="person-outline" size={18} color="#fff" />
+                <Text style={s.primaryBtnText}>Send to Designer</Text>
+              </Pressable>}
+        </>;
       }
     }
   };
@@ -1844,7 +1832,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           const cardScale = cardPosition.interpolate({ inputRange: [-CARD_TRAVEL, 0, CARD_TRAVEL], outputRange: [.93, 1, .93], extrapolate: 'clamp' });
           return <Animated.View key={deckStep.id} pointerEvents={isActive ? 'auto' : 'none'} {...(isActive ? pan.panHandlers : {})} style={[s.card, s.deckCard, isActive ? s.deckCardActive : s.deckCardBehind, { zIndex: isActive ? 22 : 20 - Math.abs(distance), transform: [{ translateY: travelPosition }, { scale: cardScale }] }]}>
 
-            <View style={s.cardHeader}><Text style={s.cardTitle}>{editingInfo && deckStep.id === 'choice' ? 'Save changes' : deckStep.title}</Text>{editingInfo ? <Pressable onPress={() => { setEditingInfo(false); setAppScreen('dashboard'); }} hitSlop={10} style={s.closeEditBtn} accessibilityLabel="Close without saving"><Ionicons name="close" size={20} color={C.ink} /></Pressable> : deckIndex > 0 && <Text style={s.count}>{deckIndex}/{setupStepIndexes.length}</Text>}</View>
+            <View style={s.cardHeader}><Text style={s.cardTitle}>{deckStep.title}</Text>{editingInfo ? <Pressable onPress={() => { setEditingInfo(false); setAppScreen('dashboard'); }} hitSlop={10} style={s.closeEditBtn} accessibilityLabel="Close without saving"><Ionicons name="close" size={20} color={C.ink} /></Pressable> : deckIndex > 0 && <Text style={s.count}>{deckIndex}/{setupStepIndexes.length}</Text>}</View>
             <ScrollView style={s.cardScroll} contentContainerStyle={[s.content, deckStep.id === 'login' && s.loginContent, deckStep.id === 'hours' && s.hoursContent]}
               scrollEnabled={!['hours', 'business', 'contact'].includes(deckStep.id) || keyboardVisible}
               keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
@@ -1852,7 +1840,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             </ScrollView>
             <View pointerEvents="none" style={s.fixedPrompt}>
               {!!validationMessage && isActive && <Text style={s.validationText}>{validationMessage}</Text>}
-              <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : deckStep.id === 'choice' ? (editingInfo ? 'Tap Save changes above' : 'Tap to continue') : deckStep.id === 'domain' && domainReady ? 'Swipe up to send to designer' : 'Swipe up to save'}</Text></View>
+              {deckStep.id !== 'domain' && <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : 'Swipe up to save'}</Text></View>}
             </View>
           </Animated.View>;
         })}
