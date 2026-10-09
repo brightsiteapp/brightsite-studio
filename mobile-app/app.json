@@ -33,7 +33,10 @@
           "photosPermission": "Allow BrightSite to use the photos you choose for your website."
         }
       ],
-      ["@stripe/stripe-react-native", {}],
+      [
+        "@stripe/stripe-react-native",
+        {}
+      ],
       [
         "expo-notifications",
         {
@@ -50,7 +53,9 @@
           "imageWidth": 240,
           "resizeMode": "contain"
         }
-      ]
+      ],
+      "expo-web-browser",
+      "@react-native-google-signin/google-signin"
     ],
     "scheme": "app.brightsite.mobile"
   }

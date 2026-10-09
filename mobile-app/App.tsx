@@ -12,7 +12,11 @@ import {
 } from 'react-native';
 import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
+import * as WebBrowser from 'expo-web-browser';
+import { makeRedirectUri } from 'expo-auth-session';
 import { supabase } from './lib/supabase';
+
+WebBrowser.maybeCompleteAuthSession();
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 // The dashboard chrome occupies roughly 258pt. Keep the website preview inset
@@ -1552,6 +1556,34 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       setAuthBusy(false);
     }
   };
+  const googleSignIn = async () => {
+    Keyboard.dismiss();
+    setAuthBusy(true);
+    setAuthStatus('');
+    try {
+      const redirectTo = makeRedirectUri({ scheme: 'app.brightsite.mobile', path: 'auth-callback' });
+      const { data: oauthData, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo, skipBrowserRedirect: true },
+      });
+      if (error || !oauthData.url) { setAuthStatus('Google sign-in failed. Try again.'); return; }
+      const result = await WebBrowser.openAuthSessionAsync(oauthData.url, redirectTo);
+      if (result.type === 'success') {
+        try {
+          const { data: exData, error: exErr } = await supabase.auth.exchangeCodeForSession(result.url);
+          if (!exErr && exData.session) { await loadAccountDestination(exData.session); return; }
+        } catch {}
+        const { data: sd } = await supabase.auth.getSession();
+        if (sd.session) { await loadAccountDestination(sd.session); return; }
+      }
+      setAuthStatus('');
+    } catch {
+      setAuthStatus('Google sign-in failed. Try again.');
+    } finally {
+      setAuthBusy(false);
+    }
+  };
+
   const go = (to: number) => {
     const requested = Math.max(0, Math.min(steps.length - 1, to));
     const next = Math.max(index - 1, Math.min(index + 1, requested));
@@ -1746,7 +1778,11 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: 'https://brightsite.app/account/reset-password' });
           setAuthStatus(error ? 'Couldn\'t send a reset email. Try again.' : 'Check your inbox for a reset link.');
         }} style={s.forgotLink}><Text style={s.forgotText}>Forgot password?</Text></Pressable>}
-        <Pressable disabled={authBusy || authChecking} onPress={() => void authenticate()} style={({ pressed }) => [s.authSubmit, pressed && s.pressed, (authBusy || authChecking) && s.authSubmitDisabled]}>{authBusy || authChecking ? <ActivityIndicator size="small" color="#fff" /> : <Text style={s.authSubmitText}>{authMode === 'signup' ? 'Create account' : 'Log in'}</Text>}</Pressable></>;
+        <Pressable disabled={authBusy || authChecking} onPress={() => void authenticate()} style={({ pressed }) => [s.authSubmit, pressed && s.pressed, (authBusy || authChecking) && s.authSubmitDisabled]}>{authBusy || authChecking ? <ActivityIndicator size="small" color="#fff" /> : <Text style={s.authSubmitText}>{authMode === 'signup' ? 'Create account' : 'Log in'}</Text>}</Pressable>
+        <View style={s.orRow}><View style={s.orLine} /><Text style={s.orText}>or</Text><View style={s.orLine} /></View>
+        <Pressable disabled={authBusy || authChecking} onPress={() => void googleSignIn()} style={({ pressed }) => [s.googleBtn, pressed && s.pressed, (authBusy || authChecking) && s.authSubmitDisabled]}>
+          <Text style={s.googleBtnText}>Continue with Google</Text>
+        </Pressable></>;
       case 'business': return <><Intro>Tell us the essentials. Anything you leave blank simply won’t appear on your website.</Intro>
         <Field label="Full name" value={data.fullName} onChangeText={(v: string) => setData({ ...data, fullName: v })} placeholder="e.g. Jane Smith" />
         <Pressable onPress={() => setShowFullName(!showFullName)} style={s.nameDisplay} hitSlop={8}><View style={[s.checkbox, showFullName && s.checkboxOn]}>{showFullName && <Ionicons name="checkmark" size={13} color="#fff" />}</View><Text style={s.nameDisplayText}>Display full name on website</Text></Pressable>
@@ -2021,7 +2057,7 @@ const s = StyleSheet.create({
   nameDisplayText: { fontFamily: FONT, fontSize: 13, fontWeight: '600', color: C.inkSoft }, pressed: { transform: [{ scale: .96 }], opacity: .86 },
   heroTitle: { fontFamily: FONT, fontSize: 28, lineHeight: 33, fontWeight: '800', letterSpacing: -.8, color: C.ink, marginBottom: 8 },
   authModes: { height: 44, padding: 4, borderRadius: 14, flexDirection: 'row', backgroundColor: 'rgba(28,40,50,.08)', marginBottom: 16 }, authMode: { flex: 1, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }, authModeOn: { backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 } }, authModeText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.inkMuted }, authModeTextOn: { color: C.ink }, authStatus: { marginTop: -2, fontFamily: FONT, fontSize: 13, lineHeight: 18, fontWeight: '600', color: C.danger, textAlign: 'center' },
-  authSubmit: { height: 52, marginTop: 12, borderRadius: 14, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' }, authSubmitDisabled: { opacity: .62 }, authSubmitText: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: '#fff' }, forgotLink: { alignSelf: 'flex-end', marginTop: 6 }, forgotText: { fontFamily: FONT, fontSize: 13, fontWeight: '600', color: C.primary }, hoursContent: { padding: 0 }, hoursIntro: { paddingHorizontal: 30, paddingTop: 24 }, hoursCard: { minHeight: SCREEN_HEIGHT * .57, overflow: 'hidden' },
+  authSubmit: { height: 52, marginTop: 12, borderRadius: 14, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' }, authSubmitDisabled: { opacity: .62 }, authSubmitText: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: '#fff' }, forgotLink: { alignSelf: 'flex-end', marginTop: 6 }, forgotText: { fontFamily: FONT, fontSize: 13, fontWeight: '600', color: C.primary }, orRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 14 }, orLine: { flex: 1, height: 1, backgroundColor: C.line }, orText: { fontFamily: FONT, fontSize: 12, fontWeight: '600', color: C.inkMuted, marginHorizontal: 10 }, googleBtn: { height: 52, borderRadius: 14, borderWidth: 1.5, borderColor: C.line, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center' }, googleBtnText: { fontFamily: FONT, fontSize: 15, fontWeight: '700', color: C.ink }, hoursContent: { padding: 0 }, hoursIntro: { paddingHorizontal: 30, paddingTop: 24 }, hoursCard: { minHeight: SCREEN_HEIGHT * .57, overflow: 'hidden' },
   hoursRow: { flex: 1, minHeight: 58, paddingLeft: 30, paddingRight: 20, flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.lineStrong }, hoursRowLast: { borderBottomWidth: 0 }, hoursDay: { width: 43, fontFamily: FONT, fontSize: 14, fontWeight: '700', color: '#1C2832' }, hoursTimes: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, timeInput: { width: 66, height: 36, borderRadius: 10, paddingHorizontal: 8, backgroundColor: C.field, color: C.ink, fontFamily: FONT, fontSize: 14, textAlign: 'center', borderWidth: 1, borderColor: C.line, outlineWidth: 0 }, timeInputOff: { width: 66, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.line }, timeOffText: { fontFamily: FONT, color: C.inkMuted, fontSize: 13 }, timeDash: { fontFamily: FONT, fontSize: 13, color: C.inkSoft }, hoursSwitch: { width: 52, alignItems: 'flex-end' },
   upload: { alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 14, backgroundColor: C.field, borderWidth: 1, borderStyle: 'dashed', borderColor: C.lineStrong, overflow: 'hidden' },
   uploadPreview: { width: 52, height: 52, borderRadius: 15, marginBottom: 9 }, uploadPreviewFill: { width: '100%', height: '100%' },
