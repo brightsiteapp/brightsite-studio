@@ -1840,7 +1840,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
 
             <View style={s.cardHeader}><Text style={s.cardTitle}>{editingInfo && deckStep.id === 'choice' ? 'Save changes' : deckStep.title}</Text>{editingInfo ? <Pressable onPress={() => { setEditingInfo(false); setAppScreen('dashboard'); }} hitSlop={10} style={s.closeEditBtn} accessibilityLabel="Close without saving"><Ionicons name="close" size={20} color={C.ink} /></Pressable> : deckIndex > 0 && <Text style={s.count}>{deckIndex}/{setupStepIndexes.length}</Text>}</View>
             <ScrollView style={s.cardScroll} contentContainerStyle={[s.content, deckStep.id === 'login' && s.loginContent, deckStep.id === 'hours' && s.hoursContent]}
-              scrollEnabled={deckStep.id !== 'hours' || keyboardVisible}
+              scrollEnabled={!['hours', 'business', 'contact'].includes(deckStep.id) || keyboardVisible}
               keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
               {content(deckStep)}
             </ScrollView>
