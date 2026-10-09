@@ -1670,6 +1670,17 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     if (validationMessage) setValidationMessage('');
   }, [data, hours, services, domainReady, designReady]);
 
+  const [cardDragging, setCardDragging] = useState(false);
+  const overflowSteps = useRef(new Set<string>());
+  const scrollViewH = useRef<Record<string, number>>({});
+  const trackOverflow = (id: string, contentH?: number, viewH?: number) => {
+    if (viewH !== undefined) scrollViewH.current[id] = viewH;
+    if (contentH !== undefined) scrollViewH.current[id + ':c'] = contentH;
+    const vh = scrollViewH.current[id];
+    contentH = scrollViewH.current[id + ':c'];
+    if (contentH === undefined || !vh) return;
+    if (contentH > vh + 4) overflowSteps.current.add(id); else overflowSteps.current.delete(id);
+  };
   const pan = useMemo(() => PanResponder.create({
     // Only allow card swipes from the header strip or the bottom prompt zone,
     // so scrolling the site preview or form content never triggers a card transition.
@@ -1678,11 +1689,12 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     onMoveShouldSetPanResponder: (_, g) => {
       if (keyboardVisible) return false;
       const inHeader = g.y0 < CARD_TOP + 80;
-      const scrollableStep = ['prices', 'reviews', 'photos'].includes(step.id);
+      const scrollableStep = overflowSteps.current.has(step.id) || ['prices', 'reviews', 'photos', 'services'].includes(step.id);
       const inFooter = !scrollableStep && g.y0 > SCREEN_HEIGHT - CARD_BOTTOM - 48;
       return (inHeader || inFooter) && Math.abs(g.dy) > 12;
     },
-    onPanResponderGrant: revealRail,
+    onPanResponderTerminationRequest: () => false,
+    onPanResponderGrant: () => { setCardDragging(true); revealRail(); },
     onPanResponderMove: (_, g) => {
       if (Math.abs(g.dy) > Math.abs(g.dx)) {
         const minIndex = authSession ? 1 : 0;
@@ -1692,10 +1704,12 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       }
     },
     onPanResponderRelease: (_, g) => {
+      setCardDragging(false);
       if (g.dy < -48 || g.vy < -.55) go(index + 1); else if (g.dy > 48 || g.vy > .55) go(index - 1); else Animated.spring(motion, { toValue: index * CARD_TRAVEL, damping: 20, stiffness: 210, useNativeDriver: true }).start(() => setDeckDirection(0));
       hideRailSoon();
     },
     onPanResponderTerminate: () => {
+      setCardDragging(false);
       Animated.spring(motion, { toValue: index * CARD_TRAVEL, damping: 20, stiffness: 210, useNativeDriver: true }).start(() => setDeckDirection(0));
       hideRailSoon();
     },
@@ -1897,9 +1911,11 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           const cardScale = cardPosition.interpolate({ inputRange: [-CARD_TRAVEL, 0, CARD_TRAVEL], outputRange: [.93, 1, .93], extrapolate: 'clamp' });
           return <Animated.View key={deckStep.id} pointerEvents={isActive ? 'auto' : 'none'} {...(isActive ? pan.panHandlers : {})} style={[s.card, s.deckCard, isActive ? s.deckCardActive : s.deckCardBehind, { zIndex: isActive ? 22 : 20 - Math.abs(distance), transform: [{ translateY: travelPosition }, { scale: cardScale }] }]}>
 
-            <View style={s.cardHeader}><Text style={s.cardTitle}>{deckStep.title}</Text>{editingInfo ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><Pressable onPress={() => { setEditingInfo(false); setAppScreen('dashboard'); }} hitSlop={10} style={s.closeEditBtn} accessibilityLabel="Close without saving"><Ionicons name="close" size={20} color={C.ink} /></Pressable><Pressable disabled={savingInfo} onPress={async () => { setSavingInfo(true); await syncOnboardingToBackend(buildChoice || 'designer'); setSavingInfo(false); setEditingInfo(false); setAppScreen('dashboard'); }} style={s.saveTickBtn} accessibilityLabel="Save changes">{savingInfo ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="checkmark" size={18} color="#fff" />}</Pressable></View> : deckIndex > 0 && <Text style={s.count}>{deckIndex}/{setupStepIndexes.length}</Text>}</View>
+            <View style={s.cardHeader}><Text style={s.cardTitle}>{deckStep.title}</Text>{editingInfo ? <Pressable disabled={savingInfo} onPress={async () => { setSavingInfo(true); await syncOnboardingToBackend(buildChoice || 'designer'); setSavingInfo(false); setEditingInfo(false); setAppScreen('dashboard'); }} style={s.saveTickBtn} accessibilityLabel="Save changes">{savingInfo ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="checkmark" size={18} color="#fff" />}</Pressable> : deckIndex > 0 && <Text style={s.count}>{deckIndex}/{setupStepIndexes.length}</Text>}</View>
             <ScrollView style={s.cardScroll} contentContainerStyle={[s.content, deckStep.id === 'login' && s.loginContent, deckStep.id === 'hours' && s.hoursContent]}
-              scrollEnabled={!['hours', 'business', 'contact'].includes(deckStep.id) || keyboardVisible}
+              scrollEnabled={!cardDragging && (!['hours', 'business', 'contact'].includes(deckStep.id) || keyboardVisible)}
+              onLayout={e => trackOverflow(deckStep.id, undefined, e.nativeEvent.layout.height)}
+              onContentSizeChange={(_, h) => trackOverflow(deckStep.id, h)}
               keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
               {content(deckStep)}
             </ScrollView>
