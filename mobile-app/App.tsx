@@ -1100,9 +1100,6 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
                 {!isBuilding && <Ionicons name={showEditMenu ? 'chevron-up' : 'chevron-down'} size={14} color={C.inkMuted} />}
               </Pressable>
               {showEditMenu && <View style={s.editMenu}>
-                <Pressable onPress={() => { setShowEditMenu(false); onEdit?.(); }} style={({ pressed }) => [s.editMenuItem, pressed && { backgroundColor: C.primarySoft }]}>
-                  <Ionicons name="color-palette-outline" size={17} color={C.primary} /><View><Text style={s.editMenuTitle}>Design</Text><Text style={s.editMenuSub}>Colours, fonts, text and sections</Text></View>
-                </Pressable>
                 <Pressable onPress={() => { setShowEditMenu(false); onEditInfo?.(); }} style={({ pressed }) => [s.editMenuItem, pressed && { backgroundColor: C.primarySoft }]}>
                   <Ionicons name="storefront-outline" size={17} color={C.primary} /><View><Text style={s.editMenuTitle}>Business info</Text><Text style={s.editMenuSub}>Details, hours, services and photos</Text></View>
                 </Pressable>
@@ -1749,16 +1746,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         </Pressable>
       </View>;
       return <View style={s.choiceWrap}>
-        <Text style={s.choiceHeading}>How would you like to build your website?</Text>
-        <Text style={s.choiceSub}>Either way, you can always make changes later.</Text>
-        <Pressable onPress={() => { void syncOnboardingToBackend('template'); setBuildChoice('template'); setAppScreen('loading'); }} style={s.choiceCard}>
-          <View style={[s.choiceIcon, { backgroundColor: 'rgba(59,130,246,.14)' }]}><Ionicons name="layers-outline" size={26} color={C.primary} /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={s.choiceCardTitle}>Build with Template</Text>
-            <Text style={s.choiceCardText}>Choose a design, pick your colours and font — goes live today.</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={C.inkMuted} />
-        </Pressable>
+        <Text style={s.choiceHeading}>You're all set!</Text>
+        <Text style={s.choiceSub}>Your details have been sent to our designer. Your preview will be ready in 1–2 days.</Text>
         <Pressable onPress={() => { void syncOnboardingToBackend('designer'); setBuildChoice('designer'); setAppScreen('loading'); }} style={s.choiceCard}>
           <View style={[s.choiceIcon, { backgroundColor: C.successSoft }]}><Ionicons name="person-outline" size={26} color={C.success} /></View>
           <View style={{ flex: 1 }}>
@@ -1858,7 +1847,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             </ScrollView>
             <View pointerEvents="none" style={s.fixedPrompt}>
               {!!validationMessage && isActive && <Text style={s.validationText}>{validationMessage}</Text>}
-              <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : deckStep.id === 'choice' ? (editingInfo ? 'Tap Save changes above' : 'Pick an option above') : 'Swipe up to save'}</Text></View>
+              <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : deckStep.id === 'choice' ? (editingInfo ? 'Tap Save changes above' : 'Tap to continue') : 'Swipe up to save'}</Text></View>
             </View>
           </Animated.View>;
         })}
