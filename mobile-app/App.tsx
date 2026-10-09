@@ -1299,6 +1299,12 @@ function DesignEditorFullscreen({ media, palette, setPalette, font, setFont, sit
 function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [index, setIndex] = useState(0);
   const [authMode, setAuthMode] = useState<'signup' | 'login'>('signup');
+  const [resetModal, setResetModal] = useState(false);
+  const [resetSession, setResetSession] = useState<{ access_token: string; refresh_token: string } | null>(null);
+  const [resetPw, setResetPw] = useState('');
+  const [resetConfirm, setResetConfirm] = useState('');
+  const [resetMsg, setResetMsg] = useState('');
+  const [resetBusy, setResetBusy] = useState(false);
   const [authBusy, setAuthBusy] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
   const [authSession, setAuthSession] = useState(false);
@@ -1454,6 +1460,20 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     const show = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
     const hide = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
     return () => { show.remove(); hide.remove(); };
+  }, []);
+
+  useEffect(() => {
+    const handleUrl = (url: string) => {
+      if (!url.includes('reset-password')) return;
+      const hash = url.split('#')[1] || '';
+      const params = Object.fromEntries(hash.split('&').map(p => p.split('=')));
+      const access = params['access_token'];
+      const refresh = params['refresh_token'];
+      if (access && refresh) { setResetSession({ access_token: access, refresh_token: refresh }); setResetModal(true); }
+    };
+    Linking.getInitialURL().then(url => { if (url) handleUrl(url); });
+    const sub = Linking.addEventListener('url', ({ url }) => handleUrl(url));
+    return () => sub.remove();
   }, []);
 
 
@@ -1723,7 +1743,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           const email = data.email.trim().toLowerCase();
           if (!/\S+@\S+\.\S+/.test(email)) { setAuthStatus('Enter your email address first.'); return; }
           setAuthStatus('Sending reset link…');
-          const { error } = await supabase.auth.resetPasswordForEmail(email);
+          const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: 'app.brightsite.mobile://reset-password' });
           setAuthStatus(error ? 'Couldn\'t send a reset email. Try again.' : 'Check your inbox for a reset link.');
         }} style={s.forgotLink}><Text style={s.forgotText}>Forgot password?</Text></Pressable>}
         <Pressable disabled={authBusy || authChecking} onPress={() => void authenticate()} style={({ pressed }) => [s.authSubmit, pressed && s.pressed, (authBusy || authChecking) && s.authSubmitDisabled]}>{authBusy || authChecking ? <ActivityIndicator size="small" color="#fff" /> : <Text style={s.authSubmitText}>{authMode === 'signup' ? 'Create account' : 'Log in'}</Text>}</Pressable></>;
@@ -1850,6 +1870,47 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       }
     }
   };
+
+  if (resetModal) return <FlowBackdrop>
+    <StatusBar style="dark" />
+    <View style={s.loginStage}>
+      <View style={[s.card, s.loginCard]}>
+        <View style={s.loginHeader}><Logo height={20} /></View>
+        <ScrollView contentContainerStyle={[s.content, s.loginContent]} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
+          <Text style={s.heroTitle}>Set new password</Text>
+          <Intro>Choose a new password for your account.</Intro>
+          <Field label="New password" value={resetPw} onChangeText={setResetPw} secureTextEntry placeholder="At least 8 characters" textContentType="newPassword" autoFocus />
+          <Field label="Confirm password" value={resetConfirm} onChangeText={setResetConfirm} secureTextEntry placeholder="Repeat your new password" textContentType="newPassword" onSubmitEditing={async () => {
+            if (resetPw.length < 8) { setResetMsg('Password must be at least 8 characters.'); return; }
+            if (resetPw !== resetConfirm) { setResetMsg('Those passwords don\'t match.'); return; }
+            if (!resetSession) return;
+            setResetBusy(true);
+            await supabase.auth.setSession(resetSession);
+            const { error } = await supabase.auth.updateUser({ password: resetPw });
+            setResetBusy(false);
+            if (error) { setResetMsg('Couldn\'t update your password. Please try again.'); return; }
+            setResetModal(false); setResetPw(''); setResetConfirm(''); setResetMsg(''); setResetSession(null);
+            setAuthMode('login'); setAuthStatus('Password updated — log in with your new password.');
+          }} />
+          {!!resetMsg && <Text style={s.authStatus}>{resetMsg}</Text>}
+          <Pressable disabled={resetBusy} onPress={async () => {
+            if (resetPw.length < 8) { setResetMsg('Password must be at least 8 characters.'); return; }
+            if (resetPw !== resetConfirm) { setResetMsg('Those passwords don\'t match.'); return; }
+            if (!resetSession) return;
+            setResetBusy(true);
+            await supabase.auth.setSession(resetSession);
+            const { error } = await supabase.auth.updateUser({ password: resetPw });
+            setResetBusy(false);
+            if (error) { setResetMsg('Couldn\'t update your password. Please try again.'); return; }
+            setResetModal(false); setResetPw(''); setResetConfirm(''); setResetMsg(''); setResetSession(null);
+            setAuthMode('login'); setAuthStatus('Password updated — log in with your new password.');
+          }} style={({ pressed }) => [s.authSubmit, { marginTop: 12 }, pressed && s.pressed, resetBusy && s.authSubmitDisabled]}>
+            {resetBusy ? <ActivityIndicator size="small" color="#fff" /> : <Text style={s.authSubmitText}>Save password</Text>}
+          </Pressable>
+        </ScrollView>
+      </View>
+    </View>
+  </FlowBackdrop>;
 
   if (index === 0 && appScreen === 'onboarding') return <FlowBackdrop>
     <StatusBar style="dark" />
