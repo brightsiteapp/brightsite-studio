@@ -1606,10 +1606,13 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const pan = useMemo(() => PanResponder.create({
     // Only allow card swipes from the header strip or the bottom prompt zone,
     // so scrolling the site preview or form content never triggers a card transition.
+    // Steps with tall scrollable content (prices, reviews, photos) block the footer
+    // zone entirely — header-only swiping avoids competing with the inner ScrollView.
     onMoveShouldSetPanResponder: (_, g) => {
       if (keyboardVisible) return false;
       const inHeader = g.y0 < CARD_TOP + 80;
-      const inFooter = g.y0 > SCREEN_HEIGHT - CARD_BOTTOM - 48;
+      const scrollableStep = ['prices', 'reviews', 'photos'].includes(step.id);
+      const inFooter = !scrollableStep && g.y0 > SCREEN_HEIGHT - CARD_BOTTOM - 48;
       return (inHeader || inFooter) && Math.abs(g.dy) > 12;
     },
     onPanResponderGrant: revealRail,
