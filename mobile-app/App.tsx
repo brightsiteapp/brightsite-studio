@@ -1674,7 +1674,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             </Pressable>
           </Pressable>
         </Modal>
-        <Field label="Address" value={data.address} onChangeText={(v: string) => setData({ ...data, address: v })} placeholder="e.g. 12 High Street, London" /></>;
+        <Field label="Address" value={data.address} onChangeText={(v: string) => setData({ ...data, address: v })} placeholder="e.g. 12 High Street, London" multiline /></>;
       case 'contact': return <><Intro>Add whichever ways customers should contact you.</Intro>
         <Field label="Email" value={data.contactEmail} onChangeText={(v: string) => setData({ ...data, contactEmail: v })} keyboardType="email-address" />
         <Field label="Phone (optional)" value={data.phone} onChangeText={(v: string) => setData({ ...data, phone: v })} keyboardType="phone-pad" />
