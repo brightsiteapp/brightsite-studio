@@ -1466,7 +1466,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     const handleUrl = (url: string) => {
       if (!url.includes('reset-password')) return;
       const hash = url.split('#')[1] || '';
-      const params = Object.fromEntries(hash.split('&').map(p => p.split('=')));
+      const params = Object.fromEntries(hash.split('&').map(p => { const [k, ...v] = p.split('='); return [k, decodeURIComponent(v.join('='))]; }));
       const access = params['access_token'];
       const refresh = params['refresh_token'];
       if (access && refresh) { setResetSession({ access_token: access, refresh_token: refresh }); setResetModal(true); }
@@ -1743,7 +1743,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           const email = data.email.trim().toLowerCase();
           if (!/\S+@\S+\.\S+/.test(email)) { setAuthStatus('Enter your email address first.'); return; }
           setAuthStatus('Sending reset link…');
-          const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: 'app.brightsite.mobile://reset-password' });
+          const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: 'https://brightsite.app/account/reset-password' });
           setAuthStatus(error ? 'Couldn\'t send a reset email. Try again.' : 'Check your inbox for a reset link.');
         }} style={s.forgotLink}><Text style={s.forgotText}>Forgot password?</Text></Pressable>}
         <Pressable disabled={authBusy || authChecking} onPress={() => void authenticate()} style={({ pressed }) => [s.authSubmit, pressed && s.pressed, (authBusy || authChecking) && s.authSubmitDisabled]}>{authBusy || authChecking ? <ActivityIndicator size="small" color="#fff" /> : <Text style={s.authSubmitText}>{authMode === 'signup' ? 'Create account' : 'Log in'}</Text>}</Pressable></>;
