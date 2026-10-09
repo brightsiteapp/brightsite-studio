@@ -1703,12 +1703,15 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         </View>
         <View style={s.galleryGrid} onLayout={(e: any) => setGalleryWidth(e.nativeEvent.layout.width)}>
           <GalleryGrid gallery={media.gallery} setGallery={(gallery: string[]) => setMedia(current => ({ ...current, gallery }))} containerWidth={galleryWidth} />
-          {media.gallery.length < 16 && <Pressable style={[s.galleryAdd, galleryTileSize(galleryWidth)]} onPress={async () => {
-            const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (!permission.granted) return;
-            const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, quality: .82 });
-            if (!result.canceled) setMedia(current => ({ ...current, gallery: [...current.gallery, ...result.assets.map(a => a.uri)].slice(0, 16) }));
-          }}><Ionicons name="add" size={26} color={C.primary} /></Pressable>}
+          {media.gallery.length < 16 && <>
+            {Array.from({ length: (GALLERY_COLS - media.gallery.length % GALLERY_COLS) % GALLERY_COLS }).map((_, i) => <View key={`sp${i}`} style={[galleryTileSize(galleryWidth), { opacity: 0 }]} />)}
+            <Pressable style={[s.galleryAdd, galleryTileSize(galleryWidth)]} onPress={async () => {
+              const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+              if (!permission.granted) return;
+              const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, quality: .82 });
+              if (!result.canceled) setMedia(current => ({ ...current, gallery: [...current.gallery, ...result.assets.map(a => a.uri)].slice(0, 16) }));
+            }}><Ionicons name="add" size={26} color={C.primary} /></Pressable>
+          </>}
         </View></>;
       case 'reviews': return <><Intro>Add customer reviews for your website. Each one is optional.</Intro>
         {reviewsList.map((review, i) => {
@@ -2009,7 +2012,7 @@ const s = StyleSheet.create({
   reviewSourceAction: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.primary },
   addReviewBtn: { height: 46, borderRadius: 12, borderWidth: 1, borderColor: C.primaryBorder, backgroundColor: C.primarySoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 18 },
   addReviewText: { fontFamily: FONT, fontWeight: '700', fontSize: 14, color: C.ink },
-  galleryGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 8, marginTop: 8, marginBottom: 12 },
+  galleryGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', gap: 8, marginTop: 8, marginBottom: 12 },
   galleryItem: { borderRadius: 14, overflow: 'hidden', backgroundColor: '#EFE4DB' },
   galleryThumb: { width: '100%', height: '100%' },
   galleryAdd: { borderRadius: 12, borderWidth: 1, borderStyle: 'dashed', borderColor: C.lineStrong, alignItems: 'center', justifyContent: 'center', backgroundColor: C.field },
