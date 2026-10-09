@@ -2174,8 +2174,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
                 return <Pressable key={id} onPress={() => setAdminActiveThread(biz)} style={({ pressed }) => [aS.threadCard, pressed && s.pressed]}>
                   <View style={[aS.threadAvatar, unread && { backgroundColor: C.primary }]}><Text style={aS.threadAvatarText}>{(name[0] || '?').toUpperCase()}</Text></View>
                   <View style={{ flex: 1 }}>
-                    <View style={aS.threadTop}><Text style={[aS.threadName, unread && { color: C.ink, fontWeight: '700' }]} numberOfLines={1}>{name}</Text><Text style={aS.threadTime}>{lastMsg ? timeAgo(lastMsg.created_at) : ''}</Text></View>
-                    <Text style={[aS.threadPreview, unread && { color: C.ink }]} numberOfLines={1}>{lastMsg?.body || ''}</Text>
+                    <View style={aS.threadTop}><Text style={aS.threadName} numberOfLines={1}>{name}</Text><Text style={aS.threadTime}>{lastMsg ? timeAgo(lastMsg.created_at) : ''}</Text></View>
+                    <Text style={[aS.threadPreview, unread && { color: C.ink, fontWeight: '700' }]} numberOfLines={1}>{lastMsg?.body || ''}</Text>
                   </View>
                   {unread && <View style={aS.threadUnread} />}
                 </Pressable>;
@@ -2183,22 +2183,22 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             </ScrollView>
           ) : (
             <View style={{ flex: 1 }}>
-              <Pressable onPress={() => setAdminActiveThread(null)} style={aS.threadBack}><Ionicons name="chevron-back" size={18} color={C.primary} /><Text style={aS.threadBackText}>{adminActiveThread?.data?.name || adminActiveThread?.data?.businessName || adminActiveThread?.id}</Text></Pressable>
-              <ScrollView ref={adminMsgScrollRef} style={{ flex: 1 }} contentContainerStyle={aS.msgList} showsVerticalScrollIndicator={false} onContentSizeChange={() => adminMsgScrollRef.current?.scrollToEnd({ animated: false })}>
+              <Pressable onPress={() => setAdminActiveThread(null)} style={aS.threadBack}><Ionicons name="chevron-back" size={20} color={C.ink} /><Text style={aS.threadBackText}>{adminActiveThread?.data?.name || adminActiveThread?.data?.businessName || adminActiveThread?.id}</Text></Pressable>
+              <ScrollView ref={adminMsgScrollRef} style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 8 }} showsVerticalScrollIndicator={false} onContentSizeChange={() => adminMsgScrollRef.current?.scrollToEnd({ animated: false })}>
                 {adminThreadMessages(adminActiveThread?.id).map((m: any) => {
                   const isAdmin = m.sender === 'admin';
-                  return <View key={m.id} style={[aS.msgBubbleWrap, isAdmin && aS.msgBubbleWrapAdmin]}>
-                    <View style={[aS.msgBubble, isAdmin ? aS.msgBubbleAdmin : aS.msgBubbleUser]}>
-                      <Text style={[aS.msgText, isAdmin && aS.msgTextAdmin]}>{m.body}</Text>
+                  return <View key={m.id}>
+                    <View style={[s.messageBubble, isAdmin ? s.messageBubbleSent : s.messageBubbleReceived]}>
+                      <Text style={[s.messageText, isAdmin && { color: '#fff' }]}>{m.body}</Text>
                     </View>
-                    <Text style={[aS.msgTime, isAdmin && { textAlign: 'right' }]}>{timeAgo(m.created_at)}</Text>
+                    <Text style={[s.messageMeta, isAdmin ? s.messageMetaSent : s.messageMetaReceived]}>{timeAgo(m.created_at)}</Text>
                   </View>;
                 })}
               </ScrollView>
               <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-                <View style={aS.msgInput}>
-                  <TextInput style={aS.msgInputText} value={adminMsgText} onChangeText={setAdminMsgText} placeholder="Message…" placeholderTextColor={C.placeholder} multiline returnKeyType="send" onSubmitEditing={() => void adminSendMessage(adminActiveThread?.id)} />
-                  <Pressable onPress={() => void adminSendMessage(adminActiveThread?.id)} disabled={adminMsgSending || !adminMsgText.trim()} style={[aS.msgSendBtn, (!adminMsgText.trim() || adminMsgSending) && { opacity: 0.4 }]}><Ionicons name="arrow-up" size={18} color="#fff" /></Pressable>
+                <View style={s.messageInputFixed}>
+                  <TextInput style={s.messageInputField} value={adminMsgText} onChangeText={setAdminMsgText} placeholder="Message…" placeholderTextColor={C.placeholder} multiline />
+                  <Pressable onPress={() => void adminSendMessage(adminActiveThread?.id)} disabled={adminMsgSending || !adminMsgText.trim()} style={[s.messageSendBtn, (!adminMsgText.trim() || adminMsgSending) && { opacity: 0.4 }]}><Ionicons name="arrow-up" size={18} color="#fff" /></Pressable>
                 </View>
               </KeyboardAvoidingView>
             </View>
@@ -2575,69 +2575,47 @@ const s = StyleSheet.create({
 });
 
 const aS = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', paddingTop: CARD_TOP, paddingHorizontal: 20, paddingBottom: 12, backgroundColor: C.canvas, gap: 8 },
-  adminBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: C.primarySoft, borderWidth: 1, borderColor: C.primaryBorder },
-  adminBadgeText: { fontFamily: FONT, fontSize: 10, fontWeight: '800', color: C.primary, letterSpacing: 0.8 },
-  signOutBtn: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12, backgroundColor: 'rgba(28,40,50,.08)' },
-  signOutText: { fontFamily: FONT, fontSize: 13, fontWeight: '600', color: C.ink },
+  adminBadge: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999, backgroundColor: C.primarySoft },
+  adminBadgeText: { fontFamily: FONT, fontSize: 11, fontWeight: '800', color: C.primary, letterSpacing: .6 },
+  signOutBtn: { minHeight: 34, paddingHorizontal: 14, borderRadius: 999, justifyContent: 'center', backgroundColor: C.surface, borderWidth: 1, borderColor: C.line },
+  signOutText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.ink },
   filterRow: { paddingHorizontal: 20, paddingBottom: 12, alignItems: 'center' },
-  filterTab: { flexDirection: 'row', alignItems: 'center', height: 34, paddingHorizontal: 14, borderRadius: 17, marginRight: 8, backgroundColor: 'rgba(28,40,50,.07)', gap: 5 },
-  filterTabOn: { backgroundColor: C.ink },
+  filterTab: { flexDirection: 'row', alignItems: 'center', height: 34, paddingHorizontal: 13, borderRadius: 999, marginRight: 8, backgroundColor: C.surface, borderWidth: 1, borderColor: C.line, gap: 6 },
+  filterTabOn: { backgroundColor: C.ink, borderColor: C.ink },
   filterDot: { width: 7, height: 7, borderRadius: 4 },
-  filterTabText: { fontFamily: FONT, fontSize: 13, fontWeight: '600', color: C.ink },
+  filterTabText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.ink },
   filterTabTextOn: { color: '#fff' },
-  filterCount: { fontWeight: '400', opacity: 0.6 },
-  searchWrap: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 20, marginBottom: 10, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: '#fff', borderRadius: 14, borderWidth: 1, borderColor: C.line, gap: 8 },
-  searchInput: { flex: 1, fontFamily: FONT, fontSize: 14, color: C.ink },
+  filterCount: { fontWeight: '700', color: C.inkMuted },
+  searchWrap: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 20, marginBottom: 12, paddingHorizontal: 14, minHeight: 46, backgroundColor: C.surface, borderRadius: 14, borderWidth: 1, borderColor: C.line, gap: 8 },
+  searchInput: { flex: 1, fontFamily: FONT, fontSize: 15, color: C.ink, paddingVertical: 10 },
   bizList: { paddingHorizontal: 20, paddingBottom: 40 },
-  bizCard: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 14, marginBottom: 8, overflow: 'hidden', borderWidth: 1, borderColor: C.line, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
+  bizCard: { flexDirection: 'row', backgroundColor: C.surface, borderRadius: 16, marginBottom: 8, overflow: 'hidden' },
   bizStatusBar: { width: 4 },
   bizCardInner: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingVertical: 11, paddingLeft: 14, paddingRight: 10, gap: 6 },
   bizMeta: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 },
-  bizCardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
-  bizName: { fontFamily: FONT, fontSize: 15, fontWeight: '700', color: C.ink },
-  bizTime: { fontFamily: FONT, fontSize: 12, color: C.inkMuted },
-  bizCardBottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  bizStatusPill: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, gap: 5 },
-  bizStatusDot: { width: 6, height: 6, borderRadius: 3 },
-  bizStatusText: { fontFamily: FONT, fontSize: 12, fontWeight: '600' },
-  bizActions: { flexDirection: 'row', gap: 4 },
-  bizAction: { width: 32, height: 32, borderRadius: 10, backgroundColor: 'rgba(28,40,50,.06)', alignItems: 'center', justifyContent: 'center' },
+  bizName: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: C.ink },
+  bizTime: { fontFamily: FONT, fontSize: 13, color: C.inkMuted },
+  bizStatusDot: { width: 7, height: 7, borderRadius: 4 },
+  bizStatusText: { fontFamily: FONT, fontSize: 12, fontWeight: '800' },
+  bizAction: { width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(28,40,50,.06)', alignItems: 'center', justifyContent: 'center' },
   bizUnreadDot: { position: 'absolute', top: 0, right: 0, width: 8, height: 8, borderRadius: 4, backgroundColor: C.primary, borderWidth: 1.5, borderColor: '#fff' },
-  emptyText: { textAlign: 'center', marginTop: 60, fontFamily: FONT, fontSize: 15, color: C.inkMuted },
-  showingText: { textAlign: 'center', marginTop: 16, fontFamily: FONT, fontSize: 12, color: C.inkMuted },
-  threadCard: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.line, gap: 12 },
-  threadAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.primarySoft, alignItems: 'center', justifyContent: 'center' },
-  threadAvatarText: { fontFamily: FONT, fontSize: 17, fontWeight: '700', color: C.primary },
+  emptyText: { textAlign: 'center', marginTop: 60, fontFamily: FONT, fontSize: 15, lineHeight: 21, color: C.inkSoft },
+  showingText: { textAlign: 'center', marginTop: 14, fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted },
+  threadCard: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 16, backgroundColor: C.surface, marginBottom: 8, gap: 12 },
+  threadAvatar: { width: 42, height: 42, borderRadius: 21, backgroundColor: C.primarySoft, alignItems: 'center', justifyContent: 'center' },
+  threadAvatarText: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: C.primary },
   threadTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3 },
-  threadName: { fontFamily: FONT, fontSize: 14, fontWeight: '600', color: C.inkSoft, flex: 1, marginRight: 8 },
-  threadTime: { fontFamily: FONT, fontSize: 12, color: C.inkMuted },
-  threadPreview: { fontFamily: FONT, fontSize: 13, color: C.inkMuted },
+  threadName: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: C.ink, flex: 1, marginRight: 8 },
+  threadTime: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted },
+  threadPreview: { fontFamily: FONT, fontSize: 14, color: C.inkSoft },
   threadUnread: { width: 9, height: 9, borderRadius: 5, backgroundColor: C.primary },
-  threadBack: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.line, gap: 4 },
-  threadBackText: { fontFamily: FONT, fontSize: 15, fontWeight: '600', color: C.primary, flex: 1 },
-  msgList: { padding: 16, paddingBottom: 8, gap: 2 },
-  msgBubbleWrap: { marginBottom: 10 },
-  msgBubbleWrapAdmin: { alignItems: 'flex-end' },
-  msgBubble: { maxWidth: '78%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18 },
-  msgBubbleUser: { backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, alignSelf: 'flex-start' },
-  msgBubbleAdmin: { backgroundColor: C.primary, alignSelf: 'flex-end' },
-  msgText: { fontFamily: FONT, fontSize: 14, color: C.ink, lineHeight: 20 },
-  msgTextAdmin: { color: '#fff' },
-  msgTime: { fontFamily: FONT, fontSize: 11, color: C.inkMuted, marginTop: 4, marginHorizontal: 4 },
-  msgInput: { flexDirection: 'row', alignItems: 'flex-end', margin: 12, padding: 8, backgroundColor: '#fff', borderRadius: 20, borderWidth: 1, borderColor: C.line, gap: 8 },
-  msgInputText: { flex: 1, fontFamily: FONT, fontSize: 14, color: C.ink, paddingHorizontal: 8, paddingVertical: 6, maxHeight: 100 },
-  msgSendBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
-  notifRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.line, gap: 12 },
+  threadBack: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 12, gap: 4 },
+  threadBackText: { fontFamily: FONT, fontSize: 17, fontWeight: '800', color: C.ink, flex: 1 },
+  notifRow: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 16, backgroundColor: C.surface, marginBottom: 8, gap: 12 },
   notifIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  notifName: { fontFamily: FONT, fontSize: 14, fontWeight: '600', color: C.ink },
-  notifDesc: { fontFamily: FONT, fontSize: 13, color: C.inkMuted, marginTop: 2 },
-  notifTime: { fontFamily: FONT, fontSize: 12, color: C.inkMuted },
-  tabBar: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: C.line, backgroundColor: '#fff', paddingBottom: Platform.OS === 'ios' ? 24 : 8, paddingTop: 8 },
-  tabItem: { flex: 1, alignItems: 'center', gap: 3 },
-  tabLabel: { fontFamily: FONT, fontSize: 10, fontWeight: '600', color: C.inkMuted },
+  notifName: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: C.ink },
+  notifDesc: { fontFamily: FONT, fontSize: 14, color: C.inkSoft, marginTop: 2 },
+  notifTime: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted },
   tabBadge: { minWidth: 18, height: 18, borderRadius: 9, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
   tabBadgeText: { fontFamily: FONT, fontSize: 11, fontWeight: '800', color: '#fff' },
-  adminViewingBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, paddingTop: CARD_TOP, backgroundColor: C.ink, gap: 4 },
-  adminViewingText: { fontFamily: FONT, fontSize: 13, fontWeight: '600', color: '#fff', flex: 1 },
 });
