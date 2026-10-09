@@ -1224,14 +1224,14 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           {isBuilding
             ? <View style={s.buildingCard}><ActivityIndicator size="large" color={C.primary} style={{ marginBottom: 14 }} /><Text style={s.buildingText}>Building your preview</Text><Text style={s.buildingSub}>You’ll get a message here as soon as it’s ready to review.</Text></View>
             : <>
-              {previewMode === 'desktop' ? <Pressable onPress={() => isLive ? void Linking.openURL(siteUrl) : onEdit?.()} style={s.desktopFrame}>
+              {previewMode === 'desktop' ? <Pressable disabled={!isLive} onPress={() => void Linking.openURL(siteUrl)} style={s.desktopFrame}>
                 <View style={s.desktopBar}><View style={s.previewDots}><View style={s.previewDot} /><View style={s.previewDot} /><View style={s.previewDot} /></View><Text style={s.desktopBarUrl} numberOfLines={1}>{domain ? `${domain}${suffix}` : 'yourwebsite.co.uk'}</Text></View>
                 <View pointerEvents="none" style={{ height: DESKTOP_VIEW_H, overflow: 'hidden' }}>
                   <ScaledView virtualWidth={DESKTOP_WIDTH} width={DESKTOP_VIEW_W}><SitePreview desktop palette={palette} font={font} page={0} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} media={media} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></ScaledView>
                 </View>
                 {isLive && <View style={s.previewOpenBadge}><Ionicons name="open-outline" size={12} color="#fff" /><Text style={s.previewOpenText}>Open site</Text></View>}
               </Pressable>
-              : <Pressable onPress={() => isLive ? void Linking.openURL(siteUrl) : onEdit?.()} style={s.phoneFrame}>
+              : <Pressable disabled={!isLive} onPress={() => void Linking.openURL(siteUrl)} style={s.phoneFrame}>
                 <View pointerEvents="none" style={{ overflow: 'hidden', flex: 1 }}>
                   <ScaledView virtualWidth={MOBILE_WIDTH} width={DASHBOARD_PREVIEW_WIDTH - 14}><SitePreview palette={palette} font={font} page={0} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} media={media} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></ScaledView>
                 </View>
@@ -2578,7 +2578,7 @@ const aS = StyleSheet.create({
   bizUnreadDot: { position: 'absolute', top: 0, right: 0, width: 8, height: 8, borderRadius: 4, backgroundColor: C.primary, borderWidth: 1.5, borderColor: '#fff' },
   emptyText: { textAlign: 'center', marginTop: 60, fontFamily: FONT, fontSize: 15, lineHeight: 21, color: C.inkSoft },
   showingText: { textAlign: 'center', marginTop: 14, fontFamily: FONT, fontSize: 12, fontWeight: '500', color: C.inkMuted },
-  threadCard: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 16, backgroundColor: C.surface, marginBottom: 8, gap: 12 },
+  threadCard: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.line, gap: 12 },
   threadAvatar: { width: 42, height: 42, borderRadius: 21, backgroundColor: C.primarySoft, alignItems: 'center', justifyContent: 'center' },
   threadAvatarText: { fontFamily: FONT, fontSize: 16, fontWeight: '600', color: C.primary },
   threadTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3 },
@@ -2588,7 +2588,7 @@ const aS = StyleSheet.create({
   threadUnread: { width: 9, height: 9, borderRadius: 5, backgroundColor: C.primary },
   threadBack: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 12, gap: 4 },
   threadBackText: { fontFamily: FONT, fontSize: 17, fontWeight: '600', color: C.ink, flex: 1 },
-  notifRow: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 16, backgroundColor: C.surface, marginBottom: 8, gap: 12 },
+  notifRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.line, gap: 12 },
   notifIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   notifName: { fontFamily: FONT, fontSize: 16, fontWeight: '600', color: C.ink },
   notifDesc: { fontFamily: FONT, fontSize: 14, color: C.inkSoft, marginTop: 2 },
