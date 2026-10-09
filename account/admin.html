@@ -786,7 +786,7 @@ document.getElementById('uploadConfirm').addEventListener('click', function() {
 });
 
 function patchBusinessAfterUpload(demoUrl, failed, btn, status, progressWrap) {
-  fetch(SUPABASE_URL + '/rest/v1/businesses?select=id,data&id=eq.' + encodeURIComponent(uploadTargetSlug), {
+  fetch(SUPABASE_URL + '/rest/v1/businesses?select=id,name,data&id=eq.' + encodeURIComponent(uploadTargetSlug), {
     headers: authHeaders()
   })
   .then(function(r) { return r.json(); })
@@ -796,12 +796,17 @@ function patchBusinessAfterUpload(demoUrl, failed, btn, status, progressWrap) {
     var patch = { demoUploaded: true, previewSent: true, demoReady: true };
     if (demoUrl) patch.demoUrl = demoUrl;
     var newData = Object.assign({}, existing.data || {}, patch);
+    var firstName = ((existing.data && existing.data.raw && existing.data.raw.fullName) || '').trim().split(' ')[0] || 'there';
+    var businessName = (existing.name || (existing.data && existing.data.raw && existing.data.raw.name) || '').trim();
+    var notification = hadPreview
+      ? ('We\'ve updated your preview for ' + (businessName || 'your website') + ' — please take another look.')
+      : ('Hey ' + firstName + ', I\'ve finished the preview for your ' + (businessName || 'website') + '. Let me know if any changes, if not feel free to go ahead and make it live!');
     return fetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(uploadTargetSlug), {
       method: 'PATCH',
       headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
       body: JSON.stringify({ data: newData })
     }).then(function(response) {
-      return { response: response, notification: hadPreview ? 'We\'ve updated your website preview — please take another look.' : 'Your website preview is ready to review.' };
+      return { response: response, notification: notification };
     });
   })
   .then(function(result) {

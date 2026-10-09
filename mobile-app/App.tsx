@@ -849,7 +849,7 @@ function ChangePasswordModal({ visible, onClose }: { visible: boolean; onClose: 
 
 const LOADING_MESSAGES = {
   template: ['Choosing a layout', 'Setting the tone', 'Matching your details', 'Almost ready'],
-  designer: ['Saving your details', 'Preparing your dashboard', 'Getting things ready', 'Almost there'],
+  designer: ['Saving your details', 'Preparing your dashboard', 'Our designer is on it!', "You'll get a notification when your preview is ready"],
 };
 
 function FadeIn({ children }: { children: React.ReactNode }) {
