@@ -2082,7 +2082,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   </FlowBackdrop>;
 
   if (appScreen === 'admin') {
-    const STATUS_COLORS: Record<string, string> = { new: C.inkMuted, build: C.danger, pending: C.warning, live: C.success };
+    const STATUS_COLORS: Record<string, string> = { new: '#6B7680', build: C.danger, pending: C.warning, live: C.success };
     const STATUS_LABELS: Record<string, string> = { new: 'New', build: 'Build', pending: 'Pending', live: 'Live' };
     const filteredBiz = adminBusinesses.filter(b => {
       if (adminFilter !== 'all' && adminStatusOf(b) !== adminFilter) return false;
@@ -2099,17 +2099,29 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     return <FadeIn>
       <View style={{ flex: 1, backgroundColor: C.canvas }}>
         <StatusBar style="dark" />
-        {/* Header */}
-        <View style={aS.header}>
-          <Logo height={18} />
-          <View style={aS.adminBadge}><Text style={aS.adminBadgeText}>ADMIN</Text></View>
-          <View style={{ flex: 1 }} />
-          <Pressable onPress={async () => { await supabase.auth.signOut(); onSignedOut(); }} style={aS.signOutBtn}><Text style={aS.signOutText}>Sign out</Text></Pressable>
+        <View style={s.dashboardScreen}>
+        <View style={s.dashboardBrandRow}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Logo height={17} />
+            <View style={aS.adminBadge}><Text style={aS.adminBadgeText}>ADMIN</Text></View>
+          </View>
+          <Pressable hitSlop={8} onPress={async () => { await supabase.auth.signOut(); onSignedOut(); }} style={aS.signOutBtn}><Text style={aS.signOutText}>Sign out</Text></Pressable>
+        </View>
+        <View style={s.dashboardTabsTop}>
+          {([['businesses', 'Accounts'], ['messages', 'Messages'], ['notifications', 'Activity']] as const).map(([key, label]) => {
+            const active = adminTab === key;
+            const badge = key === 'messages' ? totalUnread : 0;
+            return <Pressable key={key} onPress={() => { setAdminTab(key); if (key !== 'messages') setAdminActiveThread(null); }} style={[s.dashboardTab, active && s.dashboardTabOn]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={[s.dashboardTabText, active && s.dashboardTabTextOn]}>{label}</Text>
+                {badge > 0 && <View style={[aS.tabBadge, active && { backgroundColor: '#fff' }]}><Text style={[aS.tabBadgeText, active && { color: C.primary }]}>{badge}</Text></View>}
+              </View>
+            </Pressable>;
+          })}
         </View>
 
         {adminTab === 'businesses' && <>
-          {/* Filter tabs */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={aS.filterRow}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={aS.filterRow}>
             {(['all', 'new', 'build', 'pending', 'live'] as const).map(f => (
               <Pressable key={f} onPress={() => setAdminFilter(f)} style={[aS.filterTab, adminFilter === f && aS.filterTabOn]}>
                 {f !== 'all' && <View style={[aS.filterDot, { backgroundColor: STATUS_COLORS[f] }]} />}
@@ -2210,19 +2222,6 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           })}
         </ScrollView>}
 
-        {/* Bottom tab bar */}
-        <View style={aS.tabBar}>
-          {([['businesses', 'grid-outline', 'Accounts'], ['messages', 'chatbubbles-outline', 'Messages'], ['notifications', 'notifications-outline', 'Activity']] as const).map(([key, icon, label]) => {
-            const active = adminTab === key;
-            const badge = key === 'messages' ? totalUnread : 0;
-            return <Pressable key={key} onPress={() => { setAdminTab(key); if (key !== 'messages') setAdminActiveThread(null); }} style={aS.tabItem}>
-              <View style={{ position: 'relative' }}>
-                <Ionicons name={icon as any} size={22} color={active ? C.primary : C.inkMuted} />
-                {badge > 0 && <View style={aS.tabBadge}><Text style={aS.tabBadgeText}>{badge}</Text></View>}
-              </View>
-              <Text style={[aS.tabLabel, active && { color: C.primary }]}>{label}</Text>
-            </Pressable>;
-          })}
         </View>
       </View>
     </FadeIn>;
@@ -2583,16 +2582,16 @@ const aS = StyleSheet.create({
   adminBadgeText: { fontFamily: FONT, fontSize: 10, fontWeight: '800', color: C.primary, letterSpacing: 0.8 },
   signOutBtn: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12, backgroundColor: 'rgba(28,40,50,.08)' },
   signOutText: { fontFamily: FONT, fontSize: 13, fontWeight: '600', color: C.ink },
-  filterRow: { paddingHorizontal: 16, paddingVertical: 8 },
-  filterTab: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, marginRight: 8, backgroundColor: 'rgba(28,40,50,.07)', gap: 5 },
+  filterRow: { paddingHorizontal: 20, paddingBottom: 12, alignItems: 'center' },
+  filterTab: { flexDirection: 'row', alignItems: 'center', height: 34, paddingHorizontal: 14, borderRadius: 17, marginRight: 8, backgroundColor: 'rgba(28,40,50,.07)', gap: 5 },
   filterTabOn: { backgroundColor: C.ink },
   filterDot: { width: 7, height: 7, borderRadius: 4 },
   filterTabText: { fontFamily: FONT, fontSize: 13, fontWeight: '600', color: C.ink },
   filterTabTextOn: { color: '#fff' },
   filterCount: { fontWeight: '400', opacity: 0.6 },
-  searchWrap: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginBottom: 10, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: '#fff', borderRadius: 14, borderWidth: 1, borderColor: C.line, gap: 8 },
+  searchWrap: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 20, marginBottom: 10, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: '#fff', borderRadius: 14, borderWidth: 1, borderColor: C.line, gap: 8 },
   searchInput: { flex: 1, fontFamily: FONT, fontSize: 14, color: C.ink },
-  bizList: { paddingHorizontal: 16, paddingBottom: 24 },
+  bizList: { paddingHorizontal: 20, paddingBottom: 40 },
   bizCard: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 16, marginBottom: 10, overflow: 'hidden', borderWidth: 1, borderColor: C.line, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
   bizStatusBar: { width: 4 },
   bizCardInner: { flex: 1, padding: 14 },
@@ -2638,8 +2637,8 @@ const aS = StyleSheet.create({
   tabBar: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: C.line, backgroundColor: '#fff', paddingBottom: Platform.OS === 'ios' ? 24 : 8, paddingTop: 8 },
   tabItem: { flex: 1, alignItems: 'center', gap: 3 },
   tabLabel: { fontFamily: FONT, fontSize: 10, fontWeight: '600', color: C.inkMuted },
-  tabBadge: { position: 'absolute', top: -4, right: -8, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3, borderWidth: 1.5, borderColor: C.canvas },
-  tabBadgeText: { fontFamily: FONT, fontSize: 9, fontWeight: '800', color: '#fff' },
+  tabBadge: { minWidth: 18, height: 18, borderRadius: 9, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
+  tabBadgeText: { fontFamily: FONT, fontSize: 11, fontWeight: '800', color: '#fff' },
   adminViewingBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, paddingTop: CARD_TOP, backgroundColor: C.ink, gap: 4 },
   adminViewingText: { fontFamily: FONT, fontSize: 13, fontWeight: '600', color: '#fff', flex: 1 },
 });
