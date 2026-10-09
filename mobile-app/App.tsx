@@ -904,27 +904,7 @@ function FadeIn({ children }: { children: React.ReactNode }) {
   return <Animated.View style={{ flex: 1, opacity }}>{children}</Animated.View>;
 }
 
-function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, onEdit, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, onPaid, saveError, planAnnual, media, isPaying, buildChoice, session, slug, onAdminBack }: any) {
-  const [previewMode, setPreviewMode] = useState<'mobile' | 'desktop'>('mobile');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showEditMenu, setShowEditMenu] = useState(false);
-  const siteUrl = data.website?.trim() || `https://${domain}${suffix}`;
-  const [showPlanModal, setShowPlanModal] = useState(false);
-  const [domainPriceLabel, setDomainPriceLabel] = useState<string | null>(null);
-  const [domainPriceLoading, setDomainPriceLoading] = useState(false);
-  const openPlanModal = async () => {
-    setShowPlanModal(true);
-    setDomainPriceLoading(true);
-    try {
-      const res = await fetch(`${DOMAIN_API}?domain=${encodeURIComponent(domain + suffix)}`);
-      const result = await res.json();
-      setDomainPriceLabel(res.ok && result.priceLabel ? result.priceLabel : null);
-    } catch { setDomainPriceLabel(null); }
-    finally { setDomainPriceLoading(false); }
-  };
-  const [annual, setAnnual] = useState(!!planAnnual);
-  const [payBusy, setPayBusy] = useState(false);
-  const [payError, setPayError] = useState('');
+function MessageThread({ session, slug, viewer, otherName, placeholder, intro }: { session: any; slug: string; viewer: 'customer' | 'admin'; otherName: string; placeholder: string; intro?: React.ReactNode }) {
   const [messageDraft, setMessageDraft] = useState('');
   const [messages, setMessages] = useState<{ id: string; sender: string; body: string; created_at: string }[]>([]);
   const [sendingMessage, setSendingMessage] = useState(false);
@@ -933,11 +913,11 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
   const [kbOpen, setKbOpen] = useState(false);
   const scrollToLatest = (animated = true) => requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated }));
   useEffect(() => {
-    const show = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => { setKbOpen(true); if (tab === 'Messages') setTimeout(() => scrollToLatest(), 60); });
+    const show = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => { setKbOpen(true); setTimeout(() => scrollToLatest(), 60); });
     const hide = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKbOpen(false));
     return () => { show.remove(); hide.remove(); };
-  }, [tab]);
-  useEffect(() => { if (tab === 'Messages') scrollToLatest(false); }, [tab]);
+  }, []);
+  useEffect(() => { scrollToLatest(false); }, []);
 
   const loadMessagesNow = async () => {
     if (!session?.access_token || !slug) return;
@@ -954,14 +934,13 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
     } catch { /* same best-effort polling as the website’s messages tab */ }
   };
   useEffect(() => {
-    if (tab !== 'Messages') return;
     void loadMessagesNow();
     const timer = setInterval(() => { void loadMessagesNow(); }, 4000);
     return () => clearInterval(timer);
-  }, [tab, slug, session?.access_token]);
+  }, [slug, session?.access_token]);
 
   const handleLongPressMessage = (m: { id: string; sender: string; body: string }) => {
-    if (m.sender !== 'customer' || !session?.access_token) return;
+    if (m.sender !== viewer || !session?.access_token) return;
     const isImage = isImageMessage(m.body);
     const options: any[] = [{ text: 'Cancel', style: 'cancel' }];
     if (!isImage) {
@@ -1007,11 +986,11 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
     if (!text || sendingMessage || !session?.access_token || !slug) return;
     setSendingMessage(true);
     const localId = `local-${Date.now()}`;
-    setMessages(current => [...current, { id: localId, sender: 'customer', body: text, created_at: new Date().toISOString() }]);
+    setMessages(current => [...current, { id: localId, sender: viewer, body: text, created_at: new Date().toISOString() }]);
     if (!body) setMessageDraft('');
     scrollToLatest();
     try {
-      await postMessage(session.access_token, slug, text, 'customer');
+      await postMessage(session.access_token, slug, text, viewer);
       await loadMessagesNow();
     } catch {
       setMessages(current => current.filter(m => m.id !== localId));
@@ -1021,6 +1000,57 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
     finally { setSendingMessage(false); }
   };
 
+  const visible = messages.filter(m => !(m.sender === 'admin' && m.body.startsWith('Welcome to BrightSite')));
+  return <>
+    <ScrollView ref={scrollRef} contentContainerStyle={s.dashboardContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" onContentSizeChange={() => scrollToLatest()}>
+      {intro}
+      {visible.map((m, i) => {
+        const mine = m.sender === viewer;
+        const showDay = i === 0 || dayLabel(m.created_at) !== dayLabel(visible[i - 1].created_at);
+        const lastOfRun = i === visible.length - 1 || visible[i + 1].sender !== m.sender || dayLabel(visible[i + 1].created_at) !== dayLabel(m.created_at);
+        const pending = m.id.startsWith('local-');
+        return <React.Fragment key={m.id}>
+          {showDay && <Text style={s.messageDay}>{dayLabel(m.created_at)}</Text>}
+          <Pressable onLongPress={() => handleLongPressMessage(m)} style={[s.messageBubble, mine ? s.messageBubbleSent : s.messageBubbleReceived, !lastOfRun && { marginBottom: 3 }]}>
+            {isImageMessage(m.body) ? <Image source={{ uri: m.body }} style={s.messageImage} resizeMode="cover" /> : <Text style={[s.messageText, mine && { color: '#fff' }]}>{m.body}</Text>}
+          </Pressable>
+          {lastOfRun && <Text style={[s.messageMeta, mine ? s.messageMetaSent : s.messageMetaReceived]}>{mine ? 'You' : otherName} · {pending ? 'Sending…' : timeLabel(m.created_at)}</Text>}
+        </React.Fragment>;
+      })}
+    </ScrollView>
+    <View style={[s.messageInputFixed, kbOpen && { paddingBottom: 10 }]}>
+      <Pressable onPress={() => void attachImage()} hitSlop={10} style={s.messageIconBtn} accessibilityLabel="Attach photo">
+        <Ionicons name="image-outline" size={22} color={C.inkSoft} />
+      </Pressable>
+      <TextInput style={s.messageInputField} value={messageDraft} onChangeText={setMessageDraft} placeholder={placeholder} placeholderTextColor={C.placeholder} autoCapitalize="sentences" autoCorrect spellCheck keyboardType="default" enablesReturnKeyAutomatically multiline />
+      <Pressable onPress={() => void sendMessage(undefined)} disabled={!messageDraft.trim() || sendingMessage} hitSlop={10} style={[s.messageSendBtn, (!messageDraft.trim() || sendingMessage) && { opacity: .35 }]} accessibilityLabel="Send message">
+        {sendingMessage ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={18} color="#fff" />}
+      </Pressable>
+    </View>
+  </>;
+}
+
+function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, onEdit, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, onPaid, saveError, planAnnual, media, isPaying, buildChoice, session, slug, onAdminBack }: any) {
+  const [previewMode, setPreviewMode] = useState<'mobile' | 'desktop'>('mobile');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showEditMenu, setShowEditMenu] = useState(false);
+  const siteUrl = data.website?.trim() || `https://${domain}${suffix}`;
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [domainPriceLabel, setDomainPriceLabel] = useState<string | null>(null);
+  const [domainPriceLoading, setDomainPriceLoading] = useState(false);
+  const openPlanModal = async () => {
+    setShowPlanModal(true);
+    setDomainPriceLoading(true);
+    try {
+      const res = await fetch(`${DOMAIN_API}?domain=${encodeURIComponent(domain + suffix)}`);
+      const result = await res.json();
+      setDomainPriceLabel(res.ok && result.priceLabel ? result.priceLabel : null);
+    } catch { setDomainPriceLabel(null); }
+    finally { setDomainPriceLoading(false); }
+  };
+  const [annual, setAnnual] = useState(!!planAnnual);
+  const [payBusy, setPayBusy] = useState(false);
+  const [payError, setPayError] = useState('');
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const handlePay = async () => {
     setPayBusy(true); setPayError('');
@@ -1131,7 +1161,11 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
       </View>
       <View style={s.dashboardTabsTop}>{['Website', 'Messages', 'Account'].map(name => <Pressable key={name} onPress={() => setTab(name)} style={[s.dashboardTab, tab === name && s.dashboardTabOn]}><Text style={[s.dashboardTabText, tab === name && s.dashboardTabTextOn]}>{name}</Text></Pressable>)}</View>
       {!!saveError && <View style={s.saveBanner}><Ionicons name="alert-circle" size={16} color={C.danger} /><Text style={s.saveBannerText}>{saveError}</Text></View>}
-      <ScrollView ref={scrollRef} contentContainerStyle={s.dashboardContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" onContentSizeChange={() => { if (tab === 'Messages') scrollToLatest(); }}>
+      {tab === 'Messages' ? <MessageThread session={session} slug={slug} viewer="customer" otherName="Tom" placeholder="Message Tom…" intro={<>
+          <View style={[s.messageBubble, s.messageBubbleReceived]}><Text style={s.messageText}>{`Hey ${data.fullName?.trim().split(' ')[0] || 'there'}, welcome to BrightSite! My name is Tom and I’ll be your ${buildChoice === 'designer' ? 'designer and support' : 'support'}. ${buildChoice === 'designer' ? 'I’m working on your preview now, so let me know if you have any requests or questions.' : 'Love your design! Let me know if you have any requests or questions.'} When you’re ready, just hit Make Live to put your website online!`}</Text></View>
+          <Text style={[s.messageMeta, s.messageMetaReceived]}>Tom · BrightSite</Text>
+        </>} /> :
+      <ScrollView contentContainerStyle={s.dashboardContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
         {tab === 'Account' && <>
           <View style={s.dashboardInfoCard}>
             <Text style={s.dashboardCardLabel}>Plan</Text>
@@ -1200,33 +1234,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
               </Pressable>}
             </>}
         </>}
-        {tab === 'Messages' && <>
-          <View style={[s.messageBubble, s.messageBubbleReceived]}><Text style={s.messageText}>{`Hey ${data.fullName?.trim().split(' ')[0] || 'there'}, welcome to BrightSite! My name is Tom and I’ll be your ${buildChoice === 'designer' ? 'designer and support' : 'support'}. ${buildChoice === 'designer' ? 'I’m working on your preview now, so let me know if you have any requests or questions.' : 'Love your design! Let me know if you have any requests or questions.'} When you’re ready, just hit Make Live to put your website online!`}</Text></View>
-          <Text style={[s.messageMeta, s.messageMetaReceived]}>Tom · BrightSite</Text>
-          {messages.filter(m => !(m.sender === 'admin' && m.body.startsWith('Welcome to BrightSite'))).map((m, i) => {
-            const mine = m.sender === 'customer';
-            const showDay = i === 0 || dayLabel(m.created_at) !== dayLabel(messages[i - 1].created_at);
-            const lastOfRun = i === messages.length - 1 || messages[i + 1].sender !== m.sender || dayLabel(messages[i + 1].created_at) !== dayLabel(m.created_at);
-            const pending = m.id.startsWith('local-');
-            return <React.Fragment key={m.id}>
-              {showDay && <Text style={s.messageDay}>{dayLabel(m.created_at)}</Text>}
-              <Pressable onLongPress={() => handleLongPressMessage(m)} style={[s.messageBubble, mine ? s.messageBubbleSent : s.messageBubbleReceived, !lastOfRun && { marginBottom: 3 }]}>
-                {isImageMessage(m.body) ? <Image source={{ uri: m.body }} style={s.messageImage} resizeMode="cover" /> : <Text style={[s.messageText, mine && { color: '#fff' }]}>{m.body}</Text>}
-              </Pressable>
-              {lastOfRun && <Text style={[s.messageMeta, mine ? s.messageMetaSent : s.messageMetaReceived]}>{mine ? 'You' : 'Tom'} · {pending ? 'Sending…' : timeLabel(m.created_at)}</Text>}
-            </React.Fragment>;
-          })}
-        </>}
-      </ScrollView>
-      {tab === 'Messages' && <View style={[s.messageInputFixed, kbOpen && { paddingBottom: 10 }]}>
-        <Pressable onPress={() => void attachImage()} hitSlop={10} style={s.messageIconBtn} accessibilityLabel="Attach photo">
-          <Ionicons name="image-outline" size={22} color={C.inkSoft} />
-        </Pressable>
-        <TextInput style={s.messageInputField} value={messageDraft} onChangeText={setMessageDraft} placeholder="Message Tom…" placeholderTextColor={C.placeholder} autoCapitalize="sentences" autoCorrect spellCheck keyboardType="default" enablesReturnKeyAutomatically multiline />
-        <Pressable onPress={() => void sendMessage(undefined)} disabled={!messageDraft.trim() || sendingMessage} hitSlop={10} style={[s.messageSendBtn, (!messageDraft.trim() || sendingMessage) && { opacity: .35 }]} accessibilityLabel="Send message">
-          {sendingMessage ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={18} color="#fff" />}
-        </Pressable>
-      </View>}
+      </ScrollView>}
     </View>
     <Modal visible={showPlanModal} transparent animationType="slide" onRequestClose={() => setShowPlanModal(false)}>
       <View style={s.planModalOverlay}>
@@ -1358,11 +1366,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [adminTab, setAdminTab] = useState<'businesses' | 'messages' | 'notifications'>('businesses');
   const [adminActiveThread, setAdminActiveThread] = useState<any>(null);
   const [adminAllMessages, setAdminAllMessages] = useState<any[]>([]);
-  const [adminMsgText, setAdminMsgText] = useState('');
-  const [adminMsgSending, setAdminMsgSending] = useState(false);
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminViewingBusiness, setAdminViewingBusiness] = useState<any>(null);
-  const adminMsgScrollRef = useRef<ScrollView>(null);
   const [editFrom, setEditFrom] = useState<'onboarding' | 'dashboard'>('onboarding');
   const [editingInfo, setEditingInfo] = useState(false);
   const [savingInfo, setSavingInfo] = useState(false);
@@ -1488,26 +1493,6 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       const lastMsg = adminAllMessages.find((m: any) => m.business_id === id);
       return { id, biz, lastMsg };
     }).filter(x => x.biz).sort((a, b) => new Date(b.lastMsg?.created_at || 0).getTime() - new Date(a.lastMsg?.created_at || 0).getTime());
-  };
-
-  const adminSendMessage = async (bizId: string) => {
-    if (!adminMsgText.trim() || adminMsgSending || !session) return;
-    const text = adminMsgText.trim();
-    setAdminMsgText('');
-    setAdminMsgSending(true);
-    try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/messages`, {
-        method: 'POST',
-        headers: { ...authHeaders(session.access_token), 'Content-Type': 'application/json', Prefer: 'return=representation' },
-        body: JSON.stringify({ business_id: bizId, sender: 'admin', body: text }),
-      });
-      if (res.ok) {
-        const newMsg = await res.json();
-        setAdminAllMessages(prev => [Array.isArray(newMsg) ? newMsg[0] : newMsg, ...prev]);
-        setTimeout(() => adminMsgScrollRef.current?.scrollToEnd({ animated: true }), 100);
-      }
-    } catch {}
-    finally { setAdminMsgSending(false); }
   };
 
   const adminOpenBusiness = (biz: any) => {
@@ -2182,26 +2167,10 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
               })}
             </ScrollView>
           ) : (
-            <View style={{ flex: 1 }}>
-              <Pressable onPress={() => setAdminActiveThread(null)} style={aS.threadBack}><Ionicons name="chevron-back" size={20} color={C.ink} /><Text style={aS.threadBackText}>{adminActiveThread?.data?.name || adminActiveThread?.data?.businessName || adminActiveThread?.id}</Text></Pressable>
-              <ScrollView ref={adminMsgScrollRef} style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 8 }} showsVerticalScrollIndicator={false} onContentSizeChange={() => adminMsgScrollRef.current?.scrollToEnd({ animated: false })}>
-                {adminThreadMessages(adminActiveThread?.id).map((m: any) => {
-                  const isAdmin = m.sender === 'admin';
-                  return <View key={m.id}>
-                    <View style={[s.messageBubble, isAdmin ? s.messageBubbleSent : s.messageBubbleReceived]}>
-                      <Text style={[s.messageText, isAdmin && { color: '#fff' }]}>{m.body}</Text>
-                    </View>
-                    <Text style={[s.messageMeta, isAdmin ? s.messageMetaSent : s.messageMetaReceived]}>{timeAgo(m.created_at)}</Text>
-                  </View>;
-                })}
-              </ScrollView>
-              <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-                <View style={s.messageInputFixed}>
-                  <TextInput style={s.messageInputField} value={adminMsgText} onChangeText={setAdminMsgText} placeholder="Message…" placeholderTextColor={C.placeholder} multiline />
-                  <Pressable onPress={() => void adminSendMessage(adminActiveThread?.id)} disabled={adminMsgSending || !adminMsgText.trim()} style={[s.messageSendBtn, (!adminMsgText.trim() || adminMsgSending) && { opacity: 0.4 }]}><Ionicons name="arrow-up" size={18} color="#fff" /></Pressable>
-                </View>
-              </KeyboardAvoidingView>
-            </View>
+            <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+              <Pressable onPress={() => { setAdminActiveThread(null); if (session) void loadAdminData(session); }} style={aS.threadBack}><Ionicons name="chevron-back" size={20} color={C.ink} /><Text style={aS.threadBackText}>{adminActiveThread?.data?.name || adminActiveThread?.data?.businessName || adminActiveThread?.id}</Text></Pressable>
+              <MessageThread key={adminActiveThread?.id} session={session} slug={adminActiveThread?.id} viewer="admin" otherName={(adminActiveThread?.data?.fullName || adminActiveThread?.data?.name || 'Customer').trim().split(' ')[0]} placeholder="Message…" />
+            </KeyboardAvoidingView>
           )}
         </>}
 
