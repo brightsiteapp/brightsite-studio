@@ -55,6 +55,18 @@ const UPLOAD_WORKER = 'https://brightsite-upload.notify-lead-worker.workers.dev'
 const R2_PUBLIC_URL = 'https://pub-38c2019362f64b6780e0b217ba84be8c.r2.dev';
 const NOTIFY_API = 'https://brightsite-notify-lead.notify-lead-worker.workers.dev/';
 
+function timeAgo(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `${d}d ago`;
+  return `${Math.floor(d / 30)}mo ago`;
+}
+
 function slugify(value: string) {
   return (value || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
 }
@@ -1338,7 +1350,18 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [homeSections, setHomeSections] = useState([...HOME_SECTIONS_DEFAULT]);
   const [servicesSections, setServicesSections] = useState([...SERVICES_SECTIONS_DEFAULT]);
   const [contactSections, setContactSections] = useState([...CONTACT_SECTIONS_DEFAULT]);
-  const [appScreen, setAppScreen] = useState<'onboarding' | 'loading' | 'design-editor' | 'dashboard'>('onboarding');
+  const [appScreen, setAppScreen] = useState<'onboarding' | 'loading' | 'design-editor' | 'dashboard' | 'admin'>('onboarding');
+  const [adminBusinesses, setAdminBusinesses] = useState<any[]>([]);
+  const [adminFilter, setAdminFilter] = useState<'all' | 'new' | 'build' | 'pending' | 'live'>('all');
+  const [adminSearch, setAdminSearch] = useState('');
+  const [adminTab, setAdminTab] = useState<'businesses' | 'messages' | 'notifications'>('businesses');
+  const [adminActiveThread, setAdminActiveThread] = useState<any>(null);
+  const [adminAllMessages, setAdminAllMessages] = useState<any[]>([]);
+  const [adminMsgText, setAdminMsgText] = useState('');
+  const [adminMsgSending, setAdminMsgSending] = useState(false);
+  const [adminLoading, setAdminLoading] = useState(false);
+  const [adminViewingBusiness, setAdminViewingBusiness] = useState<any>(null);
+  const adminMsgScrollRef = useRef<ScrollView>(null);
   const [editFrom, setEditFrom] = useState<'onboarding' | 'dashboard'>('onboarding');
   const [editingInfo, setEditingInfo] = useState(false);
   const [savingInfo, setSavingInfo] = useState(false);
@@ -1424,10 +1447,90 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     onSignedOut();
   };
 
+  const ADMIN_EMAIL = 'brightsiteapp@gmail.com';
+
+  const adminStatusOf = (b: any): 'new' | 'build' | 'pending' | 'live' => {
+    const d = b.data || {};
+    if (d.published) return 'live';
+    if (d.previewUrl || d.demoUrl || d.liveUrl) return 'pending';
+    if (d.buildChoice === 'designer' || /Build choice: designer/i.test(d.notes || '')) return 'build';
+    return 'new';
+  };
+
+  const adminStatusColor = (s: string) => ({ new: C.inkMuted, build: C.danger, pending: C.warning, live: C.success }[s] || C.inkMuted);
+
+  const loadAdminData = async (sess: any) => {
+    setAdminLoading(true);
+    try {
+      const [bizRes, msgRes] = await Promise.all([
+        fetch('https://api.brightsite.app/api/admin-businesses', { headers: { Authorization: `Bearer ${sess.access_token}` } }),
+        fetch(`${SUPABASE_URL}/rest/v1/messages?select=id,business_id,sender,body,created_at&order=created_at.desc&limit=2000`, { headers: authHeaders(sess.access_token) }),
+      ]);
+      if (bizRes.ok) { const rows = await bizRes.json(); setAdminBusinesses(Array.isArray(rows) ? rows : []); }
+      if (msgRes.ok) { const msgs = await msgRes.json(); setAdminAllMessages(Array.isArray(msgs) ? msgs : []); }
+    } catch {}
+    finally { setAdminLoading(false); }
+  };
+
+  const adminThreadMessages = (bizId: string) => adminAllMessages.filter((m: any) => m.business_id === bizId).slice().reverse();
+
+  const adminThreadUnread = (bizId: string) => {
+    const msgs = adminThreadMessages(bizId);
+    if (!msgs.length) return false;
+    return msgs[msgs.length - 1].sender === 'customer';
+  };
+
+  const adminBusinessesWithMessages = () => {
+    const bizIds = [...new Set(adminAllMessages.map((m: any) => m.business_id))];
+    return bizIds.map(id => {
+      const biz = adminBusinesses.find(b => b.id === id);
+      const lastMsg = adminAllMessages.find((m: any) => m.business_id === id);
+      return { id, biz, lastMsg };
+    }).filter(x => x.biz).sort((a, b) => new Date(b.lastMsg?.created_at || 0).getTime() - new Date(a.lastMsg?.created_at || 0).getTime());
+  };
+
+  const adminSendMessage = async (bizId: string) => {
+    if (!adminMsgText.trim() || adminMsgSending || !session) return;
+    const text = adminMsgText.trim();
+    setAdminMsgText('');
+    setAdminMsgSending(true);
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/messages`, {
+        method: 'POST',
+        headers: { ...authHeaders(session.access_token), 'Content-Type': 'application/json', Prefer: 'return=representation' },
+        body: JSON.stringify({ business_id: bizId, sender: 'admin', body: text }),
+      });
+      if (res.ok) {
+        const newMsg = await res.json();
+        setAdminAllMessages(prev => [Array.isArray(newMsg) ? newMsg[0] : newMsg, ...prev]);
+        setTimeout(() => adminMsgScrollRef.current?.scrollToEnd({ animated: true }), 100);
+      }
+    } catch {}
+    finally { setAdminMsgSending(false); }
+  };
+
+  const adminOpenBusiness = (biz: any) => {
+    const email = biz.data?.contactEmail || biz.data?.email || '';
+    hydrateFromRecord(biz.data || {}, email);
+    setSlug(biz.id);
+    setAdminViewingBusiness(biz);
+    setAppScreen('dashboard');
+  };
+
+  const adminBackFromBusiness = () => {
+    setAdminViewingBusiness(null);
+    setAppScreen('admin');
+  };
+
   const loadAccountDestination = async (authedSession: any) => {
     const email = authedSession?.user?.email || data.email.trim();
     setAuthSession(true);
     setSession(authedSession);
+    if (email.toLowerCase() === ADMIN_EMAIL) {
+      setAppScreen('admin');
+      void loadAdminData(authedSession);
+      return;
+    }
     setData(current => ({ ...current, email, contactEmail: current.contactEmail || email }));
     const { data: rows, error } = await supabase
       .from('businesses')
@@ -1978,7 +2081,157 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     </View>
   </FlowBackdrop>;
 
-  if (appScreen === 'dashboard') return <FadeIn><DashboardHome tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true }; setPlanAnnual(isAnnual); setWebsiteStatus('publishing'); }} onEditInfo={() => { setEditingInfo(true); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={signOut} saveError={saveError} planAnnual={planAnnual} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onEdit={() => { setEditFrom('dashboard'); setAppScreen('design-editor'); }} /></FadeIn>;
+  if (appScreen === 'admin') {
+    const STATUS_COLORS: Record<string, string> = { new: C.inkMuted, build: C.danger, pending: C.warning, live: C.success };
+    const STATUS_LABELS: Record<string, string> = { new: 'New', build: 'Build', pending: 'Pending', live: 'Live' };
+    const filteredBiz = adminBusinesses.filter(b => {
+      if (adminFilter !== 'all' && adminStatusOf(b) !== adminFilter) return false;
+      if (adminSearch) { const q = adminSearch.toLowerCase(); const d = b.data || {}; return (d.name || '').toLowerCase().includes(q) || (b.id || '').toLowerCase().includes(q); }
+      return true;
+    }).sort((a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime());
+
+    const tabCounts: Record<string, number> = { all: adminBusinesses.length, new: 0, build: 0, pending: 0, live: 0 };
+    adminBusinesses.forEach(b => { tabCounts[adminStatusOf(b)]++; });
+
+    const threadsWithMessages = adminBusinessesWithMessages();
+    const totalUnread = threadsWithMessages.filter(t => adminThreadUnread(t.id)).length;
+
+    return <FadeIn>
+      <View style={{ flex: 1, backgroundColor: C.canvas }}>
+        <StatusBar style="dark" />
+        {/* Header */}
+        <View style={aS.header}>
+          <Logo height={18} />
+          <View style={aS.adminBadge}><Text style={aS.adminBadgeText}>ADMIN</Text></View>
+          <View style={{ flex: 1 }} />
+          <Pressable onPress={async () => { await supabase.auth.signOut(); onSignedOut(); }} style={aS.signOutBtn}><Text style={aS.signOutText}>Sign out</Text></Pressable>
+        </View>
+
+        {adminTab === 'businesses' && <>
+          {/* Filter tabs */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={aS.filterRow}>
+            {(['all', 'new', 'build', 'pending', 'live'] as const).map(f => (
+              <Pressable key={f} onPress={() => setAdminFilter(f)} style={[aS.filterTab, adminFilter === f && aS.filterTabOn]}>
+                {f !== 'all' && <View style={[aS.filterDot, { backgroundColor: STATUS_COLORS[f] }]} />}
+                <Text style={[aS.filterTabText, adminFilter === f && aS.filterTabTextOn]}>{f === 'all' ? 'All' : STATUS_LABELS[f]} <Text style={aS.filterCount}>{tabCounts[f]}</Text></Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+          {/* Search */}
+          <View style={aS.searchWrap}><Ionicons name="search-outline" size={16} color={C.inkMuted} /><TextInput style={aS.searchInput} value={adminSearch} onChangeText={setAdminSearch} placeholder="Search name…" placeholderTextColor={C.placeholder} autoCorrect={false} autoCapitalize="none" /></View>
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={aS.bizList} showsVerticalScrollIndicator={false}>
+            {adminLoading && <ActivityIndicator style={{ marginTop: 40 }} color={C.primary} />}
+            {!adminLoading && filteredBiz.length === 0 && <Text style={aS.emptyText}>No accounts found</Text>}
+            {filteredBiz.map(biz => {
+              const st = adminStatusOf(biz);
+              const d = biz.data || {};
+              const name = d.name || d.businessName || biz.id;
+              const updated = biz.updatedAt ? timeAgo(biz.updatedAt) : '';
+              const hasUnread = adminThreadUnread(biz.id);
+              return <Pressable key={biz.id} onPress={() => adminOpenBusiness(biz)} style={({ pressed }) => [aS.bizCard, pressed && s.pressed]}>
+                <View style={[aS.bizStatusBar, { backgroundColor: STATUS_COLORS[st] }]} />
+                <View style={aS.bizCardInner}>
+                  <View style={aS.bizCardTop}>
+                    <Text style={aS.bizName} numberOfLines={1}>{name}</Text>
+                    <Text style={aS.bizTime}>{updated}</Text>
+                  </View>
+                  <View style={aS.bizCardBottom}>
+                    <View style={[aS.bizStatusPill, { backgroundColor: STATUS_COLORS[st] + '18' }]}>
+                      <View style={[aS.bizStatusDot, { backgroundColor: STATUS_COLORS[st] }]} />
+                      <Text style={[aS.bizStatusText, { color: STATUS_COLORS[st] }]}>{STATUS_LABELS[st]}</Text>
+                    </View>
+                    <View style={aS.bizActions}>
+                      <Pressable hitSlop={8} onPress={(e) => { e.stopPropagation?.(); setAdminActiveThread(biz); setAdminTab('messages'); }} style={aS.bizAction}>
+                        {hasUnread && <View style={aS.bizUnreadDot} />}
+                        <Ionicons name="chatbubble-outline" size={17} color={hasUnread ? C.primary : C.inkMuted} />
+                      </Pressable>
+                      {(d.liveUrl || d.previewUrl || d.demoUrl) && <Pressable hitSlop={8} onPress={() => Linking.openURL(d.liveUrl || d.previewUrl || d.demoUrl)} style={aS.bizAction}><Ionicons name="globe-outline" size={17} color={C.inkMuted} /></Pressable>}
+                    </View>
+                  </View>
+                </View>
+              </Pressable>;
+            })}
+            {!adminLoading && <Text style={aS.showingText}>Showing {filteredBiz.length} account{filteredBiz.length !== 1 ? 's' : ''}</Text>}
+          </ScrollView>
+        </>}
+
+        {adminTab === 'messages' && <>
+          {!adminActiveThread ? (
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={aS.bizList} showsVerticalScrollIndicator={false}>
+              {threadsWithMessages.length === 0 && <Text style={aS.emptyText}>No messages yet</Text>}
+              {threadsWithMessages.map(({ id, biz, lastMsg }) => {
+                const unread = adminThreadUnread(id);
+                const name = biz?.data?.name || biz?.data?.businessName || id;
+                return <Pressable key={id} onPress={() => setAdminActiveThread(biz)} style={({ pressed }) => [aS.threadCard, pressed && s.pressed]}>
+                  <View style={[aS.threadAvatar, unread && { backgroundColor: C.primary }]}><Text style={aS.threadAvatarText}>{(name[0] || '?').toUpperCase()}</Text></View>
+                  <View style={{ flex: 1 }}>
+                    <View style={aS.threadTop}><Text style={[aS.threadName, unread && { color: C.ink, fontWeight: '700' }]} numberOfLines={1}>{name}</Text><Text style={aS.threadTime}>{lastMsg ? timeAgo(lastMsg.created_at) : ''}</Text></View>
+                    <Text style={[aS.threadPreview, unread && { color: C.ink }]} numberOfLines={1}>{lastMsg?.body || ''}</Text>
+                  </View>
+                  {unread && <View style={aS.threadUnread} />}
+                </Pressable>;
+              })}
+            </ScrollView>
+          ) : (
+            <View style={{ flex: 1 }}>
+              <Pressable onPress={() => setAdminActiveThread(null)} style={aS.threadBack}><Ionicons name="chevron-back" size={18} color={C.primary} /><Text style={aS.threadBackText}>{adminActiveThread?.data?.name || adminActiveThread?.data?.businessName || adminActiveThread?.id}</Text></Pressable>
+              <ScrollView ref={adminMsgScrollRef} style={{ flex: 1 }} contentContainerStyle={aS.msgList} showsVerticalScrollIndicator={false} onContentSizeChange={() => adminMsgScrollRef.current?.scrollToEnd({ animated: false })}>
+                {adminThreadMessages(adminActiveThread?.id).map((m: any) => {
+                  const isAdmin = m.sender === 'admin';
+                  return <View key={m.id} style={[aS.msgBubbleWrap, isAdmin && aS.msgBubbleWrapAdmin]}>
+                    <View style={[aS.msgBubble, isAdmin ? aS.msgBubbleAdmin : aS.msgBubbleUser]}>
+                      <Text style={[aS.msgText, isAdmin && aS.msgTextAdmin]}>{m.body}</Text>
+                    </View>
+                    <Text style={[aS.msgTime, isAdmin && { textAlign: 'right' }]}>{timeAgo(m.created_at)}</Text>
+                  </View>;
+                })}
+              </ScrollView>
+              <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+                <View style={aS.msgInput}>
+                  <TextInput style={aS.msgInputText} value={adminMsgText} onChangeText={setAdminMsgText} placeholder="Message…" placeholderTextColor={C.placeholder} multiline returnKeyType="send" onSubmitEditing={() => void adminSendMessage(adminActiveThread?.id)} />
+                  <Pressable onPress={() => void adminSendMessage(adminActiveThread?.id)} disabled={adminMsgSending || !adminMsgText.trim()} style={[aS.msgSendBtn, (!adminMsgText.trim() || adminMsgSending) && { opacity: 0.4 }]}><Ionicons name="arrow-up" size={18} color="#fff" /></Pressable>
+                </View>
+              </KeyboardAvoidingView>
+            </View>
+          )}
+        </>}
+
+        {adminTab === 'notifications' && <ScrollView style={{ flex: 1 }} contentContainerStyle={aS.bizList} showsVerticalScrollIndicator={false}>
+          {adminBusinesses.slice().sort((a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()).slice(0, 40).map(biz => {
+            const st = adminStatusOf(biz);
+            const name = biz.data?.name || biz.data?.businessName || biz.id;
+            const icon = ({ new: 'person-add-outline', build: 'hammer-outline', pending: 'time-outline', live: 'checkmark-circle-outline' } as any)[st];
+            const desc = ({ new: 'Signed up', build: 'Submitted to build', pending: 'Preview ready — awaiting payment', live: 'Live and paying' } as any)[st];
+            return <View key={biz.id} style={aS.notifRow}>
+              <View style={[aS.notifIcon, { backgroundColor: STATUS_COLORS[st] + '18' }]}><Ionicons name={icon} size={18} color={STATUS_COLORS[st]} /></View>
+              <View style={{ flex: 1 }}><Text style={aS.notifName} numberOfLines={1}>{name}</Text><Text style={aS.notifDesc}>{desc}</Text></View>
+              <Text style={aS.notifTime}>{biz.updatedAt ? timeAgo(biz.updatedAt) : ''}</Text>
+            </View>;
+          })}
+        </ScrollView>}
+
+        {/* Bottom tab bar */}
+        <View style={aS.tabBar}>
+          {([['businesses', 'grid-outline', 'Accounts'], ['messages', 'chatbubbles-outline', 'Messages'], ['notifications', 'notifications-outline', 'Activity']] as const).map(([key, icon, label]) => {
+            const active = adminTab === key;
+            const badge = key === 'messages' ? totalUnread : 0;
+            return <Pressable key={key} onPress={() => { setAdminTab(key); if (key !== 'messages') setAdminActiveThread(null); }} style={aS.tabItem}>
+              <View style={{ position: 'relative' }}>
+                <Ionicons name={icon as any} size={22} color={active ? C.primary : C.inkMuted} />
+                {badge > 0 && <View style={aS.tabBadge}><Text style={aS.tabBadgeText}>{badge}</Text></View>}
+              </View>
+              <Text style={[aS.tabLabel, active && { color: C.primary }]}>{label}</Text>
+            </Pressable>;
+          })}
+        </View>
+      </View>
+    </FadeIn>;
+  }
+
+  if (appScreen === 'dashboard') return <FadeIn>
+    {adminViewingBusiness && <Pressable onPress={adminBackFromBusiness} style={aS.adminViewingBar}><Ionicons name="chevron-back" size={15} color="#fff" /><Text style={aS.adminViewingText}>Admin · {adminViewingBusiness.data?.name || adminViewingBusiness.data?.businessName || adminViewingBusiness.id}</Text></Pressable>}
+    <DashboardHome tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true }; setPlanAnnual(isAnnual); setWebsiteStatus('publishing'); }} onEditInfo={() => { if (adminViewingBusiness) return; setEditingInfo(true); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} saveError={saveError} planAnnual={planAnnual} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onEdit={() => { setEditFrom('dashboard'); setAppScreen('design-editor'); }} />
+  </FadeIn>;
 
   if (appScreen === 'design-editor') return <FadeIn><DesignEditorFullscreen palette={palette} setPalette={setPalette} font={font} setFont={setFont} siteTexts={siteTexts} setSiteTexts={setSiteTexts} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} data={data} services={services} hours={hours} contactForm={contactForm} onBack={() => {
     if (editFrom === 'dashboard') { setAppScreen('dashboard'); return; }
@@ -2322,4 +2575,71 @@ const s = StyleSheet.create({
   stripChip: { minHeight: 38, paddingHorizontal: 10, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderColor: C.line, backgroundColor: '#fff' },
   stripChipOn: { borderColor: C.primary, backgroundColor: C.primarySoft },
   stripHint: { fontFamily: FONT, fontSize: 12, color: C.inkMuted, marginLeft: 6 },
+});
+
+const aS = StyleSheet.create({
+  header: { flexDirection: 'row', alignItems: 'center', paddingTop: CARD_TOP, paddingHorizontal: 20, paddingBottom: 12, backgroundColor: C.canvas, gap: 8 },
+  adminBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: C.primarySoft, borderWidth: 1, borderColor: C.primaryBorder },
+  adminBadgeText: { fontFamily: FONT, fontSize: 10, fontWeight: '800', color: C.primary, letterSpacing: 0.8 },
+  signOutBtn: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12, backgroundColor: 'rgba(28,40,50,.08)' },
+  signOutText: { fontFamily: FONT, fontSize: 13, fontWeight: '600', color: C.ink },
+  filterRow: { paddingHorizontal: 16, paddingVertical: 8 },
+  filterTab: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, marginRight: 8, backgroundColor: 'rgba(28,40,50,.07)', gap: 5 },
+  filterTabOn: { backgroundColor: C.ink },
+  filterDot: { width: 7, height: 7, borderRadius: 4 },
+  filterTabText: { fontFamily: FONT, fontSize: 13, fontWeight: '600', color: C.ink },
+  filterTabTextOn: { color: '#fff' },
+  filterCount: { fontWeight: '400', opacity: 0.6 },
+  searchWrap: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginBottom: 10, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: '#fff', borderRadius: 14, borderWidth: 1, borderColor: C.line, gap: 8 },
+  searchInput: { flex: 1, fontFamily: FONT, fontSize: 14, color: C.ink },
+  bizList: { paddingHorizontal: 16, paddingBottom: 24 },
+  bizCard: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 16, marginBottom: 10, overflow: 'hidden', borderWidth: 1, borderColor: C.line, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
+  bizStatusBar: { width: 4 },
+  bizCardInner: { flex: 1, padding: 14 },
+  bizCardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  bizName: { fontFamily: FONT, fontSize: 15, fontWeight: '700', color: C.ink, flex: 1, marginRight: 8 },
+  bizTime: { fontFamily: FONT, fontSize: 12, color: C.inkMuted },
+  bizCardBottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  bizStatusPill: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, gap: 5 },
+  bizStatusDot: { width: 6, height: 6, borderRadius: 3 },
+  bizStatusText: { fontFamily: FONT, fontSize: 12, fontWeight: '600' },
+  bizActions: { flexDirection: 'row', gap: 4 },
+  bizAction: { width: 34, height: 34, borderRadius: 10, backgroundColor: 'rgba(28,40,50,.06)', alignItems: 'center', justifyContent: 'center' },
+  bizUnreadDot: { position: 'absolute', top: 0, right: 0, width: 8, height: 8, borderRadius: 4, backgroundColor: C.primary, borderWidth: 1.5, borderColor: '#fff' },
+  emptyText: { textAlign: 'center', marginTop: 60, fontFamily: FONT, fontSize: 15, color: C.inkMuted },
+  showingText: { textAlign: 'center', marginTop: 16, fontFamily: FONT, fontSize: 12, color: C.inkMuted },
+  threadCard: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.line, gap: 12 },
+  threadAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.primarySoft, alignItems: 'center', justifyContent: 'center' },
+  threadAvatarText: { fontFamily: FONT, fontSize: 17, fontWeight: '700', color: C.primary },
+  threadTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3 },
+  threadName: { fontFamily: FONT, fontSize: 14, fontWeight: '600', color: C.inkSoft, flex: 1, marginRight: 8 },
+  threadTime: { fontFamily: FONT, fontSize: 12, color: C.inkMuted },
+  threadPreview: { fontFamily: FONT, fontSize: 13, color: C.inkMuted },
+  threadUnread: { width: 9, height: 9, borderRadius: 5, backgroundColor: C.primary },
+  threadBack: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.line, gap: 4 },
+  threadBackText: { fontFamily: FONT, fontSize: 15, fontWeight: '600', color: C.primary, flex: 1 },
+  msgList: { padding: 16, paddingBottom: 8, gap: 2 },
+  msgBubbleWrap: { marginBottom: 10 },
+  msgBubbleWrapAdmin: { alignItems: 'flex-end' },
+  msgBubble: { maxWidth: '78%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18 },
+  msgBubbleUser: { backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, alignSelf: 'flex-start' },
+  msgBubbleAdmin: { backgroundColor: C.primary, alignSelf: 'flex-end' },
+  msgText: { fontFamily: FONT, fontSize: 14, color: C.ink, lineHeight: 20 },
+  msgTextAdmin: { color: '#fff' },
+  msgTime: { fontFamily: FONT, fontSize: 11, color: C.inkMuted, marginTop: 4, marginHorizontal: 4 },
+  msgInput: { flexDirection: 'row', alignItems: 'flex-end', margin: 12, padding: 8, backgroundColor: '#fff', borderRadius: 20, borderWidth: 1, borderColor: C.line, gap: 8 },
+  msgInputText: { flex: 1, fontFamily: FONT, fontSize: 14, color: C.ink, paddingHorizontal: 8, paddingVertical: 6, maxHeight: 100 },
+  msgSendBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
+  notifRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.line, gap: 12 },
+  notifIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  notifName: { fontFamily: FONT, fontSize: 14, fontWeight: '600', color: C.ink },
+  notifDesc: { fontFamily: FONT, fontSize: 13, color: C.inkMuted, marginTop: 2 },
+  notifTime: { fontFamily: FONT, fontSize: 12, color: C.inkMuted },
+  tabBar: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: C.line, backgroundColor: '#fff', paddingBottom: Platform.OS === 'ios' ? 24 : 8, paddingTop: 8 },
+  tabItem: { flex: 1, alignItems: 'center', gap: 3 },
+  tabLabel: { fontFamily: FONT, fontSize: 10, fontWeight: '600', color: C.inkMuted },
+  tabBadge: { position: 'absolute', top: -4, right: -8, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3, borderWidth: 1.5, borderColor: C.canvas },
+  tabBadgeText: { fontFamily: FONT, fontSize: 9, fontWeight: '800', color: '#fff' },
+  adminViewingBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, paddingTop: CARD_TOP, backgroundColor: C.ink, gap: 4 },
+  adminViewingText: { fontFamily: FONT, fontSize: 13, fontWeight: '600', color: '#fff', flex: 1 },
 });
