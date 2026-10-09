@@ -1486,6 +1486,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     setValidationMessage('');
     setDeckDirection(forward ? 1 : -1);
     transitioning.current = true;
+    setStepEditMode(false);
     Animated.timing(motion, { toValue: next * CARD_TRAVEL, duration: 420, easing: Easing.bezier(.18, .78, .22, 1), useNativeDriver: true }).start(() => {
       if (forward) setComplete(old => new Set([...old, index]));
       setIndex(next);
@@ -1670,31 +1671,17 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     if (validationMessage) setValidationMessage('');
   }, [data, hours, services, domainReady, designReady]);
 
-  const [cardDragging, setCardDragging] = useState(false);
-  const overflowSteps = useRef(new Set<string>());
-  const scrollViewH = useRef<Record<string, number>>({});
-  const trackOverflow = (id: string, contentH?: number, viewH?: number) => {
-    if (viewH !== undefined) scrollViewH.current[id] = viewH;
-    if (contentH !== undefined) scrollViewH.current[id + ':c'] = contentH;
-    const vh = scrollViewH.current[id];
-    contentH = scrollViewH.current[id + ':c'];
-    if (contentH === undefined || !vh) return;
-    if (contentH > vh + 4) overflowSteps.current.add(id); else overflowSteps.current.delete(id);
-  };
+  const SWIPE_LOCK_STEPS = ['prices', 'reviews', 'photos'];
+  const [stepEditMode, setStepEditMode] = useState(false);
   const pan = useMemo(() => PanResponder.create({
-    // Only allow card swipes from the header strip or the bottom prompt zone,
-    // so scrolling the site preview or form content never triggers a card transition.
-    // Steps with tall scrollable content (prices, reviews, photos) block the footer
-    // zone entirely — header-only swiping avoids competing with the inner ScrollView.
     onMoveShouldSetPanResponder: (_, g) => {
-      if (keyboardVisible) return false;
+      if (keyboardVisible || stepEditMode) return false;
       const inHeader = g.y0 < CARD_TOP + 80;
-      const scrollableStep = overflowSteps.current.has(step.id) || ['prices', 'reviews', 'photos', 'services'].includes(step.id);
-      const inFooter = !scrollableStep && g.y0 > SCREEN_HEIGHT - CARD_BOTTOM - 48;
+      const inFooter = !SWIPE_LOCK_STEPS.includes(step.id) && g.y0 > SCREEN_HEIGHT - CARD_BOTTOM - 48;
       return (inHeader || inFooter) && Math.abs(g.dy) > 12;
     },
     onPanResponderTerminationRequest: () => false,
-    onPanResponderGrant: () => { setCardDragging(true); revealRail(); },
+    onPanResponderGrant: revealRail,
     onPanResponderMove: (_, g) => {
       if (Math.abs(g.dy) > Math.abs(g.dx)) {
         const minIndex = authSession ? 1 : 0;
@@ -1704,16 +1691,14 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       }
     },
     onPanResponderRelease: (_, g) => {
-      setCardDragging(false);
       if (g.dy < -48 || g.vy < -.55) go(index + 1); else if (g.dy > 48 || g.vy > .55) go(index - 1); else Animated.spring(motion, { toValue: index * CARD_TRAVEL, damping: 20, stiffness: 210, useNativeDriver: true }).start(() => setDeckDirection(0));
       hideRailSoon();
     },
     onPanResponderTerminate: () => {
-      setCardDragging(false);
       Animated.spring(motion, { toValue: index * CARD_TRAVEL, damping: 20, stiffness: 210, useNativeDriver: true }).start(() => setDeckDirection(0));
       hideRailSoon();
     },
-  }), [index, step.id, data, hours, services, domainReady, designReady, keyboardVisible]);
+  }), [index, step.id, stepEditMode, data, hours, services, domainReady, designReady, keyboardVisible]);
 
   const railPan = useMemo(() => PanResponder.create({
     onStartShouldSetPanResponder: () => true, onMoveShouldSetPanResponder: () => true,
@@ -1911,11 +1896,9 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           const cardScale = cardPosition.interpolate({ inputRange: [-CARD_TRAVEL, 0, CARD_TRAVEL], outputRange: [.93, 1, .93], extrapolate: 'clamp' });
           return <Animated.View key={deckStep.id} pointerEvents={isActive ? 'auto' : 'none'} {...(isActive ? pan.panHandlers : {})} style={[s.card, s.deckCard, isActive ? s.deckCardActive : s.deckCardBehind, { zIndex: isActive ? 22 : 20 - Math.abs(distance), transform: [{ translateY: travelPosition }, { scale: cardScale }] }]}>
 
-            <View style={s.cardHeader}><Text style={s.cardTitle}>{deckStep.title}</Text>{editingInfo ? <Pressable disabled={savingInfo} onPress={async () => { setSavingInfo(true); await syncOnboardingToBackend(buildChoice || 'designer'); setSavingInfo(false); setEditingInfo(false); setAppScreen('dashboard'); }} style={s.saveTickBtn} accessibilityLabel="Save changes">{savingInfo ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="checkmark" size={18} color="#fff" />}</Pressable> : deckIndex > 0 && <Text style={s.count}>{deckIndex}/{setupStepIndexes.length}</Text>}</View>
+            <View style={s.cardHeader}><Text style={s.cardTitle}>{deckStep.title}</Text>{editingInfo ? <Pressable disabled={savingInfo} onPress={async () => { setSavingInfo(true); await syncOnboardingToBackend(buildChoice || 'designer'); setSavingInfo(false); setEditingInfo(false); setAppScreen('dashboard'); }} style={s.saveTickBtn} accessibilityLabel="Save changes">{savingInfo ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="checkmark" size={18} color="#fff" />}</Pressable> : isActive && SWIPE_LOCK_STEPS.includes(deckStep.id) ? <Pressable onPress={() => setStepEditMode(v => !v)} hitSlop={10} style={stepEditMode ? s.saveTickBtn : s.editStepBtn}>{stepEditMode ? <Ionicons name="checkmark" size={18} color="#fff" /> : <Text style={s.editStepText}>Edit</Text>}</Pressable> : deckIndex > 0 && <Text style={s.count}>{deckIndex}/{setupStepIndexes.length}</Text>}</View>
             <ScrollView style={s.cardScroll} contentContainerStyle={[s.content, deckStep.id === 'login' && s.loginContent, deckStep.id === 'hours' && s.hoursContent]}
-              scrollEnabled={!cardDragging && (!['hours', 'business', 'contact'].includes(deckStep.id) || keyboardVisible)}
-              onLayout={e => trackOverflow(deckStep.id, undefined, e.nativeEvent.layout.height)}
-              onContentSizeChange={(_, h) => trackOverflow(deckStep.id, h)}
+              scrollEnabled={SWIPE_LOCK_STEPS.includes(deckStep.id) ? stepEditMode : (!['hours', 'business', 'contact'].includes(deckStep.id) || keyboardVisible)}
               keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
               {content(deckStep)}
             </ScrollView>
@@ -1976,6 +1959,8 @@ const s = StyleSheet.create({
   uploadPreview: { width: 52, height: 52, borderRadius: 15, marginBottom: 9 }, uploadPreviewFill: { width: '100%', height: '100%' },
   uploadIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(59,130,246,.12)', marginBottom: 10 },
   saveTickBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
+  editStepBtn: { paddingHorizontal: 14, height: 30, borderRadius: 15, backgroundColor: C.field, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center' },
+  editStepText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.ink },
   uploadTitle: { fontFamily: FONT, fontWeight: '800', fontSize: 14, color: '#1C2832' }, uploadSub: { fontFamily: FONT, fontSize: 11, color: C.inkSoft, marginTop: 3 }, swipeHint: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.ink, textAlign: 'center' },
   cardFade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 80, zIndex: 110, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
   fixedPrompt: { position: 'absolute', left: 18, right: 18, bottom: 14, zIndex: 120, elevation: 120, alignItems: 'center', gap: 7 }, swipeRow: { minHeight: 34, paddingHorizontal: 14, borderRadius: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,.7)' }, validationText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.danger, textAlign: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: C.dangerSoft, overflow: 'hidden' },
