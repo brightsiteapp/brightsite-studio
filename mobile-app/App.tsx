@@ -13,6 +13,14 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 import { supabase } from './lib/supabase';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+// The dashboard chrome occupies roughly 258pt. Keep the website preview inset
+// evenly on all sides, then let it use the rest of the available viewport.
+const DASHBOARD_PREVIEW_INSET = 20;
+const PHONE_FRAME_ASPECT_RATIO = 9 / 16;
+const DASHBOARD_PREVIEW_MAX_HEIGHT = SCREEN_HEIGHT - 258 - DASHBOARD_PREVIEW_INSET * 2;
+const DASHBOARD_PREVIEW_MAX_WIDTH = SCREEN_WIDTH - DASHBOARD_PREVIEW_INSET * 2;
+const DASHBOARD_PREVIEW_HEIGHT = Math.min(DASHBOARD_PREVIEW_MAX_HEIGHT, DASHBOARD_PREVIEW_MAX_WIDTH / PHONE_FRAME_ASPECT_RATIO);
+const DASHBOARD_PREVIEW_WIDTH = DASHBOARD_PREVIEW_HEIGHT * PHONE_FRAME_ASPECT_RATIO;
 const CARD_TOP = Platform.OS === 'ios' ? 54 : 28;
 const CARD_BOTTOM = 72;
 const CARD_TRAVEL = SCREEN_HEIGHT - 190;
@@ -648,13 +656,7 @@ function SectionDragList({ sections, setSections, sectionVisible, onToggle }: an
   })])), []);
 
   return <View>
-    {sections.map((name: string, i: number) => {
-      const isHero = name === 'Hero';
-      if (isHero) return <View key={name} style={[s.sectionOption, { opacity: 0.55 }]}>
-        <View style={s.sectionEye}><Ionicons name="eye-outline" size={21} color="#436172" /></View>
-        <Text style={s.sectionText}>{name}</Text>
-        <View style={s.sectionDragHandle}><Ionicons name="lock-closed-outline" size={18} color={C.inkSoft} /></View>
-      </View>;
+    {sections.filter((name: string) => name !== 'Hero').map((name: string) => {
       const isActive = activeName === name;
       return <Animated.View key={name} style={[s.sectionOption, {
         transform: [{ translateY: itemDys[name] }],
@@ -662,7 +664,7 @@ function SectionDragList({ sections, setSections, sectionVisible, onToggle }: an
         backgroundColor: isActive ? 'rgba(255,255,255,.35)' : 'transparent',
         borderRadius: isActive ? 12 : 0,
       }]}>
-        <Pressable onPress={() => onToggle(i)} style={s.sectionEye}>
+        <Pressable onPress={() => onToggle(name)} style={s.sectionEye}>
           <Ionicons name={sectionVisible[name] !== false ? 'eye-outline' : 'eye-off-outline'} size={21} color={sectionVisible[name] !== false ? '#436172' : 'rgba(67,97,114,.28)'} />
         </Pressable>
         <Text style={s.sectionText}>{name}</Text>
@@ -683,8 +685,7 @@ function DesignTools({ landscape = false, active, setActive, palette, setPalette
   const setPageSections = [setHomeSections, setServicesSections, setContactSections];
   const curSections = pageSections[editPage];
   const setCurSections = setPageSections[editPage];
-  const handleToggle = (idx: number) => {
-    const name = curSections[idx]; if (name === 'Hero') return;
+  const handleToggle = (name: string) => {
     setSectionVisible((v: any) => ({ ...v, [name]: v[name] === false ? true : false }));
   };
   return <View style={landscape ? s.toolsLandscape : s.tools}>
@@ -730,8 +731,10 @@ function LandscapeToolStrip({ active, palette, setPalette, font, setFont, homeSe
   const [editPage, setEditPage] = useState(0);
   const pages = [[homeSections, setHomeSections], [servicesSections, setServicesSections], [contactSections, setContactSections]];
   const [secs, setSecs] = pages[editPage];
-  const move = (i: number, dir: -1 | 1) => {
-    const j = i + dir; if (j < 0 || j >= secs.length) return;
+  const move = (name: string, dir: -1 | 1) => {
+    const i = secs.indexOf(name);
+    const firstMovableIndex = secs[0] === 'Hero' ? 1 : 0;
+    const j = i + dir; if (j < firstMovableIndex || j >= secs.length) return;
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     const next = [...secs]; [next[i], next[j]] = [next[j], next[i]]; setSecs(next);
   };
@@ -747,10 +750,10 @@ function LandscapeToolStrip({ active, palette, setPalette, font, setFont, homeSe
       {active === 'font' && fonts.map((name, i) => <Pressable key={name} onPress={() => setFont(i)} style={[s.stripChip, { paddingHorizontal: 18 }, font === i && s.stripChipOn]}><Text style={s.fontOptionText}>{name}</Text></Pressable>)}
       {active === 'edit' && <>
         <View style={[s.editPageTabs, { marginBottom: 0, alignSelf: 'center' }]}>{['Home', 'Services', 'Contact'].map((name, i) => <Pressable key={name} onPress={() => setEditPage(i)} style={[s.editPageTab, { paddingHorizontal: 12 }, editPage === i && s.editPageTabOn]}><Text style={[s.editPageTabText, editPage === i && s.editPageTabTextOn]}>{name}</Text></Pressable>)}</View>
-        {secs.map((name: string, i: number) => <View key={name} style={[s.stripChip, { gap: 4, paddingHorizontal: 6 }]}>
-          <Pressable onPress={() => move(i, -1)} hitSlop={6} disabled={i === 0} style={{ opacity: i === 0 ? .3 : 1, padding: 4 }}><Ionicons name="chevron-back" size={16} color={C.inkSoft} /></Pressable>
+        {secs.filter((name: string) => name !== 'Hero').map((name: string, visibleIndex: number, visibleSections: string[]) => <View key={name} style={[s.stripChip, { gap: 4, paddingHorizontal: 6 }]}>
+          <Pressable onPress={() => move(name, -1)} hitSlop={6} disabled={visibleIndex === 0} style={{ opacity: visibleIndex === 0 ? .3 : 1, padding: 4 }}><Ionicons name="chevron-back" size={16} color={C.inkSoft} /></Pressable>
           <Text style={s.fontOptionText}>{name}</Text>
-          <Pressable onPress={() => move(i, 1)} hitSlop={6} disabled={i === secs.length - 1} style={{ opacity: i === secs.length - 1 ? .3 : 1, padding: 4 }}><Ionicons name="chevron-forward" size={16} color={C.inkSoft} /></Pressable>
+          <Pressable onPress={() => move(name, 1)} hitSlop={6} disabled={visibleIndex === visibleSections.length - 1} style={{ opacity: visibleIndex === visibleSections.length - 1 ? .3 : 1, padding: 4 }}><Ionicons name="chevron-forward" size={16} color={C.inkSoft} /></Pressable>
         </View>)}
         <Text style={s.stripHint}>Tap text on the page to edit it</Text>
       </>}
@@ -1118,7 +1121,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
               </Pressable>
               : <Pressable onPress={() => isLive ? void Linking.openURL(siteUrl) : onEdit?.()} style={s.phoneFrame}>
                 <View pointerEvents="none" style={{ overflow: 'hidden', flex: 1 }}>
-                  <ScaledView virtualWidth={MOBILE_WIDTH} width={Math.round(SCREEN_WIDTH * .72) - 14}><SitePreview palette={palette} font={font} page={0} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} media={media} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></ScaledView>
+                  <ScaledView virtualWidth={MOBILE_WIDTH} width={DASHBOARD_PREVIEW_WIDTH - 14}><SitePreview palette={palette} font={font} page={0} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} media={media} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></ScaledView>
                 </View>
                 {isLive && <View style={s.previewOpenBadge}><Ionicons name="open-outline" size={12} color="#fff" /><Text style={s.previewOpenText}>Open site</Text></View>}
               </Pressable>}
@@ -1215,7 +1218,7 @@ function DesignEditorFullscreen({ media, palette, setPalette, font, setFont, sit
       <Pressable onPress={onConfirm} style={[s.fsTickBtn, s.toolButtonSmall]} accessibilityLabel="Save design"><Ionicons name="checkmark" size={20} color="#fff" /></Pressable>
     </View>
     {!!tool && <LandscapeToolStrip {...toolProps} />}
-    <View style={{ flex: 1, paddingHorizontal: 54, paddingBottom: 14, paddingTop: 6 }}>{desktopFrame}</View>
+    <View style={{ flex: 1, zIndex: 0, paddingHorizontal: 54, paddingBottom: 14, paddingTop: 6 }}>{desktopFrame}</View>
   </View>;
 
   return <View style={{ flex: 1, backgroundColor: '#070D12' }}>
@@ -2037,7 +2040,7 @@ const s = StyleSheet.create({
   dashboardWebsiteHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   dashboardEdit: { minHeight: 38, paddingHorizontal: 14, borderRadius: 999, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.surface, borderWidth: 1, borderColor: C.line },
   dashboardEditText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.ink },
-  phoneFrame: { width: Math.round(SCREEN_WIDTH * .72), height: SCREEN_HEIGHT - 330, alignSelf: 'center', borderRadius: 28, borderWidth: 7, borderColor: '#141A1E', overflow: 'hidden', marginBottom: 8, backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .18, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } },
+  phoneFrame: { width: DASHBOARD_PREVIEW_WIDTH, height: DASHBOARD_PREVIEW_HEIGHT, alignSelf: 'center', borderRadius: 28, borderWidth: 7, borderColor: '#141A1E', overflow: 'hidden', marginVertical: DASHBOARD_PREVIEW_INSET, backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .18, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } },
   makeLiveBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 7, paddingHorizontal: 13, borderRadius: 20, backgroundColor: C.primary },
   makeLiveBtnLive: { backgroundColor: C.danger },
   makeLiveBtnText: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#fff' },
@@ -2141,8 +2144,8 @@ const s = StyleSheet.create({
   toolsLandscape: { flexDirection: 'row', alignItems: 'center' },
   toolSlotLandscape: { marginHorizontal: 5 },
   toolButtonSmall: { width: 38, height: 38, borderRadius: 19 },
-  landBar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 54, paddingVertical: 8, backgroundColor: '#0E1A24', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.08)' },
-  stripPanel: { backgroundColor: 'rgba(255,255,255,.96)', borderBottomWidth: 1, borderBottomColor: C.line },
+  landBar: { zIndex: 30, elevation: 30, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 54, paddingVertical: 8, backgroundColor: '#0E1A24', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.08)' },
+  stripPanel: { zIndex: 20, elevation: 20, backgroundColor: 'rgba(255,255,255,.96)', borderBottomWidth: 1, borderBottomColor: C.line },
   stripContent: { alignItems: 'center', gap: 10, paddingHorizontal: 54, paddingVertical: 8 },
   stripGroup: { gap: 4 },
   stripGroupLabel: { fontFamily: FONT, fontSize: 10, fontWeight: '800', letterSpacing: .8, color: C.inkSoft, textTransform: 'uppercase' },
