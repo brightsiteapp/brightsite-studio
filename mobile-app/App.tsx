@@ -1609,7 +1609,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     onMoveShouldSetPanResponder: (_, g) => {
       if (keyboardVisible) return false;
       const inHeader = g.y0 < CARD_TOP + 80;
-      const inFooter = g.y0 > SCREEN_HEIGHT - CARD_BOTTOM - 70;
+      const inFooter = g.y0 > SCREEN_HEIGHT - CARD_BOTTOM - 48;
       return (inHeader || inFooter) && Math.abs(g.dy) > 12;
     },
     onPanResponderGrant: revealRail,
@@ -1694,7 +1694,10 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             <Upload icon="image-outline" title="Hero image" subtitle="Hero image" value={media.hero} onChange={(hero: string) => setMedia(current => ({ ...current, hero }))} fill h={110} />
           </View>
         </View>
-        <Text style={s.fieldLabel}>Gallery</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+          <Text style={[s.fieldLabel, { marginBottom: 0 }]}>Gallery</Text>
+          <Text style={{ fontFamily: FONT, fontSize: 12, color: C.inkMuted }}>{media.gallery.length}/16</Text>
+        </View>
         <View style={s.galleryGrid} onLayout={(e: any) => setGalleryWidth(e.nativeEvent.layout.width)}>
           <GalleryGrid gallery={media.gallery} setGallery={(gallery: string[]) => setMedia(current => ({ ...current, gallery }))} containerWidth={galleryWidth} />
           {media.gallery.length < 16 && <Pressable style={[s.galleryAdd, galleryTileSize(galleryWidth)]} onPress={async () => {
@@ -1728,14 +1731,10 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           <Ionicons name="add" size={16} color={DARK} /><Text style={s.addReviewText}>Add review</Text>
         </Pressable>
         <View style={s.reviewSourceCard}>
-          <Text style={s.reviewSourceTitle}>Show reviews from</Text>
-          <Text style={s.reviewSourceSub}>Connect an existing profile so visitors see your full rating.</Text>
-          {(['Google', 'Trustpilot'] as const).map(source => <Pressable key={source} onPress={() => setData({ ...data, reviewSource: data.reviewSource === source ? null : source })} style={[s.reviewSourceRow, data.reviewSource === source && s.reviewSourceRowOn]}>
-            <Ionicons name={source === 'Google' ? 'logo-google' : 'star-outline'} size={16} color={DARK} />
-            <Text style={s.reviewSourceName}>{source === 'Google' ? 'Google Reviews' : 'Trustpilot'}</Text>
-            <Text style={s.reviewSourceAction}>{data.reviewSource === source ? 'Cancel' : 'Connect'}</Text>
-          </Pressable>)}
-          {data.reviewSource && <Field label={`${data.reviewSource} profile link`} value={data.reviewLink} onChangeText={(v: string) => setData({ ...data, reviewLink: v })} placeholder={data.reviewSource === 'Google' ? 'Paste your Google Business link' : 'Paste your Trustpilot link'} />}
+          <Text style={s.reviewSourceTitle}>Review profile links</Text>
+          <Text style={s.reviewSourceSub}>Paste your review page link so visitors can see your rating.</Text>
+          <Field label="Google Business link" value={data.reviewSource === 'Google' ? data.reviewLink : ''} onChangeText={(v: string) => setData({ ...data, reviewLink: v, reviewSource: v.trim() ? 'Google' : (data.reviewSource === 'Google' ? null : data.reviewSource) })} placeholder="https://g.page/your-business" />
+          <Field label="Trustpilot link" value={data.reviewSource === 'Trustpilot' ? data.reviewLink : ''} onChangeText={(v: string) => setData({ ...data, reviewLink: v, reviewSource: v.trim() ? 'Trustpilot' : (data.reviewSource === 'Trustpilot' ? null : data.reviewSource) })} placeholder="https://uk.trustpilot.com/review/..." />
         </View>
         <Pressable onPress={() => setContactForm(!contactForm)} style={s.formChoice}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color={C.primary} /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: 'rgba(28,40,50,.18)', true: C.primary }} thumbColor="#fff" {...({ activeThumbColor: '#fff' } as any)} /></Pressable></>;
       case 'choice': if (editingInfo) return <View style={s.choiceWrap}>
@@ -1847,7 +1846,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             </ScrollView>
             <View pointerEvents="none" style={s.fixedPrompt}>
               {!!validationMessage && isActive && <Text style={s.validationText}>{validationMessage}</Text>}
-              <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : deckStep.id === 'choice' ? (editingInfo ? 'Tap Save changes above' : 'Tap to continue') : 'Swipe up to save'}</Text></View>
+              <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : deckStep.id === 'choice' ? (editingInfo ? 'Tap Save changes above' : 'Tap to continue') : deckStep.id === 'domain' && domainReady ? 'Swipe up to send to designer' : 'Swipe up to save'}</Text></View>
             </View>
           </Animated.View>;
         })}
