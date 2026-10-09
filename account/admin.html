@@ -378,6 +378,15 @@ function sendBusinessMessage(businessId, body) {
   }).catch(function(err) { console.warn('[messages] notification failed', err); });
 }
 
+function sendPushNotification(pushToken, title, body) {
+  if (!pushToken) return;
+  fetch('https://exp.host/--/api/v2/push/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Accept-Encoding': 'gzip, deflate' },
+    body: JSON.stringify({ to: pushToken, title: title, body: body, sound: 'default' })
+  }).catch(function(err) { console.warn('[push] notification failed', err); });
+}
+
 function loadBusinesses() {
   document.getElementById('accountsList').innerHTML = '<div class="loading-row"><span class="spinner"></span> Loading accounts…</div>';
 
@@ -849,7 +858,7 @@ document.getElementById('goLiveConfirm').addEventListener('click', function() {
   var btn = document.getElementById('goLiveConfirm');
   btn.textContent = 'Saving…'; btn.disabled = true;
 
-  fetch(SUPABASE_URL + '/rest/v1/businesses?select=id,data&id=eq.' + encodeURIComponent(goLiveTargetSlug), {
+  fetch(SUPABASE_URL + '/rest/v1/businesses?select=id,name,data&id=eq.' + encodeURIComponent(goLiveTargetSlug), {
     headers: authHeaders()
   })
   .then(function(r) { return r.json(); })
@@ -862,12 +871,20 @@ document.getElementById('goLiveConfirm').addEventListener('click', function() {
       method: 'PATCH',
       headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
       body: JSON.stringify({ data: newData, updated_at: new Date().toISOString() })
+    }).then(function(response) {
+      return { response: response, existing: existing };
     });
   })
-  .then(function(r) {
+  .then(function(result) {
+    var r = result.response;
+    var existing = result.existing;
     btn.textContent = 'Mark as live ✓'; btn.disabled = false;
     if (r.ok) {
-      sendBusinessMessage(goLiveTargetSlug, 'Your website is now live. Take a look and let us know what you think.');
+      var businessName = existing.name || (existing.data && existing.data.raw && existing.data.raw.name) || '';
+      var siteUrl = liveUrl || (existing.data && existing.data.liveUrl) || '';
+      var liveMsg = '🎉 Your website is live' + (siteUrl ? ' at ' + siteUrl : '') + '! Share it with everyone.';
+      sendBusinessMessage(goLiveTargetSlug, liveMsg);
+      sendPushNotification(existing.data && existing.data.pushToken, businessName ? businessName + ' is live! 🎉' : 'Your website is live! 🎉', siteUrl ? 'Tap to open ' + siteUrl : 'Your website is now live and ready to share.');
       status.textContent = 'Site marked as live!'; status.className = 'modal-status ok';
       // Also add Vercel domain if token is set
       if (liveUrl) tryAddVercelDomain(liveUrl, status);

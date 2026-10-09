@@ -5,6 +5,7 @@
     "version": "1.0.0",
     "orientation": "default",
     "icon": "./assets/brightsite-icon.png",
+    "backgroundColor": "#3B82F6",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": false,
@@ -32,10 +33,22 @@
           "photosPermission": "Allow BrightSite to use the photos you choose for your website."
         }
       ],
+      ["@stripe/stripe-react-native", {}],
       [
-        "@stripe/stripe-react-native",
+        "expo-notifications",
         {
-          "merchantIdentifier": "merchant.app.brightsite.mobile"
+          "icon": "./assets/brightsite-icon.png",
+          "color": "#3B82F6",
+          "sounds": []
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#3B82F6",
+          "image": "./assets/brightsite-logo-white.png",
+          "imageWidth": 240,
+          "resizeMode": "contain"
         }
       ]
     ],

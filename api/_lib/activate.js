@@ -23,10 +23,10 @@ export async function registerWithCloudflare(domain) {
 export async function markBusinessLive(slug, domain, publishOnPayment) {
   if (!slug) return;
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-  const { data: current, error: readError } = await supabase
-    .from('businesses').select('data').eq('id', slug).single();
+  const { data: row, error: readError } = await supabase
+    .from('businesses').select('name,data').eq('id', slug).single();
   if (readError) throw readError;
-  const previous = current?.data || {};
+  const previous = row?.data || {};
   const nextData = {
     ...previous,
     ...(domain ? { customDomain: domain, domain, liveUrl: `https://${domain}`, domainRegistered: true } : {}),
@@ -37,5 +37,28 @@ export async function markBusinessLive(slug, domain, publishOnPayment) {
     .update({ data: nextData, updated_at: new Date().toISOString() })
     .eq('id', slug);
   if (updateError) throw updateError;
+
+  if (publishOnPayment) {
+    const businessName = row?.name || previous?.raw?.name || '';
+    const siteUrl = domain ? `https://${domain}` : previous.liveUrl || '';
+    await notifyClientLive(supabase, slug, previous.pushToken, businessName, siteUrl);
+  }
+}
+
+async function notifyClientLive(supabase, slug, pushToken, businessName, siteUrl) {
+  const message = `🎉 Your website is live${siteUrl ? ` at ${siteUrl}` : ''}! Share it with everyone.`;
+  await supabase.from('messages').insert({ business_id: slug, sender: 'admin', body: message }).catch(() => {});
+  if (!pushToken) return;
+  await fetch('https://exp.host/--/api/v2/push/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'Accept-Encoding': 'gzip, deflate' },
+    body: JSON.stringify({
+      to: pushToken,
+      title: businessName ? `${businessName} is live! 🎉` : 'Your website is live! 🎉',
+      body: siteUrl ? `Tap to open ${siteUrl}` : 'Your website is now live and ready to share.',
+      sound: 'default',
+      data: { screen: 'dashboard' },
+    }),
+  }).catch(() => {});
 }
 

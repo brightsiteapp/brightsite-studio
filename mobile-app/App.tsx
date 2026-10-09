@@ -3,6 +3,8 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator, Alert, Animated, AppState, Dimensions, Easing, Image, ImageBackground, Keyboard, KeyboardAvoidingView, LayoutAnimation, Modal, PanResponder,
@@ -40,8 +42,8 @@ const CONFIRM_PAYMENT_API = 'https://api.brightsite.app/api/confirm-app-payment'
 const STRIPE_PUBLISHABLE_KEY = 'pk_live_51UFf7iGqCP7G2YApFHjoKMHkxsEIrf0SJiBpxeTR2MRZ4zs26OQ5jjBClWu8OvZXGXAZvMectFW0zLEuGFFKC7CA008zYaYMzc';
 // Same Supabase project, R2 bucket and Cloudflare worker the account
 // dashboard (account/dashboard.html) uses — so a business created or edited
-// in the app is the exact same row the website's dashboard reads and writes,
-// not a separate system. Checked that file's own fetch calls to get these
+// in the app is the exact same row the website’s dashboard reads and writes,
+// not a separate system. Checked that file’s own fetch calls to get these
 // constants and request shapes right rather than inventing a parallel one.
 const SUPABASE_URL = 'https://vlisyfshmxdsjuybirxe.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_gYdn5HCo63B0qZj3tG-7ow_myAMHeEB';
@@ -62,6 +64,32 @@ function guessMime(uri: string) {
 
 function authHeaders(accessToken: string, extra: Record<string, string> = {}) {
   return { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${accessToken}`, ...extra };
+}
+
+Notifications.setNotificationHandler({ handleNotification: async () => ({ shouldShowAlert: true, shouldPlaySound: true, shouldSetBadge: false, shouldShowBanner: true, shouldShowList: true }) });
+
+async function registerPushToken(): Promise<string | null> {
+  if (!Device.isDevice) return null;
+  const { status: existing } = await Notifications.getPermissionsAsync();
+  const { status } = existing === 'granted' ? { status: existing } : await Notifications.requestPermissionsAsync();
+  if (status !== 'granted') return null;
+  try {
+    const token = await Notifications.getExpoPushTokenAsync({ projectId: 'brightsite' });
+    return token.data;
+  } catch { return null; }
+}
+
+async function savePushToken(accessToken: string, slug: string, token: string) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/businesses?select=data&id=eq.${encodeURIComponent(slug)}`, { headers: authHeaders(accessToken) });
+    const rows = await res.json();
+    const existing = Array.isArray(rows) && rows[0]?.data ? rows[0].data : {};
+    await fetch(`${SUPABASE_URL}/rest/v1/businesses?id=eq.${encodeURIComponent(slug)}`, {
+      method: 'PATCH',
+      headers: authHeaders(accessToken, { 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+      body: JSON.stringify({ data: { ...existing, pushToken: token } }),
+    });
+  } catch { /* best-effort */ }
 }
 
 async function uploadMediaToR2(accessToken: string, slug: string, type: string, uri?: string): Promise<string | null> {
@@ -849,7 +877,7 @@ function ChangePasswordModal({ visible, onClose }: { visible: boolean; onClose: 
 
 const LOADING_MESSAGES = {
   template: ['Choosing a layout', 'Setting the tone', 'Matching your details', 'Almost ready'],
-  designer: ['Saving your details', 'Preparing your dashboard', 'Our designer is on it!', "You'll get a notification when your preview is ready"],
+  designer: ['Saving your details', 'Preparing your dashboard', 'Our designer is on it!', "You’ll get a notification when your preview is ready"],
 };
 
 function FadeIn({ children }: { children: React.ReactNode }) {
@@ -907,7 +935,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           return [...current.filter(m => !m.id.startsWith('local-')), ...rows.filter(r => !ids.has(r.id)), ...pending];
         });
       }
-    } catch { /* same best-effort polling as the website's messages tab */ }
+    } catch { /* same best-effort polling as the website’s messages tab */ }
   };
   useEffect(() => {
     if (tab !== 'Messages') return;
@@ -1003,8 +1031,8 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
       if (result.error) { if (result.error.code !== 'Canceled') setPayError(result.error.message); return; }
       setShowPlanModal(false);
       const confirm = await fetch(CONFIRM_PAYMENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscriptionId: json.subscriptionId }) });
-      if (confirm.ok) { onPaid?.(annual); Alert.alert('You’re live! 🎉', `Your website is now online${domain ? ` at ${domain}${suffix}` : ''}. It can take a few minutes for a new domain to start working.`); }
-      else Alert.alert('Payment received', 'Thanks! We’re finishing setting up your website and will message you as soon as it’s live.');
+      if (confirm.ok) { onPaid?.(annual); Alert.alert('Publishing your website', "We’re setting everything up. This usually takes around 5 minutes while your domain registers. You’ll get a notification as soon as it’s live!"); }
+      else Alert.alert('Payment received', "Thanks! We’re finishing setting up your website and will message you as soon as it’s live.");
     } catch (err: any) {
       try {
         const email = session?.user?.email || data.contactEmail || data.email;
@@ -1027,21 +1055,43 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
       const res = await fetch(`${SUPABASE_URL}/rest/v1/businesses?select=data&id=eq.${encodeURIComponent(slug)}`, { headers: authHeaders(session.access_token) });
       const rows = await res.json();
       const row = Array.isArray(rows) ? rows[0] : null;
-      if (row?.data?.published || row?.data?.planActive) onMakeLive?.();
+      if (row?.data?.published) onMakeLive?.();
     } catch { /* webhook may not have landed yet — the user can just reopen the app */ }
   };
   useEffect(() => {
-    const sub = AppState.addEventListener('change', (state) => { if (state === 'active' && (isReadyRef.current)) void checkIfNowLive(); });
+    const sub = AppState.addEventListener('change', (state) => { if (state === 'active' && isReadyRef.current) void checkIfNowLive(); });
     return () => sub.remove();
   }, [session?.access_token, slug]);
+
+  useEffect(() => {
+    if (!slug) return;
+    const channel = supabase.channel(`business-${slug}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'businesses', filter: `id=eq.${slug}` }, (payload) => {
+        if (payload.new?.data?.published && isReadyRef.current) onMakeLive?.();
+      })
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [slug]);
 
   const isLive = websiteStatus === 'live';
   const isBuilding = websiteStatus === 'building';
   const isReady = websiteStatus === 'ready';
-  const isReadyRef = useRef(isReady);
-  useEffect(() => { isReadyRef.current = isReady; }, [isReady]);
+  const isPublishing = websiteStatus === 'publishing';
+  const isReadyRef = useRef(isReady || isPublishing);
+  useEffect(() => { isReadyRef.current = isReady || isPublishing; }, [isReady, isPublishing]);
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (!isPublishing) { pulseAnim.setValue(1); return; }
+    const loop = Animated.loop(Animated.sequence([
+      Animated.timing(pulseAnim, { toValue: 0.35, duration: 700, useNativeDriver: true }),
+      Animated.timing(pulseAnim, { toValue: 1, duration: 700, useNativeDriver: true }),
+    ]));
+    loop.start();
+    return () => loop.stop();
+  }, [isPublishing]);
   const status = isLive ? { label: 'Live', color: C.success, bg: C.successSoft }
     : isBuilding ? { label: 'Being built', color: C.warning, bg: C.warningSoft }
+    : isPublishing ? { label: 'Publishing...', color: C.primary, bg: C.primarySoft }
     : isPaying ? { label: 'Offline', color: C.danger, bg: C.dangerSoft }
     : { label: 'Ready to publish', color: C.primary, bg: C.primarySoft };
   const confirmOffline = () => Alert.alert('Take your website offline?', 'Visitors won’t be able to see it until you put it live again. Your plan and content stay as they are.', [
@@ -1060,7 +1110,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
     <View style={s.dashboardScreen}>
       <View style={s.dashboardBrandRow}>
         <Logo height={17} />
-        <View style={[s.statusPill, { backgroundColor: status.bg }]}><View style={[s.statusDot, { backgroundColor: status.color }]} /><Text style={[s.statusPillText, { color: status.color }]}>{status.label}</Text></View>
+        <View style={[s.statusPill, { backgroundColor: status.bg }]}><Animated.View style={[s.statusDot, { backgroundColor: status.color, opacity: isPublishing ? pulseAnim : 1 }]} /><Text style={[s.statusPillText, { color: status.color }]}>{status.label}</Text></View>
       </View>
       <View style={s.dashboardTabsTop}>{['Website', 'Messages', 'Account'].map(name => <Pressable key={name} onPress={() => setTab(name)} style={[s.dashboardTab, tab === name && s.dashboardTabOn]}><Text style={[s.dashboardTabText, tab === name && s.dashboardTabTextOn]}>{name}</Text></Pressable>)}</View>
       {!!saveError && <View style={s.saveBanner}><Ionicons name="alert-circle" size={16} color={C.danger} /><Text style={s.saveBannerText}>{saveError}</Text></View>}
@@ -1086,11 +1136,21 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
         </>}
         {tab === 'Website' && <>
           <View style={[s.dashboardWebsiteHead, { zIndex: 20 }]}>
-            {(isReady || isLive) && !isBuilding
-              ? <Pressable onPress={isLive ? confirmOffline : goLive} style={({ pressed }) => [s.makeLiveBtn, isLive && s.makeLiveBtnLive, pressed && s.pressed]}>
-                  <Ionicons name={isLive ? 'cloud-offline-outline' : 'rocket-outline'} size={13} color="#fff" />
-                  <Text style={s.makeLiveBtnText}>{isLive ? 'Take Offline' : 'Make Live'}</Text>
-                </Pressable>
+            {(isReady || isLive || isPublishing) && !isBuilding
+              ? isLive
+                ? <Pressable onPress={confirmOffline} style={({ pressed }) => [s.dashboardEdit, pressed && s.pressed]}>
+                    <Ionicons name="cloud-offline-outline" size={14} color={C.inkMuted} />
+                    <Text style={[s.dashboardEditText, { color: C.inkMuted }]}>Take Offline</Text>
+                  </Pressable>
+                : isPublishing
+                  ? <Animated.View style={[s.makeLiveBtn, { opacity: pulseAnim }]}>
+                      <ActivityIndicator size="small" color="#fff" style={{ marginRight: 5 }} />
+                      <Text style={s.makeLiveBtnText}>Publishing...</Text>
+                    </Animated.View>
+                  : <Pressable onPress={goLive} style={({ pressed }) => [s.makeLiveBtn, pressed && s.pressed]}>
+                      <Ionicons name="rocket-outline" size={13} color="#fff" />
+                      <Text style={s.makeLiveBtnText}>Make Live</Text>
+                    </Pressable>
               : <View />}
             {!isBuilding && <View style={{ position: 'absolute', left: 0, right: 0, alignItems: 'center', pointerEvents: 'box-none' as any }}><DeviceToggle mode={previewMode} setMode={setPreviewMode} /></View>}
             <View>
@@ -1273,7 +1333,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [editingInfo, setEditingInfo] = useState(false);
   const [savingInfo, setSavingInfo] = useState(false);
   const [buildChoice, setBuildChoice] = useState<'designer' | 'template' | null>(null);
-  const [websiteStatus, setWebsiteStatus] = useState<'building' | 'ready' | 'live'>('building');
+  const [websiteStatus, setWebsiteStatus] = useState<'building' | 'ready' | 'publishing' | 'live'>('building');
   const [session, setSession] = useState<any>(null);
   const [slug, setSlug] = useState<string | null>(null);
   const [data, setData] = useState({ email: '', password: '', businessName: '', category: '', fullName: '', contactEmail: '', phone: '', website: '', instagram: '', facebook: '', address: '', reviewLink: '', reviewSource: null as null | 'Google' | 'Trustpilot' });
@@ -1336,7 +1396,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     const isDesigner = raw.buildChoice === 'designer' || /Build choice: designer/.test(raw.notes || '');
     setBuildChoice(isDesigner ? 'designer' : 'template');
     const hasPreview = !!(record.demoUrl || record.previewUrl || record.liveUrl);
-    setWebsiteStatus(record.published ? 'live' : isDesigner && !hasPreview ? 'building' : 'ready');
+    setWebsiteStatus(record.published ? 'live' : record.needsPublish && !record.published ? 'publishing' : isDesigner && !hasPreview ? 'building' : 'ready');
   };
 
   const saveBusiness = async (id: string, patch: { raw?: Record<string, any>; [key: string]: any }) => {
@@ -1369,6 +1429,9 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     if (realRow && !(realRow.data && realRow.data.stub)) {
       setSlug(realRow.id);
       hydrateFromRecord(realRow.data || {}, email);
+      registerPushToken().then(token => {
+        if (token && token !== realRow.data?.pushToken) savePushToken(authedSession.access_token, realRow.id, token);
+      });
       Keyboard.dismiss();
       setAppScreen('dashboard');
       return;
@@ -1560,10 +1623,16 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const setLive = async (live: boolean) => {
     if (!slug || !session) return false;
     try {
-      await saveBusiness(slug, live ? { published: true, manuallyOffline: false, needsPublish: false } : { published: false, manuallyOffline: true });
-      setWebsiteStatus(live ? 'live' : 'ready');
+      if (live) {
+        await saveBusiness(slug, { published: false, manuallyOffline: false, needsPublish: true });
+        setWebsiteStatus('publishing');
+        Alert.alert('Publishing your website', "This usually takes around 5 minutes while your domain registers. You’ll get a notification as soon as it’s live!");
+      } else {
+        await saveBusiness(slug, { published: false, manuallyOffline: true });
+        setWebsiteStatus('ready');
+      }
       return true;
-    } catch { Alert.alert('Something went wrong', 'We couldn’t update your website. Please try again.'); return false; }
+    } catch { Alert.alert('Something went wrong', 'We couldn\'t update your website. Please try again.'); return false; }
   };
 
   useEffect(() => {
@@ -1741,7 +1810,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           <Field label="Trustpilot link" value={data.reviewSource === 'Trustpilot' ? data.reviewLink : ''} onChangeText={(v: string) => setData({ ...data, reviewLink: v, reviewSource: v.trim() ? 'Trustpilot' : (data.reviewSource === 'Trustpilot' ? null : data.reviewSource) })} placeholder="https://uk.trustpilot.com/review/..." />
         </View>
         <Pressable onPress={() => setContactForm(!contactForm)} style={s.formChoice}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color={C.primary} /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: 'rgba(28,40,50,.18)', true: C.primary }} thumbColor="#fff" {...({ activeThumbColor: '#fff' } as any)} /></Pressable></>;
-      case ‘domain’: {
+      case 'domain': {
         const clearDomainQuote = () => { setDomainReady(false); setDomainQuote(null); setDomainError(''); };
         const checkDomain = async () => {
           const name = domain.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
@@ -1793,7 +1862,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     </View>
   </FlowBackdrop>;
 
-  if (appScreen === 'dashboard') return <FadeIn><DashboardHome tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true, published: true }; setPlanAnnual(isAnnual); setWebsiteStatus('live'); }} onEditInfo={() => { setEditingInfo(true); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={signOut} saveError={saveError} planAnnual={planAnnual} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onEdit={() => { setEditFrom('dashboard'); setAppScreen('design-editor'); }} /></FadeIn>;
+  if (appScreen === 'dashboard') return <FadeIn><DashboardHome tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true }; setPlanAnnual(isAnnual); setWebsiteStatus('publishing'); }} onEditInfo={() => { setEditingInfo(true); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={signOut} saveError={saveError} planAnnual={planAnnual} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onEdit={() => { setEditFrom('dashboard'); setAppScreen('design-editor'); }} /></FadeIn>;
 
   if (appScreen === 'design-editor') return <FadeIn><DesignEditorFullscreen palette={palette} setPalette={setPalette} font={font} setFont={setFont} siteTexts={siteTexts} setSiteTexts={setSiteTexts} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} data={data} services={services} hours={hours} contactForm={contactForm} onBack={() => {
     if (editFrom === 'dashboard') { setAppScreen('dashboard'); return; }
