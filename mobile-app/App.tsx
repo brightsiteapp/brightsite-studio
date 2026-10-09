@@ -1568,15 +1568,32 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       });
       if (error || !oauthData.url) { setAuthStatus('Google sign-in failed. Try again.'); return; }
       const result = await WebBrowser.openAuthSessionAsync(oauthData.url, redirectTo);
-      if (result.type === 'success') {
-        try {
-          const { data: exData, error: exErr } = await supabase.auth.exchangeCodeForSession(result.url);
-          if (!exErr && exData.session) { await loadAccountDestination(exData.session); return; }
-        } catch {}
-        const { data: sd } = await supabase.auth.getSession();
-        if (sd.session) { await loadAccountDestination(sd.session); return; }
+      if (result.type !== 'success' || !result.url) { setAuthStatus(''); return; }
+
+      // Try PKCE code exchange
+      try {
+        const { data: exData, error: exErr } = await supabase.auth.exchangeCodeForSession(result.url);
+        if (!exErr && exData.session) { await loadAccountDestination(exData.session); return; }
+      } catch {}
+
+      // Fallback: tokens in URL hash (implicit flow)
+      const hash = result.url.split('#')[1] || '';
+      if (hash) {
+        const params = Object.fromEntries(hash.split('&').map(p => { const [k, ...v] = p.split('='); return [k, decodeURIComponent(v.join('='))]; }));
+        const access = params['access_token'];
+        const refresh = params['refresh_token'];
+        if (access && refresh) {
+          const { data: sd, error: se } = await supabase.auth.setSession({ access_token: access, refresh_token: refresh });
+          if (!se && sd.session) { await loadAccountDestination(sd.session); return; }
+        }
       }
-      setAuthStatus('');
+
+      // Last resort: brief wait then check session
+      await new Promise(r => setTimeout(r, 800));
+      const { data: sd } = await supabase.auth.getSession();
+      if (sd.session) { await loadAccountDestination(sd.session); return; }
+
+      setAuthStatus('Sign-in didn\'t complete. Please try again.');
     } catch {
       setAuthStatus('Google sign-in failed. Try again.');
     } finally {
