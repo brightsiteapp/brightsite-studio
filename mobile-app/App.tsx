@@ -1836,14 +1836,10 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           <Pressable disabled={domainChecking} onPress={checkDomain} style={[s.check, domainChecking && s.checkDisabled]}><Text style={s.checkText}>{domainChecking ? 'Checking live price…' : 'Check availability'}</Text></Pressable>
           {!!domainError && <Text style={s.domainError}>{domainError}</Text>}
           {domainReady && domainQuote && <Animated.View style={s.domainResult}><Ionicons name="checkmark-circle" size={24} color={DARK} /><View style={{ flex: 1 }}><Text style={s.domainName}>{domainQuote.domain}</Text><Text style={s.domainPrice}>Available — {domainQuote.priceLabel}</Text></View></Animated.View>}
-          {editingInfo
-            ? <Pressable disabled={savingInfo} onPress={async () => { setSavingInfo(true); await syncOnboardingToBackend(buildChoice || 'designer'); setSavingInfo(false); setEditingInfo(false); setTab('Website'); setAppScreen('dashboard'); }} style={({ pressed }) => [s.primaryBtn, { marginTop: 20 }, pressed && s.pressed, savingInfo && { opacity: .6 }]}>
-                {savingInfo ? <ActivityIndicator color="#fff" /> : <><Ionicons name="checkmark" size={18} color="#fff" /><Text style={s.primaryBtnText}>Save changes</Text></>}
-              </Pressable>
-            : domainReady && <Pressable onPress={() => { void syncOnboardingToBackend('designer'); setBuildChoice('designer'); setAppScreen('loading'); }} style={[s.primaryBtn, { marginTop: 20 }]}>
-                <Ionicons name="person-outline" size={18} color="#fff" />
-                <Text style={s.primaryBtnText}>Send to Designer</Text>
-              </Pressable>}
+          {!editingInfo && domainReady && <Pressable onPress={() => { void syncOnboardingToBackend('designer'); setBuildChoice('designer'); setAppScreen('loading'); }} style={[s.primaryBtn, { marginTop: 20 }]}>
+              <Ionicons name="person-outline" size={18} color="#fff" />
+              <Text style={s.primaryBtnText}>Send to Designer</Text>
+            </Pressable>}
         </>;
       }
     }
@@ -1901,7 +1897,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           const cardScale = cardPosition.interpolate({ inputRange: [-CARD_TRAVEL, 0, CARD_TRAVEL], outputRange: [.93, 1, .93], extrapolate: 'clamp' });
           return <Animated.View key={deckStep.id} pointerEvents={isActive ? 'auto' : 'none'} {...(isActive ? pan.panHandlers : {})} style={[s.card, s.deckCard, isActive ? s.deckCardActive : s.deckCardBehind, { zIndex: isActive ? 22 : 20 - Math.abs(distance), transform: [{ translateY: travelPosition }, { scale: cardScale }] }]}>
 
-            <View style={s.cardHeader}><Text style={s.cardTitle}>{deckStep.title}</Text>{editingInfo ? <Pressable onPress={() => { setEditingInfo(false); setAppScreen('dashboard'); }} hitSlop={10} style={s.closeEditBtn} accessibilityLabel="Close without saving"><Ionicons name="close" size={20} color={C.ink} /></Pressable> : deckIndex > 0 && <Text style={s.count}>{deckIndex}/{setupStepIndexes.length}</Text>}</View>
+            <View style={s.cardHeader}><Text style={s.cardTitle}>{deckStep.title}</Text>{editingInfo ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><Pressable onPress={() => { setEditingInfo(false); setAppScreen('dashboard'); }} hitSlop={10} style={s.closeEditBtn} accessibilityLabel="Close without saving"><Ionicons name="close" size={20} color={C.ink} /></Pressable><Pressable disabled={savingInfo} onPress={async () => { setSavingInfo(true); await syncOnboardingToBackend(buildChoice || 'designer'); setSavingInfo(false); setEditingInfo(false); setAppScreen('dashboard'); }} style={s.saveTickBtn} accessibilityLabel="Save changes">{savingInfo ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="checkmark" size={18} color="#fff" />}</Pressable></View> : deckIndex > 0 && <Text style={s.count}>{deckIndex}/{setupStepIndexes.length}</Text>}</View>
             <ScrollView style={s.cardScroll} contentContainerStyle={[s.content, deckStep.id === 'login' && s.loginContent, deckStep.id === 'hours' && s.hoursContent]}
               scrollEnabled={!['hours', 'business', 'contact'].includes(deckStep.id) || keyboardVisible}
               keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
@@ -1909,7 +1905,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             </ScrollView>
             <View pointerEvents="none" style={s.fixedPrompt}>
               {!!validationMessage && isActive && <Text style={s.validationText}>{validationMessage}</Text>}
-              {deckStep.id !== 'domain' && <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : 'Swipe up to save'}</Text></View>}
+              {deckStep.id !== 'domain' && !editingInfo && <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : 'Swipe up to save'}</Text></View>}
             </View>
           </Animated.View>;
         })}
@@ -1963,6 +1959,7 @@ const s = StyleSheet.create({
   upload: { alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 14, backgroundColor: C.field, borderWidth: 1, borderStyle: 'dashed', borderColor: C.lineStrong, overflow: 'hidden' },
   uploadPreview: { width: 52, height: 52, borderRadius: 15, marginBottom: 9 }, uploadPreviewFill: { width: '100%', height: '100%' },
   uploadIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(59,130,246,.12)', marginBottom: 10 },
+  saveTickBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
   uploadTitle: { fontFamily: FONT, fontWeight: '800', fontSize: 14, color: '#1C2832' }, uploadSub: { fontFamily: FONT, fontSize: 11, color: C.inkSoft, marginTop: 3 }, swipeHint: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.ink, textAlign: 'center' },
   cardFade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 80, zIndex: 110, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
   fixedPrompt: { position: 'absolute', left: 18, right: 18, bottom: 14, zIndex: 120, elevation: 120, alignItems: 'center', gap: 7 }, swipeRow: { minHeight: 34, paddingHorizontal: 14, borderRadius: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,.7)' }, validationText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.danger, textAlign: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: C.dangerSoft, overflow: 'hidden' },
