@@ -904,6 +904,11 @@ function FadeIn({ children }: { children: React.ReactNode }) {
   return <Animated.View style={{ flex: 1, opacity }}>{children}</Animated.View>;
 }
 
+function welcomeText(fullName: string | undefined, buildChoice: string | null | undefined) {
+  const designer = buildChoice === 'designer';
+  return `Hey ${fullName?.trim().split(' ')[0] || 'there'}, welcome to BrightSite! My name is Tom and I’ll be your ${designer ? 'designer and support' : 'support'}. ${designer ? 'I’m working on your preview now, so let me know if you have any requests or questions.' : 'Love your design! Let me know if you have any requests or questions.'} When you’re ready, just hit Make Live to put your website online!`;
+}
+
 function MessageThread({ session, slug, viewer, otherName, placeholder, intro }: { session: any; slug: string; viewer: 'customer' | 'admin'; otherName: string; placeholder: string; intro?: React.ReactNode }) {
   const [messageDraft, setMessageDraft] = useState('');
   const [messages, setMessages] = useState<{ id: string; sender: string; body: string; created_at: string }[]>([]);
@@ -1162,7 +1167,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
       <View style={s.dashboardTabsTop}>{['Website', 'Messages', 'Account'].map(name => <Pressable key={name} onPress={() => setTab(name)} style={[s.dashboardTab, tab === name && s.dashboardTabOn]}><Text style={[s.dashboardTabText, tab === name && s.dashboardTabTextOn]}>{name}</Text></Pressable>)}</View>
       {!!saveError && <View style={s.saveBanner}><Ionicons name="alert-circle" size={16} color={C.danger} /><Text style={s.saveBannerText}>{saveError}</Text></View>}
       {tab === 'Messages' ? <MessageThread session={session} slug={slug} viewer="customer" otherName="Tom" placeholder="Message Tom…" intro={<>
-          <View style={[s.messageBubble, s.messageBubbleReceived]}><Text style={s.messageText}>{`Hey ${data.fullName?.trim().split(' ')[0] || 'there'}, welcome to BrightSite! My name is Tom and I’ll be your ${buildChoice === 'designer' ? 'designer and support' : 'support'}. ${buildChoice === 'designer' ? 'I’m working on your preview now, so let me know if you have any requests or questions.' : 'Love your design! Let me know if you have any requests or questions.'} When you’re ready, just hit Make Live to put your website online!`}</Text></View>
+          <View style={[s.messageBubble, s.messageBubbleReceived]}><Text style={s.messageText}>{welcomeText(data.fullName, buildChoice)}</Text></View>
           <Text style={[s.messageMeta, s.messageMetaReceived]}>Tom · BrightSite</Text>
         </>} /> :
       <ScrollView contentContainerStyle={s.dashboardContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
@@ -2169,7 +2174,10 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           ) : (
             <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
               <Pressable onPress={() => { setAdminActiveThread(null); if (session) void loadAdminData(session); }} style={aS.threadBack}><Ionicons name="chevron-back" size={20} color={C.ink} /><Text style={aS.threadBackText}>{adminActiveThread?.data?.name || adminActiveThread?.data?.businessName || adminActiveThread?.id}</Text></Pressable>
-              <MessageThread key={adminActiveThread?.id} session={session} slug={adminActiveThread?.id} viewer="admin" otherName={(adminActiveThread?.data?.fullName || adminActiveThread?.data?.name || 'Customer').trim().split(' ')[0]} placeholder="Message…" />
+              <MessageThread key={adminActiveThread?.id} session={session} slug={adminActiveThread?.id} viewer="admin" otherName={(adminActiveThread?.data?.fullName || adminActiveThread?.data?.name || 'Customer').trim().split(' ')[0]} placeholder="Message…" intro={<>
+                <View style={[s.messageBubble, s.messageBubbleSent]}><Text style={[s.messageText, { color: '#fff' }]}>{welcomeText(adminActiveThread?.data?.fullName, adminActiveThread?.data?.buildChoice || (/Build choice: designer/i.test(adminActiveThread?.data?.notes || '') ? 'designer' : null))}</Text></View>
+                <Text style={[s.messageMeta, s.messageMetaSent]}>You · Welcome message</Text>
+              </>} />
             </KeyboardAvoidingView>
           )}
         </>}
