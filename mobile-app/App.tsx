@@ -904,7 +904,7 @@ function FadeIn({ children }: { children: React.ReactNode }) {
   return <Animated.View style={{ flex: 1, opacity }}>{children}</Animated.View>;
 }
 
-function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, onEdit, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, onPaid, saveError, planAnnual, media, isPaying, buildChoice, session, slug }: any) {
+function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, onEdit, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, onPaid, saveError, planAnnual, media, isPaying, buildChoice, session, slug, onAdminBack }: any) {
   const [previewMode, setPreviewMode] = useState<'mobile' | 'desktop'>('mobile');
   const [showPassword, setShowPassword] = useState(false);
   const [showEditMenu, setShowEditMenu] = useState(false);
@@ -1126,6 +1126,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
     <View style={s.dashboardScreen}>
       <View style={s.dashboardBrandRow}>
         <Logo height={17} />
+        {onAdminBack && <Pressable hitSlop={10} onPress={onAdminBack} style={s.adminBackBtn}><Ionicons name="chevron-back" size={15} color={C.primary} /><Text style={s.adminBackText}>Admin</Text></Pressable>}
         <View style={[s.statusPill, { backgroundColor: status.bg }]}><Animated.View style={[s.statusDot, { backgroundColor: status.color, opacity: isPublishing ? pulseAnim : 1 }]} /><Text style={[s.statusPillText, { color: status.color }]}>{status.label}</Text></View>
       </View>
       <View style={s.dashboardTabsTop}>{['Website', 'Messages', 'Account'].map(name => <Pressable key={name} onPress={() => setTab(name)} style={[s.dashboardTab, tab === name && s.dashboardTabOn]}><Text style={[s.dashboardTabText, tab === name && s.dashboardTabTextOn]}>{name}</Text></Pressable>)}</View>
@@ -2143,23 +2144,19 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
               return <Pressable key={biz.id} onPress={() => adminOpenBusiness(biz)} style={({ pressed }) => [aS.bizCard, pressed && s.pressed]}>
                 <View style={[aS.bizStatusBar, { backgroundColor: STATUS_COLORS[st] }]} />
                 <View style={aS.bizCardInner}>
-                  <View style={aS.bizCardTop}>
+                  <View style={{ flex: 1, marginRight: 8 }}>
                     <Text style={aS.bizName} numberOfLines={1}>{name}</Text>
-                    <Text style={aS.bizTime}>{updated}</Text>
-                  </View>
-                  <View style={aS.bizCardBottom}>
-                    <View style={[aS.bizStatusPill, { backgroundColor: STATUS_COLORS[st] + '18' }]}>
+                    <View style={aS.bizMeta}>
                       <View style={[aS.bizStatusDot, { backgroundColor: STATUS_COLORS[st] }]} />
                       <Text style={[aS.bizStatusText, { color: STATUS_COLORS[st] }]}>{STATUS_LABELS[st]}</Text>
-                    </View>
-                    <View style={aS.bizActions}>
-                      <Pressable hitSlop={8} onPress={(e) => { e.stopPropagation?.(); setAdminActiveThread(biz); setAdminTab('messages'); }} style={aS.bizAction}>
-                        {hasUnread && <View style={aS.bizUnreadDot} />}
-                        <Ionicons name="chatbubble-outline" size={17} color={hasUnread ? C.primary : C.inkMuted} />
-                      </Pressable>
-                      {(d.liveUrl || d.previewUrl || d.demoUrl) && <Pressable hitSlop={8} onPress={() => Linking.openURL(d.liveUrl || d.previewUrl || d.demoUrl)} style={aS.bizAction}><Ionicons name="globe-outline" size={17} color={C.inkMuted} /></Pressable>}
+                      {!!updated && <Text style={aS.bizTime}>· {updated}</Text>}
                     </View>
                   </View>
+                  {(d.liveUrl || d.previewUrl || d.demoUrl) && <Pressable hitSlop={8} onPress={() => Linking.openURL(d.liveUrl || d.previewUrl || d.demoUrl)} style={aS.bizAction}><Ionicons name="globe-outline" size={16} color={C.inkMuted} /></Pressable>}
+                  <Pressable hitSlop={8} onPress={() => { setAdminActiveThread(biz); setAdminTab('messages'); }} style={aS.bizAction}>
+                    {hasUnread && <View style={aS.bizUnreadDot} />}
+                    <Ionicons name="chatbubble-outline" size={16} color={hasUnread ? C.primary : C.inkMuted} />
+                  </Pressable>
                 </View>
               </Pressable>;
             })}
@@ -2228,8 +2225,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   }
 
   if (appScreen === 'dashboard') return <FadeIn>
-    {adminViewingBusiness && <Pressable onPress={adminBackFromBusiness} style={aS.adminViewingBar}><Ionicons name="chevron-back" size={15} color="#fff" /><Text style={aS.adminViewingText}>Admin · {adminViewingBusiness.data?.name || adminViewingBusiness.data?.businessName || adminViewingBusiness.id}</Text></Pressable>}
-    <DashboardHome tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true }; setPlanAnnual(isAnnual); setWebsiteStatus('publishing'); }} onEditInfo={() => { if (adminViewingBusiness) return; setEditingInfo(true); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} saveError={saveError} planAnnual={planAnnual} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onEdit={() => { setEditFrom('dashboard'); setAppScreen('design-editor'); }} />
+    <DashboardHome onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true }; setPlanAnnual(isAnnual); setWebsiteStatus('publishing'); }} onEditInfo={() => { if (adminViewingBusiness) return; setEditingInfo(true); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} saveError={saveError} planAnnual={planAnnual} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onEdit={() => { setEditFrom('dashboard'); setAppScreen('design-editor'); }} />
   </FadeIn>;
 
   if (appScreen === 'design-editor') return <FadeIn><DesignEditorFullscreen palette={palette} setPalette={setPalette} font={font} setFont={setFont} siteTexts={siteTexts} setSiteTexts={setSiteTexts} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} data={data} services={services} hours={hours} contactForm={contactForm} onBack={() => {
@@ -2444,6 +2440,8 @@ const s = StyleSheet.create({
   galleryItem: { borderRadius: 14, overflow: 'hidden', backgroundColor: '#EFE4DB' },
   galleryThumb: { width: '100%', height: '100%' },
   galleryAdd: { borderRadius: 12, borderWidth: 1, borderStyle: 'dashed', borderColor: C.lineStrong, alignItems: 'center', justifyContent: 'center', backgroundColor: C.field },
+  adminBackBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, height: 30, borderRadius: 15, backgroundColor: C.primarySoft, marginLeft: 'auto', marginRight: 8 },
+  adminBackText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.primary },
   dashboardScreen: { flex: 1, paddingTop: Platform.OS === 'ios' ? 58 : 32 },
   dashboardBrandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 16 },
   dashboardBrand: { fontFamily: FONT, fontSize: 18, fontWeight: '800', letterSpacing: -.3, color: C.ink },
@@ -2592,18 +2590,19 @@ const aS = StyleSheet.create({
   searchWrap: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 20, marginBottom: 10, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: '#fff', borderRadius: 14, borderWidth: 1, borderColor: C.line, gap: 8 },
   searchInput: { flex: 1, fontFamily: FONT, fontSize: 14, color: C.ink },
   bizList: { paddingHorizontal: 20, paddingBottom: 40 },
-  bizCard: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 16, marginBottom: 10, overflow: 'hidden', borderWidth: 1, borderColor: C.line, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
+  bizCard: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 14, marginBottom: 8, overflow: 'hidden', borderWidth: 1, borderColor: C.line, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
   bizStatusBar: { width: 4 },
-  bizCardInner: { flex: 1, padding: 14 },
+  bizCardInner: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingVertical: 11, paddingLeft: 14, paddingRight: 10, gap: 6 },
+  bizMeta: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 },
   bizCardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
-  bizName: { fontFamily: FONT, fontSize: 15, fontWeight: '700', color: C.ink, flex: 1, marginRight: 8 },
+  bizName: { fontFamily: FONT, fontSize: 15, fontWeight: '700', color: C.ink },
   bizTime: { fontFamily: FONT, fontSize: 12, color: C.inkMuted },
   bizCardBottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   bizStatusPill: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, gap: 5 },
   bizStatusDot: { width: 6, height: 6, borderRadius: 3 },
   bizStatusText: { fontFamily: FONT, fontSize: 12, fontWeight: '600' },
   bizActions: { flexDirection: 'row', gap: 4 },
-  bizAction: { width: 34, height: 34, borderRadius: 10, backgroundColor: 'rgba(28,40,50,.06)', alignItems: 'center', justifyContent: 'center' },
+  bizAction: { width: 32, height: 32, borderRadius: 10, backgroundColor: 'rgba(28,40,50,.06)', alignItems: 'center', justifyContent: 'center' },
   bizUnreadDot: { position: 'absolute', top: 0, right: 0, width: 8, height: 8, borderRadius: 4, backgroundColor: C.primary, borderWidth: 1.5, borderColor: '#fff' },
   emptyText: { textAlign: 'center', marginTop: 60, fontFamily: FONT, fontSize: 15, color: C.inkMuted },
   showingText: { textAlign: 'center', marginTop: 16, fontFamily: FONT, fontSize: 12, color: C.inkMuted },
