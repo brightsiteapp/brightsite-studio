@@ -15,8 +15,11 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
 import { supabase } from './lib/supabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 WebBrowser.maybeCompleteAuthSession();
+
+const DRAFT_KEY = 'brightsite_onboarding_draft';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 // The dashboard chrome occupies roughly 258pt. Keep the website preview inset
@@ -1540,6 +1543,23 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       setAppScreen('dashboard');
       return;
     }
+    // No business record — restore any saved draft
+    try {
+      const raw = await AsyncStorage.getItem(DRAFT_KEY);
+      if (raw) {
+        const draft = JSON.parse(raw);
+        if (draft.data) setData((cur: any) => ({ ...cur, ...draft.data }));
+        if (draft.hours) setHours(draft.hours);
+        if (draft.services) setServices(draft.services);
+        if (draft.reviewsList) setReviewsList(draft.reviewsList);
+        if (draft.domain) setDomain(draft.domain);
+        if (typeof draft.index === 'number' && draft.index > 0) {
+          setIndex(draft.index);
+          motion.setValue(draft.index * CARD_TRAVEL);
+          return;
+        }
+      }
+    } catch {}
     setIndex(1);
     motion.setValue(CARD_TRAVEL);
   };
@@ -1559,6 +1579,15 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     const hide = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
     return () => { show.remove(); hide.remove(); };
   }, []);
+
+  // Auto-save draft while user is in the onboarding flow (logged in, no business yet)
+  useEffect(() => {
+    if (!authSession || appScreen !== 'onboarding' || editingInfo) return;
+    const timer = setTimeout(() => {
+      AsyncStorage.setItem(DRAFT_KEY, JSON.stringify({ data, hours, services, reviewsList, domain, index })).catch(() => {});
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [data, hours, services, reviewsList, domain, index, authSession, appScreen, editingInfo]);
 
   useEffect(() => {
     const handleUrl = (url: string) => {
@@ -1767,6 +1796,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         const failedUploads = [media.logo && !logoImage, media.hero && !heroImage, ...media.gallery.map((u, i) => u && !galleryImages[i])].filter(Boolean).length;
         if (failedUploads) setSaveError(`${failedUploads} photo${failedUploads > 1 ? 's' : ''} couldn’t upload. You can add them again from Edit.`);
         if (!editingInfo) await notifyStage('new_signup', data.businessName || 'Unnamed business', data.contactEmail || data.email, chosenSlug);
+        AsyncStorage.removeItem(DRAFT_KEY).catch(() => {});
         return;
       } catch (err: any) {
         if (err?.conflict && !slug) continue;
