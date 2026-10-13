@@ -2482,13 +2482,13 @@
 
   function updateSectionChecks() {
     var complete = {
-      name: !!document.getElementById('fName').value.trim(),
-      contact: (!!document.getElementById('fPhone').value.trim() || !!document.getElementById('fEmail2').value.trim()) || !!sectionDoneClicked.contact,
-      hours: hoursEdited || !!sectionDoneClicked.hours,
-      address: !!document.getElementById('fAddress').value.trim() || !!sectionDoneClicked.address,
-      prices: services.some(function(g) { return g.items.some(function(it) { return it.name && it.name.trim(); }); }) || !!sectionDoneClicked.prices,
-      reviews: reviewQuotes.some(function(q) { return q.trim(); }) || !!document.getElementById('fReviewLink').value.trim() || !!sectionDoneClicked.reviews,
-      media: !!media.logoImage || !!media.heroImage || media.gallery.length > 0 || !!pendingUploads.logo || !!pendingUploads.hero || pendingUploads.gallery.length > 0 || !!sectionDoneClicked.media
+      name: !!sectionDoneClicked.name,
+      contact: !!sectionDoneClicked.contact,
+      hours: !!sectionDoneClicked.hours,
+      address: !!sectionDoneClicked.address,
+      prices: !!sectionDoneClicked.prices,
+      reviews: !!sectionDoneClicked.reviews,
+      media: !!sectionDoneClicked.media
     };
     var previewReady = !!getPreviewUrl();
     var builderList = document.getElementById('builderList');
