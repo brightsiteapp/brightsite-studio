@@ -59,6 +59,16 @@
   .bonus-text strong{display:block;font-size:12px;font-weight:800;color:#111}
   .bonus-text span{font-size:11px;color:#888}
 
+  .billing-toggle{display:flex;justify-content:center;gap:4px;margin:0 auto 22px;width:max-content;padding:4px;border-radius:999px;border:1.5px solid var(--accent);background:#fff}
+  .billing-toggle button{font:inherit;font-size:13px;font-weight:700;padding:8px 18px;border:0;border-radius:999px;background:transparent;color:#555;cursor:pointer}
+  .billing-toggle button.active{background:var(--accent);color:#fff}
+  .billing-toggle button span{font-size:11px;font-weight:600;opacity:.85;margin-left:4px}
+  #plans .b-annual{display:none}
+  #plans[data-billing="annual"] .b-annual{display:block}
+  #plans[data-billing="annual"] .b-monthly{display:none}
+  #plans[data-billing="annual"] small.b-annual{display:inline}
+  #plans[data-billing="annual"] small.b-monthly{display:none}
+
   @media(max-width:860px){
     #pricing .plans{grid-template-columns:1fr 1fr}
   }
@@ -105,16 +115,22 @@
   <section id="pricing" style="padding-top:0">
     <div class="wrap">
 
-      <div class="plans">
+      <div class="billing-toggle" role="group" aria-label="Billing period">
+        <button type="button" class="active" data-billing="monthly">Monthly</button>
+        <button type="button" data-billing="annual">Annual <span>save £24/yr</span></button>
+      </div>
+
+      <div class="plans" id="plans" data-billing="monthly">
 
         <!-- Monthly card -->
         <div class="plan feature">
           <h4>Monthly Plan</h4>
           <div class="desc">Website built for free — just pay hosting to go live.</div>
           <div class="price-row">
-            <span class="price">Free<small>£19/mo hosting</small></span>
+            <span class="price">Free<small class="b-monthly">£19/mo hosting</small><small class="b-annual">£17/mo hosting</small></span>
           </div>
-          <div class="price-note">£19/mo — cancel any time</div>
+          <div class="price-note b-monthly">£19/mo — cancel any time</div>
+          <div class="price-note b-annual">Billed £204/yr — <span class="annual-saving">save £24 a year</span></div>
           <ul>
             <li>Website built for you at no cost</li>
             <li>Hosting, security &amp; maintenance</li>
@@ -126,16 +142,17 @@
           <a href="/account/login.html?signup=1" class="go">Sign up</a>
         </div>
 
-        <!-- Annual card -->
+        <!-- Full website card -->
         <div class="plan feature" style="position:relative">
           <span class="plan-badge">BEST VALUE</span>
-          <h4>Annual Plan</h4>
-          <div class="desc">Everything in monthly, plus a free domain and logo.</div>
+          <h4>Full Website</h4>
+          <div class="desc">Everything in the annual plan, for websites over 3 pages.</div>
           <div class="price-row">
-            <span class="price">Free<small>£17/mo hosting</small></span>
+            <span class="price">£199<small>build fee</small></span>
           </div>
-          <div class="price-note">Billed £204/yr — <span class="annual-saving">save £24 a year</span></div>
-          <div class="annual-bonus">
+          <div class="price-note b-monthly">Plus £19/mo hosting — cancel any time</div>
+          <div class="price-note b-annual">Plus £17/mo hosting — <span class="annual-saving">save £24 a year</span></div>
+          <div class="annual-bonus b-annual">
             <div class="annual-bonus-item">
               <div class="bonus-icon">🌐</div>
               <div class="bonus-text">
@@ -152,11 +169,11 @@
             </div>
           </div>
           <ul>
-            <li>Website built for you at no cost</li>
+            <li>Website built for you, 3+ pages</li>
             <li>Hosting, security &amp; maintenance</li>
             <li>SEO &amp; SEO-focused content</li>
             <li>Mobile optimisation</li>
-            <li>1–3 pages with contact &amp; enquiry forms</li>
+            <li>Contact &amp; enquiry forms on every page</li>
             <li>Custom hero/header image</li>
           </ul>
           <a href="/account/login.html?signup=1" class="go">Sign up</a>
@@ -205,6 +222,16 @@
   addEventListener('scroll',u,{passive:true});
   addEventListener('resize',u,{passive:true});
   u();
+})();
+
+(function(){
+  var plans=document.getElementById('plans');
+  document.querySelectorAll('.billing-toggle button').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      plans.dataset.billing=btn.dataset.billing;
+      document.querySelectorAll('.billing-toggle button').forEach(function(b){b.classList.toggle('active',b===btn);});
+    });
+  });
 })();
 
 </script>
