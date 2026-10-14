@@ -15,10 +15,10 @@ async function currentUser(token) {
   return res.json();
 }
 
-function serviceHeaders(extra = {}) {
+function userHeaders(token, extra = {}) {
   return {
-    apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
-    Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${token}`,
     'Content-Type': 'application/json',
     ...extra,
   };
@@ -45,10 +45,10 @@ export default async function handler(request, response) {
   const { slug, fullName, buildChoice, pushToken } = request.body || {};
   if (!slug) return response.status(400).json({ error: 'Missing slug' });
 
-  // Verify user owns this business
+  // Read business using user's own token (RLS enforces ownership)
   const ownerRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/businesses?id=eq.${encodeURIComponent(slug)}&user_id=eq.${user.id}&select=id,data`,
-    { headers: serviceHeaders() }
+    `${SUPABASE_URL}/rest/v1/businesses?id=eq.${encodeURIComponent(slug)}&select=id,data`,
+    { headers: userHeaders(token) }
   );
   const rows = await ownerRes.json();
   if (!Array.isArray(rows) || rows.length === 0) return response.status(403).json({ error: 'Forbidden' });
@@ -60,34 +60,38 @@ export default async function handler(request, response) {
     ? `Hey ${firstName}, welcome to BrightSite! My name is Tom and I'll be your designer and support. I'm working on your preview now, so let me know if you have any requests or questions. When you're ready, just hit Make Live to put your website online!`
     : `Hey ${firstName}, welcome to BrightSite! My name is Tom and I'll be your support. Love your design! Let me know if you have any requests or questions. When you're ready, just hit Make Live to put your website online!`;
 
-  // Check if welcome already sent (idempotency)
+  // Check if welcome already sent (idempotency) — using user's token, RLS allows reading own messages
   const existCheck = await fetch(
     `${SUPABASE_URL}/rest/v1/messages?business_id=eq.${encodeURIComponent(slug)}&sender=eq.admin&select=id&limit=1`,
-    { headers: serviceHeaders() }
+    { headers: userHeaders(token) }
   );
   const existing = await existCheck.json();
   if (Array.isArray(existing) && existing.length > 0) {
     return response.status(200).json({ ok: true, skipped: true });
   }
 
-  // Insert welcome message
-  await fetch(`${SUPABASE_URL}/rest/v1/messages`, {
+  // Insert welcome message — RLS allows authenticated users to insert for their own business
+  const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/messages`, {
     method: 'POST',
-    headers: serviceHeaders({ Prefer: 'return=minimal' }),
+    headers: userHeaders(token, { Prefer: 'return=minimal' }),
     body: JSON.stringify({ business_id: slug, sender: 'admin', body: welcomeBody }),
   });
+  if (!insertRes.ok) {
+    const err = await insertRes.text();
+    return response.status(500).json({ error: 'Insert failed', detail: err });
+  }
 
-  // Save push token if provided and not already stored
+  // Save push token alongside existing data using user's token
   const resolvedPushToken = pushToken || existingData.pushToken;
   if (pushToken && pushToken !== existingData.pushToken) {
     await fetch(`${SUPABASE_URL}/rest/v1/businesses?id=eq.${encodeURIComponent(slug)}`, {
       method: 'PATCH',
-      headers: serviceHeaders({ Prefer: 'return=minimal' }),
+      headers: userHeaders(token, { Prefer: 'return=minimal' }),
       body: JSON.stringify({ data: { ...existingData, pushToken } }),
     }).catch(() => {});
   }
 
-  // Send push notification
+  // Send push notification via Expo — no secret needed
   if (resolvedPushToken) {
     await fetch('https://exp.host/--/api/v2/push/send', {
       method: 'POST',

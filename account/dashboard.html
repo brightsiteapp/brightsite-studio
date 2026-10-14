@@ -120,33 +120,43 @@
   .app-header-right .who .name{font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:34vw}
   .app-header-right .who .email{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:34vw}
   .app-logout{background:none;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font:inherit;font-size:12px;font-weight:600;color:var(--ink);cursor:pointer;flex:none;white-space:nowrap}
+  .header-status-pill{font-size:11.5px!important;padding:5px 10px!important}
 
   .mobile-view-tabs{
     flex:none;
     display:flex;
     width:100%;
     box-sizing:border-box;
-    gap:6px;
-    padding:6px 14px;
+    gap:0;
+    padding:4px 16px;
+    background:var(--bg);
     border-bottom:1px solid var(--line);
-    background:var(--glass);backdrop-filter:blur(22px) saturate(1.3);-webkit-backdrop-filter:blur(22px) saturate(1.3);
     position:relative;
     z-index:10;
+  }
+  .mobile-view-tabs .tabs-inner{
+    display:flex;
+    flex:1;
+    gap:0;
+    padding:4px;
+    border-radius:14px;
+    background:rgba(28,40,50,.07);
   }
   .mobile-view-tabs button{
     flex:1;
     min-height:38px;
     border:0;
-    border-radius:10px;
+    border-radius:11px;
     background:transparent;
-    color:var(--muted);
+    color:rgba(28,40,50,.5);
     font:inherit;
-    font-size:12px;
+    font-size:13px;
     font-weight:700;
     cursor:pointer;
     position:relative;
+    transition:background .15s,color .15s;
   }
-  .mobile-view-tabs button[aria-selected="true"]{background:#fff;color:var(--accent);box-shadow:0 2px 9px rgba(38,63,94,.1),inset 0 0 0 1px rgba(255,255,255,.9)}
+  .mobile-view-tabs button[aria-selected="true"]{background:var(--accent);color:#fff;box-shadow:0 1px 6px rgba(47,125,237,.25)}
   .msgs-notification{position:absolute;top:7px;right:11px;width:7px;height:7px;border-radius:50%;background:#dc2626;box-shadow:0 0 0 2px var(--bg);}
   @media(max-width:799px){
     .mobile-view-tabs{border-bottom:1px solid var(--line);}
@@ -642,10 +652,7 @@
 <div class="app-header">
   <a href="/" class="brand-mini"><img src="../img/brightsite-logo.png" alt="BrightSite"></a>
   <div class="app-header-right">
-    <div class="who">
-      <div class="name" id="acctName"></div>
-      <div class="email" id="acctEmailTop"></div>
-    </div>
+    <div class="status-pill header-status-pill" id="headerStatusPill" hidden><span class="dot"></span><span id="headerStatusLabel"></span></div>
     <button class="app-logout" id="logoutBtn" type="button">Log out</button>
   </div>
 </div>
@@ -653,9 +660,11 @@
 <div id="dashWrap">
 <div id="leftCol">
 <nav class="mobile-view-tabs" id="mobileViewTabs" aria-label="Account sections" hidden>
-  <button type="button" id="mobileAccountTab" aria-selected="false">Account</button>
-  <button type="button" id="mobileWebsiteTab" aria-selected="true">Website</button>
-  <button type="button" id="mobileMessagesTab" aria-selected="false">Messages<span class="msgs-notification" id="msgsNotification" hidden aria-label="New message"></span></button>
+  <div class="tabs-inner">
+    <button type="button" id="mobileWebsiteTab" aria-selected="false">Website</button>
+    <button type="button" id="mobileMessagesTab" aria-selected="false">Messages<span class="msgs-notification" id="msgsNotification" hidden aria-label="New message"></span></button>
+    <button type="button" id="mobileAccountTab" aria-selected="false">Account</button>
+  </div>
 </nav>
 
 <main id="appBody" hidden>
@@ -1397,6 +1406,15 @@
       status.classList.toggle('draft', !isLive);
     }
     if (statusLabel) statusLabel.textContent = isLive ? 'Live' : 'Not live';
+
+    var headerPill = document.getElementById('headerStatusPill');
+    var headerLabel = document.getElementById('headerStatusLabel');
+    if (headerPill && headerLabel) {
+      headerPill.hidden = false;
+      headerPill.classList.toggle('live', isLive);
+      headerPill.classList.toggle('draft', !isLive);
+      headerLabel.textContent = isLive ? 'Live' : 'Not live';
+    }
 
     if (urlLink) {
       if (liveUrl) {
@@ -2988,42 +3006,27 @@
     var pendingType = params.get('type') || localStorage.getItem('bs_pending_business_type') || 'Professional Services';
     if (!name || !chosenSlug) { location.replace('../'); return; }
 
-    fetch(SUPABASE_URL + '/rest/v1/businesses?select=*&id=eq.' + encodeURIComponent(chosenSlug), { headers: authHeaders() })
-      .then(function(res) { return res.ok ? res.json() : []; })
-      .then(function(rows) {
-        var existing = rows && rows[0];
-        if (existing && existing.user_id && existing.user_id !== session.user_id) {
-          throw new Error('That web address is already taken — choose another.');
-        }
-        if (existing) {
-          var claimRecord = Object.assign({}, existing.data || {}, { slug: chosenSlug, name: existing.name || name, updatedAt: new Date().toISOString() });
-          return authenticatedFetch(SUPABASE_URL + '/rest/v1/rpc/upsert_business', {
-            method: 'POST',
-            headers: authHeaders({ 'Content-Type': 'application/json' }),
-            body: JSON.stringify({ p_id: chosenSlug, p_name: existing.name || name, p_user_id: session.user_id, p_data: claimRecord, p_updated_at: claimRecord.updatedAt })
-          }).then(function(res) {
-            if (!res.ok) return res.json().then(function(d) { throw new Error(d.message || d.msg || ('Failed (' + res.status + ')')); });
-            return res.json();
-          });
-        }
-        var record = { slug: chosenSlug, name: name, raw: { name: name, email: session.email || '', tagline: pendingType, services: [], gallery: [] }, updatedAt: new Date().toISOString() };
-        return fetch(SUPABASE_URL + '/rest/v1/businesses', {
-          method: 'POST',
-          headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation,resolution=merge-duplicates' }),
-          body: JSON.stringify({ id: chosenSlug, name: name, user_id: session.user_id, data: record, updated_at: record.updatedAt })
-        }).then(function(res) {
-          if (!res.ok) return res.json().then(function(d) { throw new Error(d.message || d.msg || ('Failed (' + res.status + ')')); });
-          var fd = new FormData(); fd.append('Stage', 'new_signup'); fd.append('Business', name); fd.append('Email', session.email || ''); fd.append('Slug', chosenSlug); fd.append('Type', pendingType);
-          fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/', { method: 'POST', body: fd, keepalive: true }).catch(function(){});
-          return res.json();
-        });
+    // Use upsert_business RPC directly — it handles both claiming anon-created rows
+    // (user_id = null) and creating new ones, without needing to read the row first.
+    // A direct authenticated read can't see anon rows (user_id = null), which was
+    // causing the old pre-check to fail silently and leave the business unclaimed.
+    var record = { slug: chosenSlug, name: name, raw: { name: name, email: session.email || '', tagline: pendingType, services: [], gallery: [] }, updatedAt: new Date().toISOString() };
+    authenticatedFetch(SUPABASE_URL + '/rest/v1/rpc/upsert_business', {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ p_id: chosenSlug, p_name: name, p_user_id: session.user_id, p_data: record, p_updated_at: record.updatedAt })
+    })
+      .then(function(res) {
+        if (!res.ok) return res.json().then(function(d) { throw new Error(d.message || d.msg || ('Failed (' + res.status + ')')); });
+        return res.json();
       })
-      .then(function(rows) {
+      .then(function(row) {
         localStorage.removeItem('bs_pending_business_name');
         localStorage.removeItem('bs_pending_slug');
-        var created = Array.isArray(rows) ? rows[0] : rows;
-        if (created) business = created;
+        if (row) business = row;
         slug = chosenSlug;
+        var fd = new FormData(); fd.append('Stage', 'new_signup'); fd.append('Business', name); fd.append('Email', session.email || ''); fd.append('Slug', chosenSlug); fd.append('Type', pendingType);
+        fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/', { method: 'POST', body: fd, keepalive: true }).catch(function(){});
         if (business) renderDashboard();
       })
       .catch(function(err) {
