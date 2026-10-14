@@ -916,6 +916,7 @@ function MessageThread({ session, slug, viewer, otherName, placeholder, intro }:
   const [messageDraft, setMessageDraft] = useState('');
   const [messages, setMessages] = useState<{ id: string; sender: string; body: string; created_at: string }[]>([]);
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [msgsLoaded, setMsgsLoaded] = useState(false);
   const lastMessageTs = useRef<string | undefined>(undefined);
   const scrollRef = useRef<ScrollView>(null);
   const [kbOpen, setKbOpen] = useState(false);
@@ -927,10 +928,11 @@ function MessageThread({ session, slug, viewer, otherName, placeholder, intro }:
   }, []);
   useEffect(() => { scrollToLatest(false); }, []);
 
-  const loadMessagesNow = async () => {
+  const loadMessagesNow = async (initial = false) => {
     if (!session?.access_token || !slug) return;
     try {
       const rows = await fetchMessages(session.access_token, slug, lastMessageTs.current);
+      if (initial) setMsgsLoaded(true);
       if (rows.length) {
         lastMessageTs.current = rows[rows.length - 1].created_at;
         setMessages(current => {
@@ -942,7 +944,7 @@ function MessageThread({ session, slug, viewer, otherName, placeholder, intro }:
     } catch { /* same best-effort polling as the website’s messages tab */ }
   };
   useEffect(() => {
-    void loadMessagesNow();
+    void loadMessagesNow(true);
     const timer = setInterval(() => { void loadMessagesNow(); }, 4000);
     return () => clearInterval(timer);
   }, [slug, session?.access_token]);
@@ -1012,6 +1014,8 @@ function MessageThread({ session, slug, viewer, otherName, placeholder, intro }:
   return <>
     <ScrollView ref={scrollRef} contentContainerStyle={s.dashboardContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" onContentSizeChange={() => scrollToLatest()}>
       {intro}
+      {!msgsLoaded && <Text style={s.msgsEmpty}>Loading messages…</Text>}
+      {msgsLoaded && visible.length === 0 && <Text style={s.msgsEmpty}>No messages yet.{'\n'}Send one below!</Text>}
       {visible.map((m, i) => {
         const mine = m.sender === viewer;
         const showDay = i === 0 || dayLabel(m.created_at) !== dayLabel(visible[i - 1].created_at);
@@ -2480,6 +2484,7 @@ const s = StyleSheet.create({
   makeLiveBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 7, paddingHorizontal: 13, borderRadius: 20, backgroundColor: C.primary },
   makeLiveBtnLive: { backgroundColor: C.danger },
   makeLiveBtnText: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#fff' },
+  msgsEmpty: { fontFamily: FONT, fontSize: 13, color: C.inkMuted, textAlign: 'center', marginTop: 'auto', marginBottom: 'auto', paddingVertical: 40, lineHeight: 20 },
   messageDay: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, textAlign: 'center', marginTop: 14, marginBottom: 10 },
   messageMeta: { fontFamily: FONT, fontSize: 11, color: C.inkMuted, marginTop: 3, marginBottom: 12 },
   messageMetaSent: { alignSelf: 'flex-end', marginRight: 4 },
