@@ -934,7 +934,10 @@
   <section id="msgsPanel" class="tab-content messages-panel" hidden aria-labelledby="mobileMessagesTab">
     <div class="msgs-heading-wrap"><h2>Messages</h2></div>
     <div class="msgs-list" id="msgsList">
-      <div class="msgs-empty" id="msgsEmpty" aria-live="polite">Loading messages…</div>
+      <div class="msgs-welcome" id="msgsWelcome" hidden>
+        <div class="msgs-bubble them" id="msgsWelcomeBubble"></div>
+        <span class="msgs-sender">Tom · BrightSite</span>
+      </div>
       <div class="msgs-error" id="msgsError" hidden></div>
     </div>
 
@@ -1586,7 +1589,20 @@
     else renderPlanUI();
     populateBuilderFields(raw);
     renderWebsiteStatus();
+    renderWelcomeMessage();
     showMessagesTab();
+  }
+
+  function renderWelcomeMessage() {
+    var raw = (business && business.data && business.data.raw) || {};
+    var firstName = (raw.fullName || raw.name || '').trim().split(' ')[0] || 'there';
+    var isDesigner = raw.buildChoice === 'designer' || /Build choice: designer/i.test(raw.notes || '');
+    var body = isDesigner
+      ? 'Hey ' + firstName + ', welcome to BrightSite! My name is Tom and I’ll be your designer and support. I’m working on your preview now, so let me know if you have any requests or questions. When you’re ready, just hit Make Live to put your website online!'
+      : 'Hey ' + firstName + ', welcome to BrightSite! My name is Tom and I’ll be your support. Love your design! Let me know if you have any requests or questions. When you’re ready, just hit Make Live to put your website online!';
+    var wrap = document.getElementById('msgsWelcome');
+    var bubble = document.getElementById('msgsWelcomeBubble');
+    if (wrap && bubble) { bubble.textContent = body; wrap.hidden = false; }
   }
 
   function populateBuilderFields(raw) {
@@ -2214,17 +2230,16 @@
         var errEl = document.getElementById('msgsError');
         if (errEl) errEl.hidden = true;
         if (!Array.isArray(rows) || rows.length === 0) {
-          if (initial) {
-            msgsLoaded = true;
-            var emptyEl = document.getElementById('msgsEmpty');
-            if (emptyEl) { emptyEl.textContent = 'No messages yet. Send one below!'; emptyEl.style.display = ''; }
-          }
+          if (initial) msgsLoaded = true;
           return;
         }
         if (initial) {
           document.getElementById('msgsList').innerHTML = '';
         }
         var list = document.getElementById('msgsList');
+        rows = rows.filter(function(msg){
+          return !(msg.sender === 'admin' && msg.body && msg.body.startsWith('Hey ') && msg.body.indexOf('welcome to BrightSite') !== -1);
+        });
         rows.forEach(function(msg){
           if (msg.created_at > (msgsLastTs || '')) msgsLastTs = msg.created_at;
           var isMe = msg.sender === 'customer';
