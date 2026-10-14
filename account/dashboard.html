@@ -587,6 +587,25 @@
     flex:none;
   }
   @keyframes spin{to{transform:rotate(360deg)}}
+  /* app-style website header — mobile only */
+  .website-app-header{display:none;}
+  @media(max-width:799px){
+    .website-app-header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0 8px;border-bottom:1px solid var(--line);margin-bottom:10px;}
+    .wah-make-live{border:0;border-radius:8px;padding:7px 13px;font:700 12px/1 'Nunito Sans',sans-serif;cursor:pointer;white-space:nowrap;}
+    .wah-make-live.live{background:rgba(28,40,50,.08);color:var(--muted);}
+    .wah-make-live.pending{background:var(--accent);color:#fff;opacity:.7;}
+    .wah-make-live.go{background:var(--accent);color:#fff;}
+    .wah-edit{display:flex;align-items:center;gap:5px;border:0;border-radius:8px;padding:7px 13px;font:700 12px/1 'Nunito Sans',sans-serif;background:rgba(28,40,50,.06);color:var(--ink);cursor:pointer;}
+    .wah-toggle{margin:0;}
+    /* hide the old editor header + section list by default in mobile */
+    #websiteEditorHeader{display:none;}
+    #builderList{display:none;}
+    /* show them when editing */
+    .website-panel.editing #websiteAppHeader{display:none;}
+    .website-panel.editing #websiteEditorHeader{display:block;}
+    .website-panel.editing #builderList{display:grid;}
+    .website-panel.editing .mobile-preview-wrap{display:none;}
+  }
   /* mobile card: shown inline below cards, hidden on desktop */
   .mobile-preview-wrap{margin-top:8px;}
   @media(min-width:800px){.mobile-preview-wrap{display:none;}}
@@ -758,7 +777,20 @@
   <section id="websitePanel" class="tab-content website-panel" aria-labelledby="mobileWebsiteTab">
     <div class="panel-inner">
 
-      <div class="website-editor-header">
+      <!-- mobile-only app-style header (hidden on desktop) -->
+      <div class="website-app-header" id="websiteAppHeader">
+        <button type="button" class="wah-make-live" id="wahMakeLive" hidden></button>
+        <div class="mobile-pvw-toggle wah-toggle">
+          <button type="button" class="mobile-pvw-btn active" id="wahDesktop">Desktop</button>
+          <button type="button" class="mobile-pvw-btn" id="wahMobile">Mobile</button>
+        </div>
+        <button type="button" class="wah-edit" id="wahEdit">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5Z"/></svg>
+          Edit
+        </button>
+      </div>
+
+      <div class="website-editor-header" id="websiteEditorHeader">
         <h2 id="builderHeading">Edit your website</h2>
         <button type="button" class="builder-done" id="editorDone" data-back hidden>Done</button>
       </div>
@@ -1359,7 +1391,81 @@
   function showWebsiteTab() {
     setActiveTab('mobileWebsiteTab');
     hideMessagesPanel();
+    updateWebsiteAppHeader();
   }
+
+  function updateWebsiteAppHeader() {
+    var btn = document.getElementById('wahMakeLive');
+    if (!btn) return;
+    var data = (business && business.data) || {};
+    var previewUrl = getPreviewUrl();
+    var isBuilding = !(previewUrl || data.demoUrl);
+    if (isBuilding) {
+      btn.hidden = true;
+    } else if (isLive) {
+      btn.hidden = false;
+      btn.textContent = 'Take Offline';
+      btn.className = 'wah-make-live live';
+      btn.onclick = function() {
+        if (!confirm('Take your website offline?')) return;
+        var d = (business.data) || {};
+        business.data = Object.assign({}, d, { manuallyOffline: true, published: false });
+        isLive = false;
+        saveBusiness().then(function() { updateWebsiteAppHeader(); renderWebsiteStatus(); }).catch(function() {});
+      };
+    } else {
+      btn.hidden = false;
+      btn.textContent = isPaying ? 'Make Live' : 'Make Live';
+      btn.className = 'wah-make-live go';
+      btn.onclick = function() {
+        if (!isPaying) { document.getElementById('planModalVeil').hidden = false; return; }
+        btn.textContent = 'Publishing…';
+        btn.className = 'wah-make-live pending';
+        btn.disabled = true;
+        saveBusiness({ publish: true }).then(function() {
+          isLive = true;
+          updateWebsiteAppHeader();
+          renderWebsiteStatus();
+        }).catch(function() {
+          btn.disabled = false;
+          updateWebsiteAppHeader();
+        });
+      };
+    }
+  }
+
+  // mobile website tab edit toggle
+  (function() {
+    var wahEdit = document.getElementById('wahEdit');
+    var panel = document.getElementById('websitePanel');
+    if (!wahEdit || !panel) return;
+    wahEdit.addEventListener('click', function() {
+      panel.classList.add('editing');
+    });
+    // data-back buttons inside the editor should also exit editing
+    panel.addEventListener('click', function(e) {
+      if (e.target.closest('[data-back]')) {
+        panel.classList.remove('editing');
+      }
+    });
+  })();
+
+  // wah device toggle
+  document.getElementById('wahDesktop').addEventListener('click', function() {
+    var wrap = document.getElementById('mobilePreviewWrap');
+    if (wrap) wrap.classList.remove('mobile-view');
+    this.classList.add('active');
+    document.getElementById('wahMobile').classList.remove('active');
+    // sync existing toggle buttons
+    document.getElementById('mobilePvwDesktop') && document.getElementById('mobilePvwDesktop').click();
+  });
+  document.getElementById('wahMobile').addEventListener('click', function() {
+    var wrap = document.getElementById('mobilePreviewWrap');
+    if (wrap) wrap.classList.add('mobile-view');
+    this.classList.add('active');
+    document.getElementById('wahDesktop').classList.remove('active');
+    document.getElementById('mobilePvwMobile') && document.getElementById('mobilePvwMobile').click();
+  });
 
   function showMessagesTab() {
     setActiveTab('mobileMessagesTab');
@@ -1589,6 +1695,7 @@
     else renderPlanUI();
     populateBuilderFields(raw);
     renderWebsiteStatus();
+    updateWebsiteAppHeader();
     renderWelcomeMessage();
     showMessagesTab();
   }
