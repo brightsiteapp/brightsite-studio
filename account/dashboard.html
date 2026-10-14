@@ -429,10 +429,12 @@
   .builder-guidance{margin:14px 0 0;padding:12px 14px;border:1px solid #f0d5d5;border-radius:12px;background:#fff8f8;color:#8d4444;font-size:12.5px;line-height:1.45}
   .builder-section{animation:sectionIn .16s ease}
   @keyframes sectionIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-  .section-head{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+  .section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:16px}
   .section-back{background:none;border:0;color:var(--accent);font:inherit;font-size:13px;font-weight:700;cursor:pointer;padding:4px 0}
   .builder-done{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:0 16px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:700 12px/1 'Nunito Sans',sans-serif;cursor:pointer}
-  .builder-section .section-head,.builder-section .builder-done{display:none}
+  .builder-section .section-head{display:flex}
+  .builder-section .builder-done{display:none}
+  .builder-section .section-head .builder-done{display:inline-flex}
   .builder-section h3{font-family:var(--display);font-size:15px;font-weight:700;margin-bottom:14px}
   .svc-group{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;background:#faf7f2}
   .svc-group-head{display:flex;align-items:center;gap:6px;margin-bottom:8px}
@@ -792,7 +794,7 @@
 
       <div class="website-editor-header" id="websiteEditorHeader">
         <h2 id="builderHeading">Edit your website</h2>
-        <button type="button" class="builder-done" id="editorDone" data-back hidden>Done</button>
+        <button type="button" class="builder-done" id="editorDone" data-back>Done</button>
       </div>
 
       <!-- section list -->
@@ -858,7 +860,7 @@
 
       <!-- section detail panels (only one shown at a time) -->
       <div class="builder-section" data-section-panel="name" hidden>
-        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button></div>
+        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
         <h3>Business Info</h3>
         <div class="acct-field"><label for="fName">Business name</label><input type="text" id="fName"></div>
         <div class="acct-field"><label for="fCategory">Business type</label><select id="fCategory" style="width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--ink);font:inherit;font-size:14px;outline:none"><option value="" disabled>Select a type</option><option>Hair &amp; Beauty</option><option>Aesthetics</option><option>Health &amp; Wellness</option><option>Fitness</option><option>Automotive</option><option>Trades</option><option>Home &amp; Garden</option><option>Food &amp; Drink</option><option>Professional Services</option><option>Creative</option><option>Pets</option><option>Other</option></select></div>
@@ -872,53 +874,47 @@
             </label>
           </div>
         </div>
-        <button type="button" class="builder-done" data-back style="margin-top:16px">Done</button>
       </div>
 
       <div class="builder-section" data-section-panel="contact" hidden>
-        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button></div>
+        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
         <h3>Contact info</h3>
         <div class="acct-field"><label for="fEmail2">Email</label><input type="email" id="fEmail2" placeholder="you@example.com"></div>
         <div class="acct-field"><label for="fPhone">Phone number <span style="font-size:11px;font-weight:600;color:var(--muted)">(optional)</span></label><input type="text" id="fPhone" placeholder="e.g. 020 7946 0958"></div>
         <div class="acct-field"><label for="fWebsite">Existing website <span style="font-size:11px;font-weight:600;color:var(--muted)">(optional)</span></label><input type="url" id="fWebsite" placeholder="e.g. https://yoursite.com"></div>
         <div class="acct-field"><label for="fInstagram">Instagram <span style="font-size:11px;font-weight:600;color:var(--muted)">(optional)</span></label><input type="text" id="fInstagram" placeholder="e.g. @yourbusiness"></div>
         <div class="acct-field"><label for="fFacebook">Facebook <span style="font-size:11px;font-weight:600;color:var(--muted)">(optional)</span></label><input type="text" id="fFacebook" placeholder="e.g. facebook.com/yourbusiness"></div>
-        <button type="button" class="builder-done" data-back style="margin-top:16px">Done</button>
       </div>
 
       <div class="builder-section" data-section-panel="hours" hidden>
-        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button></div>
+        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
         <h3>Opening hours</h3>
         <div id="hoursRows"></div>
-        <button type="button" class="builder-done" data-back style="margin-top:16px">Done</button>
       </div>
 
       <div class="builder-section" data-section-panel="address" hidden>
-        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button></div>
+        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
         <h3>Location / address</h3>
         <div class="acct-field"><label for="fAddress">Address</label><input type="text" id="fAddress" placeholder="e.g. 12 High Street, London"></div>
-        <button type="button" class="builder-done" data-back style="margin-top:16px">Done</button>
       </div>
 
       <div class="builder-section" data-section-panel="prices" hidden>
-        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button></div>
+        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
         <h3>Services &amp; details</h3>
         <div id="svcGroups"></div>
         <button type="button" class="dash-add" id="svcGroupAdd">+ Add section</button>
-        <button type="button" class="builder-done" data-back style="margin-top:14px">Done</button>
       </div>
 
       <div class="builder-section" data-section-panel="reviews" hidden>
-        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button></div>
+        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
         <h3>Reviews</h3>
         <p class="info-hint" style="margin-bottom:14px">Add a few customer quotes yourself, or link us to your Google or Trustpilot reviews.</p>
         <div class="acct-field"><label>Customer review quotes</label><div id="reviewEntries"></div><button type="button" class="dash-add" id="reviewAdd">+ Add review</button></div>
         <div class="acct-field"><label for="fReviewLink">Google or Trustpilot review link</label><input type="url" id="fReviewLink" placeholder="https://www.google.com/..."></div>
-        <button type="button" class="builder-done" data-back style="margin-top:16px">Done</button>
       </div>
 
       <div class="builder-section" data-section-panel="media" hidden>
-        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button></div>
+        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
         <h3>Media</h3>
         <p class="media-intro">Add the images that make your website feel like your business.</p>
         <div class="media-upload-grid">
@@ -946,18 +942,16 @@
           <div class="gallery-grid" id="galleryGrid"></div>
           <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="galleryInput" hidden multiple>
         </div>
-        <button type="button" class="builder-done" data-back style="margin-top:14px">Done</button>
       </div>
 
       <div class="builder-section" data-section-panel="notes" hidden>
-        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button></div>
+        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
         <h3>Notes</h3>
         <p class="info-hint">Tell us anything useful about your business or what you’d like us to focus on.</p>
         <div class="acct-field" style="margin-top:10px">
           <label for="developerNote">Your note</label>
           <textarea id="developerNote" placeholder="e.g. We’d love to highlight our new treatment menu..." style="min-height:120px;resize:vertical"></textarea>
         </div>
-        <button type="button" class="builder-done" data-back style="margin-top:16px">Done</button>
       </div>
 
     </div>
@@ -2601,7 +2595,7 @@
     activeSection = id;
     document.getElementById('builderList').hidden = !!id;
     var editorDone = document.getElementById('editorDone');
-    if (editorDone) editorDone.hidden = !id;
+    if (editorDone) editorDone.hidden = false;
     var mpc = document.getElementById('mobilePreviewWrap');
     if (mpc) mpc.hidden = !!id;
     document.querySelectorAll('.builder-section').forEach(function(el) {
