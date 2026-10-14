@@ -2196,6 +2196,11 @@
         var errEl = document.getElementById('msgsError');
         if (errEl) errEl.hidden = true;
         if (!Array.isArray(rows) || rows.length === 0) {
+          if (initial) {
+            msgsLoaded = true;
+            var emptyEl = document.getElementById('msgsEmpty');
+            if (emptyEl) { emptyEl.textContent = 'No messages yet. Send one below!'; emptyEl.style.display = ''; }
+          }
           return;
         }
         if (initial) {
