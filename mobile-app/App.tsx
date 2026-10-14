@@ -1008,7 +1008,7 @@ function MessageThread({ session, slug, viewer, otherName, placeholder, intro }:
     finally { setSendingMessage(false); }
   };
 
-  const visible = messages.filter(m => !(m.sender === 'admin' && m.body.startsWith('Welcome to BrightSite')));
+  const visible = messages;
   return <>
     <ScrollView ref={scrollRef} contentContainerStyle={s.dashboardContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" onContentSizeChange={() => scrollToLatest()}>
       {intro}
@@ -1169,10 +1169,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
       </View>
       <View style={s.dashboardTabsTop}>{['Website', 'Messages', 'Account'].map(name => <Pressable key={name} onPress={() => setTab(name)} style={[s.dashboardTab, tab === name && s.dashboardTabOn]}><Text style={[s.dashboardTabText, tab === name && s.dashboardTabTextOn]}>{name}</Text></Pressable>)}</View>
       {!!saveError && <View style={s.saveBanner}><Ionicons name="alert-circle" size={16} color={C.danger} /><Text style={s.saveBannerText}>{saveError}</Text></View>}
-      {tab === 'Messages' ? <MessageThread session={session} slug={slug} viewer="customer" otherName="Tom" placeholder="Message Tom…" intro={<>
-          <View style={[s.messageBubble, s.messageBubbleReceived]}><Text style={s.messageText}>{welcomeText(data.fullName, buildChoice)}</Text></View>
-          <Text style={[s.messageMeta, s.messageMetaReceived]}>Tom · BrightSite</Text>
-        </>} /> :
+      {tab === 'Messages' ? <MessageThread session={session} slug={slug} viewer="customer" otherName="Tom" placeholder="Message Tom…" /> :
       <ScrollView contentContainerStyle={s.dashboardContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
         {tab === 'Account' && <>
           <View style={s.dashboardInfoCard}>
@@ -1795,7 +1792,17 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         setMedia({ logo: raw.logoImage, hero: raw.heroImage, gallery: raw.gallery });
         const failedUploads = [media.logo && !logoImage, media.hero && !heroImage, ...media.gallery.map((u, i) => u && !galleryImages[i])].filter(Boolean).length;
         if (failedUploads) setSaveError(`${failedUploads} photo${failedUploads > 1 ? 's' : ''} couldn’t upload. You can add them again from Edit.`);
-        if (!editingInfo) await notifyStage('new_signup', data.businessName || 'Unnamed business', data.contactEmail || data.email, chosenSlug);
+        if (!editingInfo) {
+          await notifyStage('new_signup', data.businessName || 'Unnamed business', data.contactEmail || data.email, chosenSlug);
+          // Register push token and send welcome message via server
+          const pushToken = await registerPushToken();
+          if (pushToken) savePushToken(session.access_token, chosenSlug, pushToken).catch(() => {});
+          fetch('https://brightsite.app/api/send-welcome', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+            body: JSON.stringify({ slug: chosenSlug, fullName: data.fullName, buildChoice: choice, pushToken: pushToken || undefined }),
+          }).catch(() => {});
+        }
         AsyncStorage.removeItem(DRAFT_KEY).catch(() => {});
         return;
       } catch (err: any) {
