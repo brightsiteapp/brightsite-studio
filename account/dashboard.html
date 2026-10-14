@@ -2311,7 +2311,7 @@
   }
 
   function msgsPost(body, sender) {
-    if (!body || msgsSending || !business) return Promise.resolve(false);
+    if (!body || msgsSending || !business) { console.warn('[msgs] post blocked', {body:!!body, sending:msgsSending, business:!!business}); return Promise.resolve(false); }
     msgsSending = true;
     var sendBtn = document.getElementById('msgsSend');
     if (sendBtn) sendBtn.disabled = true;
@@ -2322,13 +2322,15 @@
     }).then(function(res) {
       msgsSending = false;
       if (sendBtn) sendBtn.disabled = false;
-      if (!res.ok) throw new Error('Message could not be sent.');
+      if (!res.ok) return res.text().then(function(t){ throw new Error('HTTP ' + res.status + ': ' + t); });
       msgsLoad(false);
       return true;
     }).catch(function(e) {
-      console.warn('[msgs] send error', e);
+      console.error('[msgs] send error', e);
       msgsSending = false;
       if (sendBtn) sendBtn.disabled = false;
+      var errEl = document.getElementById('msgsError');
+      if (errEl) { errEl.textContent = 'Message not sent: ' + e.message; errEl.hidden = false; setTimeout(function(){ errEl.hidden = true; }, 5000); }
       return false;
     });
   }
