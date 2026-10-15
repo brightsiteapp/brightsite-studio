@@ -228,8 +228,9 @@ const steps: Step[] = [
   { id: 'prices', title: 'Services & prices', icon: 'pricetag-outline' },
   { id: 'media', title: 'Photos & logo', icon: 'images-outline' },
   { id: 'reviews', title: 'Reviews', icon: 'star-outline' },
+  { id: 'extras', title: 'Offers & extras', icon: 'gift-outline' },
 ];
-const setupStepIndexes = Array.from({ length: 6 }, (_, i) => i + 1);
+const setupStepIndexes = Array.from({ length: 7 }, (_, i) => i + 1);
 const paletteGroups = [
   { name: 'Light', options: [['#B98B5F', '#F5EFE5', '#201B18'], ['#C78561', '#FFF5EC', '#2D1811'], ['#8E9B7A', '#F2F5EC', '#20321D'], ['#A47A57', '#F6F0E8', '#271C15'], ['#7697A6', '#EDF6F7', '#162D35'], ['#C59C7B', '#FCF8F2', '#302015']] },
   { name: 'Dark', options: [['#D6A56B', '#15110E', '#F3EADF'], ['#78BDCF', '#0C2028', '#E7F8FC'], ['#B2C798', '#142016', '#F2F6ED'], ['#CE8471', '#261412', '#FAEDEA'], ['#A19BDB', '#171529', '#F2F1FF'], ['#D7B179', '#211A11', '#FBF1DF']] },
@@ -1468,6 +1469,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [hours, setHours] = useState(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((label, i) => ({ label, start: '9:00', end: i === 3 ? '19:00' : '17:30', enabled: i < 6 })));
   const [services, setServices] = useState([{ cid: newCid(), section: '', name: '', duration: '', price: '' }]);
   const [reviewsList, setReviewsList] = useState<{ title: string; description: string; name: string }[]>([]);
+  const [offers, setOffers] = useState<{ name: string; value: string }[]>([{ name: '', value: '' }]);
   const motion = useRef(new Animated.Value(0)).current;
   const loadingProgress = useRef(new Animated.Value(0)).current;
   const loadingFades = useRef([0, 1, 2, 3].map(() => new Animated.Value(0))).current;
@@ -1505,6 +1507,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       if (rows.length) setServices(rows);
     }
     if (Array.isArray(raw.reviewItems)) setReviewsList(raw.reviewItems);
+    if (Array.isArray(raw.offers) && raw.offers.length) setOffers(raw.offers);
     setMedia({ logo: raw.logoImage, hero: raw.heroImage, gallery: Array.isArray(raw.gallery) ? raw.gallery : [] });
     const chosen = record.customDomain || record.domain || raw.chosenDomain || '';
     const dot = chosen.indexOf('.');
@@ -1857,6 +1860,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       reviewLink: data.trustpilotLink.trim() || data.googleLink.trim(),
       reviewSource: data.trustpilotLink.trim() ? 'Trustpilot' : data.googleLink.trim() ? 'Google' : null,
       reviewItems,
+      offers: offers.filter(o => o.name.trim()),
       reviewQuotes: reviewItems.map(r => [r.title, r.description, r.name].filter(Boolean).join(' — ')),
       hours: hoursStructured.map(d => `${d.day}: ${d.open ? `${d.from || '?'}–${d.to || '?'}` : 'Closed'}`),
       hoursStructured,
@@ -1921,7 +1925,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       setAutoSaved(true);
     }, 1200);
     return () => clearTimeout(t);
-  }, [editingInfo, data, hours, services, reviewsList, contactForm]);
+  }, [editingInfo, data, hours, services, reviewsList, offers, contactForm]);
 
   // runs after setData has committed so the sync sees the pasted links
   useEffect(() => {
@@ -2131,6 +2135,16 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         <View style={{ marginTop: 14, gap: 10 }}>
           <TextInput value={data.googleLink} onChangeText={v => setData(d => { const n = { ...d, googleLink: v }; const tp = n.trustpilotLink.trim(), g = n.googleLink.trim(); return { ...n, reviewLink: tp || g, reviewSource: tp ? 'Trustpilot' : g ? 'Google' : null }; })} placeholder="Google reviews link" placeholderTextColor={C.placeholder} keyboardType="url" autoCapitalize="none" autoCorrect={false} style={s.input} />
           <TextInput value={data.trustpilotLink} onChangeText={v => setData(d => { const n = { ...d, trustpilotLink: v }; const tp = n.trustpilotLink.trim(), g = n.googleLink.trim(); return { ...n, reviewLink: tp || g, reviewSource: tp ? 'Trustpilot' : g ? 'Google' : null }; })} placeholder="Trustpilot link" placeholderTextColor={C.placeholder} keyboardType="url" autoCapitalize="none" autoCorrect={false} style={s.input} />
+        </View>
+        </>;
+      case 'extras': return <><Intro>Add any offers, rewards or gift cards you want on your website. Leave it blank to skip.</Intro>
+        <View style={s.offerCard}>
+          {offers.map((o, i) => <View key={i} style={s.serviceRow}>
+            <TextInput value={o.name} onChangeText={v => setOffers(offers.map((x, n) => n === i ? { ...x, name: v } : x))} placeholder="e.g. Loyalty card" placeholderTextColor={C.placeholder} autoCapitalize="sentences" style={[s.serviceInput, { flex: 1.9 }]} />
+            <TextInput value={o.value} onChangeText={v => setOffers(offers.map((x, n) => n === i ? { ...x, value: v } : x))} placeholder="10% off / £25" placeholderTextColor={C.placeholder} style={[s.serviceInput, { flex: 1.3 }]} />
+            <Pressable onPress={() => setOffers(offers.length > 1 ? offers.filter((_, n) => n !== i) : [{ name: '', value: '' }])} style={s.serviceDelete} hitSlop={8} accessibilityLabel="Remove offer"><Ionicons name="close" size={16} color={C.inkMuted} /></Pressable>
+          </View>)}
+          <Pressable onPress={() => setOffers([...offers, { name: '', value: '' }])} style={s.addService}><Ionicons name="add" size={16} color={C.primary} /><Text style={s.addServiceText}>Add offer</Text></Pressable>
         </View>
         <Pressable onPress={() => setContactForm(!contactForm)} style={s.formChoice}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color={C.primary} /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: 'rgba(28,40,50,.18)', true: C.primary }} thumbColor="#fff" {...({ activeThumbColor: '#fff' } as any)} /></Pressable>
         {!editingInfo && <Pressable onPress={() => { void syncOnboardingToBackend('designer'); setBuildChoice('designer'); setAppScreen('loading'); }} style={({ pressed }) => [s.primaryBtn, s.sendGlow, { marginTop: 24 }, pressed && s.pressed]}>
@@ -2452,7 +2466,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             </ScrollView>
             <View pointerEvents="none" style={s.fixedPrompt}>
               {!!validationMessage && isActive && <Text style={s.validationText}>{validationMessage}</Text>}
-              {deckStep.id !== 'reviews' && !editingInfo && <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : ['hours', 'business', 'contact'].includes(deckStep.id) ? 'Swipe up to save' : 'Swipe the title up to continue'}</Text></View>}
+              {deckStep.id !== 'extras' && !editingInfo && <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : ['hours', 'business', 'contact'].includes(deckStep.id) ? 'Swipe up to save' : 'Swipe the title up to continue'}</Text></View>}
             </View>
           </Animated.View>;
         })}
@@ -2747,6 +2761,7 @@ const s = StyleSheet.create({
   sendI: { alignItems: 'center', gap: 2 },
   sendIDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#fff' },
   sendIStem: { width: 6, height: 13, borderRadius: 3, backgroundColor: '#fff' },
+  offerCard: { backgroundColor: '#fff', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: C.line },
   savedNote: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, marginRight: 4 },
   selectText: { fontFamily: FONT, fontSize: 16, color: C.ink },
   typeRow: { minHeight: 50, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderRadius: 12 },
