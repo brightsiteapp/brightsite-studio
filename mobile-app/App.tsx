@@ -1380,7 +1380,9 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [homeSections, setHomeSections] = useState([...HOME_SECTIONS_DEFAULT]);
   const [servicesSections, setServicesSections] = useState([...SERVICES_SECTIONS_DEFAULT]);
   const [contactSections, setContactSections] = useState([...CONTACT_SECTIONS_DEFAULT]);
-  const [appScreen, setAppScreen] = useState<'onboarding' | 'loading' | 'design-editor' | 'dashboard' | 'admin'>('onboarding');
+  const [appScreen, setAppScreen] = useState<'onboarding' | 'choose' | 'loading' | 'design-editor' | 'dashboard' | 'admin'>('onboarding');
+  const [chooseMode, setChooseMode] = useState<'pick' | 'auto'>('pick');
+  const [autoPending, setAutoPending] = useState(false);
   const [adminBusinesses, setAdminBusinesses] = useState<any[]>([]);
   const [adminFilter, setAdminFilter] = useState<'all' | 'new' | 'build' | 'pending' | 'live'>('all');
   const [adminSearch, setAdminSearch] = useState('');
@@ -1576,6 +1578,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     } catch {}
     setIndex(1);
     motion.setValue(CARD_TRAVEL);
+    setChooseMode('pick');
+    setAppScreen('choose');
   };
 
   useEffect(() => {
@@ -1849,6 +1853,14 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     return () => clearTimeout(t);
   }, [editingInfo, data, hours, services, reviewsList, contactForm]);
 
+  // runs after setData has committed so the sync sees the pasted links
+  useEffect(() => {
+    if (!autoPending) return;
+    setAutoPending(false);
+    void syncOnboardingToBackend('designer');
+    setAppScreen('loading');
+  }, [autoPending]);
+
   useEffect(() => {
     if (steps[index]?.id === 'contact' && !data.contactEmail && data.email) setData(d => ({ ...d, contactEmail: d.email }));
   }, [index]);
@@ -1982,10 +1994,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       case 'contact': return <><Intro>Add whichever ways customers should contact you. Leave anything blank to skip it.</Intro>
         <Field label="Email" value={data.contactEmail} onChangeText={(v: string) => setData({ ...data, contactEmail: v })} placeholder="you@business.co.uk" keyboardType="email-address" textContentType="emailAddress" autoComplete="email" autoCapitalize="none" autoCorrect={false} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.phone?.focus()} />
         <Field label="Phone" optional inputRef={(r: any) => { fieldRefs.current.phone = r; }} value={data.phone} onChangeText={(v: string) => setData({ ...data, phone: v })} placeholder="e.g. 07700 900123" keyboardType="phone-pad" textContentType="telephoneNumber" autoComplete="tel" />
-        <Field label="Address" optional inputRef={(r: any) => { fieldRefs.current.address = r; }} value={data.address} onChangeText={(v: string) => setData({ ...data, address: v })} placeholder="e.g. 12 High Street, London" textContentType="fullStreetAddress" autoComplete="street-address" autoCapitalize="words" returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.website?.focus()} />
-        <Field label="Existing website" optional inputRef={(r: any) => { fieldRefs.current.website = r; }} value={data.website} onChangeText={(v: string) => setData({ ...data, website: v })} placeholder="yoursite.com" keyboardType="url" textContentType="URL" autoCapitalize="none" autoCorrect={false} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.instagram?.focus()} />
-        <Field label="Instagram" optional inputRef={(r: any) => { fieldRefs.current.instagram = r; }} value={data.instagram} onChangeText={(v: string) => setData({ ...data, instagram: v })} placeholder="@yourbusiness" autoCapitalize="none" autoCorrect={false} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.facebook?.focus()} />
-        <Field label="Facebook" optional inputRef={(r: any) => { fieldRefs.current.facebook = r; }} value={data.facebook} onChangeText={(v: string) => setData({ ...data, facebook: v })} placeholder="facebook.com/yourbusiness" autoCapitalize="none" autoCorrect={false} returnKeyType="done" /></>;
+        <Field label="Address" optional inputRef={(r: any) => { fieldRefs.current.address = r; }} value={data.address} onChangeText={(v: string) => setData({ ...data, address: v })} placeholder="e.g. 12 High Street, London" textContentType="fullStreetAddress" autoComplete="street-address" autoCapitalize="words" returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.instagram?.focus()} />
+        <Field label="Instagram" optional inputRef={(r: any) => { fieldRefs.current.instagram = r; }} value={data.instagram} onChangeText={(v: string) => setData({ ...data, instagram: v })} placeholder="@yourbusiness" autoCapitalize="none" autoCorrect={false} returnKeyType="done" /></>;
       case 'hours': return <><View style={s.hoursIntro}><Intro>Switch off days you’re closed. Times can be changed later.</Intro></View><Hours rows={hours} setRows={setHours} /></>;
       case 'prices': return <><Intro>Add a category (e.g. Massages), then the services in it with their prices.</Intro><Services items={services} setItems={setServices} /></>;
       case 'media': return <><Intro>Add the images you want to use. Everything here is optional and can be changed later.</Intro>
@@ -2039,9 +2049,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           <Ionicons name="add" size={16} color={DARK} /><Text style={s.addReviewText}>Add review</Text>
         </Pressable>
         <View style={s.reviewSourceCard}>
-          <Text style={s.reviewSourceTitle}>Review profile links</Text>
-          <Text style={s.reviewSourceSub}>Paste your review page link so visitors can see your rating.</Text>
-          <Field label="Google Business link" value={data.reviewSource === 'Google' ? data.reviewLink : ''} onChangeText={(v: string) => setData({ ...data, reviewLink: v, reviewSource: v.trim() ? 'Google' : (data.reviewSource === 'Google' ? null : data.reviewSource) })} placeholder="https://g.page/your-business" />
+          <Text style={s.reviewSourceTitle}>Trustpilot</Text>
+          <Text style={s.reviewSourceSub}>Paste your Trustpilot page so visitors can see your rating.</Text>
           <Field label="Trustpilot link" value={data.reviewSource === 'Trustpilot' ? data.reviewLink : ''} onChangeText={(v: string) => setData({ ...data, reviewLink: v, reviewSource: v.trim() ? 'Trustpilot' : (data.reviewSource === 'Trustpilot' ? null : data.reviewSource) })} placeholder="https://uk.trustpilot.com/review/..." />
         </View>
         <Pressable onPress={() => setContactForm(!contactForm)} style={s.formChoice}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color={C.primary} /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: 'rgba(28,40,50,.18)', true: C.primary }} thumbColor="#fff" {...({ activeThumbColor: '#fff' } as any)} /></Pressable></>;
@@ -2273,6 +2282,44 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     setIndex(steps.findIndex(item => item.id === 'domain'));
     motion.setValue(steps.findIndex(item => item.id === 'domain') * CARD_TRAVEL);
   }} media={media} onConfirm={() => { if (websiteStatus !== 'live') setWebsiteStatus('ready'); void saveDesign(); setTab('Website'); setAppScreen('dashboard'); }} /></FadeIn>;
+
+  if (appScreen === 'choose') {
+    const hasLink = !!(data.reviewSource === 'Google' && data.reviewLink.trim()) || !!data.facebook.trim() || !!data.website.trim();
+    return <FlowBackdrop>
+      <StatusBar style="dark" />
+      <View style={s.loginStage}>
+        <View style={[s.card, s.loginCard]}>
+          <View style={s.loginHeader}><Logo height={20} /><Image source={require('./assets/brightsite-icon.png')} style={s.loginAppIcon} /></View>
+          <ScrollView contentContainerStyle={[s.content, s.loginContent]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
+            {chooseMode === 'pick' ? <>
+              <Text style={s.heroTitle}>How do you want to build your site?</Text>
+              <Intro>Pick one. You can change any details later.</Intro>
+              <Pressable onPress={() => setChooseMode('auto')} style={({ pressed }) => [s.formChoice, pressed && s.pressed]}>
+                <View style={s.formChoiceIcon}><Ionicons name="flash-outline" size={22} color={C.primary} /></View>
+                <View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Automatic</Text><Text style={s.formChoiceText}>Paste your existing links and we’ll build it for you.</Text></View>
+                <Ionicons name="chevron-forward" size={18} color={C.inkMuted} />
+              </Pressable>
+              <Pressable onPress={() => { setIndex(1); motion.setValue(CARD_TRAVEL); setAppScreen('onboarding'); }} style={({ pressed }) => [s.formChoice, { marginTop: 12 }, pressed && s.pressed]}>
+                <View style={s.formChoiceIcon}><Ionicons name="create-outline" size={22} color={C.primary} /></View>
+                <View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Manual</Text><Text style={s.formChoiceText}>Fill in your details step by step.</Text></View>
+                <Ionicons name="chevron-forward" size={18} color={C.inkMuted} />
+              </Pressable>
+            </> : <>
+              <Pressable onPress={() => setChooseMode('pick')} hitSlop={10} style={s.chooseBack}><Ionicons name="chevron-back" size={16} color={C.primary} /><Text style={s.chooseBackText}>Back</Text></Pressable>
+              <Text style={s.heroTitle}>Paste your links</Text>
+              <Intro>Add one or all three. We’ll pull your details, photos and reviews from them.</Intro>
+              <Field label="Google Business link" optional value={data.reviewSource === 'Google' ? data.reviewLink : ''} onChangeText={(v: string) => setData({ ...data, reviewLink: v, reviewSource: v.trim() ? 'Google' : null })} placeholder="https://g.page/your-business" keyboardType="url" autoCapitalize="none" autoCorrect={false} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.autoFacebook?.focus()} />
+              <Field label="Facebook link" optional inputRef={(r: any) => { fieldRefs.current.autoFacebook = r; }} value={data.facebook} onChangeText={(v: string) => setData({ ...data, facebook: v })} placeholder="facebook.com/yourbusiness" keyboardType="url" autoCapitalize="none" autoCorrect={false} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.autoWebsite?.focus()} />
+              <Field label="Existing website" optional inputRef={(r: any) => { fieldRefs.current.autoWebsite = r; }} value={data.website} onChangeText={(v: string) => setData({ ...data, website: v })} placeholder="yoursite.com" keyboardType="url" textContentType="URL" autoCapitalize="none" autoCorrect={false} returnKeyType="done" />
+              <Pressable disabled={!hasLink} onPress={() => { Keyboard.dismiss(); setBuildChoice('designer'); setAutoPending(true); }} style={[s.primaryBtn, { marginTop: 8 }, !hasLink && { opacity: .45 }]}>
+                <Ionicons name="sparkles-outline" size={18} color="#fff" /><Text style={s.primaryBtnText}>Build my website</Text>
+              </Pressable>
+            </>}
+          </ScrollView>
+        </View>
+      </View>
+    </FlowBackdrop>;
+  }
 
   if (appScreen === 'loading') {
     const messages = buildChoice === 'template' ? LOADING_MESSAGES.template : LOADING_MESSAGES.designer;
@@ -2586,6 +2633,8 @@ const s = StyleSheet.create({
   chipOn: { backgroundColor: C.primary, borderColor: C.primary },
   chipText: { fontFamily: FONT, fontSize: 14, fontWeight: '600', color: C.ink },
   chipTextOn: { color: '#fff' },
+  chooseBack: { flexDirection: 'row', alignItems: 'center', gap: 2, alignSelf: 'flex-start', marginBottom: 14 },
+  chooseBackText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.primary },
   savedNote: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, marginRight: 4 },
   selectText: { fontFamily: FONT, fontSize: 16, color: C.ink },
   typeRow: { minHeight: 50, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderRadius: 12 },
