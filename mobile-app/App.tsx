@@ -1148,6 +1148,15 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
   const isReadyRef = useRef(isReady || isPublishing);
   useEffect(() => { isReadyRef.current = isReady || isPublishing; }, [isReady, isPublishing]);
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const buildPulse = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(Animated.sequence([
+      Animated.timing(buildPulse, { toValue: 1, duration: 1400, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      Animated.timing(buildPulse, { toValue: 0, duration: 1400, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+    ]));
+    loop.start();
+    return () => loop.stop();
+  }, []);
   useEffect(() => {
     if (!isPublishing) { pulseAnim.setValue(1); return; }
     const loop = Animated.loop(Animated.sequence([
@@ -1239,7 +1248,13 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
             </View>
           </View>
           {isBuilding
-            ? <View style={s.buildingCard}><ActivityIndicator size="large" color={C.primary} style={{ marginBottom: 14 }} /><Text style={s.buildingText}>Building your preview</Text><Text style={s.buildingSub}>You’ll get a message here as soon as it’s ready to review.</Text></View>
+            ? <View style={s.buildingWrap}>
+              <View style={[s.phoneFrame, s.buildingPhone]}>
+                <Animated.Image source={require('./assets/brightsite-b-white.png')} resizeMode="contain" style={[s.buildingLogo, { opacity: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.35, 1] }), transform: [{ scale: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.92, 1] }) }] }]} />
+                <Text style={[s.buildingText, { color: '#fff', marginTop: 28 }]}>Building your preview</Text>
+                <Text style={[s.buildingSub, { color: 'rgba(255,255,255,.6)' }]}>We’ll send you a notification as soon as it’s ready to review.</Text>
+              </View>
+            </View>
             : <>
               {previewMode === 'desktop' ? <Pressable disabled={!isLive} onPress={() => void Linking.openURL(siteUrl)} style={s.desktopFrame}>
                 <View style={s.desktopBar}><View style={s.previewDots}><View style={s.previewDot} /><View style={s.previewDot} /><View style={s.previewDot} /></View><Text style={s.desktopBarUrl} numberOfLines={1}>{domain ? `${domain}${suffix}` : 'yourwebsite.co.uk'}</Text></View>
@@ -2578,9 +2593,11 @@ const s = StyleSheet.create({
   choiceIcon: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   choiceCardTitle: { fontFamily: FONT, fontSize: 16, fontWeight: '700', color: '#1C2832' },
   choiceCardText: { fontFamily: FONT, fontSize: 14, lineHeight: 19, color: C.inkSoft, marginTop: 3 },
-  buildingCard: { alignItems: 'center', padding: 28, borderRadius: 18, backgroundColor: C.surface, marginTop: 6, marginBottom: 12 },
-  buildingText: { fontFamily: FONT, fontSize: 17, fontWeight: '800', color: C.ink },
-  buildingSub: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: C.inkSoft, textAlign: 'center', marginTop: 6 },
+  buildingWrap: { alignItems: 'center', paddingBottom: 24 },
+  buildingPhone: { backgroundColor: '#141A1E', alignItems: 'center', justifyContent: 'center' },
+  buildingLogo: { width: 64, height: 70 },
+  buildingText: { fontFamily: FONT, fontSize: 18, fontWeight: '800', color: C.ink },
+  buildingSub: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: C.inkSoft, textAlign: 'center', marginTop: 6, paddingHorizontal: 24 },
   previewOpenBadge: { position: 'absolute', bottom: 12, right: 12, flexDirection: 'row', gap: 6, alignItems: 'center', backgroundColor: 'rgba(0,0,0,.6)', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999 },
   previewOpenText: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: '#fff' },
   planModalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(3,10,16,.6)' },
