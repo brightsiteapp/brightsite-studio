@@ -1714,8 +1714,9 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     setDeckDirection(forward ? 1 : -1);
     transitioning.current = true;
     setStepEditMode(false);
+    // colour the rail as soon as the move starts; the last card has no next step so it counts once reached
+    if (forward) setComplete(old => new Set([...old, index, ...(next === steps.length - 1 ? [next] : [])]));
     Animated.timing(motion, { toValue: next * CARD_TRAVEL, duration: 420, easing: Easing.bezier(.18, .78, .22, 1), useNativeDriver: true }).start(() => {
-      if (forward) setComplete(old => new Set([...old, index]));
       setIndex(next);
       setDeckDirection(0);
       transitioning.current = false;
@@ -1927,6 +1928,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   }, [autoPending]);
 
   useEffect(() => { if (index >= steps.length - 1) setReachedEnd(true); }, [index]);
+  useEffect(() => { if (editingInfo) setComplete(new Set(setupStepIndexes)); }, [editingInfo]);
 
   useEffect(() => {
     if (steps[index]?.id === 'contact' && !data.contactEmail && data.email) setData(d => ({ ...d, contactEmail: d.email }));
