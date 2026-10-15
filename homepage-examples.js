@@ -23,7 +23,7 @@
     { url: 'https://sisko-hairdressing.brightsite.app', image: 'img/work-previews/sisko.webp' },
     { url: 'https://kings-valeting-hull.brightsite.app', live: true },
     { url: 'https://de-lacy.brightsite.app', image: 'img/work-previews/de-lacy.webp' },
-    { url: 'https://muse-hull.brightsite.app', image: 'img/work-previews/muse.webp' },
+    { url: 'https://dnaarmour.com', image: 'img/work-previews/dnaarmour.webp' },
     { url: 'https://mgs-beverley.brightsite.app', image: 'img/work-previews/mgs-beverley.webp?v=20260907' },
     { url: 'https://brian-griffin.brightsite.app', live: true },
   ];
@@ -58,7 +58,7 @@
   examples.forEach((ex) => {
     const card = document.createElement('article');
     card.className = 'ex-card';
-    const siteName = ex.url.replace(/^https:\/\/|\.(?:vercel|brightsite)\.app$/g, '');
+    const siteName = ex.url.replace(/^https:\/\/|\.(?:vercel|brightsite)\.app$|\.com$/g, '');
     if (ex.live) {
       card.innerHTML = `
         <div class="ex-frame ex-frame-desktop is-active">
