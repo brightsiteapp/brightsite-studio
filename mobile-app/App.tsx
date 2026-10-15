@@ -321,12 +321,13 @@ function Services({ items, setItems }: any) {
   const addSection = () => { const cid = newCid(); setCollapsed(c => ({ ...c, [cid]: false })); setItems([...items, { cid, section: '', name: '', duration: '', price: '' }]); };
   const cids = items.reduce((acc: string[], it: any) => { if (!acc.length || acc[acc.length - 1] !== it.cid) acc.push(it.cid); return acc; }, [] as string[]);
   return <View>
+    <View style={{ backgroundColor: '#fff', borderRadius: 16, paddingHorizontal: 14, borderWidth: 1, borderColor: C.line }}>
     {cids.map((cid: string, ci: number) => {
       const sectionItems = items.map((it: any, idx: number) => ({ ...it, _idx: idx })).filter((it: any) => it.cid === cid);
       const svcCount = sectionItems.filter((it: any) => it.name).length;
       const isOpen = !collapsed[cid];
       const sectionName = sectionItems[0]?.section || '';
-      return <View key={cid} style={[ci > 0 && { marginTop: 14 }, { backgroundColor: '#fff', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: C.line }]}>
+      return <View key={cid} style={[{ paddingVertical: 14 }, ci > 0 && { borderTopWidth: 1, borderTopColor: C.line }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Pressable onPress={() => toggleCollapse(cid)} hitSlop={10} accessibilityLabel={isOpen ? 'Collapse category' : 'Expand category'}><Ionicons name={isOpen ? 'chevron-down' : 'chevron-forward'} size={16} color={C.inkSoft} /></Pressable>
           <TextInput value={sectionName} onChangeText={v => setItems(items.map((it: any) => it.cid === cid ? { ...it, section: v } : it))} placeholder={ci === 0 ? 'Category name, e.g. Massages' : 'Category name, e.g. Waxing'} placeholderTextColor={C.placeholder} autoCapitalize="words" style={[s.input, { flex: 1, minHeight: 46, fontWeight: '700' }]} />
@@ -334,7 +335,7 @@ function Services({ items, setItems }: any) {
         </View>
         {!isOpen && <Text style={{ fontFamily: FONT, fontSize: 12, color: C.inkMuted, marginTop: 6, marginLeft: 24 }}>{svcCount} service{svcCount !== 1 ? 's' : ''}</Text>}
         {isOpen && <View style={{ marginTop: 4 }}>
-          <View style={[s.serviceHeadRow, { marginTop: 10 }]}><Text style={[s.serviceHead, { flex: 1.9 }]}>Service</Text><Text style={[s.serviceHead, { flex: 1.2 }]}>Time</Text><Text style={[s.serviceHead, { flex: .95 }]}>Price</Text><View style={{ width: 28 }} /></View>
+          {ci === 0 ? <View style={[s.serviceHeadRow, { marginTop: 10 }]}><Text style={[s.serviceHead, { flex: 1.9 }]}>Service</Text><Text style={[s.serviceHead, { flex: 1.2 }]}>Time</Text><Text style={[s.serviceHead, { flex: .95 }]}>Price</Text><View style={{ width: 28 }} /></View> : <View style={{ height: 10 }} />}
           {sectionItems.map((item: any) => <View key={item._idx} style={s.serviceRow}>
             <TextInput value={item.name} onChangeText={v => update(item._idx, 'name', v)} placeholder="e.g. Haircut" placeholderTextColor={C.placeholder} style={[s.serviceInput, { flex: 1.9 }]} />
             <TextInput value={item.duration} onChangeText={v => update(item._idx, 'duration', v)} placeholder="45 mins" placeholderTextColor={C.placeholder} style={[s.serviceInput, { flex: 1.2 }]} />
@@ -345,6 +346,7 @@ function Services({ items, setItems }: any) {
         </View>}
       </View>;
     })}
+    </View>
     <Pressable onPress={addSection} style={[s.addService, s.addSectionBtn]}><Ionicons name="add" size={16} color={C.ink} /><Text style={s.addServiceText}>Add category</Text></Pressable>
   </View>;
 }
@@ -1973,7 +1975,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     if (validationMessage) setValidationMessage('');
   }, [data, hours, services, domainReady, designReady]);
 
-  const SWIPE_LOCK_STEPS = ['prices', 'photos'];
+  const SWIPE_LOCK_STEPS = ['photos'];
   const [stepEditMode, setStepEditMode] = useState(false);
   const pan = useMemo(() => PanResponder.create({
     onMoveShouldSetPanResponder: (_, g) => {
