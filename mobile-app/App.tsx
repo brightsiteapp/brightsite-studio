@@ -1444,7 +1444,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [websiteStatus, setWebsiteStatus] = useState<'building' | 'ready' | 'publishing' | 'live'>('building');
   const [session, setSession] = useState<any>(null);
   const [slug, setSlug] = useState<string | null>(null);
-  const [data, setData] = useState({ email: '', password: '', businessName: '', category: '', fullName: '', contactEmail: '', phone: '', website: '', instagram: '', facebook: '', address: '', reviewLink: '', reviewSource: null as null | 'Google' | 'Trustpilot' });
+  const [data, setData] = useState({ email: '', password: '', businessName: '', category: '', fullName: '', contactEmail: '', phone: '', website: '', instagram: '', facebook: '', address: '', reviewLink: '', reviewSource: null as null | 'Google' | 'Trustpilot', googleLink: '', trustpilotLink: '' });
   const [planAnnual, setPlanAnnual] = useState(false);
   const [saveError, setSaveError] = useState('');
   const businessRecord = useRef<Record<string, any>>({});
@@ -1479,6 +1479,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       address: raw.address || '',
       reviewLink: raw.reviewLink || '',
       reviewSource: raw.reviewSource || null,
+      googleLink: raw.googleLink || (raw.reviewSource === 'Google' ? raw.reviewLink || '' : ''),
+      trustpilotLink: raw.trustpilotLink || (raw.reviewSource === 'Trustpilot' ? raw.reviewLink || '' : ''),
     }));
     setShowFullName(!!raw.fullNameDisplay);
     if (Array.isArray(raw.hoursStructured) && raw.hoursStructured.length) {
@@ -1830,8 +1832,11 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       address: data.address,
       notes: `Build choice: ${choice}`,
       buildChoice: choice,
-      reviewLink: data.reviewLink || '',
-      reviewSource: data.reviewSource,
+      googleLink: data.googleLink.trim(),
+      trustpilotLink: data.trustpilotLink.trim(),
+      // older site templates read one link, so prefer Trustpilot (it shows a badge)
+      reviewLink: data.trustpilotLink.trim() || data.googleLink.trim(),
+      reviewSource: data.trustpilotLink.trim() ? 'Trustpilot' : data.googleLink.trim() ? 'Google' : null,
       reviewItems,
       reviewQuotes: reviewItems.map(r => [r.title, r.description, r.name].filter(Boolean).join(' — ')),
       hours: hoursStructured.map(d => `${d.day}: ${d.open ? `${d.from || '?'}–${d.to || '?'}` : 'Closed'}`),
@@ -2095,10 +2100,9 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         <Pressable onPress={() => { setReviewsList([...reviewsList, { title: '', description: '', name: '' }]); setOpenReview(reviewsList.length); }} style={s.addReviewBtn}>
           <Ionicons name="add" size={16} color={DARK} /><Text style={s.addReviewText}>Add review</Text>
         </Pressable>
-        <View style={s.reviewSourceCard}>
-          <Text style={s.reviewSourceTitle}>Trustpilot</Text>
-          <Text style={s.reviewSourceSub}>Paste your Trustpilot page so visitors can see your rating.</Text>
-          <Field label="Trustpilot link" value={data.reviewSource === 'Trustpilot' ? data.reviewLink : ''} onChangeText={(v: string) => setData({ ...data, reviewLink: v, reviewSource: v.trim() ? 'Trustpilot' : (data.reviewSource === 'Trustpilot' ? null : data.reviewSource) })} placeholder="https://uk.trustpilot.com/review/..." />
+        <View style={{ marginTop: 14, gap: 10 }}>
+          <TextInput value={data.googleLink} onChangeText={v => setData(d => { const n = { ...d, googleLink: v }; const tp = n.trustpilotLink.trim(), g = n.googleLink.trim(); return { ...n, reviewLink: tp || g, reviewSource: tp ? 'Trustpilot' : g ? 'Google' : null }; })} placeholder="Google reviews link" placeholderTextColor={C.placeholder} keyboardType="url" autoCapitalize="none" autoCorrect={false} style={s.input} />
+          <TextInput value={data.trustpilotLink} onChangeText={v => setData(d => { const n = { ...d, trustpilotLink: v }; const tp = n.trustpilotLink.trim(), g = n.googleLink.trim(); return { ...n, reviewLink: tp || g, reviewSource: tp ? 'Trustpilot' : g ? 'Google' : null }; })} placeholder="Trustpilot link" placeholderTextColor={C.placeholder} keyboardType="url" autoCapitalize="none" autoCorrect={false} style={s.input} />
         </View>
         <Pressable onPress={() => setContactForm(!contactForm)} style={s.formChoice}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color={C.primary} /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: 'rgba(28,40,50,.18)', true: C.primary }} thumbColor="#fff" {...({ activeThumbColor: '#fff' } as any)} /></Pressable>
         {!editingInfo && <Pressable onPress={() => { void syncOnboardingToBackend('designer'); setBuildChoice('designer'); setAppScreen('loading'); }} style={({ pressed }) => [s.primaryBtn, s.sendGlow, { marginTop: 24 }, pressed && s.pressed]}>
@@ -2334,7 +2338,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   }} media={media} onConfirm={() => { if (websiteStatus !== 'live') setWebsiteStatus('ready'); void saveDesign(); setTab(editFrom === 'dashboard' ? 'Website' : 'Messages'); setAppScreen('dashboard'); }} /></FadeIn>;
 
   if (appScreen === 'choose') {
-    const canSend = !!data.fullName.trim() && (!!(data.reviewSource === 'Google' && data.reviewLink.trim()) || !!data.facebook.trim() || !!data.website.trim());
+    const canSend = !!data.fullName.trim() && (!!data.googleLink.trim() || !!data.facebook.trim() || !!data.website.trim());
     return <FlowBackdrop>
       <StatusBar style="dark" />
       <View style={s.loginStage}>
@@ -2361,7 +2365,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
               <Text style={s.heroTitle}>Share your links</Text>
               <Intro>Add your name and at least one link. Our designer will take it from there.</Intro>
               <Field label="Full name" value={data.fullName} onChangeText={(v: string) => setData({ ...data, fullName: v })} placeholder="e.g. Jane Smith" textContentType="name" autoComplete="name" autoCapitalize="words" returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.autoGoogle?.focus()} />
-              <Field label="Google Business link" optional inputRef={(r: any) => { fieldRefs.current.autoGoogle = r; }} value={data.reviewSource === 'Google' ? data.reviewLink : ''} onChangeText={(v: string) => setData({ ...data, reviewLink: v, reviewSource: v.trim() ? 'Google' : null })} placeholder="https://g.page/your-business" keyboardType="url" autoCapitalize="none" autoCorrect={false} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.autoFacebook?.focus()} />
+              <Field label="Google Business link" optional inputRef={(r: any) => { fieldRefs.current.autoGoogle = r; }} value={data.googleLink} onChangeText={(v: string) => setData(d => { const n = { ...d, googleLink: v }; const tp = n.trustpilotLink.trim(), g = n.googleLink.trim(); return { ...n, reviewLink: tp || g, reviewSource: tp ? 'Trustpilot' : g ? 'Google' : null }; })} placeholder="https://g.page/your-business" keyboardType="url" autoCapitalize="none" autoCorrect={false} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.autoFacebook?.focus()} />
               <Field label="Facebook link" optional inputRef={(r: any) => { fieldRefs.current.autoFacebook = r; }} value={data.facebook} onChangeText={(v: string) => setData({ ...data, facebook: v })} placeholder="facebook.com/yourbusiness" keyboardType="url" autoCapitalize="none" autoCorrect={false} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.autoWebsite?.focus()} />
               <Field label="Existing website" optional inputRef={(r: any) => { fieldRefs.current.autoWebsite = r; }} value={data.website} onChangeText={(v: string) => setData({ ...data, website: v })} placeholder="yoursite.com" keyboardType="url" textContentType="URL" autoCapitalize="none" autoCorrect={false} returnKeyType="done" />
               <Text style={s.sendHint}>{canSend ? 'Ready to go!' : 'Add your name and at least one link'}</Text>
