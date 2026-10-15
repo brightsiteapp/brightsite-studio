@@ -1241,7 +1241,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
             {!isBuilding && <View style={{ position: 'absolute', left: 0, right: 0, alignItems: 'center', pointerEvents: 'box-none' as any }}><DeviceToggle mode={previewMode} setMode={setPreviewMode} /></View>}
             <View>
               <Pressable onPress={() => isBuilding ? onEditInfo?.() : setShowEditMenu(v => !v)} style={({ pressed }) => [s.dashboardEdit, pressed && s.pressed]}>
-                <Ionicons name="create-outline" size={15} color={C.ink} /><Text style={s.dashboardEditText}>{isBuilding ? 'Edit info' : 'Edit'}</Text>
+                <Ionicons name="create-outline" size={15} color={C.ink} /><Text style={s.dashboardEditText}>Edit</Text>
                 {!isBuilding && <Ionicons name={showEditMenu ? 'chevron-up' : 'chevron-down'} size={14} color={C.inkMuted} />}
               </Pressable>
               {showEditMenu && <View style={s.editMenu}>
