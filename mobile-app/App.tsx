@@ -2080,16 +2080,16 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       case 'reviews': return <><Intro>Add customer reviews for your website. Each one is optional.</Intro>
         {reviewsList.map((review, i) => {
           const open = openReview === i;
-          const label = review.title.trim() || 'New review';
+          const label = review.title.trim() || review.description.trim() || review.name.trim() || 'Review';
           return <View key={i} style={[s.reviewCard, open && s.reviewCardOpen]}>
-            <Pressable onPress={() => setOpenReview(open ? null : i)} style={s.reviewRow}>
+            {!open && <Pressable onPress={() => setOpenReview(i)} style={s.reviewRow}>
               <Text style={s.reviewRowText} numberOfLines={1}>{label}</Text>
-              <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={16} color={DARK} />
-            </Pressable>
-            {open && <View style={s.reviewFields}>
-              <Field label="Review title" value={review.title} onChangeText={(v: string) => setReviewsList(reviewsList.map((r, n) => n === i ? { ...r, title: v } : r))} placeholder="e.g. Amazing service" />
-              <Field label="Review" value={review.description} onChangeText={(v: string) => setReviewsList(reviewsList.map((r, n) => n === i ? { ...r, description: v } : r))} multiline />
-              <Field label="Customer name" value={review.name} onChangeText={(v: string) => setReviewsList(reviewsList.map((r, n) => n === i ? { ...r, name: v } : r))} placeholder="e.g. Jane Smith" />
+              <Ionicons name="chevron-down" size={16} color={DARK} />
+            </Pressable>}
+            {open && <View style={[s.reviewFields, { paddingTop: 12, gap: 8 }]}>
+              <TextInput value={review.title} onChangeText={v => setReviewsList(reviewsList.map((r, n) => n === i ? { ...r, title: v } : r))} placeholder="Review title, e.g. Amazing service" placeholderTextColor={C.placeholder} autoCapitalize="sentences" style={s.input} />
+              <TextInput value={review.description} onChangeText={v => setReviewsList(reviewsList.map((r, n) => n === i ? { ...r, description: v } : r))} placeholder="Review" placeholderTextColor={C.placeholder} multiline autoCapitalize="sentences" style={[s.input, s.inputGrow]} />
+              <TextInput value={review.name} onChangeText={v => setReviewsList(reviewsList.map((r, n) => n === i ? { ...r, name: v } : r))} placeholder="Customer name" placeholderTextColor={C.placeholder} autoCapitalize="words" textContentType="name" style={s.input} />
               <View style={s.reviewActionsRow}>
                 <Pressable onPress={() => { Alert.alert('Remove this review?', '', [{ text: 'Cancel', style: 'cancel' }, { text: 'Remove', style: 'destructive', onPress: () => { setReviewsList(reviewsList.filter((_, n) => n !== i)); setOpenReview(null); } }]); }} style={s.reviewDeleteBtn}><Ionicons name="trash-outline" size={15} color="#A3261F" /><Text style={s.reviewDeleteText}>Remove</Text></Pressable>
                 <Pressable onPress={() => setOpenReview(null)} style={s.reviewDoneBtn}><Text style={s.reviewDoneText}>Done</Text></Pressable>
@@ -2459,6 +2459,7 @@ const s = StyleSheet.create({
   content: { paddingTop: 24, paddingLeft: 30, paddingRight: 24, paddingBottom: 84 }, loginContent: { flex: 1, paddingTop: 12, paddingBottom: 18 }, intro: { fontFamily: FONT, fontSize: 15, lineHeight: 22, color: C.inkSoft, marginBottom: 20 },
   fieldWrap: { marginBottom: 16 }, fieldLabel: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.inkSoft, marginBottom: 7 },
   input: { minHeight: 50, borderRadius: 14, paddingHorizontal: 16, fontFamily: FONT, fontSize: 16, color: C.ink, backgroundColor: C.field, borderWidth: 1, borderColor: C.line, outlineWidth: 0 },
+  inputGrow: { paddingTop: 14, paddingBottom: 14, textAlignVertical: 'top' },
   inputMultiline: { minHeight: 92, paddingTop: 14, textAlignVertical: 'top' },
   nameDisplay: { marginTop: -3, marginBottom: 6, flexDirection: 'row', alignItems: 'center', gap: 9 },
   checkbox: { width: 20, height: 20, borderRadius: 6, borderWidth: 1.5, borderColor: C.lineStrong, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
