@@ -1034,7 +1034,7 @@ function MessageThread({ session, slug, viewer, otherName, placeholder, intro }:
       </Pressable>
       <TextInput style={s.messageInputField} value={messageDraft} onChangeText={v => setMessageDraft(v.charAt(0).toUpperCase() + v.slice(1))} placeholder={placeholder} placeholderTextColor={C.placeholder} autoCapitalize="sentences" autoCorrect spellCheck keyboardType="default" enablesReturnKeyAutomatically multiline />
       <Pressable onPress={() => void sendMessage(undefined)} disabled={!messageDraft.trim() || sendingMessage} hitSlop={10} style={[s.messageSendBtn, (!messageDraft.trim() || sendingMessage) && { opacity: .35 }]} accessibilityLabel="Send message">
-        {sendingMessage ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={18} color="#fff" />}
+        {sendingMessage ? <ActivityIndicator size="small" color={C.ink} /> : <View style={s.sendI}><View style={s.sendIDot} /><View style={s.sendIStem} /></View>}
       </Pressable>
     </View>
   </>;
@@ -2743,6 +2743,10 @@ const s = StyleSheet.create({
   pathText: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: C.inkSoft },
   chooseBack: { flexDirection: 'row', alignItems: 'center', gap: 2, alignSelf: 'flex-start', marginBottom: 14 },
   chooseBackText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.primary },
+  // the lowercase i from the BrightSite wordmark: round dot over a rounded stem
+  sendI: { alignItems: 'center', gap: 2 },
+  sendIDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#fff' },
+  sendIStem: { width: 6, height: 13, borderRadius: 3, backgroundColor: '#fff' },
   savedNote: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, marginRight: 4 },
   selectText: { fontFamily: FONT, fontSize: 16, color: C.ink },
   typeRow: { minHeight: 50, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderRadius: 12 },
