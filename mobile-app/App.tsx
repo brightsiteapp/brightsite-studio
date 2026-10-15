@@ -2292,29 +2292,31 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           <View style={s.loginHeader}><Logo height={20} /><Image source={require('./assets/brightsite-icon.png')} style={s.loginAppIcon} /></View>
           <ScrollView contentContainerStyle={[s.content, s.loginContent]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
             {chooseMode === 'pick' ? <>
-              <Text style={s.heroTitle}>How do you want to build your site?</Text>
-              <Intro>Pick one. You can change any details later.</Intro>
-              <Pressable onPress={() => setChooseMode('auto')} style={({ pressed }) => [s.formChoice, pressed && s.pressed]}>
-                <View style={s.formChoiceIcon}><Ionicons name="flash-outline" size={22} color={C.primary} /></View>
-                <View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Automatic</Text><Text style={s.formChoiceText}>Paste your existing links and we’ll build it for you.</Text></View>
-                <Ionicons name="chevron-forward" size={18} color={C.inkMuted} />
-              </Pressable>
-              <Pressable onPress={() => { setIndex(1); motion.setValue(CARD_TRAVEL); setAppScreen('onboarding'); }} style={({ pressed }) => [s.formChoice, { marginTop: 12 }, pressed && s.pressed]}>
-                <View style={s.formChoiceIcon}><Ionicons name="create-outline" size={22} color={C.primary} /></View>
-                <View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Manual</Text><Text style={s.formChoiceText}>Fill in your details step by step.</Text></View>
-                <Ionicons name="chevron-forward" size={18} color={C.inkMuted} />
-              </Pressable>
+              <Text style={s.heroTitle}>How would you like to build your website?</Text>
+              <Intro>You can change anything later.</Intro>
+              <View style={s.pathStack}>
+                <Pressable onPress={() => setChooseMode('auto')} style={({ pressed }) => [s.pathCard, s.pathCardMain, pressed && s.pressed]}>
+                  <Text style={s.pathTag}>RECOMMENDED · 2 MINUTES</Text>
+                  <Text style={[s.pathTitle, { color: '#fff' }]}>Automatic</Text>
+                  <Text style={[s.pathText, { color: 'rgba(255,255,255,.85)' }]}>Share your Google, Facebook or website link and our designer builds it for you.</Text>
+                </Pressable>
+                <Pressable onPress={() => { setIndex(1); motion.setValue(CARD_TRAVEL); setAppScreen('onboarding'); }} style={({ pressed }) => [s.pathCard, s.pathCardPlain, pressed && s.pressed]}>
+                  <Text style={[s.pathTag, { color: C.inkMuted }]}>ABOUT 10 MINUTES</Text>
+                  <Text style={s.pathTitle}>Manual</Text>
+                  <Text style={s.pathText}>Enter your details, hours, services and photos yourself.</Text>
+                </Pressable>
+              </View>
             </> : <>
-              <Pressable onPress={() => setChooseMode('pick')} hitSlop={10} style={s.chooseBack}><Ionicons name="chevron-back" size={16} color={C.primary} /><Text style={s.chooseBackText}>Back</Text></Pressable>
-              <Text style={s.heroTitle}>Paste your links</Text>
-              <Intro>Add one or all three. We’ll pull your details, photos and reviews from them.</Intro>
+              <Pressable onPress={() => setChooseMode('pick')} hitSlop={10} style={s.chooseBack}><Text style={s.chooseBackText}>‹ Back</Text></Pressable>
+              <Text style={s.heroTitle}>Share your links</Text>
+              <Intro>Add your name and at least one link. Our designer will take it from there.</Intro>
               <Field label="Full name" value={data.fullName} onChangeText={(v: string) => setData({ ...data, fullName: v })} placeholder="e.g. Jane Smith" textContentType="name" autoComplete="name" autoCapitalize="words" returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.autoGoogle?.focus()} />
               <Field label="Google Business link" optional inputRef={(r: any) => { fieldRefs.current.autoGoogle = r; }} value={data.reviewSource === 'Google' ? data.reviewLink : ''} onChangeText={(v: string) => setData({ ...data, reviewLink: v, reviewSource: v.trim() ? 'Google' : null })} placeholder="https://g.page/your-business" keyboardType="url" autoCapitalize="none" autoCorrect={false} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.autoFacebook?.focus()} />
               <Field label="Facebook link" optional inputRef={(r: any) => { fieldRefs.current.autoFacebook = r; }} value={data.facebook} onChangeText={(v: string) => setData({ ...data, facebook: v })} placeholder="facebook.com/yourbusiness" keyboardType="url" autoCapitalize="none" autoCorrect={false} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.autoWebsite?.focus()} />
               <Field label="Existing website" optional inputRef={(r: any) => { fieldRefs.current.autoWebsite = r; }} value={data.website} onChangeText={(v: string) => setData({ ...data, website: v })} placeholder="yoursite.com" keyboardType="url" textContentType="URL" autoCapitalize="none" autoCorrect={false} returnKeyType="done" />
               <Text style={s.sendHint}>{canSend ? 'Ready to go!' : 'Add your name and at least one link'}</Text>
               <Pressable disabled={!canSend} onPress={() => { Keyboard.dismiss(); setBuildChoice('designer'); setAutoPending(true); }} style={({ pressed }) => [s.primaryBtn, s.sendGlow, !canSend && s.sendGlowOff, pressed && s.pressed]}>
-                <Ionicons name="paper-plane-outline" size={18} color="#fff" /><Text style={s.primaryBtnText}>Send to designer</Text>
+                <Text style={s.primaryBtnText}>Send to designer</Text>
               </Pressable>
             </>}
           </ScrollView>
@@ -2638,6 +2640,13 @@ const s = StyleSheet.create({
   sendGlow: { marginTop: 6, borderWidth: 2, borderColor: 'rgba(147,197,253,.95)', shadowColor: '#3B82F6', shadowOpacity: .75, shadowRadius: 16, shadowOffset: { width: 0, height: 0 }, elevation: 10 },
   sendGlowOff: { opacity: .45, shadowOpacity: 0, borderColor: 'transparent', elevation: 0 },
   sendHint: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, textAlign: 'center', marginTop: 4, marginBottom: 8 },
+  pathStack: { flex: 1, justifyContent: 'center', gap: 16, paddingBottom: 24 },
+  pathCard: { height: 168, borderRadius: 22, padding: 22, justifyContent: 'flex-end' },
+  pathCardMain: { backgroundColor: C.primary, shadowColor: '#1D4ED8', shadowOpacity: .28, shadowRadius: 18, shadowOffset: { width: 0, height: 8 } },
+  pathCardPlain: { backgroundColor: 'transparent', borderWidth: 1, borderColor: C.lineStrong },
+  pathTag: { fontFamily: FONT, fontSize: 11, fontWeight: '800', letterSpacing: .8, color: 'rgba(255,255,255,.8)', marginBottom: 'auto' },
+  pathTitle: { fontFamily: FONT, fontSize: 24, fontWeight: '800', letterSpacing: -.5, color: C.ink, marginBottom: 6 },
+  pathText: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: C.inkSoft },
   chooseBack: { flexDirection: 'row', alignItems: 'center', gap: 2, alignSelf: 'flex-start', marginBottom: 14 },
   chooseBackText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.primary },
   savedNote: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, marginRight: 4 },
