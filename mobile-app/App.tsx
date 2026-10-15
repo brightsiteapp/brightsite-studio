@@ -276,23 +276,35 @@ function getPreset(category: string) {
   return key ? CATEGORY_PRESETS[key] : { topServices: ['Our Services', 'Consultations', 'Packages'], about: 'Professional, friendly service tailored to your needs.', heroTitle: 'Quality you can count on.', heroBody: 'Friendly, professional service from a local business that cares.' };
 }
 
-function Field({ label, value, onChangeText, placeholder, keyboardType = 'default', multiline = false, ...inputProps }: any) {
+function Field({ label, optional = false, value, onChangeText, placeholder, keyboardType = 'default', multiline = false, inputRef, ...inputProps }: any) {
   return <View style={s.fieldWrap}>
-    <Text style={s.fieldLabel}>{label}</Text>
-    <TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={C.placeholder}
+    <Text style={s.fieldLabel}>{label}{optional && <Text style={s.fieldOptional}>  optional</Text>}</Text>
+    <TextInput ref={inputRef} value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={C.placeholder}
       keyboardType={keyboardType} multiline={multiline} style={[s.input, multiline && s.inputMultiline]} {...inputProps} />
   </View>;
 }
 
 const Intro = ({ children }: any) => <Text style={s.intro}>{children}</Text>;
 
+const HOURS_PRESETS = [
+  { label: 'Mon–Fri 9–5', apply: (i: number) => ({ enabled: i < 5, start: '9:00', end: '17:00' }) },
+  { label: 'Mon–Sat 9–5:30', apply: (i: number) => ({ enabled: i < 6, start: '9:00', end: '17:30' }) },
+  { label: 'Every day 10–6', apply: () => ({ enabled: true, start: '10:00', end: '18:00' }) },
+];
+
 function Hours({ rows, setRows }: any) {
-  return <View style={s.hoursCard}>{rows.map((row: any, i: number) =>
+  const first = rows.find((r: any) => r.enabled) || rows[0];
+  return <>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chipRow} keyboardShouldPersistTaps="handled">
+      {HOURS_PRESETS.map(p => <Pressable key={p.label} onPress={() => setRows(rows.map((r: any, i: number) => ({ ...r, ...p.apply(i) })))} style={({ pressed }) => [s.chip, pressed && s.chipOn]}><Text style={s.chipText}>{p.label}</Text></Pressable>)}
+      <Pressable onPress={() => setRows(rows.map((r: any) => r.enabled ? { ...r, start: first.start, end: first.end } : r))} style={({ pressed }) => [s.chip, pressed && s.chipOn]}><Ionicons name="copy-outline" size={13} color={C.ink} /><Text style={s.chipText}>Copy {first.label.slice(0, 3)} to all</Text></Pressable>
+    </ScrollView>
+    <View style={s.hoursCard}>{rows.map((row: any, i: number) =>
     <View style={[s.hoursRow, i === rows.length - 1 && s.hoursRowLast]} key={row.label}>
       <Text style={s.hoursDay}>{row.label.slice(0, 3)}</Text>
       <View style={s.hoursTimes}>{row.enabled ? <><TextInput value={row.start} onChangeText={v => setRows(rows.map((x: any, n: number) => n === i ? { ...x, start: v } : x))} style={s.timeInput} /><Text style={s.timeDash}>–</Text><TextInput value={row.end} onChangeText={v => setRows(rows.map((x: any, n: number) => n === i ? { ...x, end: v } : x))} style={s.timeInput} /></> : <><View style={s.timeInputOff}><Text style={s.timeOffText}>—</Text></View><Text style={s.timeDash}>–</Text><View style={s.timeInputOff}><Text style={s.timeOffText}>—</Text></View></>}</View>
       <View style={s.hoursSwitch}><Switch value={row.enabled} onValueChange={() => setRows(rows.map((x: any, n: number) => n === i ? { ...x, enabled: !x.enabled } : x))}
-        trackColor={{ false: 'rgba(28,40,50,.18)', true: C.primary }} thumbColor="#fff" {...({ activeThumbColor: '#fff' } as any)} /></View></View>)}</View>;
+        trackColor={{ false: 'rgba(28,40,50,.18)', true: C.primary }} thumbColor="#fff" {...({ activeThumbColor: '#fff' } as any)} /></View></View>)}</View></>;
 }
 
 let cidSeed = 0;
@@ -1389,7 +1401,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [saveError, setSaveError] = useState('');
   const businessRecord = useRef<Record<string, any>>({});
   const [showFullName, setShowFullName] = useState(false);
-  const [showTypes, setShowTypes] = useState(false);
+  const fieldRefs = useRef<Record<string, TextInput | null>>({});
+  const [autoSaved, setAutoSaved] = useState(false);
   const [galleryWidth, setGalleryWidth] = useState(0);
   const [openReview, setOpenReview] = useState<number | null>(null);
   const [hours, setHours] = useState(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((label, i) => ({ label, start: '9:00', end: i === 3 ? '19:00' : '17:30', enabled: i < 6 })));
@@ -1819,6 +1832,27 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     setSaveError('We couldn’t save your details. Please try again.');
   };
 
+  const autoSaveBusy = useRef(false);
+  const autoSaveSkip = useRef(true);
+  useEffect(() => {
+    if (!editingInfo) { autoSaveSkip.current = true; return; }
+    // skip the render that opens the editor so opening alone doesn't save
+    if (autoSaveSkip.current) { autoSaveSkip.current = false; return; }
+    setAutoSaved(false);
+    const t = setTimeout(async () => {
+      if (autoSaveBusy.current) return;
+      autoSaveBusy.current = true;
+      await syncOnboardingToBackend(buildChoice || 'designer');
+      autoSaveBusy.current = false;
+      setAutoSaved(true);
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [editingInfo, data, hours, services, reviewsList, contactForm]);
+
+  useEffect(() => {
+    if (steps[index]?.id === 'contact' && !data.contactEmail && data.email) setData(d => ({ ...d, contactEmail: d.email }));
+  }, [index]);
+
   const saveDesign = async () => {
     if (!slug || !session) return;
     try { await saveBusiness(slug, { raw: { design: designSnapshot(), contactForm }, needsPublish: websiteStatus === 'live' }); setSaveError(''); }
@@ -1936,35 +1970,22 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           <Text style={s.googleBtnText}>Continue with Google</Text>
         </Pressable></>;
       case 'business': return <><Intro>Tell us the essentials. Anything you leave blank simply won’t appear on your website.</Intro>
-        <Field label="Full name" value={data.fullName} onChangeText={(v: string) => setData({ ...data, fullName: v })} placeholder="e.g. Jane Smith" />
+        <Field label="Full name" value={data.fullName} onChangeText={(v: string) => setData({ ...data, fullName: v })} placeholder="e.g. Jane Smith" textContentType="name" autoComplete="name" autoCapitalize="words" returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.businessName?.focus()} />
         <Pressable onPress={() => setShowFullName(!showFullName)} style={s.nameDisplay} hitSlop={8}><View style={[s.checkbox, showFullName && s.checkboxOn]}>{showFullName && <Ionicons name="checkmark" size={13} color="#fff" />}</View><Text style={s.nameDisplayText}>Display full name on website</Text></Pressable>
-        <Field label="Business name" value={data.businessName} onChangeText={(v: string) => setData({ ...data, businessName: v })} />
+        <Field label="Business name" inputRef={(r: any) => { fieldRefs.current.businessName = r; }} value={data.businessName} onChangeText={(v: string) => setData({ ...data, businessName: v })} placeholder="e.g. Sisko Hair" textContentType="organizationName" autoCapitalize="words" returnKeyType="done" />
         <Text style={s.fieldLabel}>Business type</Text>
-        <Pressable onPress={() => { Keyboard.dismiss(); setShowTypes(true); }} style={({ pressed }) => [s.input, s.selectInput, pressed && { opacity: .8 }]}>
-          <Text style={[s.selectText, !data.category && { color: C.placeholder }]}>{data.category || 'Select your business type'}</Text>
-          <Ionicons name="chevron-down" size={18} color={C.inkMuted} />
-        </Pressable>
-        <View style={{ height: 16 }} />
-        <Modal visible={showTypes} transparent animationType="slide" onRequestClose={() => setShowTypes(false)}>
-          <Pressable style={s.modalOverlay} onPress={() => setShowTypes(false)}>
-            <Pressable onPress={() => {}} style={s.modalBox}>
-              <Text style={s.modalLabel}>Business type</Text>
-              <ScrollView style={{ maxHeight: SCREEN_HEIGHT * .55 }}>
-                {BUSINESS_TYPES.map(type => <Pressable key={type} onPress={() => { setData({ ...data, category: type }); setShowTypes(false); }} style={[s.typeRow, data.category === type && s.typeRowOn]}>
-                  <Text style={[s.typeRowText, data.category === type && { color: C.primary }]}>{type}</Text>
-                  {data.category === type && <Ionicons name="checkmark" size={18} color={C.primary} />}
-                </Pressable>)}
-              </ScrollView>
-            </Pressable>
-          </Pressable>
-        </Modal>
-        <Field label="Address" value={data.address} onChangeText={(v: string) => setData({ ...data, address: v })} placeholder="e.g. 12 High Street, London" multiline /></>;
-      case 'contact': return <><Intro>Add whichever ways customers should contact you.</Intro>
-        <Field label="Email" value={data.contactEmail} onChangeText={(v: string) => setData({ ...data, contactEmail: v })} keyboardType="email-address" />
-        <Field label="Phone (optional)" value={data.phone} onChangeText={(v: string) => setData({ ...data, phone: v })} keyboardType="phone-pad" />
-        <Field label="Existing website (optional)" value={data.website} onChangeText={(v: string) => setData({ ...data, website: v })} placeholder="https://yoursite.com" />
-        <Field label="Instagram (optional)" value={data.instagram} onChangeText={(v: string) => setData({ ...data, instagram: v })} placeholder="@yourbusiness" />
-        <Field label="Facebook (optional)" value={data.facebook} onChangeText={(v: string) => setData({ ...data, facebook: v })} placeholder="facebook.com/yourbusiness" /></>;
+        <View style={s.chipWrap}>
+          {BUSINESS_TYPES.map(type => <Pressable key={type} onPress={() => { Keyboard.dismiss(); setData({ ...data, category: type }); }} style={[s.chip, data.category === type && s.chipOn]}>
+            <Text style={[s.chipText, data.category === type && s.chipTextOn]}>{type}</Text>
+          </Pressable>)}
+        </View></>;
+      case 'contact': return <><Intro>Add whichever ways customers should contact you. Leave anything blank to skip it.</Intro>
+        <Field label="Email" value={data.contactEmail} onChangeText={(v: string) => setData({ ...data, contactEmail: v })} placeholder="you@business.co.uk" keyboardType="email-address" textContentType="emailAddress" autoComplete="email" autoCapitalize="none" autoCorrect={false} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.phone?.focus()} />
+        <Field label="Phone" optional inputRef={(r: any) => { fieldRefs.current.phone = r; }} value={data.phone} onChangeText={(v: string) => setData({ ...data, phone: v })} placeholder="e.g. 07700 900123" keyboardType="phone-pad" textContentType="telephoneNumber" autoComplete="tel" />
+        <Field label="Address" optional inputRef={(r: any) => { fieldRefs.current.address = r; }} value={data.address} onChangeText={(v: string) => setData({ ...data, address: v })} placeholder="e.g. 12 High Street, London" textContentType="fullStreetAddress" autoComplete="street-address" autoCapitalize="words" returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.website?.focus()} />
+        <Field label="Existing website" optional inputRef={(r: any) => { fieldRefs.current.website = r; }} value={data.website} onChangeText={(v: string) => setData({ ...data, website: v })} placeholder="yoursite.com" keyboardType="url" textContentType="URL" autoCapitalize="none" autoCorrect={false} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.instagram?.focus()} />
+        <Field label="Instagram" optional inputRef={(r: any) => { fieldRefs.current.instagram = r; }} value={data.instagram} onChangeText={(v: string) => setData({ ...data, instagram: v })} placeholder="@yourbusiness" autoCapitalize="none" autoCorrect={false} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.facebook?.focus()} />
+        <Field label="Facebook" optional inputRef={(r: any) => { fieldRefs.current.facebook = r; }} value={data.facebook} onChangeText={(v: string) => setData({ ...data, facebook: v })} placeholder="facebook.com/yourbusiness" autoCapitalize="none" autoCorrect={false} returnKeyType="done" /></>;
       case 'hours': return <><View style={s.hoursIntro}><Intro>Switch off days you’re closed. Times can be changed later.</Intro></View><Hours rows={hours} setRows={setHours} /></>;
       case 'prices': return <><Intro>Add a category (e.g. Massages), then the services in it with their prices.</Intro><Services items={services} setItems={setServices} /></>;
       case 'media': return <><Intro>Add the images you want to use. Everything here is optional and can be changed later.</Intro>
@@ -2283,7 +2304,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           const cardScale = cardPosition.interpolate({ inputRange: [-CARD_TRAVEL, 0, CARD_TRAVEL], outputRange: [.93, 1, .93], extrapolate: 'clamp' });
           return <Animated.View key={deckStep.id} pointerEvents={isActive ? 'auto' : 'none'} {...(isActive ? pan.panHandlers : {})} style={[s.card, s.deckCard, isActive ? s.deckCardActive : s.deckCardBehind, { zIndex: isActive ? 22 : 20 - Math.abs(distance), transform: [{ translateY: travelPosition }, { scale: cardScale }] }]}>
 
-            <View style={s.cardHeader}><Text style={s.cardTitle}>{deckStep.title}</Text>{editingInfo ? <Pressable disabled={savingInfo} onPress={async () => { setSavingInfo(true); await syncOnboardingToBackend(buildChoice || 'designer'); setSavingInfo(false); setEditingInfo(false); setAppScreen('dashboard'); }} style={s.saveTickBtn} accessibilityLabel="Save changes">{savingInfo ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="checkmark" size={18} color="#fff" />}</Pressable> : isActive && SWIPE_LOCK_STEPS.includes(deckStep.id) ? <Pressable onPress={() => setStepEditMode(v => !v)} hitSlop={10} style={stepEditMode ? s.saveTickBtn : s.editStepBtn}>{stepEditMode ? <Ionicons name="checkmark" size={18} color="#fff" /> : <Text style={s.editStepText}>Edit</Text>}</Pressable> : deckIndex > 0 && <Text style={s.count}>{deckIndex}/{setupStepIndexes.length}</Text>}</View>
+            <View style={s.cardHeader}><Text style={s.cardTitle}>{deckStep.title}</Text>{editingInfo ? <View style={s.cardHeaderActions}>{autoSaved && !savingInfo && <Text style={s.savedNote}>Saved</Text>}<Pressable disabled={savingInfo} onPress={async () => { setSavingInfo(true); await syncOnboardingToBackend(buildChoice || 'designer'); setSavingInfo(false); setEditingInfo(false); setAppScreen('dashboard'); }} style={s.saveTickBtn} accessibilityLabel="Save changes">{savingInfo ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="checkmark" size={18} color="#fff" />}</Pressable></View> : isActive && SWIPE_LOCK_STEPS.includes(deckStep.id) ? <Pressable onPress={() => setStepEditMode(v => !v)} hitSlop={10} style={stepEditMode ? s.saveTickBtn : s.editStepBtn}>{stepEditMode ? <Ionicons name="checkmark" size={18} color="#fff" /> : <Text style={s.editStepText}>Edit</Text>}</Pressable> : deckIndex > 0 && <Text style={s.count}>{deckIndex}/{setupStepIndexes.length}</Text>}</View>
             <ScrollView style={s.cardScroll} contentContainerStyle={[s.content, deckStep.id === 'login' && s.loginContent, deckStep.id === 'hours' && s.hoursContent]}
               scrollEnabled={SWIPE_LOCK_STEPS.includes(deckStep.id) ? stepEditMode : (!['hours', 'business', 'contact'].includes(deckStep.id) || keyboardVisible)}
               keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
@@ -2558,6 +2579,14 @@ const s = StyleSheet.create({
   serviceHeadRow: { flexDirection: 'row', gap: 10, marginTop: -4, marginBottom: 2 },
   serviceHead: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, paddingLeft: 4 },
   selectInput: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  fieldOptional: { fontWeight: '600', color: C.inkMuted, fontSize: 12 },
+  chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
+  chipRow: { gap: 8, paddingBottom: 12 },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999, backgroundColor: C.field, borderWidth: 1, borderColor: C.line },
+  chipOn: { backgroundColor: C.primary, borderColor: C.primary },
+  chipText: { fontFamily: FONT, fontSize: 14, fontWeight: '600', color: C.ink },
+  chipTextOn: { color: '#fff' },
+  savedNote: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, marginRight: 4 },
   selectText: { fontFamily: FONT, fontSize: 16, color: C.ink },
   typeRow: { minHeight: 50, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderRadius: 12 },
   typeRowOn: { backgroundColor: C.primarySoft },
