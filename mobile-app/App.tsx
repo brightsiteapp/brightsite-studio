@@ -1462,6 +1462,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [showFullName, setShowFullName] = useState(false);
   const fieldRefs = useRef<Record<string, TextInput | null>>({});
   const [autoSaved, setAutoSaved] = useState(false);
+  const [reachedEnd, setReachedEnd] = useState(false);
   const [galleryWidth, setGalleryWidth] = useState(0);
   const [openReview, setOpenReview] = useState<number | null>(null);
   const [hours, setHours] = useState(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((label, i) => ({ label, start: '9:00', end: i === 3 ? '19:00' : '17:30', enabled: i < 6 })));
@@ -1924,6 +1925,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     void syncOnboardingToBackend('designer');
     setAppScreen('loading');
   }, [autoPending]);
+
+  useEffect(() => { if (index >= steps.length - 1) setReachedEnd(true); }, [index]);
 
   useEffect(() => {
     if (steps[index]?.id === 'contact' && !data.contactEmail && data.email) setData(d => ({ ...d, contactEmail: d.email }));
@@ -2426,7 +2429,14 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           const cardScale = cardPosition.interpolate({ inputRange: [-CARD_TRAVEL, 0, CARD_TRAVEL], outputRange: [.93, 1, .93], extrapolate: 'clamp' });
           return <Animated.View key={deckStep.id} pointerEvents={isActive ? 'auto' : 'none'} {...(isActive ? pan.panHandlers : {})} style={[s.card, s.deckCard, isActive ? s.deckCardActive : s.deckCardBehind, { zIndex: isActive ? 22 : 20 - Math.abs(distance), transform: [{ translateY: travelPosition }, { scale: cardScale }] }]}>
 
-            <View style={s.cardHeader}><Text style={s.cardTitle}>{deckStep.title}</Text>{editingInfo ? <View style={s.cardHeaderActions}>{autoSaved && !savingInfo && <Text style={s.savedNote}>Saved</Text>}<Pressable disabled={savingInfo} onPress={async () => { setSavingInfo(true); await syncOnboardingToBackend(buildChoice || 'designer'); setSavingInfo(false); setEditingInfo(false); setAppScreen('dashboard'); }} style={s.saveTickBtn} accessibilityLabel="Save changes">{savingInfo ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="checkmark" size={18} color="#fff" />}</Pressable></View> : isActive && SWIPE_LOCK_STEPS.includes(deckStep.id) ? <Pressable onPress={() => setStepEditMode(v => !v)} hitSlop={10} style={stepEditMode ? s.saveTickBtn : s.editStepBtn}>{stepEditMode ? <Ionicons name="checkmark" size={18} color="#fff" /> : <Text style={s.editStepText}>Edit</Text>}</Pressable> : deckIndex > 0 && <Text style={s.count}>{deckIndex}/{setupStepIndexes.length}</Text>}</View>
+            <View style={s.cardHeader}><Text style={s.cardTitle}>{deckStep.title}</Text><View style={s.cardHeaderActions}>
+              {deckIndex > 0 && <Text style={s.count}>{deckIndex}/{setupStepIndexes.length}</Text>}
+              {!editingInfo && isActive && SWIPE_LOCK_STEPS.includes(deckStep.id) && <Pressable onPress={() => setStepEditMode(v => !v)} hitSlop={10} style={stepEditMode ? s.saveTickBtn : s.editStepBtn}>{stepEditMode ? <Ionicons name="checkmark" size={18} color="#fff" /> : <Text style={s.editStepText}>Edit</Text>}</Pressable>}
+              {(editingInfo || reachedEnd) && !(stepEditMode && isActive && SWIPE_LOCK_STEPS.includes(deckStep.id)) && <Pressable disabled={savingInfo} onPress={async () => {
+                if (!editingInfo) { void syncOnboardingToBackend('designer'); setBuildChoice('designer'); setAppScreen('loading'); return; }
+                setSavingInfo(true); await syncOnboardingToBackend(buildChoice || 'designer'); setSavingInfo(false); setEditingInfo(false); setAppScreen('dashboard');
+              }} style={s.saveTickBtn} accessibilityLabel={editingInfo ? 'Save changes' : 'Send to designer'}>{savingInfo ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="checkmark" size={18} color="#fff" />}</Pressable>}
+            </View></View>
             <ScrollView style={s.cardScroll} contentContainerStyle={[s.content, deckStep.id === 'login' && s.loginContent, deckStep.id === 'hours' && s.hoursContent]}
               scrollEnabled={SWIPE_LOCK_STEPS.includes(deckStep.id) ? stepEditMode : (!['hours', 'business', 'contact'].includes(deckStep.id) || keyboardVisible)}
               keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
@@ -2448,7 +2458,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         });
         return <View key={item.id} style={s.railButton}>
           <Animated.View style={[s.railDot, done && s.railDotOn, { transform: [{ scale: dotScale }] }]} />
-          <Animated.View pointerEvents="none" style={[s.railActive, { opacity: dotScale.interpolate({ inputRange: [1, 1.75], outputRange: [0, 1], extrapolate: 'clamp' }), transform: [{ scale: dotScale.interpolate({ inputRange: [1, 1.75], outputRange: [0, 1], extrapolate: 'clamp' }) }] }]}><Ionicons name={item.icon} size={15} color="#fff" /></Animated.View>
+          <Animated.View pointerEvents="none" style={[s.railActive, { opacity: motion.interpolate({ inputRange: [Math.max(0, actual - 1) * CARD_TRAVEL, (actual - .85) * CARD_TRAVEL, (actual + .85) * CARD_TRAVEL, (actual + 1) * CARD_TRAVEL], outputRange: [0, 1, 1, 0], extrapolate: 'clamp' }), transform: [{ scale: dotScale.interpolate({ inputRange: [1, 1.75], outputRange: [0, 1], extrapolate: 'clamp' }) }] }]}><Ionicons name={item.icon} size={15} color="#fff" /></Animated.View>
         </View>;
       })}</Animated.View>
     </View>
