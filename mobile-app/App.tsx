@@ -2284,7 +2284,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   }} media={media} onConfirm={() => { if (websiteStatus !== 'live') setWebsiteStatus('ready'); void saveDesign(); setTab('Website'); setAppScreen('dashboard'); }} /></FadeIn>;
 
   if (appScreen === 'choose') {
-    const hasLink = !!(data.reviewSource === 'Google' && data.reviewLink.trim()) || !!data.facebook.trim() || !!data.website.trim();
+    const canSend = !!data.fullName.trim() && (!!(data.reviewSource === 'Google' && data.reviewLink.trim()) || !!data.facebook.trim() || !!data.website.trim());
     return <FlowBackdrop>
       <StatusBar style="dark" />
       <View style={s.loginStage}>
@@ -2312,8 +2312,9 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
               <Field label="Google Business link" optional inputRef={(r: any) => { fieldRefs.current.autoGoogle = r; }} value={data.reviewSource === 'Google' ? data.reviewLink : ''} onChangeText={(v: string) => setData({ ...data, reviewLink: v, reviewSource: v.trim() ? 'Google' : null })} placeholder="https://g.page/your-business" keyboardType="url" autoCapitalize="none" autoCorrect={false} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.autoFacebook?.focus()} />
               <Field label="Facebook link" optional inputRef={(r: any) => { fieldRefs.current.autoFacebook = r; }} value={data.facebook} onChangeText={(v: string) => setData({ ...data, facebook: v })} placeholder="facebook.com/yourbusiness" keyboardType="url" autoCapitalize="none" autoCorrect={false} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.autoWebsite?.focus()} />
               <Field label="Existing website" optional inputRef={(r: any) => { fieldRefs.current.autoWebsite = r; }} value={data.website} onChangeText={(v: string) => setData({ ...data, website: v })} placeholder="yoursite.com" keyboardType="url" textContentType="URL" autoCapitalize="none" autoCorrect={false} returnKeyType="done" />
-              <Pressable disabled={!hasLink} onPress={() => { Keyboard.dismiss(); setBuildChoice('designer'); setAutoPending(true); }} style={[s.primaryBtn, { marginTop: 8 }, !hasLink && { opacity: .45 }]}>
-                <Ionicons name="sparkles-outline" size={18} color="#fff" /><Text style={s.primaryBtnText}>Build my website</Text>
+              <Text style={s.sendHint}>{canSend ? 'Ready to go!' : 'Add your name and at least one link'}</Text>
+              <Pressable disabled={!canSend} onPress={() => { Keyboard.dismiss(); setBuildChoice('designer'); setAutoPending(true); }} style={({ pressed }) => [s.primaryBtn, s.sendGlow, !canSend && s.sendGlowOff, pressed && s.pressed]}>
+                <Ionicons name="paper-plane-outline" size={18} color="#fff" /><Text style={s.primaryBtnText}>Send to designer</Text>
               </Pressable>
             </>}
           </ScrollView>
@@ -2634,6 +2635,9 @@ const s = StyleSheet.create({
   chipOn: { backgroundColor: C.primary, borderColor: C.primary },
   chipText: { fontFamily: FONT, fontSize: 14, fontWeight: '600', color: C.ink },
   chipTextOn: { color: '#fff' },
+  sendGlow: { marginTop: 6, borderWidth: 2, borderColor: 'rgba(147,197,253,.95)', shadowColor: '#3B82F6', shadowOpacity: .75, shadowRadius: 16, shadowOffset: { width: 0, height: 0 }, elevation: 10 },
+  sendGlowOff: { opacity: .45, shadowOpacity: 0, borderColor: 'transparent', elevation: 0 },
+  sendHint: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, textAlign: 'center', marginTop: 4, marginBottom: 8 },
   chooseBack: { flexDirection: 'row', alignItems: 'center', gap: 2, alignSelf: 'flex-start', marginBottom: 14 },
   chooseBackText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.primary },
   savedNote: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, marginRight: 4 },
