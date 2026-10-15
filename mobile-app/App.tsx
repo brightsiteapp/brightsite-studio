@@ -8,7 +8,7 @@ import * as Device from 'expo-device';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator, Alert, Animated, AppState, Dimensions, Easing, Image, Keyboard, KeyboardAvoidingView, LayoutAnimation, Modal, PanResponder,
-  Linking, Platform, Pressable, ScrollView, SectionList, StyleSheet, Switch, Text, TextInput, View, useWindowDimensions,
+  Linking, Platform, Pressable, ScrollView, SectionList, Share, StyleSheet, Switch, Text, TextInput, View, useWindowDimensions,
 } from 'react-native';
 import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
@@ -129,6 +129,37 @@ async function uploadMediaToR2(accessToken: string, slug: string, type: string, 
   } catch {
     return null;
   }
+}
+
+// Plain-text brief of everything a customer entered, ready to paste into Claude to build their site.
+function businessBrief(biz: any): string {
+  const r = biz?.data?.raw || biz?.data || {};
+  const line = (label: string, value: any) => value ? `${label}: ${value}` : '';
+  const list = (title: string, rows: string[]) => rows.length ? `\n${title}\n${rows.map(x => `- ${x}`).join('\n')}` : '';
+  return [
+    `BUSINESS BRIEF: ${r.name || biz?.id || 'Unnamed business'}`,
+    line('Account ID', biz?.id),
+    line('Build choice', r.buildChoice),
+    line('Business type', r.tagline),
+    line('Owner', r.fullName && r.fullName + (r.fullNameDisplay ? ' (show on website)' : '')),
+    line('Owner email', r.ownerEmail),
+    line('Business email', r.email),
+    line('Phone', r.phone),
+    line('Address', r.address),
+    line('Existing website', r.website),
+    line('Instagram', r.instagram),
+    line('Facebook', r.facebook),
+    line('Google reviews', r.googleLink),
+    line('Trustpilot', r.trustpilotLink),
+    line('Chosen domain', r.chosenDomain),
+    line('Contact form', r.contactForm ? 'Yes' : ''),
+    list('OPENING HOURS', r.hours || []),
+    ...(r.serviceGroups || []).map((g: any) => list(`SERVICES: ${g.name}`, (g.items || []).map((it: string[]) => [it[0], it[2], it[1]].filter(Boolean).join(' | ')))),
+    list('OFFERS', (r.offers || []).map((o: any) => `${o.name}: ${o.value}`)),
+    list('REVIEWS', (r.reviewItems || []).map((x: any) => [x.title, x.description, x.name].filter(Boolean).join(' — '))),
+    list('PHOTOS', [r.logoImage && `Logo: ${r.logoImage}`, r.heroImage && `Hero: ${r.heroImage}`, ...(r.gallery || []).map((u: string, i: number) => `Gallery ${i + 1}: ${u}`)].filter(Boolean)),
+    r.design ? `\nDESIGN SETTINGS\n${JSON.stringify(r.design)}` : '',
+  ].filter(Boolean).join('\n');
 }
 
 async function notifyStage(stage: string, businessName: string, email: string, slug: string) {
@@ -1662,6 +1693,9 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         if (draft.hours) setHours(draft.hours);
         if (draft.services) setServices(draft.services);
         if (draft.reviewsList) setReviewsList(draft.reviewsList);
+        if (draft.offers) setOffers(draft.offers);
+        if (typeof draft.contactForm === 'boolean') setContactForm(draft.contactForm);
+        if (draft.media) setMedia(draft.media);
         if (draft.domain) setDomain(draft.domain);
         if (typeof draft.index === 'number' && draft.index > 0) {
           // drafts saved before the domain step was removed can point past the last card
@@ -1698,10 +1732,10 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   useEffect(() => {
     if (!authSession || appScreen !== 'onboarding' || editingInfo) return;
     const timer = setTimeout(() => {
-      AsyncStorage.setItem(DRAFT_KEY, JSON.stringify({ data, hours, services, reviewsList, domain, index })).catch(() => {});
+      AsyncStorage.setItem(DRAFT_KEY, JSON.stringify({ data, hours, services, reviewsList, offers, contactForm, media, domain, index })).catch(() => {});
     }, 800);
     return () => clearTimeout(timer);
-  }, [data, hours, services, reviewsList, domain, index, authSession, appScreen, editingInfo]);
+  }, [data, hours, services, reviewsList, offers, contactForm, media, domain, index, authSession, appScreen, editingInfo]);
 
   useEffect(() => {
     const handleUrl = (url: string) => {
@@ -2308,7 +2342,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             </ScrollView>
           ) : (
             <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-              <Pressable onPress={() => { setAdminActiveThread(null); if (session) void loadAdminData(session); }} style={aS.threadBack}><Ionicons name="chevron-back" size={20} color={C.ink} /><Text style={aS.threadBackText}>{adminActiveThread?.data?.name || adminActiveThread?.data?.businessName || adminActiveThread?.id}</Text></Pressable>
+              <View style={aS.threadHeader}><Pressable onPress={() => { setAdminActiveThread(null); if (session) void loadAdminData(session); }} style={[aS.threadBack, { flex: 1 }]}><Ionicons name="chevron-back" size={20} color={C.ink} /><Text style={aS.threadBackText}>{adminActiveThread?.data?.name || adminActiveThread?.data?.businessName || adminActiveThread?.id}</Text></Pressable><Pressable onPress={() => void Share.share({ message: businessBrief(adminActiveThread), title: 'Business brief' })} hitSlop={8} style={aS.briefBtn} accessibilityLabel="Copy all business info"><Ionicons name="copy-outline" size={15} color="#fff" /><Text style={aS.briefBtnText}>Copy info</Text></Pressable></View>
               <MessageThread key={adminActiveThread?.id} session={session} slug={adminActiveThread?.id} viewer="admin" otherName={(adminActiveThread?.data?.fullName || adminActiveThread?.data?.name || 'Customer').trim().split(' ')[0]} placeholder="Message…" intro={<>
                 <View style={[s.messageBubble, s.messageBubbleSent]}><Text style={[s.messageText, { color: '#fff' }]}>{welcomeText(adminActiveThread?.data?.fullName, adminActiveThread?.data?.buildChoice || (/Build choice: designer/i.test(adminActiveThread?.data?.notes || '') ? 'designer' : null))}</Text></View>
                 <Text style={[s.messageMeta, s.messageMetaSent]}>You · Welcome message</Text>
@@ -2774,7 +2808,10 @@ const aS = StyleSheet.create({
   threadTime: { fontFamily: FONT, fontSize: 12, fontWeight: '500', color: C.inkMuted },
   threadPreview: { fontFamily: FONT, fontSize: 14, color: C.inkSoft },
   threadUnread: { width: 9, height: 9, borderRadius: 5, backgroundColor: C.primary },
+  threadHeader: { flexDirection: 'row', alignItems: 'center', paddingRight: 16 },
   threadBack: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 12, gap: 4 },
+  briefBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, backgroundColor: C.primary },
+  briefBtnText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: '#fff' },
   threadBackText: { fontFamily: FONT, fontSize: 17, fontWeight: '600', color: C.ink, flex: 1 },
   notifRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.line, gap: 12 },
   notifIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
