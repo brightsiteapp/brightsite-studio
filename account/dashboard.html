@@ -974,7 +974,7 @@
     </div>
 
     <div class="msgs-input-bar">
-      <textarea id="msgsInput" class="msgs-input" rows="1" placeholder="Message Tom…" aria-label="Message Tom"></textarea>
+      <textarea id="msgsInput" class="msgs-input" rows="1" placeholder="Message Tom…" aria-label="Message Tom" autocapitalize="sentences"></textarea>
       <button type="button" class="msgs-send" id="msgsSend" disabled aria-label="Send message">↑</button>
     </div>
   </section>
@@ -2577,6 +2577,12 @@
     var sendBtn = document.getElementById('msgsSend');
     if (!input || !sendBtn) return;
     input.addEventListener('input', function(){
+      var v = input.value;
+      if (v && v.charAt(0) !== v.charAt(0).toUpperCase()) {
+        var pos = input.selectionStart;
+        input.value = v.charAt(0).toUpperCase() + v.slice(1);
+        input.setSelectionRange(pos, pos);
+      }
       sendBtn.disabled = !input.value.trim();
       input.style.height = 'auto';
       input.style.height = Math.min(input.scrollHeight, 120) + 'px';

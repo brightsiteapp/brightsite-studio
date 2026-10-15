@@ -1032,7 +1032,7 @@ function MessageThread({ session, slug, viewer, otherName, placeholder, intro }:
       <Pressable onPress={() => void attachImage()} hitSlop={10} style={s.messageIconBtn} accessibilityLabel="Attach photo">
         <Ionicons name="image-outline" size={22} color={C.inkSoft} />
       </Pressable>
-      <TextInput style={s.messageInputField} value={messageDraft} onChangeText={setMessageDraft} placeholder={placeholder} placeholderTextColor={C.placeholder} autoCapitalize="sentences" autoCorrect spellCheck keyboardType="default" enablesReturnKeyAutomatically multiline />
+      <TextInput style={s.messageInputField} value={messageDraft} onChangeText={v => setMessageDraft(v.charAt(0).toUpperCase() + v.slice(1))} placeholder={placeholder} placeholderTextColor={C.placeholder} autoCapitalize="sentences" autoCorrect spellCheck keyboardType="default" enablesReturnKeyAutomatically multiline />
       <Pressable onPress={() => void sendMessage(undefined)} disabled={!messageDraft.trim() || sendingMessage} hitSlop={10} style={[s.messageSendBtn, (!messageDraft.trim() || sendingMessage) && { opacity: .35 }]} accessibilityLabel="Send message">
         {sendingMessage ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={18} color="#fff" />}
       </Pressable>
