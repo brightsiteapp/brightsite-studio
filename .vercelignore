@@ -1,4 +1,7 @@
-desktop-app/dist/
-desktop-app-v2/dist/
-.claude/
-node_modules/
+# This Vercel project only serves api.brightsite.app (the static site is on GitHub Pages),
+# so upload just the API and its dependency manifests. Keeps deployment storage small.
+/*
+!api
+!package.json
+!package-lock.json
+!vercel.json

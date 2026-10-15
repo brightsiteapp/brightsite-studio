@@ -9,7 +9,8 @@ export default async function handler(request, response) {
   if (!key) return response.status(503).json({ error: 'Photo lookup is not configured' });
 
   const name = String(request.query.name || '').trim();
-  if (!name.startsWith('places/')) return response.status(400).json({ error: 'Invalid photo reference' });
+  // Only accept a real photo resource name, so the server key can't be pointed at other Places endpoints.
+  if (!/^places\/[\w-]+\/photos\/[\w-]+$/.test(name)) return response.status(400).json({ error: 'Invalid photo reference' });
   const maxWidthPx = Math.min(Math.max(parseInt(request.query.w, 10) || 1600, 100), 1600);
 
   try {
