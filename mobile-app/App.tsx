@@ -223,7 +223,7 @@ type Step = { id: string; title: string; icon: keyof typeof Ionicons.glyphMap };
 const steps: Step[] = [
   { id: 'login', title: 'Welcome to BrightSite', icon: 'sparkles-outline' },
   { id: 'business', title: 'Business information', icon: 'storefront-outline' },
-  { id: 'contact', title: 'Contact details', icon: 'call-outline' },
+  { id: 'contact', title: 'Business details', icon: 'call-outline' },
   { id: 'hours', title: 'Opening hours', icon: 'time-outline' },
   { id: 'prices', title: 'Services & prices', icon: 'pricetag-outline' },
   { id: 'media', title: 'Photos & logo', icon: 'images-outline' },
@@ -1455,7 +1455,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [websiteStatus, setWebsiteStatus] = useState<'building' | 'ready' | 'publishing' | 'live'>('building');
   const [session, setSession] = useState<any>(null);
   const [slug, setSlug] = useState<string | null>(null);
-  const [data, setData] = useState({ email: '', password: '', businessName: '', category: '', fullName: '', contactEmail: '', phone: '', website: '', instagram: '', facebook: '', address: '', reviewLink: '', reviewSource: null as null | 'Google' | 'Trustpilot', googleLink: '', trustpilotLink: '' });
+  const [data, setData] = useState({ email: '', password: '', businessName: '', category: '', fullName: '', contactEmail: '', phone: '', website: '', instagram: '', facebook: '', address: '', reviewLink: '', reviewSource: null as null | 'Google' | 'Trustpilot', googleLink: '', trustpilotLink: '', ownerEmail: '', sameEmail: true });
   const [planAnnual, setPlanAnnual] = useState(false);
   const [saveError, setSaveError] = useState('');
   const businessRecord = useRef<Record<string, any>>({});
@@ -1483,6 +1483,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       businessName: raw.name || record.name || '',
       category: raw.tagline || '',
       fullName: raw.fullName || '',
+      ownerEmail: raw.ownerEmail || '',
+      sameEmail: raw.sameEmail !== false,
       contactEmail: raw.email || accountEmail,
       phone: raw.phone || '',
       website: raw.website || '',
@@ -1843,6 +1845,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       instagram: data.instagram,
       facebook: data.facebook,
       fullName: data.fullName,
+      ownerEmail: data.ownerEmail.trim(),
+      sameEmail: data.sameEmail,
       fullNameDisplay: showFullName,
       address: data.address,
       notes: `Build choice: ${choice}`,
@@ -1931,7 +1935,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   useEffect(() => { if (editingInfo) setComplete(new Set(setupStepIndexes)); }, [editingInfo]);
 
   useEffect(() => {
-    if (steps[index]?.id === 'contact' && !data.contactEmail && data.email) setData(d => ({ ...d, contactEmail: d.email }));
+    if (steps[index]?.id === 'contact' && data.sameEmail && (data.ownerEmail || data.email)) setData(d => ({ ...d, contactEmail: d.ownerEmail || d.email }));
   }, [index]);
 
   const saveDesign = async () => {
@@ -2057,11 +2061,13 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       case 'business': return <><Intro>Tell us the essentials. Anything you leave blank simply won’t appear on your website.</Intro>
         <Field label="Full name" value={data.fullName} onChangeText={(v: string) => setData({ ...data, fullName: v })} placeholder="e.g. Jane Smith" textContentType="name" autoComplete="name" autoCapitalize="words" returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.businessName?.focus()} />
         <Pressable onPress={() => setShowFullName(!showFullName)} style={s.nameDisplay} hitSlop={8}><View style={[s.checkbox, showFullName && s.checkboxOn]}>{showFullName && <Ionicons name="checkmark" size={13} color="#fff" />}</View><Text style={s.nameDisplayText}>Display full name on website</Text></Pressable>
+        <Field label="Email" value={data.ownerEmail || data.email} onChangeText={(v: string) => setData({ ...data, ownerEmail: v, ...(data.sameEmail ? { contactEmail: v } : {}) })} placeholder="you@email.com" keyboardType="email-address" textContentType="emailAddress" autoComplete="email" autoCapitalize="none" autoCorrect={false} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.businessName?.focus()} />
+        <Pressable onPress={() => { const on = !data.sameEmail; setData({ ...data, sameEmail: on, ...(on ? { contactEmail: data.ownerEmail || data.email } : {}) }); }} style={s.nameDisplay} hitSlop={8}><View style={[s.checkbox, data.sameEmail && s.checkboxOn]}>{data.sameEmail && <Ionicons name="checkmark" size={13} color="#fff" />}</View><Text style={s.nameDisplayText}>Same as business email</Text></Pressable>
         <Field label="Business name" inputRef={(r: any) => { fieldRefs.current.businessName = r; }} value={data.businessName} onChangeText={(v: string) => setData({ ...data, businessName: v })} placeholder="e.g. Sisko Hair" textContentType="organizationName" autoCapitalize="words" returnKeyType="done" />
         <Text style={s.fieldLabel}>Business type</Text>
         <View style={s.chipWrap}>
-          {BUSINESS_TYPES.map(type => <Pressable key={type} onPress={() => { Keyboard.dismiss(); setData({ ...data, category: type }); }} style={[s.chip, data.category === type && s.chipOn]}>
-            <Text style={[s.chipText, data.category === type && s.chipTextOn]}>{type}</Text>
+          {BUSINESS_TYPES.map(type => <Pressable key={type} onPress={() => { Keyboard.dismiss(); setData({ ...data, category: type }); }} style={[s.chip, s.typeChip, data.category === type && s.chipOn]}>
+            <Text style={[s.chipText, s.typeChipText, data.category === type && s.chipTextOn]}>{type}</Text>
           </Pressable>)}
         </View></>;
       case 'contact': return <><Intro>Add whichever ways customers should contact you. Leave anything blank to skip it.</Intro>
@@ -2717,7 +2723,9 @@ const s = StyleSheet.create({
   serviceHead: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, paddingLeft: 4 },
   selectInput: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   fieldOptional: { fontWeight: '600', color: C.inkMuted, fontSize: 12 },
-  chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
+  chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginBottom: 16 },
+  typeChip: { paddingHorizontal: 9, paddingVertical: 8 },
+  typeChipText: { fontSize: 13 },
   chipRow: { gap: 8, paddingBottom: 12 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999, backgroundColor: C.field, borderWidth: 1, borderColor: C.line },
   chipOn: { backgroundColor: C.primary, borderColor: C.primary },
