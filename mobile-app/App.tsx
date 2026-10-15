@@ -1200,7 +1200,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           <View style={[s.messageBubble, s.messageBubbleReceived]}><Text style={s.messageText}>{welcomeText(data.fullName, buildChoice)}</Text></View>
           <Text style={[s.messageMeta, s.messageMetaReceived]}>Tom · BrightSite</Text>
         </>} /> :
-      <ScrollView contentContainerStyle={s.dashboardContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
+      <ScrollView key={tab} scrollEnabled={tab !== 'Website'} contentContainerStyle={s.dashboardContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
         {tab === 'Account' && <>
           <View style={s.dashboardInfoCard}>
             <Text style={s.dashboardCardLabel}>Plan</Text>
@@ -1986,14 +1986,15 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     onPanResponderGrant: revealRail,
     onPanResponderMove: (_, g) => {
       if (Math.abs(g.dy) > Math.abs(g.dx)) {
-        const minIndex = authSession ? 1 : 0;
-        if (g.dy > 0 && index <= minIndex) return;
-        if (Math.abs(g.dy) > 12) setDeckDirection(g.dy < 0 ? 1 : -1);
-        motion.setValue(index * CARD_TRAVEL - g.dy);
+        const pastEdge = (g.dy > 0 && index <= (authSession ? 1 : 0)) || (g.dy < 0 && index >= steps.length - 1);
+        if (Math.abs(g.dy) > 12 && !pastEdge) setDeckDirection(g.dy < 0 ? 1 : -1);
+        // rubber-band past the first and last card instead of stopping dead
+        motion.setValue(index * CARD_TRAVEL - (pastEdge ? g.dy * .22 : g.dy));
       }
     },
     onPanResponderRelease: (_, g) => {
-      if (g.dy < -48 || g.vy < -.55) go(index + 1); else if (g.dy > 48 || g.vy > .55) go(index - 1); else Animated.spring(motion, { toValue: index * CARD_TRAVEL, damping: 20, stiffness: 210, useNativeDriver: true }).start(() => setDeckDirection(0));
+      const atStart = index <= (authSession ? 1 : 0), atEnd = index >= steps.length - 1;
+      if (!atEnd && (g.dy < -48 || g.vy < -.55)) go(index + 1); else if (!atStart && (g.dy > 48 || g.vy > .55)) go(index - 1); else Animated.spring(motion, { toValue: index * CARD_TRAVEL, damping: 20, stiffness: 210, useNativeDriver: true }).start(() => setDeckDirection(0));
       hideRailSoon();
     },
     onPanResponderTerminate: () => {
@@ -2098,9 +2099,9 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             </View>}
           </View>;
         })}
-        <Pressable onPress={() => { setReviewsList([...reviewsList, { title: '', description: '', name: '' }]); setOpenReview(reviewsList.length); }} style={s.addReviewBtn}>
+        {(() => { const unfinished = reviewsList.findIndex(r => !r.title.trim() || !r.description.trim()); return <Pressable onPress={() => { if (unfinished >= 0) { setOpenReview(unfinished); return; } setReviewsList([...reviewsList, { title: '', description: '', name: '' }]); setOpenReview(reviewsList.length); }} style={[s.addReviewBtn, unfinished >= 0 && { opacity: .45 }]}>
           <Ionicons name="add" size={16} color={DARK} /><Text style={s.addReviewText}>Add review</Text>
-        </Pressable>
+        </Pressable>; })()}
         <View style={{ marginTop: 14, gap: 10 }}>
           <TextInput value={data.googleLink} onChangeText={v => setData(d => { const n = { ...d, googleLink: v }; const tp = n.trustpilotLink.trim(), g = n.googleLink.trim(); return { ...n, reviewLink: tp || g, reviewSource: tp ? 'Trustpilot' : g ? 'Google' : null }; })} placeholder="Google reviews link" placeholderTextColor={C.placeholder} keyboardType="url" autoCapitalize="none" autoCorrect={false} style={s.input} />
           <TextInput value={data.trustpilotLink} onChangeText={v => setData(d => { const n = { ...d, trustpilotLink: v }; const tp = n.trustpilotLink.trim(), g = n.googleLink.trim(); return { ...n, reviewLink: tp || g, reviewSource: tp ? 'Trustpilot' : g ? 'Google' : null }; })} placeholder="Trustpilot link" placeholderTextColor={C.placeholder} keyboardType="url" autoCapitalize="none" autoCorrect={false} style={s.input} />
