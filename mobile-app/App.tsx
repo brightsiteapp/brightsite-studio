@@ -7,7 +7,7 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Alert, Animated, AppState, Dimensions, Easing, Image, ImageBackground, Keyboard, KeyboardAvoidingView, LayoutAnimation, Modal, PanResponder,
+  ActivityIndicator, Alert, Animated, AppState, Dimensions, Easing, Image, Keyboard, KeyboardAvoidingView, LayoutAnimation, Modal, PanResponder,
   Linking, Platform, Pressable, ScrollView, SectionList, StyleSheet, Switch, Text, TextInput, View, useWindowDimensions,
 } from 'react-native';
 import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
@@ -227,8 +227,8 @@ const steps: Step[] = [
   { id: 'hours', title: 'Opening hours', icon: 'time-outline' },
   { id: 'prices', title: 'Services & prices', icon: 'pricetag-outline' },
   { id: 'media', title: 'Photos & logo', icon: 'images-outline' },
-  { id: 'reviews', title: 'Reviews', icon: 'star-outline' },
   { id: 'extras', title: 'Offers & extras', icon: 'gift-outline' },
+  { id: 'reviews', title: 'Reviews', icon: 'star-outline' },
 ];
 const setupStepIndexes = Array.from({ length: 7 }, (_, i) => i + 1);
 const paletteGroups = [
@@ -285,6 +285,41 @@ function Field({ label, optional = false, value, onChangeText, placeholder, keyb
 }
 
 const Intro = ({ children }: any) => <Text style={s.intro}>{children}</Text>;
+
+type SheetField = { key: string; placeholder: string; multiline?: boolean };
+
+// Bottom sheet for adding/editing one list item; Save stays disabled until every field has text.
+function ItemSheet({ open, title, fields, initial, onSave, onDelete, onClose }: { open: boolean; title: string; fields: SheetField[]; initial: Record<string, string> | null; onSave: (item: Record<string, string>) => void; onDelete?: () => void; onClose: () => void }) {
+  const [draft, setDraft] = useState<Record<string, string>>({});
+  useEffect(() => { if (open) setDraft(initial || {}); }, [open]);
+  const ready = fields.every(f => (draft[f.key] || '').trim());
+  return <Modal visible={open} transparent animationType="slide" onRequestClose={onClose}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.planModalOverlay}>
+      <Pressable style={{ flex: 1 }} onPress={onClose} />
+      <View style={s.planModalBox}>
+        <View style={s.planModalHeader}><Text style={s.planModalTitle}>{title}</Text><Pressable onPress={onClose} hitSlop={10} accessibilityLabel="Close"><Ionicons name="close" size={22} color={C.ink} /></Pressable></View>
+        <View style={{ gap: 10, marginTop: 10 }}>
+          {fields.map((f, i) => <TextInput key={f.key} value={draft[f.key] || ''} onChangeText={v => setDraft(d => ({ ...d, [f.key]: v }))} placeholder={f.placeholder} placeholderTextColor={C.placeholder} autoCapitalize="sentences" autoFocus={i === 0} multiline={f.multiline} style={[s.input, f.multiline && s.inputGrow]} />)}
+        </View>
+        <Pressable disabled={!ready} onPress={() => onSave(draft)} style={[s.planModalPayBtn, !ready && { opacity: .45 }]}><Text style={s.planModalPayBtnText}>Save</Text></Pressable>
+        {onDelete && <Pressable onPress={onDelete} style={s.sheetDelete}><Text style={s.sheetDeleteText}>Remove</Text></Pressable>}
+      </View>
+    </KeyboardAvoidingView>
+  </Modal>;
+}
+
+function ItemList({ items, primary, secondary, addLabel, onOpen }: { items: Record<string, string>[]; primary: string; secondary: string; addLabel: string; onOpen: (index: number | null) => void }) {
+  return <View>
+    {items.map((item, i) => <Pressable key={i} onPress={() => onOpen(i)} style={({ pressed }) => [s.listRow, pressed && s.pressed]}>
+      <View style={{ flex: 1 }}>
+        <Text style={s.reviewRowText} numberOfLines={1}>{item[primary]}</Text>
+        {!!item[secondary] && <Text style={s.listRowSub} numberOfLines={1}>{item[secondary]}</Text>}
+      </View>
+      <Ionicons name="chevron-forward" size={16} color={C.inkMuted} />
+    </Pressable>)}
+    <Pressable onPress={() => onOpen(null)} style={s.addReviewBtn}><Ionicons name="add" size={16} color={DARK} /><Text style={s.addReviewText}>{addLabel}</Text></Pressable>
+  </View>;
+}
 
 function Hours({ rows, setRows }: any) {
   return <>
@@ -1427,11 +1462,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [media, setMedia] = useState<{ logo?: string; hero?: string; gallery: string[] }>({ gallery: [] });
   const [domain, setDomain] = useState('');
   const [suffix, setSuffix] = useState('.co.uk');
-  const [showSuffixes, setShowSuffixes] = useState(false);
   const [domainReady, setDomainReady] = useState(false);
-  const [domainChecking, setDomainChecking] = useState(false);
-  const [domainQuote, setDomainQuote] = useState<{ domain: string; priceLabel: string } | null>(null);
-  const [domainError, setDomainError] = useState('');
   const [contactForm, setContactForm] = useState(false);
   const [tab, setTab] = useState('Website');
   const [siteTexts, setSiteTexts] = useState<Record<string, string>>({});
@@ -1462,14 +1493,13 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const businessRecord = useRef<Record<string, any>>({});
   const [showFullName, setShowFullName] = useState(false);
   const fieldRefs = useRef<Record<string, TextInput | null>>({});
-  const [autoSaved, setAutoSaved] = useState(false);
   const [reachedEnd, setReachedEnd] = useState(false);
   const [galleryWidth, setGalleryWidth] = useState(0);
-  const [openReview, setOpenReview] = useState<number | null>(null);
+  const [sheet, setSheet] = useState<{ kind: 'review' | 'offer'; index: number | null } | null>(null);
   const [hours, setHours] = useState(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((label, i) => ({ label, start: '9:00', end: i === 3 ? '19:00' : '17:30', enabled: i < 6 })));
   const [services, setServices] = useState([{ cid: newCid(), section: '', name: '', duration: '', price: '' }]);
   const [reviewsList, setReviewsList] = useState<{ title: string; description: string; name: string }[]>([]);
-  const [offers, setOffers] = useState<{ name: string; value: string }[]>([{ name: '', value: '' }]);
+  const [offers, setOffers] = useState<{ name: string; value: string }[]>([]);
   const motion = useRef(new Animated.Value(0)).current;
   const loadingProgress = useRef(new Animated.Value(0)).current;
   const loadingFades = useRef([0, 1, 2, 3].map(() => new Animated.Value(0))).current;
@@ -1507,7 +1537,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       if (rows.length) setServices(rows);
     }
     if (Array.isArray(raw.reviewItems)) setReviewsList(raw.reviewItems);
-    if (Array.isArray(raw.offers) && raw.offers.length) setOffers(raw.offers);
+    if (Array.isArray(raw.offers)) setOffers(raw.offers);
     setMedia({ logo: raw.logoImage, hero: raw.heroImage, gallery: Array.isArray(raw.gallery) ? raw.gallery : [] });
     const chosen = record.customDomain || record.domain || raw.chosenDomain || '';
     const dot = chosen.indexOf('.');
@@ -1552,7 +1582,6 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     return 'new';
   };
 
-  const adminStatusColor = (s: string) => ({ new: C.inkMuted, build: C.danger, pending: C.warning, live: C.success }[s] || C.inkMuted);
 
   const loadAdminData = async (sess: any) => {
     setAdminLoading(true);
@@ -1696,7 +1725,6 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       case 'contact': return /\S+@\S+\.\S+/.test(data.contactEmail.trim()) || data.phone.replace(/\D/g, '').length >= 7;
       case 'hours': return hours.some(row => row.enabled && row.start.trim() && row.end.trim());
       case 'prices': return services.some(it => it.name.trim()) && services.every(it => !it.name.trim() || it.section.trim());
-      case 'domain': return domainReady || editingInfo;
       default: return true;
     }
   };
@@ -1713,7 +1741,6 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     const next = Math.max(authSession ? 1 : 0, Math.min(steps.length - 1, to));
     if (next === index || transitioning.current) return;
     const forward = next > index;
-    if (steps[next].id === 'domain' && !domain.trim()) setDomain(slugify(data.businessName).replace(/-/g, ''));
     Keyboard.dismiss();
     setValidationMessage('');
     setDeckDirection(forward ? 1 : -1);
@@ -1860,7 +1887,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       reviewLink: data.trustpilotLink.trim() || data.googleLink.trim(),
       reviewSource: data.trustpilotLink.trim() ? 'Trustpilot' : data.googleLink.trim() ? 'Google' : null,
       reviewItems,
-      offers: offers.filter(o => o.name.trim()),
+      offers,
       reviewQuotes: reviewItems.map(r => [r.title, r.description, r.name].filter(Boolean).join(' — ')),
       hours: hoursStructured.map(d => `${d.day}: ${d.open ? `${d.from || '?'}–${d.to || '?'}` : 'Closed'}`),
       hoursStructured,
@@ -1916,16 +1943,16 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     if (!editingInfo) { autoSaveSkip.current = true; return; }
     // skip the render that opens the editor so opening alone doesn't save
     if (autoSaveSkip.current) { autoSaveSkip.current = false; return; }
-    setAutoSaved(false);
     const t = setTimeout(async () => {
       if (autoSaveBusy.current) return;
       autoSaveBusy.current = true;
       await syncOnboardingToBackend(buildChoice || 'designer');
       autoSaveBusy.current = false;
-      setAutoSaved(true);
     }, 1200);
     return () => clearTimeout(t);
   }, [editingInfo, data, hours, services, reviewsList, offers, contactForm]);
+
+  const sendToDesigner = () => { void syncOnboardingToBackend('designer'); setBuildChoice('designer'); setAppScreen('loading'); };
 
   // runs after setData has committed so the sync sees the pasted links
   useEffect(() => {
@@ -2111,77 +2138,18 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           </>}
         </View></>;
       case 'reviews': return <><Intro>Add customer reviews for your website. Each one is optional.</Intro>
-        {reviewsList.map((review, i) => {
-          const open = openReview === i;
-          const label = review.title.trim() || review.description.trim() || review.name.trim() || 'Review';
-          return <View key={i} style={[s.reviewCard, open && s.reviewCardOpen]}>
-            {!open && <Pressable onPress={() => setOpenReview(i)} style={s.reviewRow}>
-              <Text style={s.reviewRowText} numberOfLines={1}>{label}</Text>
-              <Ionicons name="chevron-down" size={16} color={DARK} />
-            </Pressable>}
-            {open && <View style={[s.reviewFields, { paddingTop: 12, gap: 8 }]}>
-              <TextInput value={review.title} onChangeText={v => setReviewsList(reviewsList.map((r, n) => n === i ? { ...r, title: v } : r))} placeholder="Review title, e.g. Amazing service" placeholderTextColor={C.placeholder} autoCapitalize="sentences" style={s.input} />
-              <TextInput value={review.description} onChangeText={v => setReviewsList(reviewsList.map((r, n) => n === i ? { ...r, description: v } : r))} placeholder="Review and Name" placeholderTextColor={C.placeholder} multiline autoCapitalize="sentences" style={[s.input, s.inputGrow]} />
-              <View style={s.reviewActionsRow}>
-                <Pressable onPress={() => { Alert.alert('Remove this review?', '', [{ text: 'Cancel', style: 'cancel' }, { text: 'Remove', style: 'destructive', onPress: () => { setReviewsList(reviewsList.filter((_, n) => n !== i)); setOpenReview(null); } }]); }} style={s.reviewDeleteBtn}><Ionicons name="trash-outline" size={15} color="#A3261F" /><Text style={s.reviewDeleteText}>Remove</Text></Pressable>
-                <Pressable onPress={() => setOpenReview(null)} style={s.reviewDoneBtn}><Text style={s.reviewDoneText}>Done</Text></Pressable>
-              </View>
-            </View>}
-          </View>;
-        })}
-        {(() => { const unfinished = reviewsList.findIndex(r => !r.title.trim() || !r.description.trim()); return <Pressable onPress={() => { if (unfinished >= 0) { setOpenReview(unfinished); return; } setReviewsList([...reviewsList, { title: '', description: '', name: '' }]); setOpenReview(reviewsList.length); }} style={[s.addReviewBtn, unfinished >= 0 && { opacity: .45 }]}>
-          <Ionicons name="add" size={16} color={DARK} /><Text style={s.addReviewText}>Add review</Text>
-        </Pressable>; })()}
+        <ItemList items={reviewsList} primary="title" secondary="description" addLabel="Add review" onOpen={i => setSheet({ kind: 'review', index: i })} />
         <View style={{ marginTop: 14, gap: 10 }}>
           <TextInput value={data.googleLink} onChangeText={v => setData(d => { const n = { ...d, googleLink: v }; const tp = n.trustpilotLink.trim(), g = n.googleLink.trim(); return { ...n, reviewLink: tp || g, reviewSource: tp ? 'Trustpilot' : g ? 'Google' : null }; })} placeholder="Google reviews link" placeholderTextColor={C.placeholder} keyboardType="url" autoCapitalize="none" autoCorrect={false} style={s.input} />
           <TextInput value={data.trustpilotLink} onChangeText={v => setData(d => { const n = { ...d, trustpilotLink: v }; const tp = n.trustpilotLink.trim(), g = n.googleLink.trim(); return { ...n, reviewLink: tp || g, reviewSource: tp ? 'Trustpilot' : g ? 'Google' : null }; })} placeholder="Trustpilot link" placeholderTextColor={C.placeholder} keyboardType="url" autoCapitalize="none" autoCorrect={false} style={s.input} />
         </View>
+        {!editingInfo && <Pressable onPress={sendToDesigner} style={({ pressed }) => [s.primaryBtn, s.sendGlow, { marginTop: 24 }, pressed && s.pressed]}>
+          <Text style={s.primaryBtnText}>Send to designer</Text>
+        </Pressable>}
         </>;
       case 'extras': return <><Intro>Add any offers, rewards or gift cards you want on your website. Leave it blank to skip.</Intro>
-        <View style={s.offerCard}>
-          {offers.map((o, i) => <View key={i} style={s.serviceRow}>
-            <TextInput value={o.name} onChangeText={v => setOffers(offers.map((x, n) => n === i ? { ...x, name: v } : x))} placeholder="e.g. Loyalty card" placeholderTextColor={C.placeholder} autoCapitalize="sentences" style={[s.serviceInput, { flex: 1.9 }]} />
-            <TextInput value={o.value} onChangeText={v => setOffers(offers.map((x, n) => n === i ? { ...x, value: v } : x))} placeholder="10% off / £25" placeholderTextColor={C.placeholder} style={[s.serviceInput, { flex: 1.3 }]} />
-            <Pressable onPress={() => setOffers(offers.length > 1 ? offers.filter((_, n) => n !== i) : [{ name: '', value: '' }])} style={s.serviceDelete} hitSlop={8} accessibilityLabel="Remove offer"><Ionicons name="close" size={16} color={C.inkMuted} /></Pressable>
-          </View>)}
-          <Pressable onPress={() => setOffers([...offers, { name: '', value: '' }])} style={s.addService}><Ionicons name="add" size={16} color={C.primary} /><Text style={s.addServiceText}>Add offer</Text></Pressable>
-        </View>
-        <Pressable onPress={() => setContactForm(!contactForm)} style={s.formChoice}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color={C.primary} /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: 'rgba(28,40,50,.18)', true: C.primary }} thumbColor="#fff" {...({ activeThumbColor: '#fff' } as any)} /></Pressable>
-        {!editingInfo && <Pressable onPress={() => { void syncOnboardingToBackend('designer'); setBuildChoice('designer'); setAppScreen('loading'); }} style={({ pressed }) => [s.primaryBtn, s.sendGlow, { marginTop: 24 }, pressed && s.pressed]}>
-          <Text style={s.primaryBtnText}>Send to designer</Text>
-        </Pressable>}</>;
-      case 'domain': {
-        const clearDomainQuote = () => { setDomainReady(false); setDomainQuote(null); setDomainError(''); };
-        const checkDomain = async () => {
-          const name = domain.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
-          if (!name) { setDomainError('Add a domain name first.'); return; }
-          setDomainChecking(true); clearDomainQuote();
-          try {
-            const response = await fetch(`${DOMAIN_API}?domain=${encodeURIComponent(name + suffix)}`);
-            const result = await response.json();
-            if (!response.ok || !result.available || !result.priceLabel) throw new Error(result.error || 'That domain is not available.');
-            setDomainQuote({ domain: result.domain, priceLabel: result.priceLabel });
-            setDomainReady(true);
-          } catch (error: any) { setDomainError(error.message || 'Couldn’t check that domain right now.'); }
-          finally { setDomainChecking(false); }
-        };
-        return <><Intro>Find the right home for your website. The live registration price comes straight from the registry before payment.</Intro><View style={s.domainSearch}>
-          <TextInput style={s.domainInput} value={domain} placeholder="yourbusiness" placeholderTextColor={C.placeholder} autoCorrect={false} onChangeText={(value) => { setDomain(value); clearDomainQuote(); }} autoCapitalize="none" /><View style={{ position: 'relative' }}><Pressable onPress={() => setShowSuffixes(!showSuffixes)} style={s.suffixButton} hitSlop={6}><Text style={s.domainSuffix}>{suffix}</Text><Ionicons name={showSuffixes ? 'chevron-up' : 'chevron-down'} size={14} color={C.ink} /></Pressable>
-          {showSuffixes && <View style={s.suffixDropdown}>
-            {DOMAIN_TLDS.map((item, i) => <Pressable key={item} onPress={() => { setSuffix(item); setShowSuffixes(false); clearDomainQuote(); }} style={[s.suffixDropdownItem, i < DOMAIN_TLDS.length - 1 && s.suffixDropdownDivider, suffix === item && s.suffixDropdownItemOn]}>
-              <Text style={s.suffixDropdownText}>{item}</Text>
-              {suffix === item && <Ionicons name="checkmark" size={14} color={DARK} />}
-            </Pressable>)}
-          </View>}</View></View>
-          <Pressable disabled={domainChecking} onPress={checkDomain} style={[s.check, domainChecking && s.checkDisabled]}><Text style={s.checkText}>{domainChecking ? 'Checking live price…' : 'Check availability'}</Text></Pressable>
-          {!!domainError && <Text style={s.domainError}>{domainError}</Text>}
-          {domainReady && domainQuote && <Animated.View style={s.domainResult}><Ionicons name="checkmark-circle" size={24} color={DARK} /><View style={{ flex: 1 }}><Text style={s.domainName}>{domainQuote.domain}</Text><Text style={s.domainPrice}>Available — {domainQuote.priceLabel}</Text></View></Animated.View>}
-          {!editingInfo && domainReady && <Pressable onPress={() => { void syncOnboardingToBackend('designer'); setBuildChoice('designer'); setAppScreen('loading'); }} style={[s.primaryBtn, { marginTop: 20 }]}>
-              <Ionicons name="person-outline" size={18} color="#fff" />
-              <Text style={s.primaryBtnText}>Send to Designer</Text>
-            </Pressable>}
-        </>;
-      }
+        <ItemList items={offers} primary="name" secondary="value" addLabel="Add offer" onOpen={i => setSheet({ kind: 'offer', index: i })} />
+        <Pressable onPress={() => setContactForm(!contactForm)} style={s.formChoice}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color={C.primary} /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: 'rgba(28,40,50,.18)', true: C.primary }} thumbColor="#fff" {...({ activeThumbColor: '#fff' } as any)} /></Pressable></>;
     }
   };
 
@@ -2375,8 +2343,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   if (appScreen === 'design-editor') return <FadeIn><DesignEditorFullscreen palette={palette} setPalette={setPalette} font={font} setFont={setFont} siteTexts={siteTexts} setSiteTexts={setSiteTexts} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} data={data} services={services} hours={hours} contactForm={contactForm} onBack={() => {
     if (editFrom === 'dashboard') { setAppScreen('dashboard'); return; }
     setAppScreen('onboarding');
-    setIndex(steps.findIndex(item => item.id === 'domain'));
-    motion.setValue(steps.findIndex(item => item.id === 'domain') * CARD_TRAVEL);
+    setIndex(steps.length - 1);
+    motion.setValue((steps.length - 1) * CARD_TRAVEL);
   }} media={media} onConfirm={() => { if (websiteStatus !== 'live') setWebsiteStatus('ready'); void saveDesign(); setTab(editFrom === 'dashboard' ? 'Website' : 'Messages'); setAppScreen('dashboard'); }} /></FadeIn>;
 
   if (appScreen === 'choose') {
@@ -2443,7 +2411,6 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           const deckIndex = steps.findIndex(stepItem => stepItem.id === deckStep.id);
           const distance = deckIndex - index;
           const isActive = distance === 0;
-          const isIncoming = distance === deckDirection;
           const cardPosition = Animated.subtract(deckIndex * CARD_TRAVEL, motion);
           // The card leaving the foreground takes a small lead. This clears its
           // edge before the next card reaches it, rather than blending through it.
@@ -2455,7 +2422,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
               {deckIndex > 0 && <Text style={s.count}>{deckIndex}/{setupStepIndexes.length}</Text>}
               {!editingInfo && isActive && SWIPE_LOCK_STEPS.includes(deckStep.id) && <Pressable onPress={() => setStepEditMode(v => !v)} hitSlop={10} style={stepEditMode ? s.saveTickBtn : s.editStepBtn}>{stepEditMode ? <Ionicons name="checkmark" size={18} color="#fff" /> : <Text style={s.editStepText}>Edit</Text>}</Pressable>}
               {(editingInfo || reachedEnd) && !(stepEditMode && isActive && SWIPE_LOCK_STEPS.includes(deckStep.id)) && <Pressable disabled={savingInfo} onPress={async () => {
-                if (!editingInfo) { void syncOnboardingToBackend('designer'); setBuildChoice('designer'); setAppScreen('loading'); return; }
+                if (!editingInfo) { sendToDesigner(); return; }
                 setSavingInfo(true); await syncOnboardingToBackend(buildChoice || 'designer'); setSavingInfo(false); setEditingInfo(false); setAppScreen('dashboard');
               }} style={s.saveTickBtn} accessibilityLabel={editingInfo ? 'Save changes' : 'Send to designer'}>{savingInfo ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="checkmark" size={18} color="#fff" />}</Pressable>}
             </View></View>
@@ -2466,7 +2433,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             </ScrollView>
             <View pointerEvents="none" style={s.fixedPrompt}>
               {!!validationMessage && isActive && <Text style={s.validationText}>{validationMessage}</Text>}
-              {deckStep.id !== 'extras' && !editingInfo && <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : ['hours', 'business', 'contact'].includes(deckStep.id) ? 'Swipe up to save' : 'Swipe the title up to continue'}</Text></View>}
+              {deckStep.id !== 'reviews' && !editingInfo && <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : ['hours', 'business', 'contact'].includes(deckStep.id) ? 'Swipe up to save' : 'Swipe the title up to continue'}</Text></View>}
             </View>
           </Animated.View>;
         })}
@@ -2484,6 +2451,18 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         </View>;
       })}</Animated.View>
     </View>
+    {(() => {
+      const isReview = sheet?.kind === 'review';
+      const list: Record<string, string>[] = isReview ? reviewsList : offers;
+      const save = (next: any[]) => isReview ? setReviewsList(next) : setOffers(next);
+      const index = sheet?.index ?? null;
+      return <ItemSheet open={!!sheet} title={isReview ? (index === null ? 'Add review' : 'Edit review') : (index === null ? 'Add offer' : 'Edit offer')}
+        fields={isReview ? [{ key: 'title', placeholder: 'Review title, e.g. Amazing service' }, { key: 'description', placeholder: 'Review and name', multiline: true }] : [{ key: 'name', placeholder: 'Offer, e.g. Loyalty card' }, { key: 'value', placeholder: 'Discount or price, e.g. 10% off' }]}
+        initial={index === null ? null : list[index]}
+        onSave={item => { save(index === null ? [...list, item] : list.map((x, n) => n === index ? { ...x, ...item } : x)); setSheet(null); }}
+        onDelete={index === null ? undefined : () => { save(list.filter((_, n) => n !== index)); setSheet(null); }}
+        onClose={() => setSheet(null)} />;
+    })()}
   </FlowBackdrop>;
 }
 
@@ -2522,34 +2501,28 @@ const s = StyleSheet.create({
   uploadPreview: { width: 52, height: 52, borderRadius: 15, marginBottom: 9 }, uploadPreviewFill: { width: '100%', height: '100%' },
   uploadIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(59,130,246,.12)', marginBottom: 10 },
   saveTickBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
-  backBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: C.field, alignItems: 'center', justifyContent: 'center', marginRight: 8 },
   cardHeaderActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   editStepBtn: { paddingHorizontal: 14, height: 30, borderRadius: 15, backgroundColor: C.field, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center' },
   editStepText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.ink },
   uploadTitle: { fontFamily: FONT, fontWeight: '800', fontSize: 14, color: '#1C2832' }, uploadSub: { fontFamily: FONT, fontSize: 11, color: C.inkSoft, marginTop: 3 }, swipeHint: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.ink, textAlign: 'center' },
-  cardFade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 80, zIndex: 110, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
   fixedPrompt: { position: 'absolute', left: 18, right: 18, bottom: 14, zIndex: 120, elevation: 120, alignItems: 'center', gap: 7 }, swipeRow: { minHeight: 34, paddingHorizontal: 14, borderRadius: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,.7)' }, validationText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.danger, textAlign: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: C.dangerSoft, overflow: 'hidden' },
-  serviceRow: { flexDirection: 'row', gap: 10, marginTop: 5, alignItems: 'center' }, serviceInput: { minWidth: 0, height: 48, borderRadius: 12, paddingHorizontal: 10, fontFamily: FONT, fontSize: 14, color: C.ink, backgroundColor: C.field, borderWidth: 1, borderColor: C.line, outlineWidth: 0 }, serviceDelete: { width: 28, height: 48, alignItems: 'center', justifyContent: 'center' }, sectionDelete: { width: 28, height: 50, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }, sectionDivider: { height: StyleSheet.hairlineWidth, backgroundColor: C.lineStrong, marginVertical: 16 }, addService: { marginTop: 14, height: 46, borderRadius: 12, borderWidth: 1, borderColor: C.primaryBorder, backgroundColor: C.primarySoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, addSectionBtn: { marginTop: 8, borderColor: C.lineStrong, backgroundColor: 'transparent' }, addServiceText: { fontFamily: FONT, fontWeight: '700', fontSize: 14, color: C.ink }, site: { overflow: 'hidden' },
+  serviceRow: { flexDirection: 'row', gap: 10, marginTop: 5, alignItems: 'center' }, serviceInput: { minWidth: 0, height: 48, borderRadius: 12, paddingHorizontal: 10, fontFamily: FONT, fontSize: 14, color: C.ink, backgroundColor: C.field, borderWidth: 1, borderColor: C.line, outlineWidth: 0 }, serviceDelete: { width: 28, height: 48, alignItems: 'center', justifyContent: 'center' }, addService: { marginTop: 14, height: 46, borderRadius: 12, borderWidth: 1, borderColor: C.primaryBorder, backgroundColor: C.primarySoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, addSectionBtn: { marginTop: 8, borderColor: C.lineStrong, backgroundColor: 'transparent' }, addServiceText: { fontFamily: FONT, fontWeight: '700', fontSize: 14, color: C.ink }, site: { overflow: 'hidden' },
   previewBrowserWrap: { backgroundColor: 'rgba(8,15,20,.9)' },
   previewBrowser: { height: 29, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   previewDots: { position: 'absolute', left: 11, flexDirection: 'row', gap: 4 }, previewDot: { width: 6, height: 6, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.35)' }, previewAddress: { fontFamily: FONT, fontSize: 8, color: 'rgba(255,255,255,.54)' },
   previewPageNav: { flexDirection: 'row', borderBottomWidth: StyleSheet.hairlineWidth },
   previewPageTab: { flex: 1, paddingVertical: 6, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
   previewPageTabText: { fontFamily: FONT, fontSize: 8, fontWeight: '700', color: 'rgba(255,255,255,.45)', letterSpacing: .5 },
-  siteHero: { height: SCREEN_HEIGHT * .36, padding: 18, justifyContent: 'space-between' },
   siteHeroImg: { width: '100%', height: 260 },
   siteHeroImgDesktop: { height: 520 },
   siteHeroCopy: { paddingHorizontal: 28, paddingVertical: 28 },
-  siteTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, siteKicker: { fontFamily: FONT, fontSize: 14, letterSpacing: 2, fontWeight: '700' }, siteNav: { flexDirection: 'row', alignItems: 'center', gap: 10 }, siteNavText: { fontFamily: FONT, fontSize: 12, letterSpacing: .7, color: 'rgba(255,255,255,.78)' }, siteCopy: { maxWidth: '76%' },
+  siteTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, siteKicker: { fontFamily: FONT, fontSize: 14, letterSpacing: 2, fontWeight: '700' }, 
   siteHeadline: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 38, lineHeight: 44, marginBottom: 10 },
   siteBody: { fontFamily: FONT, fontSize: 16, lineHeight: 24 }, editing: { borderWidth: 1, borderColor: BRAND, borderRadius: 4, padding: 2 },
   siteCta: { marginTop: 0, alignSelf: 'flex-start', paddingVertical: 14, paddingHorizontal: 22, borderWidth: 1.5 }, siteCtaText: { fontFamily: FONT, fontSize: 13, fontWeight: '800', letterSpacing: 1.4 },
   siteCtaFilled: { paddingVertical: 14, paddingHorizontal: 24, borderRadius: 6, alignItems: 'center', alignSelf: 'flex-start' }, siteCtaFilledText: { fontFamily: FONT, fontSize: 14, fontWeight: '800' }, siteSectionTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 30, lineHeight: 36, marginBottom: 8 }, siteSectionBody: { fontFamily: FONT, fontSize: 15, lineHeight: 22, opacity: .68 },
   siteEyebrow: { fontSize: 11, fontWeight: '700', letterSpacing: 3, textTransform: 'uppercase' as any, marginBottom: 8 },
   heroButtons: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 10 },
-  heroTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 18 },
-  heroTag: { paddingVertical: 5, paddingHorizontal: 14, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.15)' },
-  heroTagText: { fontSize: 11, color: 'rgba(255,255,255,.8)', letterSpacing: .4 },
   siteSection: { padding: 28 },
   siteAboutDesktopRow: { flexDirection: 'row', gap: 24 },
   siteAboutCard: { padding: 18, borderRadius: 12, borderWidth: 1 },
@@ -2562,7 +2535,6 @@ const s = StyleSheet.create({
   siteCTABand: { alignItems: 'center', paddingVertical: 40 },
   siteFooter: { padding: 28, paddingBottom: 32 },
   siteFooterCols: { flexDirection: 'row', gap: 24, marginTop: 16 },
-  siteReviewsSection: { padding: 28 },
   siteTrustBadge: { marginTop: 16, paddingVertical: 14, paddingHorizontal: 16, borderWidth: 1, borderRadius: 14, alignItems: 'flex-start' },
   siteTrustTitle: { fontSize: 16, fontWeight: '700' },
   siteTrustLink: { fontSize: 14, fontWeight: '600', marginTop: 8 },
@@ -2570,7 +2542,6 @@ const s = StyleSheet.create({
   siteReviewText: { fontFamily: FONT, fontSize: 14, lineHeight: 20, fontStyle: 'italic', marginBottom: 6 },
   siteReviewAuthor: { fontFamily: FONT, fontSize: 12, opacity: .6 },
   siteContactCta: { padding: 28, borderTopWidth: 1, alignItems: 'center', gap: 14 },
-  siteContactCtaTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 26 },
   siteSvcsListSection: { padding: 28 },
   siteSvcRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth },
   siteSvcRowName: { fontFamily: FONT, fontSize: 15, fontWeight: '700' },
@@ -2606,7 +2577,7 @@ const s = StyleSheet.create({
   modalButtonText: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#1C2832' },
   tools: { position: 'relative', zIndex: 30, width: FS_SLOT * 3, alignItems: 'center' }, toolStack: { alignSelf: 'stretch', alignItems: 'center', flexDirection: 'row' }, toolSlot: { width: FS_SLOT, alignItems: 'center' },
   toolButton: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' }, toolActive: { backgroundColor: C.primary },
-  toolPanel: { position: 'absolute', top: 49, right: 0, width: 186, maxHeight: 400, padding: 12, borderRadius: 23, overflow: 'hidden', borderWidth: 1, borderColor: '#fff', backgroundColor: 'rgba(255,255,255,.92)', shadowColor: '#174E66', shadowOpacity: .18, shadowRadius: 18, zIndex: 200, elevation: 200 }, paletteWrap: { gap: 5 }, paletteScroll: { maxHeight: 274 }, paletteGroup: { paddingBottom: 12 }, paletteHeadingText: { fontFamily: FONT, fontSize: 11, fontWeight: '800', letterSpacing: .8, color: C.inkSoft, textTransform: 'uppercase' }, paletteStickyHeader: { backgroundColor: 'rgba(255,255,255,.95)', paddingVertical: 6, marginBottom: 2 },
+  toolPanel: { position: 'absolute', top: 49, right: 0, width: 186, maxHeight: 400, padding: 12, borderRadius: 23, overflow: 'hidden', borderWidth: 1, borderColor: '#fff', backgroundColor: 'rgba(255,255,255,.92)', shadowColor: '#174E66', shadowOpacity: .18, shadowRadius: 18, zIndex: 200, elevation: 200 }, paletteWrap: { gap: 5 }, paletteScroll: { maxHeight: 274 }, paletteHeadingText: { fontFamily: FONT, fontSize: 11, fontWeight: '800', letterSpacing: .8, color: C.inkSoft, textTransform: 'uppercase' }, paletteStickyHeader: { backgroundColor: 'rgba(255,255,255,.95)', paddingVertical: 6, marginBottom: 2 },
   toolTitle: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: C.ink, textAlign: 'center', marginBottom: 9 }, option: { minHeight: 44, borderRadius: 16, paddingHorizontal: 9, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' },
   dot: { width: 20, height: 20, borderRadius: 10 }, selected: { borderColor: BRAND, backgroundColor: 'rgba(59,130,246,.12)' }, fontOption: { paddingVertical: 10, borderRadius: 14, marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' }, fontOptionText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', textAlign: 'center', color: C.ink },
   sectionOption: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(28,40,50,.18)' }, sectionText: { flex: 1, fontFamily: FONT, fontSize: 12, fontWeight: '600', color: '#1C2832', marginHorizontal: 8 },
@@ -2616,20 +2587,7 @@ const s = StyleSheet.create({
   checkDisabled: { opacity: .58 }, domainError: { marginTop: 10, fontFamily: FONT, fontSize: 13, lineHeight: 18, color: C.danger }, domainResult: { marginTop: 14, padding: 15, borderRadius: 14, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: C.successSoft, borderWidth: 1, borderColor: 'rgba(31,138,84,.3)' }, domainName: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#1C2832' }, domainPrice: { fontFamily: FONT, fontSize: 13, color: C.success, fontWeight: '600', marginTop: 2 },
   formChoice: { marginTop: 22, padding: 17, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: 'rgba(255,255,255,.45)', borderWidth: 1, borderColor: 'rgba(28,40,50,.16)' }, formChoiceIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(59,130,246,.12)' }, formChoiceTitle: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#1C2832' }, formChoiceText: { fontFamily: FONT, fontSize: 13, color: C.inkSoft, marginTop: 3, lineHeight: 18 },
   rail: { position: 'absolute', left: 12, top: '25%', bottom: '25%', justifyContent: 'space-between', alignItems: 'center', zIndex: 140, elevation: 140 }, railButton: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }, railActive: { position: 'absolute', width: 27, height: 27, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: C.primary, borderWidth: 0, shadowColor: C.primary, shadowOpacity: .45, shadowRadius: 8, elevation: 8 }, railDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#1A1E22', borderWidth: 1, borderColor: 'rgba(0,0,0,.32)', shadowColor: '#000', shadowOpacity: .2, shadowRadius: 2 }, railDotOn: { backgroundColor: C.primary, borderColor: '#A9C8FF', shadowColor: C.primary, shadowOpacity: .45, shadowRadius: 5 },
-  reviewCard: { marginBottom: 8, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(28,40,50,.18)', backgroundColor: 'rgba(255,255,255,.45)', overflow: 'hidden' },
-  reviewCardOpen: { borderColor: C.primaryBorder },
-  reviewRow: { minHeight: 50, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   reviewRowText: { flex: 1, fontFamily: FONT, fontSize: 14, fontWeight: '600', color: '#1C2832' },
-  reviewFields: { paddingHorizontal: 14, paddingBottom: 14 },
-  reviewActionsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }, reviewDeleteBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999 }, reviewDeleteText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.danger }, reviewDoneBtn: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 999, backgroundColor: C.primary },
-  reviewDoneText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: '#fff' },
-  reviewSourceCard: { marginTop: 14, padding: 14, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(28,40,50,.18)', backgroundColor: 'rgba(255,255,255,.45)' },
-  reviewSourceTitle: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: '#1C2832' },
-  reviewSourceSub: { fontFamily: FONT, fontSize: 12, lineHeight: 17, color: C.inkSoft, marginTop: 3, marginBottom: 10 },
-  reviewSourceRow: { minHeight: 46, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(28,40,50,.2)', marginBottom: 8 },
-  reviewSourceRowOn: { borderColor: C.primary, backgroundColor: C.primarySoft },
-  reviewSourceName: { flex: 1, fontFamily: FONT, fontSize: 14, fontWeight: '600', color: '#1C2832' },
-  reviewSourceAction: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.primary },
   addReviewBtn: { height: 46, borderRadius: 12, borderWidth: 1, borderColor: C.primaryBorder, backgroundColor: C.primarySoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 18 },
   addReviewText: { fontFamily: FONT, fontWeight: '700', fontSize: 14, color: C.ink },
   galleryGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', gap: 8, marginTop: 8, marginBottom: 12 },
@@ -2640,15 +2598,12 @@ const s = StyleSheet.create({
   adminBackText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.primary },
   dashboardScreen: { flex: 1, paddingTop: Platform.OS === 'ios' ? 58 : 32 },
   dashboardBrandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 16 },
-  dashboardBrand: { fontFamily: FONT, fontSize: 18, fontWeight: '800', letterSpacing: -.3, color: C.ink },
   dashboardTabsTop: { flexDirection: 'row', marginHorizontal: 20, padding: 4, borderRadius: 14, backgroundColor: 'rgba(28,40,50,.07)', marginBottom: 18 },
   dashboardTab: { flex: 1, minHeight: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   dashboardTabOn: { backgroundColor: C.primary },
   dashboardTabText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.inkMuted },
   dashboardTabTextOn: { color: '#fff' },
   dashboardContent: { paddingHorizontal: 20, paddingBottom: 48 },
-  dashboardTitle: { fontFamily: FONT, fontSize: 26, fontWeight: '800', letterSpacing: -.6, color: C.ink, marginBottom: 6 },
-  dashboardIntro: { fontFamily: FONT, fontSize: 15, lineHeight: 21, color: C.inkSoft, marginBottom: 18 },
   dashboardInfoCard: { padding: 18, borderRadius: 16, backgroundColor: C.surface, marginBottom: 12 },
   dashboardCardLabel: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, marginBottom: 4 },
   dashboardCardTitle: { fontFamily: FONT, fontSize: 17, fontWeight: '800', color: C.ink },
@@ -2658,9 +2613,7 @@ const s = StyleSheet.create({
   dashboardEditText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.ink },
   phoneFrame: { width: DASHBOARD_PREVIEW_WIDTH, height: DASHBOARD_PREVIEW_HEIGHT, alignSelf: 'center', borderRadius: 28, borderWidth: 7, borderColor: '#141A1E', overflow: 'hidden', marginVertical: DASHBOARD_PREVIEW_INSET, backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .18, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } },
   makeLiveBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 7, paddingHorizontal: 13, borderRadius: 20, backgroundColor: C.primary },
-  makeLiveBtnLive: { backgroundColor: C.danger },
   makeLiveBtnText: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#fff' },
-  msgsEmpty: { fontFamily: FONT, fontSize: 13, color: C.inkMuted, textAlign: 'center', marginTop: 'auto', marginBottom: 'auto', paddingVertical: 40, lineHeight: 20 },
   messageDay: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, textAlign: 'center', marginTop: 14, marginBottom: 10 },
   messageMeta: { fontFamily: FONT, fontSize: 11, color: C.inkMuted, marginTop: 3, marginBottom: 12 },
   messageMetaSent: { alignSelf: 'flex-end', marginRight: 4 },
@@ -2668,18 +2621,10 @@ const s = StyleSheet.create({
   messageBubble: { padding: 12, paddingHorizontal: 15, borderRadius: 18, maxWidth: '82%', backgroundColor: C.surface },
   messageImage: { width: 180, height: 180, borderRadius: 12 },
   messageBubbleReceived: { alignSelf: 'flex-start', borderBottomLeftRadius: 6 },
-  messageSender: { fontFamily: FONT, fontSize: 12, fontWeight: '800', color: C.primary, marginBottom: 4 },
   messageText: { fontFamily: FONT, fontSize: 15, lineHeight: 21, color: C.ink },
   messageInputFixed: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingTop: 10, paddingHorizontal: 14, paddingBottom: Platform.OS === 'ios' ? 30 : 14, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.lineStrong, backgroundColor: C.surface },
   messageBubbleSent: { backgroundColor: C.primary, alignSelf: 'flex-end', borderBottomRightRadius: 6 },
   messageInputField: { flex: 1, minHeight: 40, maxHeight: 110, paddingHorizontal: 14, paddingTop: 10, paddingBottom: 10, borderRadius: 20, backgroundColor: 'rgba(28,40,50,.06)', fontFamily: FONT, fontSize: 15, color: C.ink },
-  choiceWrap: { gap: 0, paddingTop: 4 },
-  choiceHeading: { fontFamily: FONT, fontSize: 22, lineHeight: 28, fontWeight: '800', letterSpacing: -.6, color: '#1C2832', marginBottom: 8 },
-  choiceSub: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: C.inkSoft, marginBottom: 18 },
-  choiceCard: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 18, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, marginBottom: 12, shadowColor: '#000', shadowOpacity: .06, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } },
-  choiceIcon: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  choiceCardTitle: { fontFamily: FONT, fontSize: 16, fontWeight: '700', color: '#1C2832' },
-  choiceCardText: { fontFamily: FONT, fontSize: 14, lineHeight: 19, color: C.inkSoft, marginTop: 3 },
   buildingWrap: { alignItems: 'center', paddingBottom: 24 },
   buildingPhone: { backgroundColor: '#141A1E', alignItems: 'center', justifyContent: 'center' },
   buildingLogo: { width: 64, height: 70 },
@@ -2706,7 +2651,6 @@ const s = StyleSheet.create({
   planModalPayBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', minHeight: 54, borderRadius: 14, backgroundColor: C.primary, marginTop: 14 },
   planModalPayBtnText: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#fff' },
   fullLoading: { flex: 1, justifyContent: 'center', paddingHorizontal: 32, gap: 14 },
-  fullLoadingBrand: { fontFamily: FONT, fontSize: 34, fontWeight: '900', letterSpacing: 1, color: '#fff', textAlign: 'center', marginBottom: 36 },
   fullLoadingKicker: { fontFamily: FONT, fontSize: 11, fontWeight: '700', letterSpacing: 3, color: 'rgba(255,255,255,.75)', textAlign: 'center' },
   fullLoadingName: { fontFamily: FONT, fontSize: 30, lineHeight: 36, fontWeight: '800', color: '#fff', textAlign: 'center', marginBottom: 18 },
   fullLoadingList: { gap: 12 },
@@ -2718,7 +2662,6 @@ const s = StyleSheet.create({
   fsBackBtn: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
   fsTickBtn: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: C.primary },
   fsBrowserRight: { width: FS_SLOT * 4, flexDirection: 'row', alignItems: 'center' }, fsSlot: { width: FS_SLOT, alignItems: 'center' },
-  dashboardLogo: { width: 30, height: 30, borderRadius: 9 },
   statusPill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 11, paddingVertical: 6, borderRadius: 999 },
   statusDot: { width: 7, height: 7, borderRadius: 4 },
   statusPillText: { fontFamily: FONT, fontSize: 12, fontWeight: '800' },
@@ -2732,15 +2675,12 @@ const s = StyleSheet.create({
   messageSendBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: C.primary },
   siteLogo: { width: 18, height: 18, borderRadius: 4 },
   siteGalleryImg: { width: '31.5%', aspectRatio: 1, borderRadius: 6 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
   serviceHeadRow: { flexDirection: 'row', gap: 10, marginTop: -4, marginBottom: 2 },
   serviceHead: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, paddingLeft: 4 },
-  selectInput: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   fieldOptional: { fontWeight: '600', color: C.inkMuted, fontSize: 12 },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginBottom: 16 },
   typeChip: { paddingHorizontal: 9, paddingVertical: 8 },
   typeChipText: { fontSize: 13 },
-  chipRow: { gap: 8, paddingBottom: 12 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999, backgroundColor: C.field, borderWidth: 1, borderColor: C.line },
   chipOn: { backgroundColor: C.primary, borderColor: C.primary },
   chipText: { fontFamily: FONT, fontSize: 14, fontWeight: '600', color: C.ink },
@@ -2761,18 +2701,15 @@ const s = StyleSheet.create({
   sendI: { alignItems: 'center', gap: 2 },
   sendIDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#fff' },
   sendIStem: { width: 6, height: 13, borderRadius: 3, backgroundColor: '#fff' },
-  offerCard: { backgroundColor: '#fff', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: C.line },
-  savedNote: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, marginRight: 4 },
-  selectText: { fontFamily: FONT, fontSize: 16, color: C.ink },
-  typeRow: { minHeight: 50, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderRadius: 12 },
-  typeRowOn: { backgroundColor: C.primarySoft },
-  typeRowText: { fontFamily: FONT, fontSize: 16, fontWeight: '600', color: C.ink },
+  listRow: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 8, borderRadius: 14, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line },
+  listRowSub: { fontFamily: FONT, fontSize: 13, color: C.inkMuted, marginTop: 2 },
+  sheetDelete: { alignItems: 'center', paddingTop: 14 },
+  sheetDeleteText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.danger },
   deviceToggle: { flexDirection: 'row', padding: 3, borderRadius: 12, backgroundColor: 'rgba(28,40,50,.07)' },
   deviceToggleDark: { backgroundColor: 'rgba(255,255,255,.12)' },
   deviceToggleBtn: { alignItems: 'center', justifyContent: 'center', width: 36, height: 34, borderRadius: 9 },
   deviceToggleBtnOn: { backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 } },
   deviceToggleBtnOnDark: { backgroundColor: '#fff' },
-  deviceToggleText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.inkMuted },
   desktopFrame: { alignSelf: 'stretch', marginHorizontal: 0, borderRadius: 12, overflow: 'hidden', marginBottom: 18, backgroundColor: '#fff', borderWidth: 6, borderColor: '#141A1E', shadowColor: '#000', shadowOpacity: .18, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } },
   fullPreview: { flex: 1, backgroundColor: '#E9ECEF', paddingTop: Platform.OS === 'ios' ? 54 : 24 },
   fullPreviewBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingBottom: 10 },
@@ -2782,15 +2719,12 @@ const s = StyleSheet.create({
   desktopBar: { height: 26, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#E9ECEF' },
   desktopBarUrl: { fontFamily: FONT, fontSize: 11, color: C.inkMuted, maxWidth: '60%' },
   editorToggleRow: { alignItems: 'center', paddingVertical: 10, backgroundColor: '#0E1A24' },
-  editorDesktop: { borderRadius: 10, overflow: 'hidden' },
-  siteHeroDesktop: { height: 520, padding: 40 },
   cardLink: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, alignSelf: 'flex-start' },
   cardLinkText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.primary },
   editMenu: { position: 'absolute', top: 46, right: 0, width: 250, padding: 6, borderRadius: 14, backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .14, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 12, zIndex: 50 },
   editMenuItem: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 10 },
   editMenuTitle: { fontFamily: FONT, fontSize: 15, fontWeight: '700', color: C.ink },
   editMenuSub: { fontFamily: FONT, fontSize: 12, color: C.inkMuted, marginTop: 1 },
-  closeEditBtn: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(28,40,50,.08)' },
   editorDesktopStage: { flex: 1, justifyContent: 'center', paddingHorizontal: 20 },
   toolsLandscape: { flexDirection: 'row', alignItems: 'center' },
   toolSlotLandscape: { marginHorizontal: 5 },
