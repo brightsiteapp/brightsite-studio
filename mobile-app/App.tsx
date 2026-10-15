@@ -1050,8 +1050,8 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
   const websiteBounce = useMemo(() => PanResponder.create({
     onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 8 && Math.abs(g.dy) > Math.abs(g.dx),
     onPanResponderMove: (_, g) => websiteDrag.setValue(g.dy * .35),
-    onPanResponderRelease: () => Animated.spring(websiteDrag, { toValue: 0, damping: 16, stiffness: 180, useNativeDriver: true }).start(),
-    onPanResponderTerminate: () => Animated.spring(websiteDrag, { toValue: 0, damping: 16, stiffness: 180, useNativeDriver: true }).start(),
+    onPanResponderRelease: () => Animated.timing(websiteDrag, { toValue: 0, duration: 380, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(),
+    onPanResponderTerminate: () => Animated.timing(websiteDrag, { toValue: 0, duration: 380, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(),
   }), []);
   const [fullPage, setFullPage] = useState(0);
   const siteUrl = data.website?.trim() || `https://${domain}${suffix}`;
@@ -2434,7 +2434,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             </ScrollView>
             <View pointerEvents="none" style={s.fixedPrompt}>
               {!!validationMessage && isActive && <Text style={s.validationText}>{validationMessage}</Text>}
-              {deckStep.id !== 'reviews' && !editingInfo && <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : 'Swipe up to save'}</Text></View>}
+              {deckStep.id !== 'reviews' && !editingInfo && <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : ['hours', 'business', 'contact'].includes(deckStep.id) ? 'Swipe up to save' : 'Swipe the title up to continue'}</Text></View>}
             </View>
           </Animated.View>;
         })}
