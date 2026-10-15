@@ -322,6 +322,7 @@ function Services({ items, setItems }: any) {
   const cids = items.reduce((acc: string[], it: any) => { if (!acc.length || acc[acc.length - 1] !== it.cid) acc.push(it.cid); return acc; }, [] as string[]);
   return <View>
     <View style={{ backgroundColor: '#fff', borderRadius: 16, paddingHorizontal: 14, borderWidth: 1, borderColor: C.line }}>
+    <View style={[s.serviceHeadRow, { paddingTop: 14, marginBottom: 0 }]}><Text style={[s.serviceHead, { flex: 1.9 }]}>Service</Text><Text style={[s.serviceHead, { flex: 1.2 }]}>Time</Text><Text style={[s.serviceHead, { flex: .95 }]}>Price</Text><View style={{ width: 28 }} /></View>
     {cids.map((cid: string, ci: number) => {
       const sectionItems = items.map((it: any, idx: number) => ({ ...it, _idx: idx })).filter((it: any) => it.cid === cid);
       const svcCount = sectionItems.filter((it: any) => it.name).length;
@@ -335,7 +336,7 @@ function Services({ items, setItems }: any) {
         </View>
         {!isOpen && <Text style={{ fontFamily: FONT, fontSize: 12, color: C.inkMuted, marginTop: 6, marginLeft: 24 }}>{svcCount} service{svcCount !== 1 ? 's' : ''}</Text>}
         {isOpen && <View style={{ marginTop: 4 }}>
-          {ci === 0 ? <View style={[s.serviceHeadRow, { marginTop: 10 }]}><Text style={[s.serviceHead, { flex: 1.9 }]}>Service</Text><Text style={[s.serviceHead, { flex: 1.2 }]}>Time</Text><Text style={[s.serviceHead, { flex: .95 }]}>Price</Text><View style={{ width: 28 }} /></View> : <View style={{ height: 10 }} />}
+          <View style={{ height: 10 }} />
           {sectionItems.map((item: any) => <View key={item._idx} style={s.serviceRow}>
             <TextInput value={item.name} onChangeText={v => update(item._idx, 'name', v)} placeholder="e.g. Haircut" placeholderTextColor={C.placeholder} style={[s.serviceInput, { flex: 1.9 }]} />
             <TextInput value={item.duration} onChangeText={v => update(item._idx, 'duration', v)} placeholder="45 mins" placeholderTextColor={C.placeholder} style={[s.serviceInput, { flex: 1.2 }]} />
@@ -1044,6 +1045,14 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
   const [showPassword, setShowPassword] = useState(false);
   const [showEditMenu, setShowEditMenu] = useState(false);
   const [fullPreview, setFullPreview] = useState(false);
+  // the Website tab fits the screen, so it rubber-bands and springs back instead of scrolling
+  const websiteDrag = useRef(new Animated.Value(0)).current;
+  const websiteBounce = useMemo(() => PanResponder.create({
+    onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 8 && Math.abs(g.dy) > Math.abs(g.dx),
+    onPanResponderMove: (_, g) => websiteDrag.setValue(g.dy * .35),
+    onPanResponderRelease: () => Animated.spring(websiteDrag, { toValue: 0, damping: 16, stiffness: 180, useNativeDriver: true }).start(),
+    onPanResponderTerminate: () => Animated.spring(websiteDrag, { toValue: 0, damping: 16, stiffness: 180, useNativeDriver: true }).start(),
+  }), []);
   const [fullPage, setFullPage] = useState(0);
   const siteUrl = data.website?.trim() || `https://${domain}${suffix}`;
   const [showPlanModal, setShowPlanModal] = useState(false);
@@ -1222,7 +1231,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           <ChangePasswordModal visible={showPassword} onClose={() => setShowPassword(false)} />
           <Pressable onPress={confirmSignOut} style={({ pressed }) => [s.secondaryBtn, pressed && s.pressed]}><Ionicons name="log-out-outline" size={17} color={C.danger} /><Text style={[s.secondaryBtnText, { color: C.danger }]}>Log out</Text></Pressable>
         </>}
-        {tab === 'Website' && <>
+        {tab === 'Website' && <Animated.View {...websiteBounce.panHandlers} style={{ transform: [{ translateY: websiteDrag }] }}>
           <View style={[s.dashboardWebsiteHead, { zIndex: 20 }]}>
             {(isReady || isLive || isPublishing) && !isBuilding
               ? isLive
@@ -1276,7 +1285,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
                 <View style={s.previewOpenBadge}><Ionicons name={isLive ? 'open-outline' : 'expand-outline'} size={12} color="#fff" /><Text style={s.previewOpenText}>{isLive ? 'Open site' : 'Tap to view'}</Text></View>
               </Pressable>}
             </>}
-        </>}
+        </Animated.View>}
       </ScrollView>}
     </View>
     <Modal visible={fullPreview} animationType="slide" presentationStyle="fullScreen" onRequestClose={() => setFullPreview(false)}>
@@ -1463,7 +1472,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const loadingFades = useRef([0, 1, 2, 3].map(() => new Animated.Value(0))).current;
   const designReveal = useRef(new Animated.Value(0)).current;
   const transitioning = useRef(false);
-  const step = steps[index];
+  const step = steps[Math.min(index, steps.length - 1)];
 
   const hydrateFromRecord = (record: Record<string, any>, accountEmail: string) => {
     businessRecord.current = record;
@@ -1620,8 +1629,10 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         if (draft.reviewsList) setReviewsList(draft.reviewsList);
         if (draft.domain) setDomain(draft.domain);
         if (typeof draft.index === 'number' && draft.index > 0) {
-          setIndex(draft.index);
-          motion.setValue(draft.index * CARD_TRAVEL);
+          // drafts saved before the domain step was removed can point past the last card
+          const resumeAt = Math.min(draft.index, steps.length - 1);
+          setIndex(resumeAt);
+          motion.setValue(resumeAt * CARD_TRAVEL);
           return;
         }
       }
@@ -1981,7 +1992,9 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     onMoveShouldSetPanResponder: (_, g) => {
       if (keyboardVisible || stepEditMode) return false;
       const inHeader = g.y0 < CARD_TOP + 80;
-      const inFooter = !SWIPE_LOCK_STEPS.includes(step.id) && g.y0 > SCREEN_HEIGHT - CARD_BOTTOM - 48;
+      // cards with scrolling content only change from the header, so a scroll can't also drag the card
+      const scrollsContent = !['hours', 'business', 'contact'].includes(step.id);
+      const inFooter = !scrollsContent && g.y0 > SCREEN_HEIGHT - CARD_BOTTOM - 48;
       return (inHeader || inFooter) && Math.abs(g.dy) > 12;
     },
     onPanResponderTerminationRequest: () => false,
