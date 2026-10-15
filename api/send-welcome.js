@@ -27,12 +27,14 @@ function userHeaders(token, extra = {}) {
 export default async function handler(request, response) {
   response.setHeader('Cache-Control', 'private, no-store');
 
-  if (request.method === 'OPTIONS') {
-    response.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = request.headers.origin;
+  if (origin === 'https://brightsite.app' || origin === 'https://www.brightsite.app') {
+    response.setHeader('Access-Control-Allow-Origin', origin);
     response.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
     response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    return response.status(204).end();
+    response.setHeader('Vary', 'Origin');
   }
+  if (request.method === 'OPTIONS') return response.status(204).end();
 
   if (request.method !== 'POST') return response.status(405).json({ error: 'Method not allowed' });
 
@@ -77,8 +79,8 @@ export default async function handler(request, response) {
     body: JSON.stringify({ business_id: slug, sender: 'admin', body: welcomeBody }),
   });
   if (!insertRes.ok) {
-    const err = await insertRes.text();
-    return response.status(500).json({ error: 'Insert failed', detail: err });
+    console.error('Welcome message insert failed', insertRes.status, await insertRes.text());
+    return response.status(500).json({ error: 'Insert failed' });
   }
 
   // Save push token alongside existing data using user's token

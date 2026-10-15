@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Exclude non-site files from the Pages artifact
-        run: rm -rf node_modules tests .vercel api
+        run: rm -rf node_modules tests .vercel api supabase desktop-app desktop-app-v2 mobile-app notify-lead-worker workers docs fish-speech .claude README.md HERO-BRAND-COMPOSITOR.md package.json package-lock.json serve.mjs
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .
