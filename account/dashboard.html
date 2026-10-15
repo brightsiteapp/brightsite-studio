@@ -961,7 +961,7 @@
     <div class="msgs-heading-wrap"><h2>Messages</h2></div>
     <div class="msgs-list" id="msgsList">
       <div class="msgs-welcome" id="msgsWelcome" hidden>
-        <div class="msgs-bubble them" id="msgsWelcomeBubble"></div>
+        <div class="msgs-bubble them" id="msgsWelcomeBubble" style="white-space:pre-line"></div>
         <span class="msgs-sender">Tom · BrightSite</span>
       </div>
       <div class="msgs-error" id="msgsError" hidden></div>
@@ -1699,8 +1699,8 @@
     var firstName = (raw.fullName || raw.name || '').trim().split(' ')[0] || 'there';
     var isDesigner = raw.buildChoice === 'designer' || /Build choice: designer/i.test(raw.notes || '');
     var body = isDesigner
-      ? 'Hey ' + firstName + ', welcome to BrightSite! My name is Tom and I’ll be your designer and support. I’m working on your preview now, so let me know if you have any requests or questions. When you’re ready, just hit Make Live to put your website online!'
-      : 'Hey ' + firstName + ', welcome to BrightSite! My name is Tom and I’ll be your support. Love your design! Let me know if you have any requests or questions. When you’re ready, just hit Make Live to put your website online!';
+      ? 'Hey ' + firstName + ', welcome to BrightSite! I’m Tom, your designer.\n\n• I’m building your website now\n• You’ll get a notification when it’s ready to review\n• If I need anything else to build it, I’ll message you here\n• Got ideas or requests? Send them here as notes anytime'
+      : 'Hey ' + firstName + ', welcome to BrightSite! I’m Tom, your support.\n\n• Your design is saved and ready\n• Hit Make Live whenever you want it online\n• You’ll get a notification if I need anything from you\n• Got ideas or requests? Send them here as notes anytime';
     var wrap = document.getElementById('msgsWelcome');
     var bubble = document.getElementById('msgsWelcomeBubble');
     if (wrap && bubble) { bubble.textContent = body; wrap.hidden = false; }
@@ -2339,7 +2339,7 @@
         }
         var list = document.getElementById('msgsList');
         rows = rows.filter(function(msg){
-          return !(msg.sender === 'admin' && msg.body && msg.body.startsWith('Hey ') && msg.body.indexOf('welcome to BrightSite') !== -1);
+          return !(msg.sender === 'admin' && msg.body && ((msg.body.startsWith('Hey ') && msg.body.indexOf('welcome to BrightSite') !== -1) || msg.body.startsWith('Welcome to BrightSite! 👋')));
         });
         rows.forEach(function(msg){
           if (msg.created_at > (msgsLastTs || '')) msgsLastTs = msg.created_at;

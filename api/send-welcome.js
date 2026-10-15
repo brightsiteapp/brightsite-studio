@@ -59,8 +59,8 @@ export default async function handler(request, response) {
   const firstName = (fullName || existingData.fullName || '').trim().split(' ')[0] || 'there';
   const isDesigner = buildChoice === 'designer' || existingData.buildChoice === 'designer';
   const welcomeBody = isDesigner
-    ? `Hey ${firstName}, welcome to BrightSite! My name is Tom and I'll be your designer and support. I'm working on your preview now, so let me know if you have any requests or questions. When you're ready, just hit Make Live to put your website online!`
-    : `Hey ${firstName}, welcome to BrightSite! My name is Tom and I'll be your support. Love your design! Let me know if you have any requests or questions. When you're ready, just hit Make Live to put your website online!`;
+    ? `Hey ${firstName}, welcome to BrightSite! I'm Tom, your designer.\n\n• I'm building your website now\n• You'll get a notification when it's ready to review\n• If I need anything else to build it, I'll message you here\n• Got ideas or requests? Send them here as notes anytime`
+    : `Hey ${firstName}, welcome to BrightSite! I'm Tom, your support.\n\n• Your design is saved and ready\n• Hit Make Live whenever you want it online\n• You'll get a notification if I need anything from you\n• Got ideas or requests? Send them here as notes anytime`;
 
   // Check if welcome already sent (idempotency) — using user's token, RLS allows reading own messages
   const existCheck = await fetch(
@@ -101,7 +101,7 @@ export default async function handler(request, response) {
       body: JSON.stringify({
         to: resolvedPushToken,
         title: 'Welcome to BrightSite! 👋',
-        body: `Hey ${firstName}, your preview is being prepared. Tap to open your messages.`,
+        body: `Hey ${firstName}, Tom has sent you a message. Tap to read it.`,
         sound: 'default',
         data: { screen: 'messages' },
       }),

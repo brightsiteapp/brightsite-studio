@@ -921,7 +921,7 @@ function FadeIn({ children }: { children: React.ReactNode }) {
 
 function welcomeText(fullName: string | undefined, buildChoice: string | null | undefined) {
   const designer = buildChoice === 'designer';
-  return `Hey ${fullName?.trim().split(' ')[0] || 'there'}, welcome to BrightSite! My name is Tom and I’ll be your ${designer ? 'designer and support' : 'support'}. ${designer ? 'I’m working on your preview now, so let me know if you have any requests or questions.' : 'Love your design! Let me know if you have any requests or questions.'} When you’re ready, just hit Make Live to put your website online!`;
+  return `Hey ${fullName?.trim().split(' ')[0] || 'there'}, welcome to BrightSite! ${designer ? 'I’m Tom, your designer.\n\n• I’m building your website now\n• You’ll get a notification when it’s ready to review\n• If I need anything else to build it, I’ll message you here\n• Got ideas or requests? Send them here as notes anytime' : 'I’m Tom, your support.\n\n• Your design is saved and ready\n• Hit Make Live whenever you want it online\n• You’ll get a notification if I need anything from you\n• Got ideas or requests? Send them here as notes anytime'}`;
 }
 
 function MessageThread({ session, slug, viewer, otherName, placeholder, intro }: { session: any; slug: string; viewer: 'customer' | 'admin'; otherName: string; placeholder: string; intro?: React.ReactNode }) {
@@ -1021,7 +1021,8 @@ function MessageThread({ session, slug, viewer, otherName, placeholder, intro }:
   };
 
   // Hide DB copies of the welcome message — it's always shown via the intro bubble
-  const visible = messages.filter(m => !(m.sender === 'admin' && m.body.startsWith('Hey ') && m.body.includes('welcome to BrightSite')));
+  // our welcome is pinned as the intro bubble, and a database trigger also inserts an old welcome
+  const visible = messages.filter(m => !(m.sender === 'admin' && ((m.body.startsWith('Hey ') && m.body.includes('welcome to BrightSite')) || m.body.startsWith('Welcome to BrightSite! 👋'))));
   return <>
     <ScrollView ref={scrollRef} contentContainerStyle={s.dashboardContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" onContentSizeChange={() => scrollToLatest()}>
       {intro}
@@ -1910,6 +1911,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           setAppScreen('design-editor');
         } else {
           setWebsiteStatus('building');
+          setTab('Messages');
           setAppScreen('dashboard');
         }
       });
@@ -2281,7 +2283,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     setAppScreen('onboarding');
     setIndex(steps.findIndex(item => item.id === 'domain'));
     motion.setValue(steps.findIndex(item => item.id === 'domain') * CARD_TRAVEL);
-  }} media={media} onConfirm={() => { if (websiteStatus !== 'live') setWebsiteStatus('ready'); void saveDesign(); setTab('Website'); setAppScreen('dashboard'); }} /></FadeIn>;
+  }} media={media} onConfirm={() => { if (websiteStatus !== 'live') setWebsiteStatus('ready'); void saveDesign(); setTab(editFrom === 'dashboard' ? 'Website' : 'Messages'); setAppScreen('dashboard'); }} /></FadeIn>;
 
   if (appScreen === 'choose') {
     const canSend = !!data.fullName.trim() && (!!(data.reviewSource === 'Google' && data.reviewLink.trim()) || !!data.facebook.trim() || !!data.website.trim());
