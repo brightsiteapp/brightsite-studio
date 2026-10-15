@@ -228,9 +228,8 @@ const steps: Step[] = [
   { id: 'prices', title: 'Services & prices', icon: 'pricetag-outline' },
   { id: 'media', title: 'Photos & logo', icon: 'images-outline' },
   { id: 'reviews', title: 'Reviews', icon: 'star-outline' },
-  { id: 'domain', title: 'Choose a domain', icon: 'globe-outline' },
 ];
-const setupStepIndexes = Array.from({ length: 7 }, (_, i) => i + 1);
+const setupStepIndexes = Array.from({ length: 6 }, (_, i) => i + 1);
 const paletteGroups = [
   { name: 'Light', options: [['#B98B5F', '#F5EFE5', '#201B18'], ['#C78561', '#FFF5EC', '#2D1811'], ['#8E9B7A', '#F2F5EC', '#20321D'], ['#A47A57', '#F6F0E8', '#271C15'], ['#7697A6', '#EDF6F7', '#162D35'], ['#C59C7B', '#FCF8F2', '#302015']] },
   { name: 'Dark', options: [['#D6A56B', '#15110E', '#F3EADF'], ['#78BDCF', '#0C2028', '#E7F8FC'], ['#B2C798', '#142016', '#F2F6ED'], ['#CE8471', '#261412', '#FAEDEA'], ['#A19BDB', '#171529', '#F2F1FF'], ['#D7B179', '#211A11', '#FBF1DF']] },
@@ -286,19 +285,8 @@ function Field({ label, optional = false, value, onChangeText, placeholder, keyb
 
 const Intro = ({ children }: any) => <Text style={s.intro}>{children}</Text>;
 
-const HOURS_PRESETS = [
-  { label: 'Mon–Fri 9–5', apply: (i: number) => ({ enabled: i < 5, start: '9:00', end: '17:00' }) },
-  { label: 'Mon–Sat 9–5:30', apply: (i: number) => ({ enabled: i < 6, start: '9:00', end: '17:30' }) },
-  { label: 'Every day 10–6', apply: () => ({ enabled: true, start: '10:00', end: '18:00' }) },
-];
-
 function Hours({ rows, setRows }: any) {
-  const first = rows.find((r: any) => r.enabled) || rows[0];
   return <>
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chipRow} keyboardShouldPersistTaps="handled">
-      {HOURS_PRESETS.map(p => <Pressable key={p.label} onPress={() => setRows(rows.map((r: any, i: number) => ({ ...r, ...p.apply(i) })))} style={({ pressed }) => [s.chip, pressed && s.chipOn]}><Text style={s.chipText}>{p.label}</Text></Pressable>)}
-      <Pressable onPress={() => setRows(rows.map((r: any) => r.enabled ? { ...r, start: first.start, end: first.end } : r))} style={({ pressed }) => [s.chip, pressed && s.chipOn]}><Ionicons name="copy-outline" size={13} color={C.ink} /><Text style={s.chipText}>Copy {first.label.slice(0, 3)} to all</Text></Pressable>
-    </ScrollView>
     <View style={s.hoursCard}>{rows.map((row: any, i: number) =>
     <View style={[s.hoursRow, i === rows.length - 1 && s.hoursRowLast]} key={row.label}>
       <Text style={s.hoursDay}>{row.label.slice(0, 3)}</Text>
@@ -339,16 +327,13 @@ function Services({ items, setItems }: any) {
       const isOpen = !collapsed[cid];
       const sectionName = sectionItems[0]?.section || '';
       return <View key={cid} style={[ci > 0 && { marginTop: 14 }, { backgroundColor: '#fff', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: C.line }]}>
-        <Pressable onPress={() => toggleCollapse(cid)} style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Ionicons name={isOpen ? 'chevron-down' : 'chevron-forward'} size={16} color={C.inkSoft} style={{ marginRight: 6 }} />
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: FONT, fontWeight: '700', fontSize: 15, color: C.ink }}>{sectionName || (ci === 0 ? 'Category' : `Category ${ci + 1}`)}</Text>
-            {!isOpen && <Text style={{ fontFamily: FONT, fontSize: 12, color: C.inkMuted, marginTop: 2 }}>{svcCount} service{svcCount !== 1 ? 's' : ''}</Text>}
-          </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Pressable onPress={() => toggleCollapse(cid)} hitSlop={10} accessibilityLabel={isOpen ? 'Collapse category' : 'Expand category'}><Ionicons name={isOpen ? 'chevron-down' : 'chevron-forward'} size={16} color={C.inkSoft} /></Pressable>
+          <TextInput value={sectionName} onChangeText={v => setItems(items.map((it: any) => it.cid === cid ? { ...it, section: v } : it))} placeholder={ci === 0 ? 'Category name, e.g. Massages' : 'Category name, e.g. Waxing'} placeholderTextColor={C.placeholder} autoCapitalize="words" style={[s.input, { flex: 1, minHeight: 46, fontWeight: '700' }]} />
           {ci > 0 && <Pressable onPress={() => removeSection(cid)} hitSlop={8} accessibilityLabel="Remove category"><Ionicons name="trash-outline" size={17} color={C.danger} /></Pressable>}
-        </Pressable>
-        {isOpen && <View style={{ marginTop: 12 }}>
-          <Field label="Category name" value={sectionName} onChangeText={(v: string) => setItems(items.map((it: any) => it.cid === cid ? { ...it, section: v } : it))} placeholder={ci === 0 ? 'e.g. Massages' : 'e.g. Waxing'} />
+        </View>
+        {!isOpen && <Text style={{ fontFamily: FONT, fontSize: 12, color: C.inkMuted, marginTop: 6, marginLeft: 24 }}>{svcCount} service{svcCount !== 1 ? 's' : ''}</Text>}
+        {isOpen && <View style={{ marginTop: 4 }}>
           <View style={[s.serviceHeadRow, { marginTop: 10 }]}><Text style={[s.serviceHead, { flex: 1.9 }]}>Service</Text><Text style={[s.serviceHead, { flex: 1.2 }]}>Time</Text><Text style={[s.serviceHead, { flex: .95 }]}>Price</Text><View style={{ width: 28 }} /></View>
           {sectionItems.map((item: any) => <View key={item._idx} style={s.serviceRow}>
             <TextInput value={item.name} onChangeText={v => update(item._idx, 'name', v)} placeholder="e.g. Haircut" placeholderTextColor={C.placeholder} style={[s.serviceInput, { flex: 1.9 }]} />
@@ -1052,24 +1037,42 @@ function MessageThread({ session, slug, viewer, otherName, placeholder, intro }:
   </>;
 }
 
-function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, onEdit, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, onPaid, saveError, planAnnual, media, isPaying, buildChoice, session, slug, onAdminBack }: any) {
+function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, onEdit, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, onPaid, saveError, planAnnual, media, isPaying, buildChoice, session, slug, onAdminBack, onDomainChosen }: any) {
   const [previewMode, setPreviewMode] = useState<'mobile' | 'desktop'>('mobile');
   const [showPassword, setShowPassword] = useState(false);
   const [showEditMenu, setShowEditMenu] = useState(false);
+  const [fullPreview, setFullPreview] = useState(false);
+  const [fullPage, setFullPage] = useState(0);
   const siteUrl = data.website?.trim() || `https://${domain}${suffix}`;
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [domainPriceLabel, setDomainPriceLabel] = useState<string | null>(null);
   const [domainPriceLoading, setDomainPriceLoading] = useState(false);
-  const openPlanModal = async () => {
+  const [planStep, setPlanStep] = useState<'domain' | 'plan'>('domain');
+  const [liveDomain, setLiveDomain] = useState(domain || '');
+  const [liveSuffix, setLiveSuffix] = useState(suffix || '.co.uk');
+  const [domainError, setDomainError] = useState('');
+  const [domainAvailable, setDomainAvailable] = useState(false);
+  const openPlanModal = () => {
+    setPlanStep('domain');
+    setDomainError('');
+    setDomainAvailable(false);
     setShowPlanModal(true);
-    setDomainPriceLoading(true);
+  };
+  const checkLiveDomain = async () => {
+    const name = liveDomain.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+    if (!name) { setDomainError('Type the name you want first.'); return; }
+    setLiveDomain(name);
+    setDomainPriceLoading(true); setDomainError(''); setDomainAvailable(false);
     try {
-      const res = await fetch(`${DOMAIN_API}?domain=${encodeURIComponent(domain + suffix)}`);
+      const res = await fetch(`${DOMAIN_API}?domain=${encodeURIComponent(name + liveSuffix)}`);
       const result = await res.json();
-      setDomainPriceLabel(res.ok && result.priceLabel ? result.priceLabel : null);
-    } catch { setDomainPriceLabel(null); }
+      if (!res.ok || !result.available) throw new Error(result.error || 'That domain is taken. Try another name or ending.');
+      setDomainPriceLabel(result.priceLabel || null);
+      setDomainAvailable(true);
+    } catch (error: any) { setDomainError(error.message || 'Couldn’t check that domain right now.'); }
     finally { setDomainPriceLoading(false); }
   };
+  const confirmDomain = () => { onDomainChosen?.(liveDomain, liveSuffix); setPlanStep('plan'); };
   const [annual, setAnnual] = useState(!!planAnnual);
   const [payBusy, setPayBusy] = useState(false);
   const [payError, setPayError] = useState('');
@@ -1081,7 +1084,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
       const res = await fetch(PAYMENT_SHEET_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: 'essential', billing: annual ? 'annual' : 'monthly', email, slug, domain: domain ? domain + suffix : '' }),
+        body: JSON.stringify({ plan: 'essential', billing: annual ? 'annual' : 'monthly', email, slug, domain: liveDomain ? liveDomain + liveSuffix : '' }),
       });
       const json = await res.json();
       if (!res.ok || !json.paymentIntentClientSecret) throw new Error(json.error || 'Could not set up payment.');
@@ -1175,6 +1178,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
     { text: 'Cancel', style: 'cancel' },
     { text: 'Take offline', style: 'destructive', onPress: () => onTakeOffline?.() },
   ]);
+  const openPreview = () => { if (isLive) void Linking.openURL(siteUrl); else { setFullPage(0); setFullPreview(true); } };
   const goLive = () => { if (isPaying) void onGoLive?.(); else void openPlanModal(); };
   const confirmSignOut = () => Alert.alert('Log out?', 'Your website and details stay saved to your account.', [
     { text: 'Cancel', style: 'cancel' },
@@ -1256,33 +1260,58 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
               </View>
             </View>
             : <>
-              {previewMode === 'desktop' ? <Pressable disabled={!isLive} onPress={() => void Linking.openURL(siteUrl)} style={s.desktopFrame}>
+              {previewMode === 'desktop' ? <Pressable onPress={openPreview} style={s.desktopFrame}>
                 <View style={s.desktopBar}><View style={s.previewDots}><View style={s.previewDot} /><View style={s.previewDot} /><View style={s.previewDot} /></View><Text style={s.desktopBarUrl} numberOfLines={1}>{domain ? `${domain}${suffix}` : 'yourwebsite.co.uk'}</Text></View>
                 <View pointerEvents="none" style={{ height: DESKTOP_VIEW_H, overflow: 'hidden' }}>
                   <ScaledView virtualWidth={DESKTOP_WIDTH} width={DESKTOP_VIEW_W}><SitePreview desktop palette={palette} font={font} page={0} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} media={media} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></ScaledView>
                 </View>
-                {isLive && <View style={s.previewOpenBadge}><Ionicons name="open-outline" size={12} color="#fff" /><Text style={s.previewOpenText}>Open site</Text></View>}
+                <View style={s.previewOpenBadge}><Ionicons name={isLive ? 'open-outline' : 'expand-outline'} size={12} color="#fff" /><Text style={s.previewOpenText}>{isLive ? 'Open site' : 'Tap to view'}</Text></View>
               </Pressable>
-              : <Pressable disabled={!isLive} onPress={() => void Linking.openURL(siteUrl)} style={s.phoneFrame}>
+              : <Pressable onPress={openPreview} style={s.phoneFrame}>
                 <View pointerEvents="none" style={{ overflow: 'hidden', flex: 1 }}>
                   <ScaledView virtualWidth={MOBILE_WIDTH} width={DASHBOARD_PREVIEW_WIDTH - 14}><SitePreview palette={palette} font={font} page={0} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} media={media} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></ScaledView>
                 </View>
-                {isLive && <View style={s.previewOpenBadge}><Ionicons name="open-outline" size={12} color="#fff" /><Text style={s.previewOpenText}>Open site</Text></View>}
+                <View style={s.previewOpenBadge}><Ionicons name={isLive ? 'open-outline' : 'expand-outline'} size={12} color="#fff" /><Text style={s.previewOpenText}>{isLive ? 'Open site' : 'Tap to view'}</Text></View>
               </Pressable>}
             </>}
         </>}
       </ScrollView>}
     </View>
+    <Modal visible={fullPreview} animationType="slide" presentationStyle="fullScreen" onRequestClose={() => setFullPreview(false)}>
+      <View style={s.fullPreview}>
+        <View style={s.fullPreviewBar}>
+          <Pressable onPress={() => setFullPreview(false)} hitSlop={12} style={s.fullPreviewBack} accessibilityLabel="Close preview"><Ionicons name="chevron-back" size={20} color={C.ink} /></Pressable>
+          <View style={s.fullPreviewUrl}><Ionicons name="lock-closed" size={11} color={C.inkMuted} /><Text style={s.fullPreviewUrlText} numberOfLines={1}>{domain ? `${domain}${suffix}` : 'preview.brightsite.app'}</Text></View>
+          <View style={{ width: 32 }} />
+        </View>
+        <ScrollView style={{ flex: 1, backgroundColor: '#fff' }} showsVerticalScrollIndicator={false}>
+          <ScaledView virtualWidth={MOBILE_WIDTH} width={SCREEN_WIDTH}><SitePreview palette={palette} font={font} page={fullPage} onPageChange={setFullPage} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} media={media} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></ScaledView>
+        </ScrollView>
+      </View>
+    </Modal>
     <Modal visible={showPlanModal} transparent animationType="slide" onRequestClose={() => setShowPlanModal(false)}>
       <View style={s.planModalOverlay}>
         <View style={s.planModalBox}>
-          <View style={s.planModalHeader}><Text style={s.planModalTitle}>Choose your plan</Text><Pressable onPress={() => setShowPlanModal(false)} hitSlop={10}><Ionicons name="close" size={22} color={C.ink} /></Pressable></View>
+          {planStep === 'domain' ? <>
+          <View style={s.planModalHeader}><Text style={s.planModalTitle}>Choose your domain</Text><Pressable onPress={() => setShowPlanModal(false)} hitSlop={10}><Ionicons name="close" size={22} color={C.ink} /></Pressable></View>
+          <Text style={s.planModalSub}>This is the web address people will type to find you.</Text>
+          <TextInput value={liveDomain} onChangeText={v => { setLiveDomain(v); setDomainAvailable(false); setDomainError(''); }} placeholder="yourbusiness" placeholderTextColor={C.placeholder} autoCapitalize="none" autoCorrect={false} keyboardType="url" returnKeyType="search" onSubmitEditing={() => void checkLiveDomain()} style={[s.input, { marginTop: 14 }]} />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 8, paddingVertical: 12 }}>
+            {DOMAIN_TLDS.map(t => <Pressable key={t} onPress={() => { setLiveSuffix(t); setDomainAvailable(false); setDomainError(''); }} style={[s.chip, liveSuffix === t && s.chipOn]}><Text style={[s.chipText, liveSuffix === t && s.chipTextOn]}>{t}</Text></Pressable>)}
+          </ScrollView>
+          {!!domainError && <Text style={s.domainError}>{domainError}</Text>}
+          {domainAvailable && <View style={s.domainResult}><Ionicons name="checkmark-circle" size={24} color={C.success || '#1f9d55'} /><View style={{ flex: 1 }}><Text style={s.domainName}>{liveDomain}{liveSuffix}</Text><Text style={s.domainPrice}>Available{domainPriceLabel ? ` — ${domainPriceLabel}` : ''}</Text></View></View>}
+          <Pressable disabled={domainPriceLoading || !liveDomain.trim()} onPress={() => domainAvailable ? confirmDomain() : void checkLiveDomain()} style={[s.planModalPayBtn, (domainPriceLoading || !liveDomain.trim()) && { opacity: .5 }]}>
+            {domainPriceLoading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={s.planModalPayBtnText}>{domainAvailable ? 'Continue' : 'Check availability'}</Text>}
+          </Pressable>
+          </> : <>
+          <View style={s.planModalHeader}><Pressable onPress={() => setPlanStep('domain')} hitSlop={10}><Ionicons name="chevron-back" size={22} color={C.ink} /></Pressable><Text style={[s.planModalTitle, { flex: 1, marginLeft: 6 }]}>Choose your plan</Text><Pressable onPress={() => setShowPlanModal(false)} hitSlop={10}><Ionicons name="close" size={22} color={C.ink} /></Pressable></View>
           <Text style={s.planModalSub}>Your website is free. You only pay for hosting.</Text>
-          <View style={s.planModalDomain}><Ionicons name="globe-outline" size={14} color={C.primary} /><Text style={s.planModalDomainText}>{domain}{suffix}</Text></View>
+          <View style={s.planModalDomain}><Ionicons name="globe-outline" size={14} color={C.primary} /><Text style={s.planModalDomainText}>{liveDomain}{liveSuffix}</Text></View>
           <View style={s.planModalFeeNote}>
             <Ionicons name="information-circle-outline" size={14} color={C.inkMuted} />
             <Text style={s.planModalFeeText}>
-              {domainPriceLoading ? 'Checking domain registration price…' : domainPriceLabel ? `Plus ${domainPriceLabel} to register ${domain}${suffix} (charged today, renews yearly).` : `A separate domain registration fee for ${domain}${suffix} is charged at checkout.`}
+              {domainPriceLoading ? 'Checking domain registration price…' : domainPriceLabel ? `Plus ${domainPriceLabel} to register ${liveDomain}${liveSuffix} (charged today, renews yearly).` : `A separate domain registration fee for ${liveDomain}${liveSuffix} is charged at checkout.`}
             </Text>
           </View>
           <Pressable onPress={() => setAnnual(false)} style={[s.planModalOption, !annual && s.planModalOptionOn]}>
@@ -1297,6 +1326,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           <Pressable onPress={() => void handlePay()} disabled={payBusy} style={[s.planModalPayBtn, payBusy && { opacity: .6 }]}>
             {payBusy ? <ActivityIndicator size="small" color="#fff" /> : <><Ionicons name="lock-closed" size={15} color="#fff" /><Text style={s.planModalPayBtnText}>Pay securely</Text></>}
           </Pressable>
+          </>}
         </View>
       </View>
     </Modal>
@@ -1938,7 +1968,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     if (validationMessage) setValidationMessage('');
   }, [data, hours, services, domainReady, designReady]);
 
-  const SWIPE_LOCK_STEPS = ['prices', 'reviews', 'photos'];
+  const SWIPE_LOCK_STEPS = ['prices', 'photos'];
   const [stepEditMode, setStepEditMode] = useState(false);
   const pan = useMemo(() => PanResponder.create({
     onMoveShouldSetPanResponder: (_, g) => {
@@ -2070,7 +2100,10 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           <Text style={s.reviewSourceSub}>Paste your Trustpilot page so visitors can see your rating.</Text>
           <Field label="Trustpilot link" value={data.reviewSource === 'Trustpilot' ? data.reviewLink : ''} onChangeText={(v: string) => setData({ ...data, reviewLink: v, reviewSource: v.trim() ? 'Trustpilot' : (data.reviewSource === 'Trustpilot' ? null : data.reviewSource) })} placeholder="https://uk.trustpilot.com/review/..." />
         </View>
-        <Pressable onPress={() => setContactForm(!contactForm)} style={s.formChoice}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color={C.primary} /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: 'rgba(28,40,50,.18)', true: C.primary }} thumbColor="#fff" {...({ activeThumbColor: '#fff' } as any)} /></Pressable></>;
+        <Pressable onPress={() => setContactForm(!contactForm)} style={s.formChoice}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color={C.primary} /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: 'rgba(28,40,50,.18)', true: C.primary }} thumbColor="#fff" {...({ activeThumbColor: '#fff' } as any)} /></Pressable>
+        {!editingInfo && <Pressable onPress={() => { void syncOnboardingToBackend('designer'); setBuildChoice('designer'); setAppScreen('loading'); }} style={({ pressed }) => [s.primaryBtn, s.sendGlow, { marginTop: 24 }, pressed && s.pressed]}>
+          <Text style={s.primaryBtnText}>Send to designer</Text>
+        </Pressable>}</>;
       case 'domain': {
         const clearDomainQuote = () => { setDomainReady(false); setDomainQuote(null); setDomainError(''); };
         const checkDomain = async () => {
@@ -2290,7 +2323,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   }
 
   if (appScreen === 'dashboard') return <FadeIn>
-    <DashboardHome onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true }; setPlanAnnual(isAnnual); setWebsiteStatus('publishing'); }} onEditInfo={() => { if (adminViewingBusiness) return; setEditingInfo(true); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} saveError={saveError} planAnnual={planAnnual} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onEdit={() => { setEditFrom('dashboard'); setAppScreen('design-editor'); }} />
+    <DashboardHome onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true }; setPlanAnnual(isAnnual); setWebsiteStatus('publishing'); }} onEditInfo={() => { if (adminViewingBusiness) return; setEditingInfo(true); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} saveError={saveError} planAnnual={planAnnual} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onEdit={() => { setEditFrom('dashboard'); setAppScreen('design-editor'); }} onDomainChosen={(d: string, sfx: string) => { setDomain(d); setSuffix(sfx); setDomainReady(true); }} />
   </FadeIn>;
 
   if (appScreen === 'design-editor') return <FadeIn><DesignEditorFullscreen palette={palette} setPalette={setPalette} font={font} setFont={setFont} siteTexts={siteTexts} setSiteTexts={setSiteTexts} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} data={data} services={services} hours={hours} contactForm={contactForm} onBack={() => {
@@ -2380,7 +2413,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             </ScrollView>
             <View pointerEvents="none" style={s.fixedPrompt}>
               {!!validationMessage && isActive && <Text style={s.validationText}>{validationMessage}</Text>}
-              {deckStep.id !== 'domain' && !editingInfo && <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : 'Swipe up to save'}</Text></View>}
+              {deckStep.id !== 'reviews' && !editingInfo && <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : 'Swipe up to save'}</Text></View>}
             </View>
           </Animated.View>;
         })}
@@ -2680,6 +2713,11 @@ const s = StyleSheet.create({
   deviceToggleBtnOnDark: { backgroundColor: '#fff' },
   deviceToggleText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.inkMuted },
   desktopFrame: { alignSelf: 'stretch', marginHorizontal: 0, borderRadius: 12, overflow: 'hidden', marginBottom: 18, backgroundColor: '#fff', borderWidth: 6, borderColor: '#141A1E', shadowColor: '#000', shadowOpacity: .18, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } },
+  fullPreview: { flex: 1, backgroundColor: '#E9ECEF', paddingTop: Platform.OS === 'ios' ? 54 : 24 },
+  fullPreviewBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingBottom: 10 },
+  fullPreviewBack: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
+  fullPreviewUrl: { flex: 1, height: 32, borderRadius: 10, backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingHorizontal: 10 },
+  fullPreviewUrlText: { fontFamily: FONT, fontSize: 13, color: C.inkSoft },
   desktopBar: { height: 26, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#E9ECEF' },
   desktopBarUrl: { fontFamily: FONT, fontSize: 11, color: C.inkMuted, maxWidth: '60%' },
   editorToggleRow: { alignItems: 'center', paddingVertical: 10, backgroundColor: '#0E1A24' },
