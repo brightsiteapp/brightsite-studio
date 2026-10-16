@@ -635,6 +635,7 @@
   /* Done next to 'Edit your website' only while editing (mobile edit mode), not on the plain list */
   #editorDone{display:none !important}
   .website-panel.editing #editorDone{display:inline-flex !important}
+  .section-head .section-title{margin:0;font-family:var(--display);font-size:16px;font-weight:800;color:var(--ink)}
 </style>
 
 <body>
@@ -800,7 +801,7 @@
 
       <!-- section detail panels (only one shown at a time) -->
       <div class="builder-section" data-section-panel="business" hidden>
-        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
+        <div class="section-head"><h2 class="section-title">Edit your website</h2><button type="button" class="builder-done" data-back>Done</button></div>
         <h3>Business information</h3>
         <p class="info-hint">Tell us the essentials. Anything you leave blank simply won’t appear on your website.</p>
         <div class="acct-field"><label for="fFullName">Full name</label><input type="text" id="fFullName" placeholder="e.g. Jane Smith" autocomplete="name"></div>
@@ -812,7 +813,7 @@
       </div>
 
       <div class="builder-section" data-section-panel="details" hidden>
-        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
+        <div class="section-head"><h2 class="section-title">Edit your website</h2><button type="button" class="builder-done" data-back>Done</button></div>
         <h3>Business details</h3>
         <p class="info-hint">Add whichever ways customers should contact you. Leave anything blank to skip it.</p>
         <div class="acct-field"><label for="fEmail2">Email</label><input type="email" id="fEmail2" placeholder="you@business.co.uk"></div>
@@ -824,21 +825,21 @@
       </div>
 
       <div class="builder-section" data-section-panel="hours" hidden>
-        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
+        <div class="section-head"><h2 class="section-title">Edit your website</h2><button type="button" class="builder-done" data-back>Done</button></div>
         <h3>Opening hours</h3>
         <p class="info-hint">Switch off days you’re closed. Times can be changed later.</p>
         <div class="bs-hours" id="hoursRows"></div>
       </div>
 
       <div class="builder-section" data-section-panel="prices" hidden>
-        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
+        <div class="section-head"><h2 class="section-title">Edit your website</h2><button type="button" class="builder-done" data-back>Done</button></div>
         <h3>Services &amp; prices</h3>
         <p class="info-hint">Add a category (e.g. Massages), then the services in it with their prices.</p>
         <div id="svcGroups"></div>
       </div>
 
       <div class="builder-section" data-section-panel="media" hidden>
-        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
+        <div class="section-head"><h2 class="section-title">Edit your website</h2><button type="button" class="builder-done" data-back>Done</button></div>
         <h3>Photos &amp; logo</h3>
         <p class="media-intro">Add the images you want to use. Everything here is optional and can be changed later.</p>
         <div class="media-upload-grid">
@@ -869,7 +870,7 @@
       </div>
 
       <div class="builder-section" data-section-panel="extras" hidden>
-        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
+        <div class="section-head"><h2 class="section-title">Edit your website</h2><button type="button" class="builder-done" data-back>Done</button></div>
         <h3>Offers &amp; extras</h3>
         <p class="info-hint">Add any offers, rewards or gift cards you want on your website. Leave it blank to skip.</p>
         <div id="offerList"></div>
@@ -879,7 +880,7 @@
       </div>
 
       <div class="builder-section" data-section-panel="reviews" hidden>
-        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
+        <div class="section-head"><h2 class="section-title">Edit your website</h2><button type="button" class="builder-done" data-back>Done</button></div>
         <h3>Reviews</h3>
         <p class="info-hint">Add customer reviews for your website. Each one is optional.</p>
         <div id="reviewList"></div>
