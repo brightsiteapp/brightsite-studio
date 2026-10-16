@@ -37,11 +37,23 @@
   ],
   "rewrites": [
     {
-      "source": "/s/:slug",
+      "source": "/:slug",
+      "has": [
+        {
+          "type": "host",
+          "value": "sites.brightsite.app"
+        }
+      ],
       "destination": "https://brightsite-upload.notify-lead-worker.workers.dev/site/:slug/"
     },
     {
-      "source": "/s/:slug/:path*",
+      "source": "/:slug/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "sites.brightsite.app"
+        }
+      ],
       "destination": "https://brightsite-upload.notify-lead-worker.workers.dev/site/:slug/:path*"
     }
   ]

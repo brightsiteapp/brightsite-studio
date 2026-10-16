@@ -795,7 +795,7 @@ document.getElementById('uploadConfirm').addEventListener('click', function() {
   });
 });
 
-// Switches a customer's uploaded site on/off in the site worker (serves brightsite.app/s/<slug> and their domain).
+// Switches a customer's uploaded site on/off in the site worker (serves sites.brightsite.app/<slug> and their domain).
 function publishSite(slug, live, domain) {
   return fetch(UPLOAD_WORKER + '/publish', {
     method: 'POST',

@@ -9,7 +9,7 @@
 //   POST /publish           — { slug, live, domain? } turn a site on/off (Bearer PUBLISH_KEY, admin JWT,
 //                             or the owner's JWT when their plan is active)
 //   GET  /status/:slug      — { live, url } — whether the site is really being served
-//   GET  /site/:slug/*      — serve a live site (brightsite.app/s/<slug> rewrites here)
+//   GET  /site/:slug/*      — serve a live site (sites.brightsite.app/<slug> rewrites here)
 //   any GET on a customer's own domain — serve the site mapped to that host
 //
 // Sites are the zips uploaded on admin.html, stored at <slug>/site/. A site is served only
@@ -113,7 +113,7 @@ function contentTypeFor(key) {
 }
 
 
-const SITE_BASE = 'https://brightsite.app/s/';
+const SITE_BASE = 'https://sites.brightsite.app/';
 const WORKER_HOST = 'brightsite-upload.notify-lead-worker.workers.dev';
 
 function cleanHost(h) { return String(h || '').toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/^www\./, ''); }
@@ -135,7 +135,7 @@ async function siteUrlFor(env, slug) {
 const NOT_LIVE_PAGE = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Coming soon</title><body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#F4EDE6;font-family:Avenir Next,-apple-system,sans-serif;color:#1C2832;text-align:center"><div><h1 style="font-size:24px;margin:0 0 8px">Coming soon</h1><p style="color:#69747B;margin:0">This website isn’t live yet.</p></div>';
 
 // Serves <slug>/site/<path>, trying path, path/index.html and path.html. basePath is set when
-// served under brightsite.app/s/<slug>/ so the site's relative links resolve there.
+// served under sites.brightsite.app/<slug>/ so the site's relative links resolve there.
 async function serveSite(env, slug, path, basePath) {
   if (!slug || !(await isLive(env, slug))) {
     return new Response(NOT_LIVE_PAGE, { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
@@ -197,7 +197,7 @@ export default {
 
       const siteMatch = path.match(/^\/site\/([a-z0-9-]+)(\/.*)?$/);
       if (request.method === 'GET' && siteMatch) {
-        return serveSite(env, siteMatch[1], siteMatch[2] || '/', `/s/${siteMatch[1]}/`);
+        return serveSite(env, siteMatch[1], siteMatch[2] || '/', `/${siteMatch[1]}/`);
       }
 
       const statusMatch = path.match(/^\/status\/([a-z0-9-]+)$/);
