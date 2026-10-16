@@ -275,6 +275,11 @@ const paletteGroups = [
 const palettes = paletteGroups.flatMap(group => group.options);
 const fonts = ['Editorial', 'Rounded', 'Modern', 'Thin', 'Classic'];
 // ordered so the chip rows come out roughly even in width
+// Same plans as pricing.html; "essential" is the Free plan.
+const PLAN_OPTIONS = [
+  { id: 'essential' as const, name: 'Free', note: 'Website built free · 1–3 pages', build: '£0', buildLabel: 'build', tag: null },
+  { id: 'pro' as const, name: 'Pro', note: 'For websites over 3 pages', build: '£199', buildLabel: 'one-off build', tag: '3+ PAGES' },
+];
 const BUSINESS_TYPES = ['Hair & Beauty', 'Aesthetics', 'Fitness', 'Pets', 'Health & Wellness', 'Home & Garden', 'Food & Drink', 'Automotive', 'Trades', 'Professional Services', 'Creative', 'Other'];
 const HOME_SECTIONS_DEFAULT = ['Hero', 'About & Services', 'Reviews', 'Gallery', 'Contact'];
 const SERVICES_SECTIONS_DEFAULT = ['Services List', 'Contact CTA'];
@@ -1126,7 +1131,7 @@ function MessageThread({ session, slug, viewer, otherName, placeholder, intro }:
   </>;
 }
 
-function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, onEdit, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, onPaid, saveError, planAnnual, media, isPaying, buildChoice, session, slug, onAdminBack, onDomainChosen }: any) {
+function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, onEdit, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, onPaid, saveError, planAnnual, planPro, media, isPaying, buildChoice, session, slug, onAdminBack, onDomainChosen }: any) {
   const [previewMode, setPreviewMode] = useState<'mobile' | 'desktop'>('mobile');
   const [showPassword, setShowPassword] = useState(false);
   const [showEditMenu, setShowEditMenu] = useState(false);
@@ -1171,6 +1176,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
   };
   const confirmDomain = () => { onDomainChosen?.(liveDomain, liveSuffix); setPlanStep('plan'); };
   const [annual, setAnnual] = useState(!!planAnnual);
+  const [planChoice, setPlanChoice] = useState<'essential' | 'pro'>('essential');
   const [payBusy, setPayBusy] = useState(false);
   const [payError, setPayError] = useState('');
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
@@ -1181,7 +1187,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
       const res = await fetch(PAYMENT_SHEET_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: 'essential', billing: annual ? 'annual' : 'monthly', email, slug, domain: liveDomain ? liveDomain + liveSuffix : '' }),
+        body: JSON.stringify({ plan: planChoice, billing: annual ? 'annual' : 'monthly', email, slug, domain: liveDomain ? liveDomain + liveSuffix : '' }),
       });
       const json = await res.json();
       if (!res.ok || !json.paymentIntentClientSecret) throw new Error(json.error || 'Could not set up payment.');
@@ -1199,7 +1205,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
       if (result.error) { if (result.error.code !== 'Canceled') setPayError(result.error.message); return; }
       setShowPlanModal(false);
       const confirm = await fetch(CONFIRM_PAYMENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscriptionId: json.subscriptionId }) });
-      if (confirm.ok) { onPaid?.(annual); Alert.alert('Publishing your website', "We’re setting everything up. This usually takes around 5 minutes while your domain registers. You’ll get a notification as soon as it’s live!"); }
+      if (confirm.ok) { onPaid?.(annual, planChoice === 'pro'); Alert.alert('Publishing your website', "We’re setting everything up. This usually takes around 5 minutes while your domain registers. You’ll get a notification as soon as it’s live!"); }
       else Alert.alert('Payment received', "Thanks! We’re finishing setting up your website and will message you as soon as it’s live.");
     } catch (err: any) {
       try {
@@ -1207,7 +1213,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
         const fb = await fetch('https://api.brightsite.app/api/create-checkout-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ plan: 'essential', billing: annual ? 'annual' : 'monthly', email, slug, domain: domain ? domain + suffix : '', ui_mode: 'hosted' }),
+          body: JSON.stringify({ plan: planChoice, billing: annual ? 'annual' : 'monthly', email, slug, domain: liveDomain ? liveDomain + liveSuffix : '', ui_mode: 'hosted' }),
         });
         const fbJson = await fb.json();
         if (fb.ok && fbJson.url) { await Linking.openURL(fbJson.url); setShowPlanModal(false); return; }
@@ -1301,8 +1307,8 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
         {tab === 'Account' && <>
           <View style={s.dashboardInfoCard}>
             <Text style={s.dashboardCardLabel}>Plan</Text>
-            <Text style={s.dashboardCardTitle}>{isPaying ? (planAnnual ? 'Essential · Annual' : 'Essential · Monthly') : 'No plan yet'}</Text>
-            <Text style={s.dashboardCardText}>{isPaying ? (planAnnual ? '£17/month, billed £204 yearly' : '£19/month') : 'Choose a plan when you’re ready to go live.'}</Text>
+            <Text style={s.dashboardCardTitle}>{isPaying ? `${planPro ? 'Pro' : 'Free'} plan · ${planAnnual ? 'Annual' : 'Monthly'}` : 'No plan yet'}</Text>
+            <Text style={s.dashboardCardText}>{isPaying ? (planAnnual ? '£17/month hosting, billed £204 yearly' : '£19/month hosting') : 'Choose a plan when you tap Make Live.'}</Text>
           </View>
           <View style={s.dashboardInfoCard}>
             <Text style={s.dashboardCardLabel}>Domain</Text>
@@ -1403,22 +1409,30 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           </Pressable>
           </> : <>
           <View style={s.planModalHeader}><Pressable onPress={() => setPlanStep('domain')} hitSlop={10}><Ionicons name="chevron-back" size={22} color={C.ink} /></Pressable><Text style={[s.planModalTitle, { flex: 1, marginLeft: 6 }]}>Choose your plan</Text><Pressable onPress={() => setShowPlanModal(false)} hitSlop={10}><Ionicons name="close" size={22} color={C.ink} /></Pressable></View>
-          <Text style={s.planModalSub}>Your website is free. You only pay for hosting.</Text>
-          <View style={s.planModalDomain}><Ionicons name="globe-outline" size={14} color={C.primary} /><Text style={s.planModalDomainText}>{liveDomain}{liveSuffix}</Text></View>
+          <View style={s.billingToggle}>
+            {([false, true] as const).map(isAnnual => <Pressable key={String(isAnnual)} onPress={() => setAnnual(isAnnual)} style={[s.billingOption, annual === isAnnual && s.billingOptionOn]}>
+              <Text style={[s.billingText, annual === isAnnual && s.billingTextOn]}>{isAnnual ? 'Annual' : 'Monthly'}</Text>
+              {isAnnual && <Text style={[s.billingSave, annual && { color: '#fff' }]}>save £24</Text>}
+            </Pressable>)}
+          </View>
+          {PLAN_OPTIONS.map(opt => <Pressable key={opt.id} onPress={() => setPlanChoice(opt.id)} style={[s.planModalOption, planChoice === opt.id && s.planModalOptionOn]}>
+            <View style={{ flex: 1, paddingRight: 10 }}>
+              {opt.tag && <View style={s.savePill}><Text style={s.savePillText}>{opt.tag}</Text></View>}
+              <Text style={s.planModalOptionName}>{opt.name}</Text>
+              <Text style={s.planModalOptionNote}>{opt.note}</Text>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={s.planModalOptionPrice}>{opt.build}</Text>
+              <Text style={s.planModalOptionNote}>{opt.buildLabel}</Text>
+            </View>
+          </Pressable>)}
+          <Text style={s.planModalTotal}>{planChoice === 'pro' ? '£199 build fee today, then ' : ''}{annual ? '£204/yr hosting (£17/mo)' : '£19/mo hosting'} · cancel any time</Text>
           <View style={s.planModalFeeNote}>
-            <Ionicons name="information-circle-outline" size={14} color={C.inkMuted} />
+            <Ionicons name="globe-outline" size={14} color={C.primary} />
             <Text style={s.planModalFeeText}>
-              {domainPriceLoading ? 'Checking domain registration price…' : domainPriceLabel ? `Plus ${domainPriceLabel} to register ${liveDomain}${liveSuffix} (charged today, renews yearly).` : `A separate domain registration fee for ${liveDomain}${liveSuffix} is charged at checkout.`}
+              {liveDomain}{liveSuffix}: {domainPriceLoading ? 'checking price…' : (annual || planChoice === 'pro') ? 'free domain included (worth up to £12/yr)' : domainPriceLabel ? `plus ${domainPriceLabel} registration, charged today` : 'registration charged at checkout'}
             </Text>
           </View>
-          <Pressable onPress={() => setAnnual(false)} style={[s.planModalOption, !annual && s.planModalOptionOn]}>
-            <View><Text style={s.planModalOptionName}>Monthly</Text><Text style={s.planModalOptionNote}>Cancel any time</Text></View>
-            <Text style={s.planModalOptionPrice}>£19<Text style={{ fontSize: 12 }}>/mo</Text></Text>
-          </Pressable>
-          <Pressable onPress={() => setAnnual(true)} style={[s.planModalOption, annual && s.planModalOptionOn]}>
-            <View><View style={s.savePill}><Text style={s.savePillText}>SAVE £24</Text></View><Text style={s.planModalOptionName}>Annual</Text><Text style={s.planModalOptionNote}>Billed £204 yearly</Text></View>
-            <Text style={s.planModalOptionPrice}>£17<Text style={{ fontSize: 12 }}>/mo</Text></Text>
-          </Pressable>
           {!!payError && <Text style={{ fontFamily: FONT, fontSize: 12, color: C.danger, marginTop: 8 }}>{payError}</Text>}
           <Pressable onPress={() => void handlePay()} disabled={payBusy} style={[s.planModalPayBtn, payBusy && { opacity: .6 }]}>
             {payBusy ? <ActivityIndicator size="small" color="#fff" /> : <><Ionicons name="lock-closed" size={15} color="#fff" /><Text style={s.planModalPayBtnText}>Pay securely</Text></>}
@@ -1543,6 +1557,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [slug, setSlug] = useState<string | null>(null);
   const [data, setData] = useState({ email: '', password: '', businessName: '', category: '', fullName: '', contactEmail: '', phone: '', website: '', instagram: '', facebook: '', address: '', reviewLink: '', reviewSource: null as null | 'Google' | 'Trustpilot', googleLink: '', trustpilotLink: '', ownerEmail: '', sameEmail: true, designerNotes: '' });
   const [planAnnual, setPlanAnnual] = useState(false);
+  const [planPro, setPlanPro] = useState(false);
   const [saveError, setSaveError] = useState('');
   const businessRecord = useRef<Record<string, any>>({});
   const [showFullName, setShowFullName] = useState(false);
@@ -1607,6 +1622,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     if (Array.isArray(design.contactSections)) setContactSections(design.contactSections);
     setContactForm(!!(raw.contactForm ?? design.contactForm));
     setPlanAnnual(!!raw.chosenAnnual);
+    setPlanPro(raw.chosenPlan === 'pro');
     const isDesigner = raw.buildChoice === 'designer' || /Build choice: designer/.test(raw.notes || '');
     setBuildChoice(isDesigner ? 'designer' : 'template');
     const hasPreview = !!(record.demoUrl || record.previewUrl || record.liveUrl);
@@ -2452,7 +2468,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   }
 
   if (appScreen === 'dashboard') return <FadeIn>
-    <DashboardHome onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true }; setPlanAnnual(isAnnual); setWebsiteStatus('publishing'); }} onEditInfo={() => { if (adminViewingBusiness) return; setEditingInfo(true); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} saveError={saveError} planAnnual={planAnnual} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onEdit={() => { setEditFrom('dashboard'); setAppScreen('design-editor'); }} onDomainChosen={(d: string, sfx: string) => { setDomain(d); setSuffix(sfx); setDomainReady(true); }} />
+    <DashboardHome onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean, isPro: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true }; setPlanAnnual(isAnnual); setPlanPro(isPro); setWebsiteStatus('publishing'); }} onEditInfo={() => { if (adminViewingBusiness) return; setEditingInfo(true); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} saveError={saveError} planAnnual={planAnnual} planPro={planPro} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onEdit={() => { setEditFrom('dashboard'); setAppScreen('design-editor'); }} onDomainChosen={(d: string, sfx: string) => { setDomain(d); setSuffix(sfx); setDomainReady(true); }} />
   </FadeIn>;
 
   if (appScreen === 'design-editor') return <FadeIn><DesignEditorFullscreen palette={palette} setPalette={setPalette} font={font} setFont={setFont} siteTexts={siteTexts} setSiteTexts={setSiteTexts} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} data={data} services={services} hours={hours} contactForm={contactForm} onBack={() => {
@@ -2758,8 +2774,6 @@ const s = StyleSheet.create({
   planModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   planModalTitle: { fontFamily: FONT, fontSize: 20, fontWeight: '800', color: '#1C2832' },
   planModalSub: { fontFamily: FONT, fontSize: 14, color: C.inkSoft, marginBottom: 12 },
-  planModalDomain: { flexDirection: 'row', gap: 6, alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(59,130,246,.12)', marginBottom: 14 },
-  planModalDomainText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.primary },
   planModalFeeNote: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 14 },
   planModalFeeText: { flex: 1, fontFamily: FONT, fontSize: 13, lineHeight: 18, color: C.inkSoft },
   planModalOption: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderRadius: 14, borderWidth: 1.5, borderColor: C.line, backgroundColor: '#fff', marginBottom: 10 },
@@ -2824,6 +2838,13 @@ const s = StyleSheet.create({
   gridRow: { flexDirection: 'row', gap: 6 },
   gridCell: { minHeight: 44, borderRadius: 11, paddingHorizontal: 10, fontFamily: FONT, fontSize: 14, color: C.ink, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line },
   notesBox: { marginTop: 7, minHeight: 220, paddingTop: 14, paddingBottom: 14, textAlignVertical: 'top' },
+  billingToggle: { flexDirection: 'row', gap: 4, padding: 4, marginTop: 12, marginBottom: 10, borderRadius: 14, backgroundColor: 'rgba(28,40,50,.07)' },
+  billingOption: { flex: 1, minHeight: 40, borderRadius: 11, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 },
+  billingOptionOn: { backgroundColor: C.primary },
+  billingText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.inkSoft },
+  billingTextOn: { color: '#fff' },
+  billingSave: { fontFamily: FONT, fontSize: 11, fontWeight: '800', color: C.success },
+  planModalTotal: { fontFamily: FONT, fontSize: 13, fontWeight: '600', color: C.inkSoft, marginTop: 6, textAlign: 'center' },
   savedPill: { position: 'absolute', top: Platform.OS === 'ios' ? 58 : 24, alignSelf: 'center', zIndex: 200, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(28,40,50,.82)' },
   savedPillText: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: '#fff' },
   listRowSub: { fontFamily: FONT, fontSize: 13, color: C.inkMuted, marginTop: 2 },

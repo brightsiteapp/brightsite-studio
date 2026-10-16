@@ -1,33 +1,6 @@
 import Stripe from 'stripe';
 import { quoteDomainInGbp } from './_lib/domain-pricing.js';
-
-// Stripe Price IDs for each plan+billing combination.
-// Recurring prices are for hosting; one-time prices are setup fees added to the first invoice.
-
-const PLAN_PRICES = {
-  essential_monthly: {
-    recurring: 'price_1UGhbEGqCP7G2YApAOKm8Goo', // £19/mo hosting
-  },
-  essential_annual: {
-    recurring: 'price_1UGpjvGqCP7G2YAptYGCKsFl',  // £204/yr hosting
-  },
-  pro_monthly: {
-    recurring: 'price_1UGhbEGqCP7G2YApAOKm8Goo', // £19/mo hosting
-    setup:     'price_1UGplTGqCP7G2YApGrrTagi9',  // £199 setup (one-time)
-  },
-  pro_annual: {
-    recurring: 'price_1UGpmWGqCP7G2YApUmEXNyCn',  // £228/yr hosting
-    setup:     'price_1UGpqEGqCP7G2YApCSXelP2a',  // £99 setup (one-time)
-  },
-  prestige_monthly: {
-    recurring: 'price_1UGhbEGqCP7G2YApAOKm8Goo', // £19/mo hosting
-    setup:     'price_1UGpm2GqCP7G2YAp0fIS6NPb',  // £299 setup (one-time)
-  },
-  prestige_annual: {
-    recurring: 'price_1UGpmWGqCP7G2YApUmEXNyCn',  // £228/yr hosting
-    setup:     'price_1UGpqZGqCP7G2YAp4oDEhcoy',  // £149 setup (one-time)
-  },
-};
+import { planPrices, domainChargePence } from './_lib/plans.js';
 
 const ALLOWED_ORIGINS = ['https://brightsite.app'];
 
@@ -50,9 +23,8 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: 'Automatic publishing is being set up. Please try again shortly.' });
   }
 
-  const key = `${plan}_${billing}`;
-  const prices = PLAN_PRICES[key];
-  if (!prices) return res.status(400).json({ error: 'Unknown plan: ' + key });
+  const prices = planPrices(plan, billing);
+  if (!prices) return res.status(400).json({ error: `Unknown plan: ${plan}_${billing}` });
 
   try {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
@@ -63,9 +35,8 @@ export default async function handler(req, res) {
     // optional domain registration (one-off)
     if (selectedDomain) {
       const quote = await quoteDomainInGbp(selectedDomain);
-      const domainPence = quote.amountPence;
-      const freeDomainPlans = ['pro', 'prestige'];
-      const domainIsFree = freeDomainPlans.includes(plan) && domainPence <= 1200;
+      const chargePence = domainChargePence(plan, billing, quote.amountPence);
+      const domainIsFree = chargePence === 0;
       lineItems.push({
         price_data: {
           currency: 'gbp',
@@ -73,7 +44,7 @@ export default async function handler(req, res) {
             name: 'Domain: ' + selectedDomain,
             description: domainIsFree ? 'Included free with your plan' : '1-year registration',
           },
-          unit_amount: domainIsFree ? 0 : domainPence,
+          unit_amount: chargePence,
         },
         quantity: 1,
       });

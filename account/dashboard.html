@@ -29,8 +29,6 @@
   button:active:not(:disabled){transform:scale(.98)}
   button:focus-visible,a:focus-visible{outline:3px solid #8eb8fa;outline-offset:3px}
   @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
-
-
   html { height:100%; height:-webkit-fill-available; }
   html, body { margin:0; padding:0; }
   body {
@@ -48,12 +46,8 @@
   #deskPreview{display:none;flex-direction:column;border-left:1px solid var(--line);background:var(--bg);}
   #deskPreview.mobile-view{background:#e8e8e6;}
   .desk-preview-bar{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--glass);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);}
-.desk-preview-status{font-size:12px;font-weight:600;color:var(--muted);}
+
   .desk-preview-link{font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;}
-  .desk-preview-actions{display:flex;align-items:center;gap:7px;margin-left:auto;}
-  .desk-preview-action{border:0;border-radius:7px;padding:7px 10px;font:700 11px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;cursor:pointer;white-space:nowrap;}
-  .desk-preview-action.change{background:#171717;color:#fff;}
-  .desk-preview-action.approve{background:var(--accent);color:#fff;}
   /* frame wrapper */
   .preview-frame-wrap{flex:1;min-height:0;position:relative;overflow:hidden;}
   .fake-browser,.fake-phone{position:absolute;inset:0;}
@@ -90,7 +84,7 @@
     #deskPreview{display:flex;flex:1;min-width:0;}
     .mobile-view-tabs{border-bottom:1px solid var(--line);}
     #builderList{grid-template-columns:1fr;gap:10px;}
-    #builderList .builder-head{grid-column:1;}
+
     #builderList .builder-guidance{grid-column:1;}
     #builderList .sec-btn{height:auto;padding:14px 16px;}
     .panel-inner{padding-left:18px;padding-right:18px;}
@@ -116,10 +110,6 @@
   .app-header .brand-mini{display:flex;align-items:center;flex:none}
   .app-header .brand-mini img{height:22px;width:auto;display:block}
   .app-header-right{display:flex;align-items:center;gap:10px;min-width:0}
-  .app-header-right .who{text-align:right;line-height:1.2;min-width:0;overflow:hidden}
-  .app-header-right .who .name{font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:34vw}
-  .app-header-right .who .email{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:34vw}
-  .app-logout{background:none;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font:inherit;font-size:12px;font-weight:600;color:var(--ink);cursor:pointer;flex:none;white-space:nowrap}
   .header-status-pill{font-size:11.5px!important;padding:5px 10px!important}
 
   .mobile-view-tabs{
@@ -193,17 +183,6 @@
 
   .info-card{padding:14px 16px;border:1px solid var(--line);border-radius:20px;background:var(--card);box-shadow:var(--soft-shadow);margin:0 0 14px}
   .info-card h2{font-family:var(--display);font-size:15px;font-weight:700;margin:0 0 12px}
-  .info-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
-  .info-row:last-child{border-bottom:0}
-  .info-row .label{color:var(--muted)}
-  .info-row .value{color:var(--ink);font-weight:600;text-align:right;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .plan-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;background:#fdf2dd;color:#8a5d08;font-size:11.5px;font-weight:700}
-  .plan-pill.active{background:#e6f6ec;color:#1f9d55}
-  .plan-pill.offline{background:#fde8e8;color:#b91c1c}
-  .plan-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
-  .domain-live-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;background:#fdf2dd;color:#8a5d08;font-size:11px;font-weight:700}
-  .domain-live-pill.is-live{background:#e6f6ec;color:#1f9d55}
-
   .acct-field{margin-bottom:12px}
   .acct-pwd-show{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:13px;color:var(--muted)}
   .acct-field .acct-pwd-show input{width:16px;height:16px;min-height:16px;padding:0;margin:0;border:0;border-radius:4px;box-shadow:none;accent-color:var(--accent);flex:none}
@@ -216,46 +195,11 @@
   .acct-status.ok{color:var(--accent);font-weight:600}
   .acct-status.err{color:#b23b2c}
   .info-hint{font-size:12px;color:var(--muted);line-height:1.5;margin-top:2px}
-
-  .billing-btn{width:100%;margin-top:6px;background:none;border:1px solid var(--line);border-radius:999px;padding:10px 16px;font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer}
-  .billing-btn:disabled{cursor:not-allowed;opacity:.7}
   .upgrade-btn{display:block;width:100%;margin-top:10px;border:0;border-radius:999px;padding:11px 16px;font:inherit;font-size:12.5px;font-weight:700;color:#fff;background:var(--accent);cursor:pointer;text-align:center;text-decoration:none}
-  .plan-chosen-card{display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px solid #d7e4fb;border-radius:12px;background:#f5f8ff;margin:10px 0 8px}
-  .plan-chosen-icon{width:34px;height:34px;border-radius:10px;background:var(--accent);display:grid;place-items:center;flex-shrink:0}
-  .plan-chosen-icon svg{width:18px;height:18px;stroke:#fff;fill:none}
-  .plan-chosen-info{flex:1;min-width:0;overflow:hidden}
-  .plan-chosen-name{font-size:13px;font-weight:700;color:var(--ink)}
-  .plan-chosen-price{font-size:12px;color:var(--muted);margin-top:2px}
-  .plan-chosen-change{border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);font:inherit;font-size:11.5px;font-weight:600;padding:5px 11px;cursor:pointer;flex-shrink:0}
-
-  .website-hero{
-    display:flex;
-    align-items:flex-start;
-    justify-content:space-between;
-    gap:16px;
-    padding:22px;
-    margin-bottom:16px;
-    border:1px solid var(--line);
-    border-radius:18px;
-    background:var(--card);
-    box-shadow:0 8px 20px rgba(23,32,31,.04);
-  }
-  .website-hero h1{margin:0 0 6px;font-family:var(--display);font-size:22px;letter-spacing:-.04em}
-  .website-hero p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
   .status-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;font-size:11.5px;font-weight:700;white-space:nowrap}
   .status-pill.live{background:#e6f6ec;color:#1f9d55}
   .status-pill.draft{background:#fdf2dd;color:#8a5d08}
   .status-pill .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
-  .website-url-card{padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--card);margin-bottom:16px}
-  .website-url-card h2{margin:0 0 8px;font-size:15px}
-  .website-url{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--accent);font-size:14px;font-weight:700;text-decoration:none}
-  .website-url:hover{text-decoration:underline}
-  .website-view-btn{margin-top:14px;min-height:42px;border:0;border-radius:999px;padding:0 18px;background:var(--accent);color:#fff;font:700 13px 'Avenir Next','Avenir','Nunito Sans',sans-serif;cursor:pointer}
-  .website-view-btn:disabled{opacity:.45;cursor:not-allowed}
-  .website-support-card{padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
-  .website-support-card h2{margin:0 0 6px;font-size:15px}
-  .website-support-card p{margin:0;color:var(--muted);font-size:13px;line-height:1.55}
-
   .msgs-heading-wrap{
     flex:none;
     padding:8px 18px 8px;
@@ -327,64 +271,14 @@
   .info-card-overlay-back{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border:0;border-radius:10px;background:var(--surface,#f3f4f6);cursor:pointer;flex:none}
   .info-card-overlay-title{font-size:15px;font-weight:700;color:var(--ink)}
   .info-card-overlay-body{padding:20px 18px;flex:1}
-
-
-
-  /* Plan modal */
-  .plan-modal-veil{position:fixed;inset:0;background:rgba(23,20,15,.48);z-index:60;display:flex;align-items:flex-end;justify-content:center;padding:0}
-  .plan-modal-sheet{width:100%;max-width:760px;max-height:92dvh;overflow-y:auto;background:var(--card);border-radius:22px 22px 0 0;padding:24px 20px 32px;box-shadow:0 -8px 40px rgba(0,0,0,.18);animation:sheetUp .22s cubic-bezier(.32,.72,0,1)}
-  @media(min-width:600px){.plan-modal-veil{align-items:center;padding:20px}.plan-modal-sheet{border-radius:22px;animation:sheetFade .18s ease}}
   @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
   @keyframes sheetFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-  .plan-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
-  .plan-modal-header h2{font-family:var(--display);font-size:17px;font-weight:700}
-  .plan-modal-header p{font-size:12.5px;color:var(--muted);margin:0 0 16px}
-  .plan-modal-close{background:none;border:0;font-size:20px;color:var(--muted);cursor:pointer;line-height:1;padding:4px}
-  .plan-modal-billing-toggle{display:flex;align-items:center;padding:3px;border:1px solid var(--line);border-radius:10px;background:#fff;width:fit-content;margin:0 auto 18px}
-  .plan-modal-billing-toggle button{border:0;border-radius:7px;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:700;padding:7px 14px;cursor:pointer}
-  .plan-modal-billing-toggle button[aria-pressed="true"]{background:var(--accent);color:#fff}
-  .plan-cards-grid{display:grid;grid-template-columns:1fr;gap:12px}
-  @media(max-width:519px){.plan-cards-grid{grid-template-columns:repeat(2,1fr)}}
-  .plan-choice-card{border:2px solid var(--line);border-radius:16px;padding:18px 16px;cursor:pointer;position:relative;background:#fff;display:flex;flex-direction:column}
-  .plan-choice-card.all-blue{border-color:var(--accent)}
-  .plan-featured-badge{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:3px 10px;border-radius:999px;white-space:nowrap}
-  .plan-choice-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:2px}
-  .plan-choice-name{font-size:15px;font-weight:800}
-  .card-billing-mini{display:flex;align-items:stretch;gap:0;border:1.5px solid var(--line);border-radius:7px;overflow:hidden;flex-shrink:0;margin-top:1px}
-  .card-billing-mini button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:10px;font-weight:700;padding:5px 8px;cursor:pointer;line-height:1.2;white-space:nowrap;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
-  .card-billing-mini button.active{background:var(--accent);color:#fff}
-  .cbm-save{font-size:8.5px;font-weight:700;color:inherit;opacity:.85}
-  .plan-choice-desc{font-size:11.5px;color:var(--muted);margin-bottom:10px;line-height:1.4}
-  .plan-choice-price-row{display:flex;align-items:baseline;gap:5px;margin-bottom:4px}
-  .plan-choice-setup{font-size:22px;font-weight:800;color:var(--ink)}
-  .plan-choice-was{font-size:13px;color:var(--muted);text-decoration:line-through}
-  .plan-choice-hosting{font-size:12px;color:var(--muted)}
-  .plan-choice-note{font-size:11px;color:var(--muted);margin-bottom:12px}
-  .plan-choice-features{list-style:none;padding:0;margin:0 0 14px;display:flex;flex-direction:column;gap:6px;flex:1}
-  .plan-choice-features li{display:flex;align-items:flex-start;gap:7px;font-size:12.5px;color:var(--ink)}
-  .plan-choice-features li::before{content:'✓';font-size:10px;font-weight:800;color:#1f9d55;background:#e6f6ec;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
-  .plan-domain-row{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;cursor:pointer;margin-top:14px}
-  .plan-domain-row input[type=checkbox]{display:none}
-  .plan-domain-box{width:18px;height:18px;border:2px solid #c9c6bd;border-radius:5px;flex-shrink:0;display:grid;place-items:center;background:#fff}
-  .plan-domain-row input:checked ~ .plan-domain-box{background:var(--accent);border-color:var(--accent)}
-  .plan-domain-row input:checked ~ .plan-domain-box::after{content:'';display:block;width:5px;height:9px;border:2px solid #fff;border-top:0;border-left:0;transform:rotate(45deg) translate(-1px,-1px)}
-  .plan-domain-info{flex:1;min-width:0}
-  .plan-domain-name{font-size:13px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .plan-domain-sub{font-size:11px;color:var(--muted);margin-top:1px}
-  .plan-domain-price{font-size:12px;font-weight:700;color:var(--accent);background:#eaf0fe;padding:2px 8px;border-radius:20px;white-space:nowrap}
-  .plan-select-btn{width:100%;min-height:40px;border:2px solid var(--accent);border-radius:999px;background:transparent;color:var(--accent);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
-  .plan-choice-card.selected .plan-select-btn{background:var(--accent);color:#fff}
-  .plan-modal-note{font-size:11.5px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.5}
-
   #stripeEmbedWrap{background:var(--card)}
 
   @media(max-width:600px){
     .app-header{padding-left:14px;padding-right:14px}
-    .app-header-right .who{display:none}
+
     .panel-inner{padding-left:14px;padding-right:14px}
-    .website-hero{padding:18px;flex-direction:column}
-    .website-hero .status-pill{align-self:flex-start}
-    .plan-chosen-change{margin-left:auto}
     .sec-btn{min-height:50px;padding:10px 14px;font-size:13px}
     .section-icon{width:28px;height:28px;border-radius:9px}
     .section-icon svg{width:18px;height:18px}
@@ -398,10 +292,6 @@
   .loading-card h1{margin:0 0 6px;font-family:var(--display);font-size:20px;letter-spacing:-.04em}
   .loading-card p{margin:0;color:var(--muted);font-size:13px}
   @keyframes loadingSpin{to{transform:rotate(360deg)}}
-
-  /* ---------------- website builder ---------------- */
-  .builder-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-  .builder-head h2{font-family:var(--display);font-size:16px;font-weight:700;margin:0}
   .website-editor-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
   .website-editor-header h2{margin:0;font-family:var(--display);font-size:16px;font-weight:800;color:var(--ink)}
   .website-editor-header .builder-done{min-height:34px;margin:0;padding:0 16px}
@@ -454,7 +344,7 @@
   .media-gallery-card{padding:13px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
   .media-gallery-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
   .media-gallery-head b{font-size:13px}
-  .media-btn{border:1px solid var(--line);border-radius:999px;padding:7px 14px;font:inherit;font-size:12px;font-weight:600;background:#fff;cursor:pointer;display:inline-flex;align-items:center}
+
   .gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:7px}
   .gallery-item{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
   .gallery-item img{width:100%;height:100%;object-fit:cover;display:block}
@@ -464,7 +354,7 @@
   .gallery-add-tile svg{color:#b5ac9e}
   .gallery-counter{font-size:12px;color:var(--muted);margin-bottom:8px}
   #builderList{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  #builderList .builder-head{grid-column:1/-1;margin-bottom:0}
+
   #builderList .builder-guidance{grid-column:1/-1}
   #builderList .mobile-preview-wrap{grid-column:1/-1}
   #builderList .sec-btn{margin-bottom:0;height:56px;padding:12px 14px;overflow:hidden}
@@ -589,16 +479,9 @@
   .mobile-preview-wrap{margin-top:8px;}
   @media(min-width:800px){.mobile-preview-wrap{display:none;}}
   .preview-actions{display:flex;flex-direction:column;gap:8px;margin:0 0 8px;}
-  .preview-review-actions{display:flex;gap:8px;width:100%;}
-  .preview-review-actions .preview-action{flex:1;}
   .preview-control-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;width:100%;}
   .preview-control-row .mobile-pvw-toggle{grid-column:2;}
   .preview-control-row .mob-preview-view{grid-column:3;justify-self:end;}
-  .preview-action{min-width:0;border-radius:8px;padding:8px 7px;font:700 11px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;cursor:pointer;white-space:nowrap;}
-  .preview-action-change{border:0;background:#171717;color:#fff;}
-  .preview-action-approve{border:0;background:var(--accent);color:#fff;}
-  .preview-action-description{margin:0 0 8px;font-size:12px;line-height:1.4;color:var(--muted);text-align:center;}
-  .preview-action-status{margin:0 0 8px;min-height:0;font-size:12px;color:#1f9d55;font-weight:600;text-align:center;}
   .mobile-pvw-toggle{display:flex;gap:2px;padding:3px;background:#e8e4df;border-radius:10px;width:fit-content;margin:0;}
   .mobile-pvw-btn{border:0;border-radius:7px;background:transparent;color:var(--muted);font:700 12px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;padding:6px 14px;cursor:pointer;}
   .mobile-pvw-btn.active{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.1);}
@@ -633,8 +516,6 @@
   /* toggle states */
   .mobile-preview-wrap.mobile-view .mob-pvw-browser{display:none;}
   .mobile-preview-wrap.mobile-view .mob-pvw-phone{display:flex;}
-
-
   /* ---- builder: app-matched controls (colours from the app's palette) ---- */
   .builder-section .info-hint{margin:0 0 16px;font-size:14px;line-height:1.5;color:rgba(28,40,50,.72)}
   .builder-section .acct-field input,.bs-stack input{width:100%;box-sizing:border-box;min-height:48px;padding:0 15px;border:1px solid rgba(28,40,50,.14);border-radius:14px;background:rgba(255,255,255,.6);font:inherit;font-size:15px;color:#1C2832;outline:none}
@@ -715,8 +596,42 @@
   /* account cards in the app's style: white, borderless, small grey label over a bold value */
   #accountPanel .info-card{border:0;border-radius:16px;box-shadow:none;padding:18px;margin-bottom:12px}
   #accountPanel .info-card h2{font-size:12px;font-weight:700;color:rgba(28,40,50,.52);margin:0 0 8px;letter-spacing:0}
-  #accountPanel .info-row .value{font-weight:700;color:#1C2832}
+
   .acct-logout{display:block;width:calc(100% - 32px);max-width:788px;margin:4px auto 32px;min-height:50px;border-radius:14px;border:1px solid rgba(28,40,50,.14);background:#fff;font-size:15px;font-weight:700;font-family:inherit;color:#B42318;cursor:pointer}
+  /* Make Live sheet, status pill, account cards and send button: matched to the app */
+  .bs-sheet-delete.neutral{color:#1C2832}
+  .bs-sheet-sub{margin:-4px 0 6px;font-size:14px;color:rgba(28,40,50,.72)}
+  .bs-tld{margin:4px 0}
+  .bs-tld .bs-chip{flex-grow:0;padding:8px 14px}
+  .bs-domain-msg{font-size:14px;font-weight:600;min-height:20px}
+  .bs-domain-msg.ok{color:#1F8A54}.bs-domain-msg.err{color:#B42318}
+  .bs-billing{display:flex;gap:4px;padding:4px;border-radius:14px;background:rgba(28,40,50,.07);margin-bottom:6px}
+  .bs-billing button{flex:1;min-height:40px;border:0;border-radius:11px;background:transparent;font:inherit;font-size:14px;font-weight:700;color:rgba(28,40,50,.72);cursor:pointer}
+  .bs-billing button small{margin-left:6px;font-size:11px;font-weight:800;color:#1F8A54}
+  .bs-billing button.on{background:#3B82F6;color:#fff}.bs-billing button.on small{color:#fff}
+  .bs-plan{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:16px;border-radius:14px;border:1.5px solid rgba(28,40,50,.14);background:#fff;text-align:left;font:inherit;cursor:pointer}
+  .bs-plan.on{border-color:#3B82F6;background:rgba(59,130,246,.06)}
+  .bs-plan .l,.bs-plan .r{display:flex;flex-direction:column}.bs-plan .r{align-items:flex-end}
+  .bs-plan b{font-size:16px;font-weight:800;color:#1C2832}
+  .bs-plan small{font-size:13px;color:rgba(28,40,50,.52);margin-top:2px}
+  .bs-plan em{align-self:flex-start;margin-bottom:4px;padding:2px 7px;border-radius:999px;background:#1F8A54;color:#fff;font-style:normal;font-size:10px;font-weight:800}
+  .bs-plan-total{margin:6px 0 0;text-align:center;font-size:13px;font-weight:600;color:rgba(28,40,50,.72)}
+  .bs-plan-domain{margin:0;text-align:center;font-size:12.5px;color:rgba(28,40,50,.52)}
+  .wah-make-live{border:0;border-radius:999px;padding:9px 15px;font:inherit;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap}
+  .wah-make-live.go{background:#3B82F6;color:#fff}
+  .wah-make-live.pending{background:#3B82F6;color:#fff;opacity:.7}
+  .wah-make-live.live{background:#fff;color:rgba(28,40,50,.52);border:1px solid rgba(28,40,50,.14)}
+  #headerStatusPill[data-state="live"]{background:rgba(31,138,84,.12);color:#1F8A54}
+  #headerStatusPill[data-state="building"]{background:rgba(178,106,0,.12);color:#B26A00}
+  #headerStatusPill[data-state="offline"]{background:rgba(180,35,24,.10);color:#B42318}
+  #headerStatusPill[data-state="ready"]{background:rgba(59,130,246,.10);color:#3B82F6}
+  .acct-value{font-size:17px;font-weight:800;color:#1C2832;word-break:break-word}
+  .acct-sub{font-size:14px;color:rgba(28,40,50,.72);margin-top:3px}
+  .acct-link{display:block;margin-top:12px;padding:0;border:0;background:none;font:inherit;font-size:14px;font-weight:700;color:#3B82F6;cursor:pointer}
+  .msgs-send{background:#3B82F6 !important}
+  .send-i{display:flex;flex-direction:column;align-items:center;gap:2px}
+  .send-i span{display:block;width:5px;border-radius:3px;background:#fff}
+  .send-i span:first-child{height:5px}.send-i span:last-child{height:11px}
 </style>
 
 <body>
@@ -734,7 +649,6 @@
   <a href="/" class="brand-mini"><img src="../img/brightsite-logo.png" alt="BrightSite"></a>
   <div class="app-header-right">
     <div class="status-pill header-status-pill" id="headerStatusPill" hidden><span class="dot"></span><span id="headerStatusLabel"></span></div>
-    <button class="app-logout" id="logoutBtn" type="button">Log out</button>
   </div>
 </div>
 
@@ -755,55 +669,20 @@
       <!-- ---------------- view mode ---------------- -->
       <div id="viewPanel">
         <div class="info-card">
-          <h2>Your plan</h2>
-          <div class="plan-chosen-card" id="planChosenCard">
-            <div class="plan-chosen-icon" id="planChosenIcon">
-              <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-            </div>
-            <div class="plan-chosen-info">
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-                <div class="plan-chosen-name" id="planChosenName">Free Plan</div>
-                <button type="button" class="plan-chosen-change" id="choosePlanBtn">Change plan</button>
-              </div>
-              <div class="plan-chosen-price" id="planChosenPrice">Free · £19/mo hosting</div>
-            </div>
-          </div>
-          <p class="info-hint" id="billingHint">Your Free Plan is selected. Add features now; you'll manage billing once your account is active.</p>
-          <div id="domainIncludedNote" hidden style="display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:10px;background:#f2faf3;margin-bottom:8px;font-size:12px;color:#1f9d55;font-weight:600"><span>✓</span><span id="domainIncludedText"></span></div>
-          <button type="button" class="upgrade-btn" id="upgradeBtn">Pay for your site</button>
-          <button type="button" class="billing-btn" id="billingBtn" hidden>Manage billing</button>
-          <div id="stripeEmbedWrap" hidden style="margin-top:14px;border:1px solid var(--line);border-radius:14px;overflow:hidden">
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);background:#fafafa">
-              <span style="font-size:12px;font-weight:700;color:var(--ink)">Secure checkout</span>
-              <button type="button" id="stripeEmbedClose" style="background:none;border:0;font-size:18px;color:var(--muted);cursor:pointer;line-height:1;padding:2px 6px">&times;</button>
-            </div>
-            <div id="stripeEmbedMount" style="padding:12px"></div>
-          </div>
+          <h2>Plan</h2>
+          <div class="acct-value" id="acctPlanTitle">No plan yet</div>
+          <div class="acct-sub" id="acctPlanSub">Choose a plan when you tap Make Live.</div>
+          <button type="button" class="acct-link" id="billingBtn" hidden>Manage billing</button>
         </div>
-
-        <div class="info-card" id="domainCard">
-          <button type="button" id="domainToggle" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:0;padding:0;cursor:pointer;text-align:left">
-            <h2 style="margin:0">Get a domain</h2>
-            <span id="domainChevron" style="font-size:12px;color:var(--muted);transition:transform .2s">▼</span>
-          </button>
-          <div id="domainBody" style="margin-top:12px">
-            <p class="info-hint" style="margin-bottom:12px">Register your own domain name and we'll connect it to your website.</p>
-            <div style="display:flex;gap:8px;margin-bottom:8px">
-              <input type="text" id="domainSearchInput" placeholder="yourbusiness" autocomplete="off" autocapitalize="none" style="flex:1;min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:16px;background:var(--card);color:var(--text)">
-              <button type="button" id="domainTldBtn" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap">.com ▾</button>
-              <button type="button" id="domainCheckBtn" style="padding:10px 16px;border:0;border-radius:10px;background:#2563EB;color:#fff;font:inherit;font-size:14px;font-weight:700;cursor:pointer">Check</button>
-            </div>
-            <div id="domainTldPicker" hidden style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
-            <div id="domainResult" hidden></div>
-          </div>
-        </div>
-
         <div class="info-card">
-          <h2>Account details</h2>
-          <div class="info-row"><span class="label">Plan</span><span class="value"><span class="plan-pill" id="planPill"><span class="plan-dot"></span><span id="planLabel">Free selected</span></span></span></div>
-          <div class="info-row"><span class="label">Login email</span><span class="value" id="acctEmailRow"></span></div>
-          <div class="info-row" id="domainRow" hidden><span class="label">Domain</span><span class="value" id="domainRowValue" style="display:flex;align-items:center;gap:7px;max-width:none"></span></div>
-          <div class="info-row" style="border-bottom:0"><span class="label">Password</span><span class="value"><button type="button" id="pwdCardToggle" style="background:none;border:0;padding:0;font:inherit;font-size:13px;font-weight:700;color:#2563EB;cursor:pointer">Change password</button></span></div>
+          <h2>Domain</h2>
+          <div class="acct-value" id="acctDomainTitle">No domain yet</div>
+          <div class="acct-sub" id="acctDomainSub">You can choose one when you go live</div>
+        </div>
+        <div class="info-card">
+          <h2>Login email</h2>
+          <div class="acct-value" id="acctEmailRow"></div>
+          <button type="button" class="acct-link" id="pwdCardToggle">Change password</button>
         </div>
 
         <div class="info-card" id="pwdCard" hidden>
@@ -877,10 +756,6 @@
       <!-- mobile preview card + toggle (hidden on desktop) -->
       <div class="mobile-preview-wrap mobile-view" id="mobilePreviewWrap">
         <div id="approveSection" class="preview-actions">
-          <div class="preview-review-actions">
-            <button type="button" id="requestChangesBtn" hidden class="preview-action preview-action-change">Request changes</button>
-            <button type="button" id="approveBtn" hidden class="preview-action preview-action-approve">Approve design</button>
-          </div>
           <div class="preview-control-row">
             <div class="mobile-pvw-toggle">
               <button type="button" class="mobile-pvw-btn active" id="mobilePvwMobile">Mobile</button>
@@ -889,8 +764,6 @@
             <a id="mobPreviewViewBtn" class="mob-preview-view" href="#" target="_blank" rel="noopener" hidden style="display:none;align-items:center;gap:5px;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);font:700 11px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;text-decoration:none;white-space:nowrap">Open<svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2h6v6M10 2 4.5 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
           </div>
         </div>
-        <p id="approveDesc" hidden class="preview-action-description">Take a look at the preview and let us know if you’re happy with it.</p>
-        <p id="approveStatus" hidden class="preview-action-status"></p>
         <!-- desktop frame -->
         <div class="mob-pvw-browser">
           <div class="mob-pvw-browser-bar">
@@ -1040,7 +913,7 @@
 
     <div class="msgs-input-bar">
       <textarea id="msgsInput" class="msgs-input" rows="1" placeholder="Message Tom…" aria-label="Message Tom" autocapitalize="sentences"></textarea>
-      <button type="button" class="msgs-send" id="msgsSend" disabled aria-label="Send message">↑</button>
+      <button type="button" class="msgs-send" id="msgsSend" disabled aria-label="Send message"><span class="send-i" aria-hidden="true"><span></span><span></span></span></button>
     </div>
   </section>
 
@@ -1049,12 +922,8 @@
 
 <div id="deskPreview">
   <div class="desk-preview-bar">
-    <span class="desk-preview-status" id="deskPreviewStatus">Not live</span>
+    <button type="button" class="wah-make-live" id="deskMakeLive" hidden></button>
     <a class="desk-preview-link" id="deskPreviewLink" href="#" target="_blank" hidden>Open preview</a>
-    <div class="desk-preview-actions" id="deskPreviewActions">
-      <button type="button" class="desk-preview-action change" id="deskRequestChangesBtn" hidden>Request changes</button>
-      <button type="button" class="desk-preview-action approve" id="deskApproveBtn" hidden>Approve design</button>
-    </div>
     <div class="desk-preview-toggle" id="deskViewToggle">
       <button type="button" class="dvt-btn active" id="dvtDesktop" aria-pressed="true" onclick="var p=document.getElementById('deskPreview'),b=p.querySelector('.fake-browser'),m=p.querySelector('.fake-phone');p.classList.remove('mobile-view');b.hidden=false;m.hidden=true;b.style.display='flex';m.style.display='none';this.classList.add('active');this.setAttribute('aria-pressed','true');document.getElementById('dvtMobile').classList.remove('active');document.getElementById('dvtMobile').setAttribute('aria-pressed','false');">Desktop</button>
       <button type="button" class="dvt-btn" id="dvtMobile" aria-pressed="false" onclick="var p=document.getElementById('deskPreview'),b=p.querySelector('.fake-browser'),m=p.querySelector('.fake-phone');p.classList.add('mobile-view');b.hidden=true;m.hidden=false;b.style.display='none';m.style.display='flex';this.classList.add('active');this.setAttribute('aria-pressed','true');document.getElementById('dvtDesktop').classList.remove('active');document.getElementById('dvtDesktop').setAttribute('aria-pressed','false');">Mobile</button>
@@ -1097,115 +966,6 @@
 </div><!-- /dashWrap -->
 
 <!-- Plan chooser modal -->
-<div class="plan-modal-veil" id="planModalVeil" hidden>
-  <div class="plan-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="planModalTitle">
-    <div class="plan-modal-header">
-      <div>
-        <h2 id="planModalTitle">Choose your plan</h2>
-        <p>Every plan includes a real custom website, SEO &amp; full management.</p>
-      </div>
-      <button type="button" class="plan-modal-close" id="planModalClose" aria-label="Close">&times;</button>
-    </div>
-    <!-- hidden billing state buttons (still drive JS state) -->
-    <div hidden>
-      <button type="button" id="billingMonthly" aria-pressed="false">Monthly</button>
-      <button type="button" id="billingAnnual" aria-pressed="true">Annual</button>
-    </div>
-    <div class="plan-cards-grid" id="planCardsGrid">
-
-      <!-- Free -->
-      <div class="plan-choice-card all-blue" data-plan="essential" id="planCardEssential">
-        <div class="plan-choice-header">
-          <div class="plan-choice-name">Free Plan</div>
-          <div class="card-billing-mini">
-            <button type="button" class="cbm-monthly">Monthly</button>
-            <button type="button" class="cbm-annual active">Annual <span class="cbm-save">Save £24</span></button>
-          </div>
-        </div>
-        <div class="plan-choice-desc">Your website built for free — just pay £19/mo hosting to go live.</div>
-        <div class="plan-choice-price-row">
-          <span class="plan-choice-setup" data-monthly="Free" data-annual="Free">Free</span>
-          <span class="plan-choice-hosting" data-monthly="£19/mo hosting" data-annual="£17/mo hosting">£19/mo hosting</span>
-        </div>
-        <div class="plan-choice-note" data-monthly="£19/mo hosting — cancel any time" data-annual="Billed £204/yr — save £24 a year">£19/mo hosting — cancel any time</div>
-        <ul class="plan-choice-features">
-          <li>Website built for you at no cost</li>
-          <li>Hosting, security &amp; maintenance</li>
-          <li>SEO &amp; SEO-focused content</li>
-          <li>Mobile optimisation</li>
-          <li>1–3 pages with contact &amp; enquiry forms</li>
-        </ul>
-        <button type="button" class="plan-select-btn" data-select="essential" style="margin-top:14px">Select Free Plan</button>
-      </div>
-
-      <!-- Pro -->
-      <div class="plan-choice-card all-blue" data-plan="pro" id="planCardPro">
-        <span class="plan-featured-badge">BEST VALUE</span>
-        <div class="plan-choice-header">
-          <div class="plan-choice-name">Pro Plan</div>
-          <div class="card-billing-mini">
-            <button type="button" class="cbm-monthly">Monthly</button>
-            <button type="button" class="cbm-annual active">Annual <span class="cbm-save">Save 50%</span></button>
-          </div>
-        </div>
-        <div class="plan-choice-desc">Best for businesses that need a website with lots of info.</div>
-        <div class="plan-choice-price-row">
-          <span class="plan-choice-was" id="proWas">£199</span>
-          <span class="plan-choice-setup" data-monthly="£199" data-annual="£99">£99</span>
-          <span class="plan-choice-hosting" data-monthly="+ £19/mo" data-annual="£19/mo hosting">£19/mo hosting</span>
-        </div>
-        <div class="plan-choice-note" data-monthly="One-off build, then £19/mo" data-annual="One-off build, then £228/yr">One-off build, then £228/yr</div>
-        <ul class="plan-choice-features">
-          <li>Everything in Free</li>
-          <li>Up to 5 custom-designed pages</li>
-          <li>Custom sections built for you</li>
-          <li>Interactions &amp; animations</li>
-          <li>Free domain included <span style="font-size:10px;font-weight:600;color:var(--muted)">(under £12/yr)</span></li>
-        </ul>
-        <button type="button" class="plan-select-btn" data-select="pro" style="margin-top:14px">Select Pro Plan</button>
-      </div>
-
-      <!-- Prestige -->
-      <div class="plan-choice-card all-blue" data-plan="prestige" id="planCardPrestige">
-        <div class="plan-choice-header">
-          <div class="plan-choice-name">Prestige Plan</div>
-          <div class="card-billing-mini">
-            <button type="button" class="cbm-monthly">Monthly</button>
-            <button type="button" class="cbm-annual active">Annual <span class="cbm-save">Save 50%</span></button>
-          </div>
-        </div>
-        <div class="plan-choice-desc">Best for corporate needs and multi-location brands.</div>
-        <div class="plan-choice-price-row">
-          <span class="plan-choice-was" id="prestigeWas">£299</span>
-          <span class="plan-choice-setup" data-monthly="£299" data-annual="£149">£149</span>
-          <span class="plan-choice-hosting" data-monthly="+ £19/mo" data-annual="£19/mo hosting">£19/mo hosting</span>
-        </div>
-        <div class="plan-choice-note" data-monthly="One-off build, then £19/mo" data-annual="One-off build, then £228/yr">One-off build, then £228/yr</div>
-        <ul class="plan-choice-features">
-          <li>Everything in Pro</li>
-          <li>Up to 7 custom-designed pages</li>
-          <li>Multi-location or multi-service structure</li>
-          <li>Priority same-day support</li>
-          <li>Free domain included <span style="font-size:10px;font-weight:600;color:var(--muted)">(under £12/yr)</span></li>
-        </ul>
-        <button type="button" class="plan-select-btn" data-select="prestige" style="margin-top:14px">Select Prestige Plan</button>
-      </div>
-
-    </div>
-    <div id="planDomainAddon" hidden style="padding:0 4px 4px">
-      <label class="plan-domain-row" id="planDomainAddonLabel">
-        <input type="checkbox" id="planDomainAddonCheck" checked>
-        <span class="plan-domain-box"></span>
-        <span class="plan-domain-info">
-          <span class="plan-domain-name" id="planDomainAddonName"></span>
-          <span class="plan-domain-sub" id="planDomainAddonSub">One-off payment, billed at checkout</span>
-        </span>
-        <span class="plan-domain-price" id="planDomainAddonPrice"></span>
-      </label>
-    </div>
-    <p class="plan-modal-note">See a free personalised preview before you commit. Hosting covers security, updates and ongoing management on every plan. Cancel any time.</p>
-  </div>
-</div>
 
 
 <script>
@@ -1310,8 +1070,7 @@
   var _acctName = document.getElementById('acctName'); if (_acctName) _acctName.textContent = session.email || '';
   var _acctEmailTop = document.getElementById('acctEmailTop'); if (_acctEmailTop) _acctEmailTop.textContent = session.email || '';
   document.getElementById('acctEmailRow').textContent = session.email || '';
-  document.getElementById('acctLogoutBtn').addEventListener('click', function () { document.getElementById('logoutBtn').click(); });
-  document.getElementById('logoutBtn').addEventListener('click', function () {
+  document.getElementById('acctLogoutBtn').addEventListener('click', function () {
     localStorage.removeItem('bs_session');
     location.href = 'login.html';
   });
@@ -1386,7 +1145,7 @@
   var pendingUploads = { logo: null, hero: null, gallery: [] };
   var galleryRemoved = [];
   var isPaying = false;
-  var selectedPlan = 'essential'; // essential | pro | prestige
+  var selectedPlan = 'essential'; // essential (the Free plan) | pro
   var selectedAnnual = false;
   var selectedAddons = { booking: false, store: false, domain: null };
   var isLive = false;
@@ -1455,43 +1214,33 @@
   }
 
   function updateWebsiteAppHeader() {
-    var btn = document.getElementById('wahMakeLive');
-    if (!btn) return;
-    var data = (business && business.data) || {};
-    var previewUrl = getPreviewUrl();
-    var isBuilding = !(previewUrl || data.demoUrl);
-    if (isBuilding) {
-      btn.hidden = true;
-    } else if (isLive) {
+    ['wahMakeLive', 'deskMakeLive'].forEach(function(id) {
+      var btn = document.getElementById(id);
+      if (!btn) return;
+      btn.disabled = false;
+      if (!getPreviewUrl()) { btn.hidden = true; return; }
       btn.hidden = false;
-      btn.textContent = 'Take Offline';
-      btn.className = 'wah-make-live live';
-      btn.onclick = function() {
-        if (!confirm('Take your website offline?')) return;
-        var d = (business.data) || {};
-        business.data = Object.assign({}, d, { manuallyOffline: true, published: false });
-        isLive = false;
-        saveBusiness().then(function() { updateWebsiteAppHeader(); renderWebsiteStatus(); }).catch(function() {});
-      };
-    } else {
-      btn.hidden = false;
-      btn.textContent = isPaying ? 'Make Live' : 'Make Live';
+      if (isLive) {
+        btn.textContent = 'Take Offline';
+        btn.className = 'wah-make-live live';
+        btn.onclick = function() {
+          if (!confirm('Take your website offline?')) return;
+          business.data = Object.assign({}, business.data || {}, { manuallyOffline: true, published: false });
+          isLive = false;
+          saveBusiness().then(updateWebsiteAppHeader).catch(function() {});
+        };
+        return;
+      }
+      btn.textContent = 'Make Live';
       btn.className = 'wah-make-live go';
       btn.onclick = function() {
-        if (!isPaying) { document.getElementById('planModalVeil').hidden = false; return; }
+        if (!isPaying) { openLiveSheet(); return; }
         btn.textContent = 'Publishing…';
         btn.className = 'wah-make-live pending';
         btn.disabled = true;
-        saveBusiness({ publish: true }).then(function() {
-          isLive = true;
-          updateWebsiteAppHeader();
-          renderWebsiteStatus();
-        }).catch(function() {
-          btn.disabled = false;
-          updateWebsiteAppHeader();
-        });
+        saveBusiness({ publish: true }).then(function() { isLive = true; updateWebsiteAppHeader(); }).catch(updateWebsiteAppHeader);
       };
-    }
+    });
   }
 
   // mobile website tab edit toggle
@@ -1579,9 +1328,10 @@
     var headerLabel = document.getElementById('headerStatusLabel');
     if (headerPill && headerLabel) {
       headerPill.hidden = false;
-      headerPill.classList.toggle('live', isLive);
-      headerPill.classList.toggle('draft', !isLive);
-      headerLabel.textContent = isLive ? 'Live' : 'Not live';
+      // same states as the app's status pill
+      var st = isLive ? 'live' : !getPreviewUrl() ? 'building' : isPaying ? 'offline' : 'ready';
+      headerPill.dataset.state = st;
+      headerLabel.textContent = { live: 'Live', building: 'Being built', offline: 'Offline', ready: 'Ready to publish' }[st];
     }
 
     if (urlLink) {
@@ -1610,10 +1360,8 @@
 
     // Uploaded previews are available before the website is published.
     var previewUrl = getPreviewUrl();
-    var reviewReady = !!(previewUrl && !data.demoApproved);
 
     // Desktop preview panel
-    var deskStatus = document.getElementById('deskPreviewStatus');
     var deskLink = document.getElementById('deskPreviewLink');
     var fakeBrowserViewBtn = document.getElementById('fakeBrowserViewBtn');
     var fakeBrowserUrl = document.getElementById('fakeBrowserUrl');
@@ -1622,10 +1370,6 @@
     var deskPlaceholder = document.getElementById('deskPreviewPlaceholder');
     var deskPlaceholderMob = document.getElementById('deskPreviewPlaceholderMob');
     var deskBizName = document.getElementById('deskPreviewBizName');
-    if (deskStatus) {
-      deskStatus.textContent = isLive ? '● Live' : (previewUrl ? '● Preview ready' : '● Not live');
-      deskStatus.style.color = previewUrl ? '#1f9d55' : '#b45309';
-    }
     [deskLink, fakeBrowserViewBtn].forEach(function(link) {
       if (!link) return;
       link.hidden = !previewUrl;
@@ -1636,10 +1380,6 @@
     if (fakeBrowserUrl) fakeBrowserUrl.textContent = previewUrl ? (isLive ? 'your website' : 'preview.brightsite.app') : '';
     var mobPreviewUrl = document.getElementById('mobPreviewUrl');
     if (mobPreviewUrl) mobPreviewUrl.textContent = previewUrl ? (isLive ? 'your website' : 'preview.brightsite.app') : '';
-    ['approveBtn', 'requestChangesBtn', 'deskApproveBtn', 'deskRequestChangesBtn'].forEach(function(id) {
-      var button = document.getElementById(id);
-      if (button) button.hidden = !reviewReady;
-    });
     var bizLabel = (raw.name || business.name || '').toUpperCase();
     ['deskPreviewBizName', 'deskPreviewBizNameMob', 'mobilePreviewBizName', 'mobilePreviewBizNameMob'].forEach(function(id) {
       var el = document.getElementById(id);
@@ -1737,21 +1477,10 @@
     if (acctEmailTop) acctEmailTop.textContent = resolvedEmail;
     if (acctEmailRow) acctEmailRow.textContent = resolvedEmail;
 
-    var domainValue = data.customDomain || data.domain || '';
-    var domainRow = document.getElementById('domainRow');
-    var domainRowValue = document.getElementById('domainRowValue');
-    if (domainRow && domainRowValue) {
-      domainRow.hidden = !domainValue;
-      if (domainValue) {
-        domainRowValue.innerHTML = '<span style="font-weight:600;color:var(--ink)">' +
-          escapeHTML(domainValue) +
-          '</span><span class="domain-live-pill ' + (isLive ? 'is-live' : '') + '">' +
-          (isLive ? 'Live' : 'Not live') + '</span>';
-      }
-    }
-
-    if (window._bsRestoreSavedPlan) window._bsRestoreSavedPlan();
-    else renderPlanUI();
+    if (raw.chosenPlan === 'pro' || raw.chosenPlan === 'essential') selectedPlan = raw.chosenPlan;
+    if (typeof raw.chosenAnnual === 'boolean') selectedAnnual = raw.chosenAnnual;
+    if (raw.chosenDomain) { pendingDomain = raw.chosenDomain; pendingDomainPrice = raw.chosenDomainPrice || null; pendingDomainPence = raw.chosenDomainPence || 0; }
+    renderAccountCards();
     populateBuilderFields(raw);
     renderWebsiteStatus();
     updateWebsiteAppHeader();
@@ -1863,336 +1592,24 @@
     renderMediaThumbs();
     renderGallery();
 
-    // Approve section
-    var readyForReview = !!(getPreviewUrl() && business.data && !business.data.demoApproved);
-    ['approveBtn', 'requestChangesBtn', 'approveDesc'].forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el) el.hidden = !readyForReview;
-    });
-
     // Restore sectionDoneClicked
     if (raw.sectionDoneClicked) sectionDoneClicked = Object.assign({}, raw.sectionDoneClicked);
 
     updateSectionChecks();
   }
 
-  var PLAN_CONFIG = {
-    essential: {
-      label: 'Free Plan',
-      monthly: { setup: 'Free', hosting: '£19/mo hosting', note: '£19/mo hosting — cancel any time' },
-      annual:  { setup: 'Free', hosting: '£17/mo hosting', note: 'Billed £204/yr — save £24 a year' },
-      stripeMonthly: 'https://buy.stripe.com/14A14n87jcE4dfJbxX3gk00',
-      stripeAnnual:  'https://buy.stripe.com/bJecN55ZbbA00sX6dD3gk02',
-      iconColor: '#2563eb'
-    },
-    pro: {
-      label: 'Pro Plan',
-      monthly: { setup: '£199', hosting: '£19/mo', note: 'One-off build, then £19/mo' },
-      annual:  { setup: '£99', hosting: '£228/yr', note: 'One-off build, then £228/yr' },
-      stripeMonthly: 'https://buy.stripe.com/00wdR99bnavW6Rl31r3gk03',
-      stripeAnnual:  'https://buy.stripe.com/dRm4gzbjv1Zq6Rl45v3gk04',
-      iconColor: '#6366f1'
-    },
-    prestige: {
-      label: 'Prestige Plan',
-      monthly: { setup: '£299', hosting: '£19/mo', note: 'One-off build, then £19/mo' },
-      annual:  { setup: '£149', hosting: '£228/yr', note: 'One-off build, then £228/yr' },
-      stripeMonthly: 'https://buy.stripe.com/bJefZh87jdI8b7BbxX3gk05',
-      stripeAnnual:  'https://buy.stripe.com/eVqaEXgDPeMc1x11Xn3gk06',
-      iconColor: '#0d9488'
-    }
-  };
-
-  function planPriceLabel() {
-    var cfg = PLAN_CONFIG[selectedPlan];
-    var tier = selectedAnnual ? cfg.annual : cfg.monthly;
-    if (selectedPlan === 'essential') return tier.setup + ' · ' + tier.hosting;
-    return tier.setup + ' setup · ' + tier.hosting;
-  }
-
-  function buildStripeUrl() {
-    var cfg = PLAN_CONFIG[selectedPlan];
-    return selectedAnnual ? cfg.stripeAnnual : cfg.stripeMonthly;
-  }
-
-  function renderPlanUI() {
-    var cfg = PLAN_CONFIG[selectedPlan] || PLAN_CONFIG.essential;
-    var pill = document.getElementById('planPill');
-    var planLabel = document.getElementById('planLabel');
-    var isOffline = isPaying && !isLive;
-
-    if (pill) {
-      pill.classList.toggle('active', isLive);
-      pill.classList.toggle('offline', isOffline);
-    }
-    if (planLabel) {
-      planLabel.textContent = isLive ? (cfg.label + ' · Live')
-        : isOffline ? (cfg.label + ' · Offline')
-        : isPaying ? (cfg.label + ' · Active')
-        : (cfg.label + ' selected');
-    }
-
-    var billingHint = document.getElementById('billingHint');
-    if (billingHint) {
-      billingHint.textContent = isPaying
-        ? 'Your plan is active. Manage payment details any time.'
-        : 'Your plan is selected. You can change it any time before paying.';
-    }
-
-    var upgradeBtn = document.getElementById('upgradeBtn');
-    if (upgradeBtn) {
-      upgradeBtn.hidden = false;
-      upgradeBtn.dataset.plan = selectedPlan;
-      upgradeBtn.dataset.billing = selectedAnnual ? 'annual' : 'monthly';
-      upgradeBtn.dataset.stripeUrl = selectedAnnual ? (cfg.stripeAnnual || '') : (cfg.stripeMonthly || '');
-    }
-
-    var domainNote = document.getElementById('domainIncludedNote');
-    if (domainNote) {
-      if (!isPaying && pendingDomain) {
-        var domainText = document.getElementById('domainIncludedText');
-        if (domainText) domainText.textContent = 'Includes domain: ' + pendingDomain;
-        domainNote.hidden = false;
-      } else {
-        domainNote.hidden = true;
-      }
-    }
-
-    var billingBtn = document.getElementById('billingBtn');
-    if (billingBtn) billingBtn.hidden = !isPaying;
-
-    var planName = document.getElementById('planChosenName');
-    var planPrice = document.getElementById('planChosenPrice');
-    var iconEl = document.getElementById('planChosenIcon');
-    if (planName) planName.textContent = cfg.label;
-    if (planPrice) planPrice.textContent = planPriceLabel();
-    if (iconEl) iconEl.style.background = cfg.iconColor;
-
+  // Account tab: the app's Plan / Domain / Login email cards.
+  function renderAccountCards() {
     var data = (business && business.data) || {};
-    var domainValue = data.customDomain || data.domain || '';
-    var domainCard = document.getElementById('domainCard');
-    if (domainCard) domainCard.hidden = !!domainValue;
-
+    var set = function(id, text) { var el = document.getElementById(id); if (el) el.textContent = text; };
+    set('acctPlanTitle', isPaying ? (selectedPlan === 'pro' ? 'Pro' : 'Free') + ' plan · ' + (selectedAnnual ? 'Annual' : 'Monthly') : 'No plan yet');
+    set('acctPlanSub', isPaying ? (selectedAnnual ? '£17/month hosting, billed £204 yearly' : '£19/month hosting') : 'Choose a plan when you tap Make Live.');
+    document.getElementById('billingBtn').hidden = !isPaying;
+    var domain = data.customDomain || data.domain || pendingDomain || '';
+    set('acctDomainTitle', domain || 'No domain yet');
+    set('acctDomainSub', isLive ? 'Connected to your website' : domain ? 'Connects when your website goes live' : 'You can choose one when you go live');
     renderWebsiteStatus();
   }
-
-  // ---------------- plan chooser modal ----------------
-  (function () {
-    var veil = document.getElementById('planModalVeil');
-    var closeBtn = document.getElementById('planModalClose');
-    var monthlyBtn = document.getElementById('billingMonthly');
-    var annualBtn = document.getElementById('billingAnnual');
-
-    var FREE_DOMAIN_PLANS = ['pro', 'prestige'];
-    var FREE_DOMAIN_MAX_PENCE = 1200; // £12
-
-    function isDomainFreeForPlan() {
-      if (!pendingDomain || !FREE_DOMAIN_PLANS.includes(selectedPlan)) return false;
-      var pence = pendingDomainPence || 0;
-      // treat unknown price as free-eligible (safe — backend re-validates at charge time)
-      return pence === 0 || pence <= FREE_DOMAIN_MAX_PENCE;
-    }
-
-    function updateDomainAddonRow() {
-      var domainAddon = document.getElementById('planDomainAddon');
-      if (!domainAddon) return;
-      if (!pendingDomain) { domainAddon.hidden = true; return; }
-      document.getElementById('planDomainAddonName').textContent = pendingDomain;
-      var isFree = isDomainFreeForPlan();
-      var priceEl = document.getElementById('planDomainAddonPrice');
-      var subEl = document.getElementById('planDomainAddonSub');
-      if (isFree) {
-        priceEl.innerHTML = '<span style="text-decoration:line-through;opacity:.5;margin-right:5px">' + (pendingDomainPrice || '') + '</span><span>Free</span>';
-        priceEl.style.background = '#e6f6ec';
-        priceEl.style.color = '#1f9d55';
-        if (subEl) subEl.textContent = 'Included free with Pro & Prestige Plans';
-      } else {
-        priceEl.textContent = pendingDomainPrice || '';
-        priceEl.style.background = '';
-        priceEl.style.color = '';
-        if (subEl) subEl.textContent = 'One-off payment, billed at checkout';
-      }
-      document.getElementById('planDomainAddonCheck').checked = true;
-      domainAddon.hidden = false;
-    }
-
-    function openPlanModal() {
-      syncModalState();
-      veil.hidden = false;
-    }
-    function closePlanModal() {
-      veil.hidden = true;
-    }
-
-    document.getElementById('choosePlanBtn').addEventListener('click', openPlanModal);
-    closeBtn.addEventListener('click', closePlanModal);
-    veil.addEventListener('click', function (e) { if (e.target === veil) closePlanModal(); });
-    document.addEventListener('keydown', function (e) { if (!veil.hidden && e.key === 'Escape') closePlanModal(); });
-
-    // auto-save when domain checkbox toggled
-    var domainAddonCheck = document.getElementById('planDomainAddonCheck');
-    if (domainAddonCheck) {
-      domainAddonCheck.addEventListener('change', function() {
-        if (typeof _exposeDomain === 'function') _exposeDomain();
-        if (business && business.data && business.data.raw) saveBusiness();
-      });
-    }
-
-    function syncModalState() {
-      // billing toggle
-      monthlyBtn.setAttribute('aria-pressed', String(!selectedAnnual));
-      annualBtn.setAttribute('aria-pressed', String(selectedAnnual));
-      updatePriceDisplay();
-      syncCardToggles(selectedAnnual);
-
-      // selected card highlight
-      ['essential', 'pro', 'prestige'].forEach(function (p) {
-        var card = document.getElementById('planCard' + p.charAt(0).toUpperCase() + p.slice(1));
-        card.classList.toggle('selected', p === selectedPlan);
-      });
-
-      updateSelectLabels();
-      updateDomainAddonRow();
-    }
-
-    function updatePriceDisplay() {
-      var tier = selectedAnnual ? 'annual' : 'monthly';
-      document.querySelectorAll('.plan-choice-setup[data-' + tier + ']').forEach(function (el) {
-        el.textContent = el.dataset[tier];
-      });
-      document.querySelectorAll('.plan-choice-hosting[data-' + tier + ']').forEach(function (el) {
-        el.textContent = el.dataset[tier];
-      });
-      document.querySelectorAll('.plan-choice-note[data-' + tier + ']').forEach(function (el) {
-        el.textContent = el.dataset[tier];
-      });
-      // was-price and save badge only visible on annual for Pro/Prestige
-      var proWas = document.getElementById('proWas');
-      var presWas = document.getElementById('prestigeWas');
-      if (proWas) proWas.style.display = selectedAnnual ? '' : 'none';
-      if (presWas) presWas.style.display = selectedAnnual ? '' : 'none';
-    }
-
-    function updateSelectLabels() {
-      document.querySelectorAll('[data-select]').forEach(function (btn) {
-        var p = btn.dataset.select;
-        btn.textContent = (p === selectedPlan) ? ('✓ ' + PLAN_CONFIG[p].label + ' selected') : ('Select ' + PLAN_CONFIG[p].label);
-      });
-    }
-
-    // hidden billing state buttons
-    monthlyBtn.addEventListener('click', function () {
-      selectedAnnual = false;
-      monthlyBtn.setAttribute('aria-pressed', 'true');
-      annualBtn.setAttribute('aria-pressed', 'false');
-      updatePriceDisplay();
-      syncCardToggles(false);
-    });
-    annualBtn.addEventListener('click', function () {
-      selectedAnnual = true;
-      monthlyBtn.setAttribute('aria-pressed', 'false');
-      annualBtn.setAttribute('aria-pressed', 'true');
-      updatePriceDisplay();
-      syncCardToggles(true);
-    });
-
-    // per-card mini billing toggles
-    function syncCardToggles(isAnnual) {
-      document.querySelectorAll('.card-billing-mini .cbm-monthly').forEach(function(b){ b.classList.toggle('active', !isAnnual); });
-      document.querySelectorAll('.card-billing-mini .cbm-annual').forEach(function(b){ b.classList.toggle('active', isAnnual); });
-    }
-    document.getElementById('planCardsGrid').addEventListener('click', function(e) {
-      var btn = e.target.closest('.cbm-monthly, .cbm-annual');
-      if (!btn) return;
-      e.stopPropagation();
-      var isAnnual = btn.classList.contains('cbm-annual');
-      selectedAnnual = isAnnual;
-      monthlyBtn.setAttribute('aria-pressed', String(!isAnnual));
-      annualBtn.setAttribute('aria-pressed', String(isAnnual));
-      updatePriceDisplay();
-      syncCardToggles(isAnnual);
-    });
-
-    // card clicks select the plan (clicking the card background, not a button/label)
-    document.getElementById('planCardsGrid').addEventListener('click', function (e) {
-      var card = e.target.closest('.plan-choice-card');
-      if (!card) return;
-      // ignore clicks on checkboxes, labels, select button
-      if (e.target.closest('.plan-select-btn') || e.target.closest('.plan-addon-row')) return;
-      var plan = card.dataset.plan;
-      if (plan) { selectedPlan = plan; syncModalState(); closePlanModal(); }
-    });
-
-    // select buttons
-    document.querySelectorAll('[data-select]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        selectedPlan = btn.dataset.select;
-        // read domain add-on state
-        var domainCheck = document.getElementById('planDomainAddonCheck');
-        selectedAddons.domain = (pendingDomain && domainCheck && domainCheck.checked) ? pendingDomain : null;
-        // save to business data
-        if (business && business.data && business.data.raw) {
-          business.data.raw.chosenPlan = selectedPlan;
-          business.data.raw.chosenAnnual = selectedAnnual;
-          saveBusiness();
-        }
-        syncModalState();
-        renderPlanUI();
-        closePlanModal();
-      });
-    });
-
-    // keep addon selections in sync across cards (they share one selectedAddons state)
-        // restore saved plan choice on load
-    function restoreSavedPlan() {
-      if (!business || !business.data || !business.data.raw) return;
-      var raw = business.data.raw;
-      if (raw.chosenPlan && PLAN_CONFIG[raw.chosenPlan]) selectedPlan = raw.chosenPlan;
-      if (typeof raw.chosenAnnual === 'boolean') selectedAnnual = raw.chosenAnnual;
-      // restore domain selection
-      if (raw.chosenDomain) {
-        pendingDomain = raw.chosenDomain;
-        pendingDomainPrice = raw.chosenDomainPrice || null;
-        pendingDomainPence = raw.chosenDomainPence || 0;
-        // populate the search input
-        var inp = document.getElementById('domainSearchInput');
-        if (inp) inp.value = raw.chosenDomain.replace(/\.[^.]+(\.[^.]+)?$/, '');
-        // show the green ✓ result box
-        var resultEl = document.getElementById('domainResult');
-        if (resultEl) {
-          // Prices are quoted live by Cloudflare. Do not show a saved estimate
-          // while the current quote is being refreshed.
-          var subline = 'Checking live price…';
-          resultEl.innerHTML = '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid #c6dfc8;border-radius:12px;background:#f2faf3">'
-            + '<span style="font-size:18px">✓</span>'
-            + '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14px;color:var(--ink)">' + raw.chosenDomain + '</div>'
-            + '<div style="font-size:12px;color:#1f9d55;margin-top:1px">' + subline + '</div></div>'
-            + '<button type="button" onclick="if(window._bsClearDomain)window._bsClearDomain();" style="font:inherit;font-size:12px;font-weight:600;color:var(--muted);background:none;border:0;cursor:pointer;padding:0;white-space:nowrap">Change</button>'
-            + '</div>';
-          resultEl.hidden = false;
-        }
-        if (typeof _exposeDomain === 'function') _exposeDomain();
-        if (window._bsUpdateDomainAddon) window._bsUpdateDomainAddon();
-        if (window._bsRefreshDomainPrice) window._bsRefreshDomainPrice(raw.chosenDomain);
-      }
-      renderPlanUI();
-    }
-
-    // expose for renderDashboard to call
-    window._bsRestoreSavedPlan = restoreSavedPlan;
-    // expose so domain search can trigger addon row refresh
-    window._bsUpdateDomainAddon = updateDomainAddonRow;
-    window._bsIsDomainFree = isDomainFreeForPlan;
-    // expose so inline Change button can clear domain and save
-    window._bsClearDomain = function() {
-      pendingDomain = null; pendingDomainPrice = null; pendingDomainPence = null; pendingDomainTld = null;
-      window._bsPendingDomain = null;
-      document.getElementById('domainResult').hidden = true;
-      document.getElementById('domainSearchInput').value = '';
-      if (window._bsUpdateDomainAddon) window._bsUpdateDomainAddon();
-      if (business && business.data && business.data.raw) saveBusiness();
-    };
-  })();
 
   // ---------------- account persistence ----------------
   // The website editor has been removed from this dashboard. Keep the
@@ -2205,8 +1622,7 @@
     raw.chosenPlan = selectedPlan;
     raw.chosenAnnual = selectedAnnual;
     // persist domain selection
-    var domainCheck = document.getElementById('planDomainAddonCheck');
-    if (pendingDomain && domainCheck && domainCheck.checked) {
+    if (pendingDomain) {
       raw.chosenDomain = pendingDomain;
       raw.chosenDomainPrice = pendingDomainPrice || '';
       raw.chosenDomainPence = pendingDomainPence || 0;
@@ -2248,19 +1664,16 @@
         isLive = !!(row.published || (row.data && row.data.published));
         business.data = business.data || {};
       }
-      renderPlanUI();
-      renderWebsiteStatus();
+      renderAccountCards();
       return row;
     });
   }
 
   // ---------------- domain search ----------------
   var DOMAIN_TLDS = ['.com', '.co.uk', '.net', '.org', '.io', '.co', '.uk', '.app'];
-  var selectedTld = '.com';
   var pendingDomain = null;
   var pendingDomainPrice = null;
   var pendingDomainPence = null;
-  var pendingDomainTld = null;
 
   function liveDomainPrice(json) {
     var pence = Number(json && json.pricePence);
@@ -2270,108 +1683,6 @@
       label: '£' + (pence / 100).toFixed(2) + '/yr'
     };
   }
-
-  function showSelectedDomain(domain, price) {
-    var resultEl = document.getElementById('domainResult');
-    if (!resultEl) return;
-    var isFree = typeof window._bsIsDomainFree === 'function' && window._bsIsDomainFree();
-    var subline = isFree
-      ? 'Selected — <span style="text-decoration:line-through;opacity:.5;margin-right:3px">' + price + '</span><span style="font-weight:700;color:#1f9d55">Free with your plan</span>'
-      : 'Selected — ' + price;
-    resultEl.innerHTML = '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid #c6dfc8;border-radius:12px;background:#f2faf3">'
-      + '<span style="font-size:18px">✓</span>'
-      + '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14px;color:var(--ink)">' + domain + '</div>'
-      + '<div style="font-size:12px;color:#1f9d55;margin-top:1px">' + subline + '</div></div>'
-      + '<button type="button" onclick="if(window._bsClearDomain)window._bsClearDomain();" style="font:inherit;font-size:12px;font-weight:600;color:var(--muted);background:none;border:0;cursor:pointer;padding:0;white-space:nowrap">Change</button>'
-      + '</div>';
-    resultEl.hidden = false;
-  }
-
-  window._bsRefreshDomainPrice = async function(domain) {
-    if (!domain || domain !== pendingDomain) return;
-    try {
-      var resp = await fetch('https://api.brightsite.app/api/check-domain?domain=' + encodeURIComponent(domain));
-      var json = await resp.json();
-      var quote = liveDomainPrice(json);
-      if (!resp.ok || !json.available || !quote || domain !== pendingDomain) return;
-      pendingDomainPrice = quote.label;
-      pendingDomainPence = quote.pence;
-      showSelectedDomain(domain, quote.label);
-      if (business && business.data && business.data.raw) saveBusiness();
-    } catch (e) {
-      // Keep the existing selection but never replace it with a made-up price.
-    }
-  };
-  // expose for Stripe block (separate script scope)
-  function _exposeDomain() {
-    window._bsPendingDomain = pendingDomain || null;
-  }
-  var domainTldBtn = document.getElementById('domainTldBtn');
-  var domainTldPicker = document.getElementById('domainTldPicker');
-  var domainTldPickerOpen = false;
-
-  // Build TLD picker options
-  DOMAIN_TLDS.forEach(function(tld) {
-    var btn = document.createElement('button');
-    btn.type = 'button';
-    btn.textContent = tld;
-    btn.style.cssText = 'padding:6px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);font:inherit;font-size:13px;font-weight:600;cursor:pointer';
-    btn.addEventListener('click', function() {
-      selectedTld = tld;
-      domainTldBtn.textContent = tld + ' ▾';
-      domainTldPicker.hidden = true;
-      domainTldPickerOpen = false;
-      document.getElementById('domainResult').hidden = true;
-    });
-    domainTldPicker.appendChild(btn);
-  });
-
-  domainTldBtn.addEventListener('click', function() {
-    domainTldPickerOpen = !domainTldPickerOpen;
-    domainTldPicker.hidden = !domainTldPickerOpen;
-  });
-
-  document.getElementById('domainCheckBtn').addEventListener('click', async function() {
-    var q = document.getElementById('domainSearchInput').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
-    if (!q) return;
-    var fullDomain = q + selectedTld;
-    var resultEl = document.getElementById('domainResult');
-    var btn = document.getElementById('domainCheckBtn');
-    btn.textContent = 'Checking…';
-    btn.disabled = true;
-    resultEl.hidden = true;
-    try {
-      var resp = await fetch('https://api.brightsite.app/api/check-domain?domain=' + encodeURIComponent(fullDomain));
-      var json = await resp.json();
-      var quote = liveDomainPrice(json);
-      if (resp.ok && json.available && quote) {
-        pendingDomain = fullDomain;
-        pendingDomainPrice = quote.label;
-        pendingDomainPence = quote.pence;
-        pendingDomainTld = selectedTld;
-        showSelectedDomain(fullDomain, quote.label);
-        _exposeDomain();
-        if (window._bsUpdateDomainAddon) window._bsUpdateDomainAddon();
-        // Persist domain to Supabase immediately so it survives refresh
-        if (business && business.data && business.data.raw) saveBusiness();
-      } else if (resp.ok && json.available) {
-        resultEl.innerHTML = '<p style="margin:0;font-size:13px;color:var(--muted)">We couldn\'t get the live registration price. Please try again.</p>';
-      } else {
-        pendingDomain = null; pendingDomainPrice = null; pendingDomainPence = null; pendingDomainTld = null;
-        _exposeDomain();
-        resultEl.innerHTML = '<p style="margin:0;font-size:13px;color:var(--muted)">That domain isn\'t available. Try a different name or extension.</p>';
-      }
-    } catch(e) {
-      resultEl.innerHTML = '<p style="margin:0;font-size:13px;color:var(--muted)">Couldn\'t check availability. Please try again.</p>';
-    }
-    resultEl.hidden = false;
-    btn.textContent = 'Check';
-    btn.disabled = false;
-  });
-
-  document.getElementById('domainSearchInput').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') document.getElementById('domainCheckBtn').click();
-  });
 
   // Redirects to Stripe's Billing Portal so customers can update payment details,
   // see invoices, or cancel their subscription.
@@ -2817,8 +2128,10 @@
     sheetReady = opts.build(body);
     sheetSave = opts.onSave;
     sheetDelete = opts.onDelete || null;
+    document.getElementById('bsSheetSave').textContent = opts.saveLabel || 'Save';
     document.getElementById('bsSheetDelete').hidden = !sheetDelete;
     document.getElementById('bsSheetDelete').textContent = opts.deleteLabel || 'Remove';
+    document.getElementById('bsSheetDelete').classList.toggle('neutral', !!opts.deleteNeutral);
     refreshSheet();
     document.getElementById('bsSheet').hidden = false;
     var first = body.querySelector('input,textarea');
@@ -2829,8 +2142,8 @@
   document.getElementById('bsSheetBody').addEventListener('input', refreshSheet);
   document.getElementById('bsSheetClose').addEventListener('click', closeSheet);
   document.getElementById('bsSheet').addEventListener('click', function(e) { if (e.target === this) closeSheet(); });
-  document.getElementById('bsSheetSave').addEventListener('click', function() { if (sheetSave) sheetSave(); closeSheet(); });
-  document.getElementById('bsSheetDelete').addEventListener('click', function() { if (sheetDelete) sheetDelete(); closeSheet(); });
+  document.getElementById('bsSheetSave').addEventListener('click', function() { if (!(sheetSave && sheetSave())) closeSheet(); });
+  document.getElementById('bsSheetDelete').addEventListener('click', function() { if (!(sheetDelete && sheetDelete())) closeSheet(); });
 
   // simple one-item sheet: fields [{key, placeholder, multiline, optional}]
   function openItemSheet(title, fields, initial, onSave, onDelete) {
@@ -2849,6 +2162,115 @@
       },
       onSave: function() { var out = {}; fields.forEach(function(f) { out[f.key] = inputs[f.key].value.trim(); }); onSave(out); },
       onDelete: onDelete
+    });
+  }
+
+  // ---------------- Make Live: domain, then plan, then Stripe checkout (same steps as the app) ----------------
+  function openLiveSheet() {
+    var name = pendingDomain ? pendingDomain.split('.')[0] : '';
+    var tld = pendingDomain ? pendingDomain.slice(name.length) : '.co.uk';
+    var available = !!pendingDomain, checking = false, input, msg;
+    function label(t) { document.getElementById('bsSheetSave').textContent = t; }
+    function reset() { available = false; msg.textContent = ''; msg.className = 'bs-domain-msg'; label('Check availability'); }
+    function showAvailable() {
+      msg.className = 'bs-domain-msg ok';
+      msg.textContent = '✓ ' + input.value.trim() + tld + ' is available' + (pendingDomainPrice ? ' — ' + pendingDomainPrice : '');
+      label('Continue');
+    }
+    function check() {
+      var q = input.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+      if (!q) return;
+      input.value = q; checking = true; refreshSheet(); label('Checking…');
+      fetch('https://api.brightsite.app/api/check-domain?domain=' + encodeURIComponent(q + tld))
+        .then(function(r) { return r.json().then(function(j) { return { ok: r.ok, json: j }; }); })
+        .then(function(r) {
+          var quote = liveDomainPrice(r.json);
+          if (r.ok && r.json.available && quote) {
+            available = true; pendingDomain = q + tld; pendingDomainPrice = quote.label; pendingDomainPence = quote.pence;
+            showAvailable();
+          } else { reset(); msg.className = 'bs-domain-msg err'; msg.textContent = 'That domain is taken. Try another name or ending.'; }
+        })
+        .catch(function() { reset(); msg.className = 'bs-domain-msg err'; msg.textContent = 'Couldn’t check that domain right now.'; })
+        .then(function() { checking = false; refreshSheet(); });
+    }
+    openSheet({
+      title: 'Choose your domain',
+      saveLabel: available ? 'Continue' : 'Check availability',
+      build: function(body) {
+        body.appendChild(el('p', { 'class': 'bs-sheet-sub' }, 'This is the web address people will type to find you.'));
+        input = el('input', { type: 'text', placeholder: 'yourbusiness', autocapitalize: 'none', autocomplete: 'off' });
+        input.value = name;
+        input.addEventListener('input', reset);
+        input.addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('bsSheetSave').click(); });
+        body.appendChild(input);
+        var chips = el('div', { 'class': 'bs-chips bs-tld' });
+        DOMAIN_TLDS.forEach(function(t) {
+          var c = el('button', { type: 'button', 'class': 'bs-chip' + (t === tld ? ' on' : '') }, t);
+          c.addEventListener('click', function() { tld = t; reset(); chips.querySelectorAll('.bs-chip').forEach(function(x) { x.classList.toggle('on', x === c); }); });
+          chips.appendChild(c);
+        });
+        body.appendChild(chips);
+        msg = el('div', { 'class': 'bs-domain-msg' });
+        body.appendChild(msg);
+        if (available) showAvailable();
+        return function() { return !checking && !!input.value.trim(); };
+      },
+      onSave: function() { if (available) openPlanSheet(); else check(); return true; }
+    });
+  }
+
+  function openPlanSheet() {
+    var plan = selectedPlan, annual = selectedAnnual, body;
+    function render() {
+      body.innerHTML = '';
+      var toggle = el('div', { 'class': 'bs-billing' });
+      [false, true].forEach(function(isAnnual) {
+        var b = el('button', { type: 'button', 'class': annual === isAnnual ? 'on' : '' }, isAnnual ? 'Annual ' : 'Monthly');
+        if (isAnnual) b.appendChild(el('small', {}, 'save £24'));
+        b.addEventListener('click', function() { annual = isAnnual; render(); });
+        toggle.appendChild(b);
+      });
+      body.appendChild(toggle);
+      [{ id: 'essential', name: 'Free', note: 'Website built free · 1–3 pages', build: '£0', buildLabel: 'build' },
+       { id: 'pro', name: 'Pro', note: 'For websites over 3 pages', build: '£199', buildLabel: 'one-off build', tag: '3+ PAGES' }].forEach(function(o) {
+        var card = el('button', { type: 'button', 'class': 'bs-plan' + (plan === o.id ? ' on' : '') });
+        var left = el('span', { 'class': 'l' });
+        if (o.tag) left.appendChild(el('em', {}, o.tag));
+        left.appendChild(el('b', {}, o.name));
+        left.appendChild(el('small', {}, o.note));
+        var right = el('span', { 'class': 'r' });
+        right.appendChild(el('b', {}, o.build));
+        right.appendChild(el('small', {}, o.buildLabel));
+        card.appendChild(left); card.appendChild(right);
+        card.addEventListener('click', function() { plan = o.id; render(); });
+        body.appendChild(card);
+      });
+      body.appendChild(el('p', { 'class': 'bs-plan-total' }, (plan === 'pro' ? '£199 build fee today, then ' : '') + (annual ? '£204/yr hosting (£17/mo)' : '£19/mo hosting') + ' · cancel any time'));
+      body.appendChild(el('p', { 'class': 'bs-plan-domain' }, pendingDomain + ': ' + ((annual || plan === 'pro') ? 'free domain included (worth up to £12/yr)' : pendingDomainPrice ? 'plus ' + pendingDomainPrice + ' registration, charged today' : 'registration charged at checkout')));
+    }
+    openSheet({
+      title: 'Choose your plan',
+      saveLabel: 'Pay securely',
+      build: function(b) { body = b; render(); return function() { return true; }; },
+      onSave: function() {
+        selectedPlan = plan; selectedAnnual = annual;
+        document.getElementById('bsSheetSave').disabled = true;
+        document.getElementById('bsSheetSave').textContent = 'Opening secure checkout…';
+        sendStageEmail('design_approved');
+        saveBusiness().catch(function() {}).then(function() {
+          var email = (business.data.raw && business.data.raw.email) || session.email || '';
+          window.location.assign('/checkout.html?plan=' + encodeURIComponent(plan)
+            + '&billing=' + (annual ? 'annual' : 'monthly')
+            + '&email=' + encodeURIComponent(email)
+            + '&slug=' + encodeURIComponent(slug || '')
+            + '&addon_domain=' + encodeURIComponent(pendingDomain || '')
+            + '&publish_on_payment=1');
+        });
+        return true;
+      },
+      onDelete: function() { openLiveSheet(); return true; },
+      deleteLabel: '‹ Back',
+      deleteNeutral: true
     });
   }
 
@@ -3214,70 +2636,6 @@
   document.getElementById('fOwnerEmail').addEventListener('input', function() { syncSameEmail(); scheduleAutoSave(); });
   document.getElementById('fSameEmail').addEventListener('change', function() { syncSameEmail(); scheduleAutoSave(); });
 
-  // Approve / request changes buttons
-  (function() {
-    var approveBtns = ['approveBtn', 'deskApproveBtn'].map(function(id) { return document.getElementById(id); }).filter(Boolean);
-    var requestChangesBtns = ['requestChangesBtn', 'deskRequestChangesBtn'].map(function(id) { return document.getElementById(id); }).filter(Boolean);
-    var approveStatus = document.getElementById('approveStatus');
-    function selectedDomainForApproval() {
-      var data = (business && business.data) || {};
-      var raw = data.raw || {};
-      return pendingDomain || raw.chosenDomain || data.customDomain || data.domain || '';
-    }
-    function showDomainChooser() {
-      showAccountTab();
-      var card = document.getElementById('domainCard');
-      var body = document.getElementById('domainBody');
-      var toggle = document.getElementById('domainToggle');
-      if (body && body.hidden && toggle) toggle.click();
-      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setTimeout(function() {
-        var input = document.getElementById('domainSearchInput');
-        if (input) input.focus();
-      }, 350);
-    }
-    function approveDesign() {
-      var domain = selectedDomainForApproval();
-      if (!domain) {
-        approveStatus.textContent = 'Choose a domain before approving your website.';
-        approveStatus.hidden = false;
-        showDomainChooser();
-        return;
-      }
-      approveBtns.forEach(function(button) { button.disabled = true; });
-      approveStatus.textContent = 'Opening secure checkout…';
-      approveStatus.hidden = false;
-      sendStageEmail('design_approved');
-      if (business && business.data) business.data.demoApproved = true;
-      saveBusiness().then(function() {
-        var email = (business && business.data && business.data.raw && business.data.raw.email) || (session && session.user && session.user.email) || '';
-        var url = '/checkout.html?plan=' + encodeURIComponent(selectedPlan)
-          + '&billing=' + encodeURIComponent(selectedAnnual ? 'annual' : 'monthly')
-          + '&email=' + encodeURIComponent(email)
-          + '&slug=' + encodeURIComponent(slug || '')
-          + '&addon_domain=' + encodeURIComponent(domain)
-          + '&publish_on_payment=1';
-        window.location.assign(url);
-      }).catch(function() {
-        approveBtns.forEach(function(button) { button.disabled = false; });
-        approveStatus.textContent = 'Could not save your approval. Please try again.';
-      });
-    }
-    function requestChanges() {
-      requestChangesBtns.forEach(function(button) { button.disabled = true; });
-      sendStageEmail('changes_requested');
-      msgsPost("I'd like to make changes.", 'customer').then(function(sent) {
-        requestChangesBtns.forEach(function(button) { button.disabled = false; });
-        showMessagesTab();
-        var input = document.getElementById('msgsInput');
-        if (input) input.focus();
-        approveStatus.textContent = sent ? 'Your request has been sent.' : 'Could not send your request. Please try again.';
-        approveStatus.hidden = false;
-      });
-    }
-    approveBtns.forEach(function(button) { button.addEventListener('click', approveDesign); });
-    requestChangesBtns.forEach(function(button) { button.addEventListener('click', requestChanges); });
-  })();
 
   // ---------------- business loading ----------------
   function loadBusiness() {
@@ -3380,50 +2738,6 @@
 
 <!-- Stripe Embedded Checkout -->
 <script src="https://js.stripe.com/v3/"></script>
-<script>
-(function () {
-  var PUBLISHABLE_KEY = 'pk_live_51UFf7iGqCP7G2YApFHjoKMHkxsEIrf0SJiBpxeTR2MRZ4zs26OQ5jjBClWu8OvZXGXAZvMectFW0zLEuGFFKC7CA008zYaYMzc';
-  var upgradeBtn = document.getElementById('upgradeBtn');
-  var embedWrap = document.getElementById('stripeEmbedWrap');
-  var embedMount = document.getElementById('stripeEmbedMount');
-  var embedClose = document.getElementById('stripeEmbedClose');
-  var checkout = null;
-
-  function getSessionEmail() {
-    try { return (JSON.parse(localStorage.getItem('bs_session') || '{}')).email || ''; } catch(e) { return ''; }
-  }
-  function getSlug() {
-    return new URLSearchParams(location.search).get('slug') || '';
-  }
-
-  if (upgradeBtn) {
-    upgradeBtn.addEventListener('click', function () {
-      var plan = upgradeBtn.dataset.plan || 'essential';
-      var billing = upgradeBtn.dataset.billing || 'annual';
-      var email = getSessionEmail();
-      var slug = getSlug();
-      var includeDomain = window._bsPendingDomain || '';
-
-      var url = '/checkout.html?plan=' + encodeURIComponent(plan)
-        + '&billing=' + encodeURIComponent(billing)
-        + '&email=' + encodeURIComponent(email)
-        + '&slug=' + encodeURIComponent(slug);
-      if (includeDomain) url += '&addon_domain=' + encodeURIComponent(includeDomain);
-
-      window.location.href = url;
-    });
-  }
-
-  if (embedClose) {
-    embedClose.addEventListener('click', function () {
-      if (checkout) { checkout.destroy(); checkout = null; }
-      embedMount.innerHTML = '';
-      embedWrap.hidden = true;
-      upgradeBtn.hidden = false;
-    });
-  }
-})();
-</script>
 
 <script>
 (function(){
@@ -3499,36 +2813,6 @@
     setDeskPreviewMode('desktop');
   }
 
-  // domain card collapse toggle
-  (function() {
-    var toggle = document.getElementById('domainToggle');
-    var body = document.getElementById('domainBody');
-    var chevron = document.getElementById('domainChevron');
-    if (!toggle || !body) return;
-    // on desktop always expand; only collapsible on mobile
-    function applyDomainLayout() {
-      var isDesktop = window.innerWidth >= 800;
-      if (isDesktop) {
-        body.hidden = false;
-        if (chevron) chevron.style.display = 'none';
-        toggle.style.cursor = 'default';
-        toggle.style.pointerEvents = 'none';
-      } else {
-        body.hidden = true;
-        if (chevron) { chevron.style.display = ''; chevron.style.transform = ''; }
-        toggle.style.cursor = '';
-        toggle.style.pointerEvents = '';
-      }
-    }
-    applyDomainLayout();
-    window.addEventListener('resize', applyDomainLayout);
-    toggle.addEventListener('click', function() {
-      if (window.innerWidth >= 800) return;
-      var open = !body.hidden;
-      body.hidden = open;
-      chevron.style.transform = open ? '' : 'rotate(180deg)';
-    });
-  })();
 })();
 </script>
 

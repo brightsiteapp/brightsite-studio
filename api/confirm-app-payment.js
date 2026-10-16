@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     if (!['active', 'trialing'].includes(sub.status) || sub.latest_invoice?.status !== 'paid') {
       return res.status(409).json({ error: 'Payment has not completed yet.' });
     }
-    const { slug, domain, billing } = sub.metadata;
+    const { slug, domain, billing, plan } = sub.metadata;
 
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     const { data: row } = await supabase.from('businesses').select('data').eq('id', slug).single();
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     await markBusinessLive(slug, domain || null, true);
     if (row) {
       const { data: fresh } = await supabase.from('businesses').select('data').eq('id', slug).single();
-      const raw = { ...(fresh?.data?.raw || {}), chosenPlan: 'essential', chosenAnnual: billing === 'annual' };
+      const raw = { ...(fresh?.data?.raw || {}), chosenPlan: plan === 'pro' ? 'pro' : 'essential', chosenAnnual: billing === 'annual' };
       await supabase.from('businesses').update({ data: { ...fresh.data, raw, stripeSubscriptionId: sub.id } }).eq('id', slug);
     }
     res.status(200).json({ live: true });

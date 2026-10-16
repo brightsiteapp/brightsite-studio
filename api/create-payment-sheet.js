@@ -1,19 +1,15 @@
 import Stripe from 'stripe';
 import { quoteDomainInGbp } from './_lib/domain-pricing.js';
+import { planPrices, domainChargePence } from './_lib/plans.js';
 
-// Native in-app payment (Stripe PaymentSheet) for the mobile app. Same prices as
+// Native in-app payment (Stripe PaymentSheet) for the mobile app. Same plans as
 // create-checkout-session.js; activation happens in confirm-app-payment.js once the
 // first invoice is paid, because the existing webhook only handles Checkout sessions.
-const RECURRING = {
-  essential_monthly: 'price_1UGhbEGqCP7G2YApAOKm8Goo',
-  essential_annual: 'price_1UGpjvGqCP7G2YAptYGCKsFl',
-};
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   const { plan = 'essential', billing, email, slug, domain } = req.body || {};
-  const price = RECURRING[`${plan}_${billing}`];
-  if (!price) return res.status(400).json({ error: 'Unknown plan' });
+  const prices = planPrices(plan, billing);
+  if (!prices) return res.status(400).json({ error: 'Unknown plan' });
   if (!slug || !email) return res.status(400).json({ error: 'Missing account details' });
 
   try {
@@ -21,15 +17,17 @@ export default async function handler(req, res) {
     const existing = await stripe.customers.list({ email, limit: 1 });
     const customer = existing.data[0] || await stripe.customers.create({ email, metadata: { slug } });
 
+    // Pending invoice items are pulled into the subscription's first invoice.
+    if (prices.setup) await stripe.invoiceItems.create({ customer: customer.id, price: prices.setup });
     if (domain) {
       const quote = await quoteDomainInGbp(domain);
-      // Pending invoice items are pulled into the subscription's first invoice.
-      await stripe.invoiceItems.create({ customer: customer.id, currency: 'gbp', amount: quote.amountPence, description: `Domain: ${domain} (1-year registration)` });
+      const amount = domainChargePence(plan, billing, quote.amountPence);
+      if (amount > 0) await stripe.invoiceItems.create({ customer: customer.id, currency: 'gbp', amount, description: `Domain: ${domain} (1-year registration)` });
     }
 
     const subscription = await stripe.subscriptions.create({
       customer: customer.id,
-      items: [{ price }],
+      items: [{ price: prices.recurring }],
       payment_behavior: 'default_incomplete',
       payment_settings: { save_default_payment_method: 'on_subscription' },
       expand: ['latest_invoice.payment_intent'],
