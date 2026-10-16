@@ -364,59 +364,75 @@ function Hours({ rows, setRows }: any) {
 
 let cidSeed = 0;
 const newCid = () => `c${Date.now()}${cidSeed++}`;
+type ServiceRow = { name: string; duration: string; price: string };
+const emptyRows = (): ServiceRow[] => [0, 1, 2].map(() => ({ name: '', duration: '', price: '' }));
+
+// One sheet per category: its name plus a grid of service rows (name, time, price on one line).
+function CategorySheet({ open, initial, onSave, onDelete, onClose }: { open: boolean; initial: { section: string; rows: ServiceRow[] } | null; onSave: (section: string, rows: ServiceRow[]) => void; onDelete?: () => void; onClose: () => void }) {
+  const [section, setSection] = useState('');
+  const [rows, setRows] = useState<ServiceRow[]>(emptyRows());
+  useEffect(() => { if (open) { setSection(initial?.section || ''); setRows(initial?.rows.length ? [...initial.rows, { name: '', duration: '', price: '' }] : emptyRows()); } }, [open]);
+  const setCell = (i: number, key: keyof ServiceRow, v: string) => setRows(r => r.map((x, n) => n === i ? { ...x, [key]: v } : x));
+  const ready = !!section.trim() && rows.some(r => r.name.trim());
+  return <Modal visible={open} transparent animationType="slide" onRequestClose={onClose}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.planModalOverlay}>
+      <Pressable style={{ flex: 1 }} onPress={onClose} />
+      <View style={[s.planModalBox, { maxHeight: SCREEN_HEIGHT * .85 }]}>
+        <View style={s.planModalHeader}><Text style={s.planModalTitle}>{initial ? 'Edit category' : 'Add category'}</Text><Pressable onPress={onClose} hitSlop={10} accessibilityLabel="Close"><Ionicons name="close" size={22} color={C.ink} /></Pressable></View>
+        <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingTop: 10 }}>
+          <TextInput value={section} onChangeText={setSection} placeholder="Category name, e.g. Massages" placeholderTextColor={C.placeholder} autoCapitalize="words" autoFocus={!initial} style={[s.input, { fontWeight: '700' }]} />
+          {rows.map((r, i) => <View key={i} style={s.gridRow}>
+            <TextInput value={r.name} onChangeText={v => setCell(i, 'name', v)} placeholder="Name" placeholderTextColor={C.placeholder} autoCapitalize="sentences" style={[s.gridCell, { flex: 1.8 }]} />
+            <TextInput value={r.duration} onChangeText={v => setCell(i, 'duration', v)} placeholder="Time" placeholderTextColor={C.placeholder} style={[s.gridCell, { flex: 1 }]} />
+            <TextInput value={r.price} onChangeText={v => setCell(i, 'price', v)} placeholder="Price" placeholderTextColor={C.placeholder} style={[s.gridCell, { flex: 1 }]} />
+          </View>)}
+          <Pressable onPress={() => setRows(r => [...r, { name: '', duration: '', price: '' }])} style={s.addService}><Ionicons name="add" size={16} color={C.primary} /><Text style={s.addServiceText}>Add more</Text></Pressable>
+        </ScrollView>
+        <Pressable disabled={!ready} onPress={() => onSave(section.trim(), rows.filter(r => r.name.trim()))} style={[s.planModalPayBtn, !ready && { opacity: .45 }]}><Text style={s.planModalPayBtnText}>Save</Text></Pressable>
+        {onDelete && <Pressable onPress={onDelete} style={s.sheetDelete}><Text style={s.sheetDeleteText}>Remove category</Text></Pressable>}
+      </View>
+    </KeyboardAvoidingView>
+  </Modal>;
+}
+
 function Services({ items, setItems }: any) {
-  const [sheet, setSheet] = useState<{ cid: string; index: number | null } | null>(null);
-  const blank = (cid: string, section: string) => ({ cid, section, name: '', duration: '', price: '' });
+  const [editing, setEditing] = useState<{ cid: string | null } | null>(null);
   const cids: string[] = items.reduce((acc: string[], it: any) => acc.includes(it.cid) ? acc : [...acc, it.cid], []);
-  const saveService = (item: Record<string, string>) => {
-    if (!sheet) return;
-    const { cid, index } = sheet;
-    // a category with no services is held by one empty placeholder row, which the first service fills
-    const target = index ?? items.findIndex((it: any) => it.cid === cid && !it.name.trim());
-    if (target >= 0) setItems(items.map((it: any, n: number) => n === target ? { ...it, ...item } : it));
-    else {
-      const last = items.reduce((at: number, it: any, n: number) => it.cid === cid ? n : at, -1);
-      const next = [...items];
-      next.splice(last + 1, 0, { ...blank(cid, items[last].section), ...item });
-      setItems(next);
+  // a never-filled placeholder category isn't shown
+  const groups = cids.map(cid => ({ cid, rows: items.filter((it: any) => it.cid === cid) })).filter(g => g.rows[0].section.trim() || g.rows.some((r: any) => r.name.trim()));
+  const current = editing?.cid ? groups.find(g => g.cid === editing.cid) : null;
+  const save = (section: string, rows: ServiceRow[]) => {
+    const cid = editing?.cid || newCid();
+    const next = rows.map(r => ({ cid, section, ...r }));
+    // swap the category's rows in place, and drop the empty placeholder row
+    const out: any[] = [];
+    let placed = false;
+    for (const it of items) {
+      if (it.cid === cid) { if (!placed) { out.push(...next); placed = true; } continue; }
+      if (it.section.trim() || it.name.trim()) out.push(it);
     }
-    setSheet(null);
+    setItems(placed ? out : [...out, ...next]);
+    setEditing(null);
   };
-  const removeService = () => {
-    if (!sheet || sheet.index === null) return;
-    const { cid, index } = sheet;
-    const othersInCategory = items.some((it: any, n: number) => it.cid === cid && n !== index);
-    setItems(othersInCategory ? items.filter((_: any, n: number) => n !== index) : items.map((it: any, n: number) => n === index ? blank(cid, it.section) : it));
-    setSheet(null);
+  const remove = () => {
+    const remaining = items.filter((it: any) => it.cid !== editing?.cid);
+    setItems(remaining.length ? remaining : [{ cid: newCid(), section: '', name: '', duration: '', price: '' }]);
+    setEditing(null);
   };
-  const removeSection = (cid: string) => Alert.alert('Remove this category?', 'This removes every service in it.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Remove', style: 'destructive', onPress: () => {
-    const remaining = items.filter((it: any) => it.cid !== cid);
-    setItems(remaining.length ? remaining : [blank(newCid(), '')]);
-  } }]);
   return <View>
-    {cids.map((cid, ci) => {
-      const rows = items.map((it: any, idx: number) => ({ ...it, _idx: idx })).filter((it: any) => it.cid === cid);
-      const section = rows[0]?.section || '';
-      return <View key={cid} style={s.priceGroup}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <TextInput value={section} onChangeText={v => setItems(items.map((it: any) => it.cid === cid ? { ...it, section: v } : it))} placeholder={ci === 0 ? 'Category name, e.g. Massages' : 'Category name, e.g. Waxing'} placeholderTextColor={C.placeholder} autoCapitalize="words" style={[s.input, { flex: 1, minHeight: 46, fontWeight: '700' }]} />
-          {ci > 0 && <Pressable onPress={() => removeSection(cid)} hitSlop={8} accessibilityLabel="Remove category"><Ionicons name="trash-outline" size={17} color={C.danger} /></Pressable>}
+    {groups.map(g => {
+      const count = g.rows.filter((r: any) => r.name.trim()).length;
+      return <Pressable key={g.cid} onPress={() => setEditing({ cid: g.cid })} style={({ pressed }) => [s.listRow, pressed && s.pressed]}>
+        <View style={{ flex: 1 }}>
+          <Text style={s.reviewRowText} numberOfLines={1}>{g.rows[0].section || 'Untitled category'}</Text>
+          <Text style={s.listRowSub} numberOfLines={1}>{count} service{count === 1 ? '' : 's'}</Text>
         </View>
-        {rows.filter((it: any) => it.name.trim()).map((it: any) => <Pressable key={it._idx} onPress={() => setSheet({ cid, index: it._idx })} style={({ pressed }) => [s.priceRow, pressed && s.pressed]}>
-          <View style={{ flex: 1 }}>
-            <Text style={s.reviewRowText} numberOfLines={1}>{it.name}</Text>
-            {!!(it.duration || it.price) && <Text style={s.listRowSub} numberOfLines={1}>{[it.duration, it.price].filter(Boolean).join(' · ')}</Text>}
-          </View>
-          <Ionicons name="chevron-forward" size={16} color={C.inkMuted} />
-        </Pressable>)}
-        <Pressable onPress={() => setSheet({ cid, index: null })} style={s.addService}><Ionicons name="add" size={16} color={C.primary} /><Text style={s.addServiceText}>Add service</Text></Pressable>
-      </View>;
+        <Ionicons name="chevron-forward" size={16} color={C.inkMuted} />
+      </Pressable>;
     })}
-    <Pressable onPress={() => setItems([...items, blank(newCid(), '')])} style={[s.addService, s.addSectionBtn]}><Ionicons name="add" size={16} color={C.ink} /><Text style={s.addServiceText}>Add category</Text></Pressable>
-    <ItemSheet open={!!sheet} title={sheet?.index === null ? 'Add service' : 'Edit service'}
-      fields={[{ key: 'name', placeholder: 'Service, e.g. Haircut' }, { key: 'duration', placeholder: 'Time, e.g. 45 mins', optional: true }, { key: 'price', placeholder: 'Price, e.g. £30', optional: true }]}
-      initial={sheet && sheet.index !== null ? { name: items[sheet.index].name, duration: items[sheet.index].duration, price: items[sheet.index].price } : null}
-      onSave={saveService} onDelete={sheet?.index !== null ? removeService : undefined} onClose={() => setSheet(null)} />
+    <Pressable onPress={() => setEditing({ cid: null })} style={s.addReviewBtn}><Ionicons name="add" size={16} color={DARK} /><Text style={s.addReviewText}>Add category</Text></Pressable>
+    <CategorySheet open={!!editing} initial={current ? { section: current.rows[0].section, rows: current.rows.filter((r: any) => r.name.trim()).map((r: any) => ({ name: r.name, duration: r.duration || '', price: r.price || '' })) } : null}
+      onSave={save} onDelete={current ? remove : undefined} onClose={() => setEditing(null)} />
   </View>;
 }
 
@@ -2553,7 +2569,7 @@ const s = StyleSheet.create({
   editStepText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.ink },
   uploadTitle: { fontFamily: FONT, fontWeight: '800', fontSize: 14, color: '#1C2832' }, uploadSub: { fontFamily: FONT, fontSize: 11, color: C.inkSoft, marginTop: 3 }, swipeHint: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.ink, textAlign: 'center' },
   fixedPrompt: { position: 'absolute', left: 18, right: 18, bottom: 14, zIndex: 120, elevation: 120, alignItems: 'center', gap: 7 }, swipeRow: { minHeight: 34, paddingHorizontal: 14, borderRadius: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,.7)' }, validationText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.danger, textAlign: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: C.dangerSoft, overflow: 'hidden' },
-  addService: { marginTop: 14, height: 46, borderRadius: 12, borderWidth: 1, borderColor: C.primaryBorder, backgroundColor: C.primarySoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, addSectionBtn: { marginTop: 8, borderColor: C.lineStrong, backgroundColor: 'transparent' }, addServiceText: { fontFamily: FONT, fontWeight: '700', fontSize: 14, color: C.ink }, site: { overflow: 'hidden' },
+  addService: { marginTop: 14, height: 46, borderRadius: 12, borderWidth: 1, borderColor: C.primaryBorder, backgroundColor: C.primarySoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, addServiceText: { fontFamily: FONT, fontWeight: '700', fontSize: 14, color: C.ink }, site: { overflow: 'hidden' },
   previewBrowserWrap: { backgroundColor: 'rgba(8,15,20,.9)' },
   previewBrowser: { height: 29, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   previewDots: { position: 'absolute', left: 11, flexDirection: 'row', gap: 4 }, previewDot: { width: 6, height: 6, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.35)' }, previewAddress: { fontFamily: FONT, fontSize: 8, color: 'rgba(255,255,255,.54)' },
@@ -2748,8 +2764,8 @@ const s = StyleSheet.create({
   sendIDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#fff' },
   sendIStem: { width: 6, height: 13, borderRadius: 3, backgroundColor: '#fff' },
   listRow: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 8, borderRadius: 14, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line },
-  priceGroup: { backgroundColor: '#fff', borderRadius: 16, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: C.line, gap: 8 },
-  priceRow: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, backgroundColor: C.field, borderWidth: 1, borderColor: C.line },
+  gridRow: { flexDirection: 'row', gap: 6 },
+  gridCell: { minHeight: 44, borderRadius: 11, paddingHorizontal: 10, fontFamily: FONT, fontSize: 14, color: C.ink, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line },
   listRowSub: { fontFamily: FONT, fontSize: 13, color: C.inkMuted, marginTop: 2 },
   sheetDelete: { alignItems: 'center', paddingTop: 14 },
   sheetDeleteText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.danger },
