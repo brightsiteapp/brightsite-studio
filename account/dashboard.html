@@ -578,6 +578,15 @@
   #builderList:not(.preview-sent) .sec-btn{background:#fff4f2 !important;border-color:#f1dcd7 !important}
   #builderList:not(.preview-sent) .sec-btn.is-complete{background:#f0faf4 !important;border-color:#d2e9dc !important}
   #builderList .section-tick{display:grid !important}
+  /* before the details are sent: amber B, and Send to designer waits for every card to be green */
+  .preview-placeholder[data-state="todo"]::before{filter:drop-shadow(0 0 7px #FFD27F) drop-shadow(0 0 22px #F59E0B) !important}
+  .wah-make-live:disabled{opacity:.45;cursor:not-allowed}
+  @media(max-width:430px){
+    #websiteAppHeader{gap:6px}
+    #websiteAppHeader .wah-make-live{padding:9px 11px;font-size:12px}
+    #websiteAppHeader .wah-toggle .mobile-pvw-btn{padding-left:9px;padding-right:9px}
+    #websiteAppHeader .wah-edit{padding-left:10px;padding-right:10px}
+  }
   .website-editor-header{display:flex !important;align-items:center;justify-content:space-between}
   @media(max-width:799px){.website-panel:not(.editing) #websiteEditorHeader{display:none !important}}
   .preview-placeholder{background:#141A1E !important;padding:32px 24px !important}
@@ -625,6 +634,7 @@
   .wah-make-live.pending{background:#3B82F6;color:#fff;opacity:.7}
   .wah-make-live.live{background:#fff;color:rgba(28,40,50,.52);border:1px solid rgba(28,40,50,.14)}
   #headerStatusPill[data-state="live"]{background:rgba(31,138,84,.12);color:#1F8A54}
+  #headerStatusPill[data-state="todo"]{background:rgba(245,158,11,.14);color:#B26A00}
   #headerStatusPill[data-state="building"]{background:rgba(178,106,0,.12);color:#B26A00}
   #headerStatusPill[data-state="offline"]{background:rgba(180,35,24,.10);color:#B42318}
   #headerStatusPill[data-state="ready"]{background:rgba(59,130,246,.10);color:#3B82F6}
@@ -1226,7 +1236,17 @@
       var btn = document.getElementById(id);
       if (!btn) return;
       btn.disabled = false;
-      if (!getPreviewUrl()) { btn.hidden = true; return; }
+      btn.title = '';
+      if (!getPreviewUrl()) {
+        btn.hidden = !needsSending();
+        if (btn.hidden) return;
+        btn.textContent = 'Send to designer';
+        btn.className = 'wah-make-live go';
+        btn.disabled = !allSectionsDone();
+        if (btn.disabled) btn.title = 'Finish every info card first';
+        btn.onclick = function() { sendToDesigner(btn); };
+        return;
+      }
       btn.hidden = false;
       if (isLive) {
         btn.textContent = 'Take Offline';
@@ -1381,9 +1401,9 @@
     if (headerPill && headerLabel) {
       headerPill.hidden = false;
       // same states as the app's status pill
-      var st = isLive ? 'live' : !getPreviewUrl() ? 'building' : isPaying ? 'offline' : 'ready';
+      var st = isLive ? 'live' : !getPreviewUrl() ? (needsSending() ? 'todo' : 'building') : isPaying ? 'offline' : 'ready';
       headerPill.dataset.state = st;
-      headerLabel.textContent = { live: 'Live', building: 'Being built', offline: 'Offline', ready: 'Ready to publish' }[st];
+      headerLabel.textContent = { live: 'Live', todo: 'Add your info', building: 'Being built', offline: 'Offline', ready: 'Ready to publish' }[st];
     }
 
     if (urlLink) {
@@ -1546,12 +1566,23 @@
     return !!raw.draft;
   }
 
-  document.getElementById('draftSendBtn').addEventListener('click', function() {
-    var btn = this;
-    var raw = business.data.raw;
+  // Details still need filling in and sending (app drafts, and web signups that haven't sent yet).
+  function needsSending() {
+    var raw = (business && business.data && business.data.raw) || {};
+    return !getPreviewUrl() && !(raw.sentToDesigner || raw.draft === false);
+  }
+  function allSectionsDone() {
+    return ['business', 'details', 'hours', 'prices', 'media', 'extras', 'reviews'].every(function(k) { return !!sectionDoneClicked[k]; });
+  }
+
+  document.getElementById('draftSendBtn').addEventListener('click', function() { sendToDesigner(this); });
+
+  function sendToDesigner(btn) {
+    var raw = business.data.raw = business.data.raw || {};
     btn.disabled = true;
     btn.textContent = 'Sending…';
     raw.draft = false;
+    raw.sentToDesigner = true;
     delete raw.draftIndex;
     raw.buildChoice = raw.buildChoice || 'designer';
     saveBusiness().then(function() {
@@ -1561,21 +1592,24 @@
       notify.append('Email', raw.email || session.email || '');
       notify.append('Slug', slug);
       fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/', { method: 'POST', body: notify }).catch(function() {});
-      fetch('/api/send-welcome', {
+      fetch('https://api.brightsite.app/api/send-welcome', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
         body: JSON.stringify({ slug: slug, fullName: raw.fullName || '', buildChoice: raw.buildChoice })
       }).catch(function() {});
       renderDraftBanner();
       document.getElementById('websitePanel').classList.remove('editing');
+      updatePreviewCard();
+      updateWebsiteAppHeader();
       showMessagesTab();
     }).catch(function() {
       raw.draft = true;
+      raw.sentToDesigner = false;
       btn.disabled = false;
       btn.textContent = 'Send to designer';
       alert('We couldn’t send your details. Please check your connection and try again.');
     });
-  });
+  }
 
   function renderWelcomeMessage() {
     var raw = (business && business.data && business.data.raw) || {};
@@ -2117,6 +2151,8 @@
     }
     _prevAllDone = allDone;
     updatePreviewCard();
+    updateWebsiteAppHeader();
+    if (business) renderWebsiteStatus();
   }
 
   function updatePreviewCard() {
@@ -2137,10 +2173,10 @@
         if (sub) sub.textContent = 'Tap to view your website preview ↗';
       } else {
         // same wording as the app's loader; unsent drafts are asked to finish instead
-        var draft = !!(business && business.data && business.data.raw && business.data.raw.draft);
-        el.dataset.state = draft ? 'pending' : 'building';
-        if (title) title.textContent = draft ? 'Finish your details' : 'Building your preview';
-        if (sub) sub.textContent = draft ? 'Send them to your designer when you’re ready.' : 'We’ll send you a notification as soon as it’s ready to review.';
+        var todo = needsSending();
+        el.dataset.state = todo ? 'todo' : 'building';
+        if (title) title.textContent = todo ? 'Let’s build your website' : 'Building your preview';
+        if (sub) sub.textContent = todo ? 'Fill in your info cards. The more you add, the better your site. Then send it to your designer.' : 'We’ll send you a notification as soon as it’s ready to review.';
       }
     });
   }
