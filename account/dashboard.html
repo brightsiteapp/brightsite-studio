@@ -738,7 +738,6 @@
 
       <div class="website-editor-header" id="websiteEditorHeader">
         <h2 id="builderHeading">Edit your website</h2>
-        <button type="button" class="builder-done" id="editorDone" data-back>Done</button>
       </div>
 
       <!-- section list -->
@@ -1254,7 +1253,6 @@
     // data-back buttons inside the editor should also exit editing
     panel.addEventListener('click', function(e) {
       // only the main Done leaves the editor; a section's Back/Done returns to the section list
-      if (e.target.closest('#editorDone')) panel.classList.remove('editing');
     });
   })();
 
@@ -1284,6 +1282,11 @@
     showAccountTab();
   });
   document.getElementById('mobileWebsiteTab').addEventListener('click', function() {
+    // tapping Website again while editing goes back to the preview (the editor list has no Done)
+    if (document.getElementById('mobileWebsiteTab').getAttribute('aria-selected') === 'true') {
+      document.getElementById('websitePanel').classList.remove('editing');
+      openSection(null);
+    }
     showWebsiteTab();
   });
   document.getElementById('mobileMessagesTab').addEventListener('click', function() {
@@ -2031,8 +2034,6 @@
     activeSection = id;
     document.getElementById('websitePanel').classList.toggle('in-section', !!id);
     document.getElementById('builderList').hidden = !!id;
-    var editorDone = document.getElementById('editorDone');
-    if (editorDone) editorDone.hidden = false;
     var mpc = document.getElementById('mobilePreviewWrap');
     if (mpc) mpc.hidden = !!id;
     document.querySelectorAll('.builder-section').forEach(function(el) {
