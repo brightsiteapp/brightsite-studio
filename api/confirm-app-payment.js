@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from './_lib/supabase-admin.js';
 import { registerWithCloudflare, markBusinessLive } from './_lib/activate.js';
 
 // Called by the mobile app after PaymentSheet succeeds. Trusts nothing from the
@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     }
     const { slug, domain, billing, plan } = sub.metadata;
 
-    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = supabaseAdmin();
     const { data: row } = await supabase.from('businesses').select('data').eq('id', slug).single();
     const alreadyRegistered = row?.data?.domainRegistered && row?.data?.domain === domain;
     if (domain && !alreadyRegistered) await registerWithCloudflare(domain);

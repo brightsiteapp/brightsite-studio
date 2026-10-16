@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from './_lib/supabase-admin.js';
 import { registerWithCloudflare, markBusinessLive } from './_lib/activate.js';
 import { runDomainRenewals } from './_lib/domain-renewals.js';
 
@@ -42,7 +42,7 @@ export default async function handler(req, res) {
     await markBusinessLive(slug, domain, session.metadata?.publish_on_payment === 'true');
     // the nightly domain-renewals job needs to know which subscription (and plan) pays for this domain
     if (session.subscription && slug) {
-      const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+      const supabase = supabaseAdmin();
       const { data: row } = await supabase.from('businesses').select('data').eq('id', slug).single();
       if (row) {
         const raw = { ...(row.data?.raw || {}), chosenPlan: session.metadata?.plan === 'pro' ? 'pro' : 'essential', chosenAnnual: session.metadata?.billing === 'annual' };

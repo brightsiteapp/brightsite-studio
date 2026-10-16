@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from './supabase-admin.js';
 
 const CF_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
 const CF_API_TOKEN  = process.env.CLOUDFLARE_API_TOKEN;
@@ -22,7 +22,7 @@ export async function registerWithCloudflare(domain) {
 
 export async function markBusinessLive(slug, domain, publishOnPayment) {
   if (!slug) return;
-  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const supabase = supabaseAdmin();
   const { data: row, error: readError } = await supabase
     .from('businesses').select('name,data').eq('id', slug).single();
   if (readError) throw readError;

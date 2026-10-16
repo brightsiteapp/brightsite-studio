@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from './supabase-admin.js';
 import { getLiveDomainQuote } from './domain-pricing.js';
 
 // Nightly (Vercel cron). Cloudflare auto-renews every domain on BrightSite's account, so:
@@ -59,7 +59,7 @@ export async function runDomainRenewals(req, res) {
   }
   const dry = req.query?.dry === '1';
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
-  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const supabase = supabaseAdmin();
   const { data: rows, error } = await supabase.from('businesses').select('id,data').eq('data->>domainRegistered', 'true');
   if (error) return res.status(500).json({ error: error.message });
 
