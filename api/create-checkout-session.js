@@ -42,7 +42,7 @@ export default async function handler(req, res) {
           currency: 'gbp',
           product_data: {
             name: 'Domain: ' + selectedDomain,
-            description: domainIsFree ? 'Included free with your plan' : '1-year registration',
+            description: domainIsFree ? 'Included free with your plan' : chargePence < quote.amountPence ? '1-year registration (£12 included with your plan)' : '1-year registration',
           },
           unit_amount: chargePence,
         },

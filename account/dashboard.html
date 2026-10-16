@@ -2246,7 +2246,12 @@
         body.appendChild(card);
       });
       body.appendChild(el('p', { 'class': 'bs-plan-total' }, (plan === 'pro' ? '£199 build fee today, then ' : '') + (annual ? '£204/yr hosting (£17/mo)' : '£19/mo hosting') + ' · cancel any time'));
-      body.appendChild(el('p', { 'class': 'bs-plan-domain' }, pendingDomain + ': ' + ((annual || plan === 'pro') ? 'free domain included (worth up to £12/yr)' : pendingDomainPrice ? 'plus ' + pendingDomainPrice + ' registration, charged today' : 'registration charged at checkout')));
+      // mirrors api/_lib/plans.js: annual plans and Pro cover the first £12 of the domain
+      var included = annual || plan === 'pro';
+      var charge = pendingDomainPence ? (included ? Math.max(0, pendingDomainPence - 1200) : pendingDomainPence) : null;
+      body.appendChild(el('p', { 'class': 'bs-plan-domain' }, pendingDomain + ': ' + (charge === null ? 'registration charged at checkout'
+        : !charge ? 'free domain included with your plan'
+        : '£' + (charge / 100).toFixed(2) + ' today' + (included ? ' (£12 off with your plan)' : ' registration'))));
     }
     openSheet({
       title: 'Choose your plan',

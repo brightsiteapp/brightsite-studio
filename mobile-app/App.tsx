@@ -275,6 +275,14 @@ const paletteGroups = [
 const palettes = paletteGroups.flatMap(group => group.options);
 const fonts = ['Editorial', 'Rounded', 'Modern', 'Thin', 'Classic'];
 // ordered so the chip rows come out roughly even in width
+// Mirrors api/_lib/plans.js: annual plans and Pro cover the first £12 of the domain.
+function domainNote(pence: number, included: boolean) {
+  if (!pence) return 'registration charged at checkout';
+  const charge = included ? Math.max(0, pence - 1200) : pence;
+  if (!charge) return 'free domain included with your plan';
+  return `£${(charge / 100).toFixed(2)} today${included ? ' (£12 off with your plan)' : ' registration'}`;
+}
+
 // Same plans as pricing.html; "essential" is the Free plan.
 const PLAN_OPTIONS = [
   { id: 'essential' as const, name: 'Free', note: 'Website built free · 1–3 pages', build: '£0', buildLabel: 'build', tag: null },
@@ -1148,6 +1156,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
   const siteUrl = data.website?.trim() || `https://${domain}${suffix}`;
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [domainPriceLabel, setDomainPriceLabel] = useState<string | null>(null);
+  const [domainPence, setDomainPence] = useState(0);
   const [domainPriceLoading, setDomainPriceLoading] = useState(false);
   const [planStep, setPlanStep] = useState<'domain' | 'plan'>('domain');
   const [liveDomain, setLiveDomain] = useState(domain || '');
@@ -1170,6 +1179,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
       const result = await res.json();
       if (!res.ok || !result.available) throw new Error(result.error || 'That domain is taken. Try another name or ending.');
       setDomainPriceLabel(result.priceLabel || null);
+      setDomainPence(Number(result.pricePence) || 0);
       setDomainAvailable(true);
     } catch (error: any) { setDomainError(error.message || 'Couldn’t check that domain right now.'); }
     finally { setDomainPriceLoading(false); }
@@ -1430,7 +1440,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           <View style={s.planModalFeeNote}>
             <Ionicons name="globe-outline" size={14} color={C.primary} />
             <Text style={s.planModalFeeText}>
-              {liveDomain}{liveSuffix}: {domainPriceLoading ? 'checking price…' : (annual || planChoice === 'pro') ? 'free domain included (worth up to £12/yr)' : domainPriceLabel ? `plus ${domainPriceLabel} registration, charged today` : 'registration charged at checkout'}
+              {liveDomain}{liveSuffix}: {domainPriceLoading ? 'checking price…' : domainNote(domainPence, annual || planChoice === 'pro')}
             </Text>
           </View>
           {!!payError && <Text style={{ fontFamily: FONT, fontSize: 12, color: C.danger, marginTop: 8 }}>{payError}</Text>}
