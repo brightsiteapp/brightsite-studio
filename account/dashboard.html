@@ -795,15 +795,6 @@
       </div>
 
       <!-- section detail panels (only one shown at a time) -->
-<div class="bs-sheet-veil" id="bsSheet" hidden>
-        <div class="bs-sheet" role="dialog" aria-modal="true" aria-labelledby="bsSheetTitle">
-          <div class="bs-sheet-head"><h3 id="bsSheetTitle"></h3><button type="button" class="bs-sheet-close" id="bsSheetClose" aria-label="Close">×</button></div>
-          <div class="bs-sheet-body" id="bsSheetBody"></div>
-          <button type="button" class="bs-sheet-save" id="bsSheetSave">Save</button>
-          <button type="button" class="bs-sheet-delete" id="bsSheetDelete" hidden>Remove</button>
-        </div>
-      </div>
-
       <div class="builder-section" data-section-panel="business" hidden>
         <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
         <h3>Business information</h3>
@@ -893,6 +884,16 @@
 
     </div>
   </section>
+
+  <!-- shared pop-up sheet; outside the tab panels so it shows over any tab -->
+  <div class="bs-sheet-veil" id="bsSheet" hidden>
+        <div class="bs-sheet" role="dialog" aria-modal="true" aria-labelledby="bsSheetTitle">
+          <div class="bs-sheet-head"><h3 id="bsSheetTitle"></h3><button type="button" class="bs-sheet-close" id="bsSheetClose" aria-label="Close">×</button></div>
+          <div class="bs-sheet-body" id="bsSheetBody"></div>
+          <button type="button" class="bs-sheet-save" id="bsSheetSave">Save</button>
+          <button type="button" class="bs-sheet-delete" id="bsSheetDelete" hidden>Remove</button>
+        </div>
+      </div>
 
   <section id="msgsPanel" class="tab-content messages-panel" hidden aria-labelledby="mobileMessagesTab">
     <div class="msgs-heading-wrap"><h2>Messages</h2></div>
