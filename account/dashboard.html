@@ -23,8 +23,8 @@
 <link rel="stylesheet" href="../styles.css">
 
 <style>
-  :root{--bg:#f3f6fa;--card:#fff;--surface:#edf2f8;--ink:#263343;--text:#263343;--muted:#68778a;--line:#e1e8f0;--accent:#3276e8;--display:'Nunito Sans',sans-serif;--glass:rgba(255,255,255,.72);--soft-shadow:0 4px 18px rgba(37,59,88,.045)}
-  body,input,button,select,textarea{font-family:'Nunito Sans',sans-serif}
+  :root{--bg:#F4EDE6;--card:#fff;--surface:#EFE4DB;--ink:#1C2832;--text:#1C2832;--muted:#757b80;--line:rgba(28,40,50,.14);--accent:#3B82F6;--display:'Avenir Next','Avenir','Avenir Next','Avenir','Nunito Sans',sans-serif;--glass:rgba(255,255,255,.72);--soft-shadow:0 4px 18px rgba(37,59,88,.045)}
+  body,input,button,select,textarea{font-family:'Avenir Next','Avenir','Avenir Next','Avenir','Nunito Sans',sans-serif}
   button{transition:background-color .18s ease,box-shadow .18s ease,transform .18s ease}
   button:active:not(:disabled){transform:scale(.98)}
   button:focus-visible,a:focus-visible{outline:3px solid #8eb8fa;outline-offset:3px}
@@ -40,7 +40,7 @@
     min-height:-webkit-fill-available;
     min-height:100dvh;
     overflow:hidden;
-    background:radial-gradient(ellipse at 80% 0%,#e5eef9,transparent 65%),var(--bg);
+    background:var(--bg);
     color:var(--ink);
   }
   #dashWrap{flex:1;min-height:0;display:flex;flex-direction:column;}
@@ -51,7 +51,7 @@
 .desk-preview-status{font-size:12px;font-weight:600;color:var(--muted);}
   .desk-preview-link{font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;}
   .desk-preview-actions{display:flex;align-items:center;gap:7px;margin-left:auto;}
-  .desk-preview-action{border:0;border-radius:7px;padding:7px 10px;font:700 11px/1 'Nunito Sans',sans-serif;cursor:pointer;white-space:nowrap;}
+  .desk-preview-action{border:0;border-radius:7px;padding:7px 10px;font:700 11px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;cursor:pointer;white-space:nowrap;}
   .desk-preview-action.change{background:#171717;color:#fff;}
   .desk-preview-action.approve{background:var(--accent);color:#fff;}
   /* frame wrapper */
@@ -81,7 +81,7 @@
   #deskPreview.mobile-view .fake-browser{display:none;}
   #deskPreview.mobile-view .fake-phone{display:flex;}
   .desk-preview-toggle{display:flex;align-items:center;gap:2px;padding:3px;border:1px solid var(--line);border-radius:9px;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:inset 0 1px 0 #fff;margin-left:auto}
-  .dvt-btn{border:0;border-radius:6px;background:transparent;color:var(--muted);font:700 12px/1 'Nunito Sans',sans-serif;padding:5px 11px;cursor:pointer;transition:background .12s,color .12s}
+  .dvt-btn{border:0;border-radius:6px;background:transparent;color:var(--muted);font:700 12px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;padding:5px 11px;cursor:pointer;transition:background .12s,color .12s}
   .dvt-btn.active{background:var(--accent);color:#fff}
   #deskPreview.mobile-view .desk-preview-bar{align-self:stretch;}
   @media(min-width:800px){
@@ -250,7 +250,7 @@
   .website-url-card h2{margin:0 0 8px;font-size:15px}
   .website-url{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--accent);font-size:14px;font-weight:700;text-decoration:none}
   .website-url:hover{text-decoration:underline}
-  .website-view-btn{margin-top:14px;min-height:42px;border:0;border-radius:999px;padding:0 18px;background:var(--accent);color:#fff;font:700 13px 'Nunito Sans',sans-serif;cursor:pointer}
+  .website-view-btn{margin-top:14px;min-height:42px;border:0;border-radius:999px;padding:0 18px;background:var(--accent);color:#fff;font:700 13px 'Avenir Next','Avenir','Nunito Sans',sans-serif;cursor:pointer}
   .website-view-btn:disabled{opacity:.45;cursor:not-allowed}
   .website-support-card{padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
   .website-support-card h2{margin:0 0 6px;font-size:15px}
@@ -308,7 +308,7 @@
   .msgs-edit-bar{display:none;align-items:center;gap:8px;padding:6px 14px;background:#edf4ff;border-top:1px solid #d8e6fa;flex:none;}
   .msgs-edit-bar.active{display:flex}
   .msgs-edit-bar input{flex:1;border:0;background:none;font:inherit;font-size:14px;color:var(--ink);outline:none}
-  .msgs-edit-bar button{border:0;border-radius:8px;padding:5px 12px;font:700 12px/1 'Nunito Sans',sans-serif;cursor:pointer}
+  .msgs-edit-bar button{border:0;border-radius:8px;padding:5px 12px;font:700 12px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;cursor:pointer}
   .msgs-edit-save{background:var(--accent);color:#fff}
   .msgs-edit-cancel{background:none;color:var(--muted)}
 
@@ -430,7 +430,7 @@
   @keyframes sectionIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
   .section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:16px}
   .section-back{background:none;border:0;color:var(--accent);font:inherit;font-size:13px;font-weight:700;cursor:pointer;padding:4px 0}
-  .builder-done{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:0 16px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:700 12px/1 'Nunito Sans',sans-serif;cursor:pointer}
+  .builder-done{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:0 16px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:700 12px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;cursor:pointer}
   .builder-section .section-head{display:flex}
   .builder-section .builder-done{display:none}
   .builder-section .section-head .builder-done{display:inline-flex}
@@ -565,16 +565,16 @@
   .draft-banner[hidden]{display:none}
   .draft-banner strong{display:block;font-size:14px}
   .draft-banner span{display:block;font-size:12.5px;opacity:.9;margin-top:2px}
-  .draft-banner button{flex:none;border:0;border-radius:999px;padding:9px 14px;background:#fff;color:var(--accent);font:800 12.5px/1 'Nunito Sans',sans-serif;cursor:pointer}
+  .draft-banner button{flex:none;border:0;border-radius:999px;padding:9px 14px;background:#fff;color:var(--accent);font:800 12.5px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;cursor:pointer}
   /* app-style website header — mobile only */
   .website-app-header{display:none;}
   @media(max-width:799px){
     .website-app-header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0 8px;border-bottom:1px solid var(--line);margin-bottom:10px;}
-    .wah-make-live{border:0;border-radius:8px;padding:7px 13px;font:700 12px/1 'Nunito Sans',sans-serif;cursor:pointer;white-space:nowrap;}
+    .wah-make-live{border:0;border-radius:8px;padding:7px 13px;font:700 12px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;cursor:pointer;white-space:nowrap;}
     .wah-make-live.live{background:rgba(28,40,50,.08);color:var(--muted);}
     .wah-make-live.pending{background:var(--accent);color:#fff;opacity:.7;}
     .wah-make-live.go{background:var(--accent);color:#fff;}
-    .wah-edit{display:flex;align-items:center;gap:5px;border:0;border-radius:8px;padding:7px 13px;font:700 12px/1 'Nunito Sans',sans-serif;background:rgba(28,40,50,.06);color:var(--ink);cursor:pointer;}
+    .wah-edit{display:flex;align-items:center;gap:5px;border:0;border-radius:8px;padding:7px 13px;font:700 12px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;background:rgba(28,40,50,.06);color:var(--ink);cursor:pointer;}
     .wah-toggle{margin:0;}
     /* hide the old editor header + section list by default in mobile */
     #websiteEditorHeader{display:none;}
@@ -594,13 +594,13 @@
   .preview-control-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;width:100%;}
   .preview-control-row .mobile-pvw-toggle{grid-column:2;}
   .preview-control-row .mob-preview-view{grid-column:3;justify-self:end;}
-  .preview-action{min-width:0;border-radius:8px;padding:8px 7px;font:700 11px/1 'Nunito Sans',sans-serif;cursor:pointer;white-space:nowrap;}
+  .preview-action{min-width:0;border-radius:8px;padding:8px 7px;font:700 11px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;cursor:pointer;white-space:nowrap;}
   .preview-action-change{border:0;background:#171717;color:#fff;}
   .preview-action-approve{border:0;background:var(--accent);color:#fff;}
   .preview-action-description{margin:0 0 8px;font-size:12px;line-height:1.4;color:var(--muted);text-align:center;}
   .preview-action-status{margin:0 0 8px;min-height:0;font-size:12px;color:#1f9d55;font-weight:600;text-align:center;}
   .mobile-pvw-toggle{display:flex;gap:2px;padding:3px;background:#e8e4df;border-radius:10px;width:fit-content;margin:0;}
-  .mobile-pvw-btn{border:0;border-radius:7px;background:transparent;color:var(--muted);font:700 12px/1 'Nunito Sans',sans-serif;padding:6px 14px;cursor:pointer;}
+  .mobile-pvw-btn{border:0;border-radius:7px;background:transparent;color:var(--muted);font:700 12px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;padding:6px 14px;cursor:pointer;}
   .mobile-pvw-btn.active{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.1);}
   .mobile-preview-card{flex:1;border-radius:0;}
   /* browser frame (desktop toggle) */
@@ -611,7 +611,7 @@
   .mob-pvw-browser-bar .fake-browser-dots span:nth-child(1){background:#ff5f57}
   .mob-pvw-browser-bar .fake-browser-dots span:nth-child(2){background:#febc2e}
   .mob-pvw-browser-bar .fake-browser-dots span:nth-child(3){background:#28c840}
-  .mob-pvw-browser-url{flex:1;height:18px;background:rgba(255,255,255,.1);border-radius:4px;color:rgba(255,255,255,.68);font:500 9px/18px 'Nunito Sans',sans-serif;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .mob-pvw-browser-url{flex:1;height:18px;background:rgba(255,255,255,.1);border-radius:4px;color:rgba(255,255,255,.68);font:500 9px/18px 'Avenir Next','Avenir','Nunito Sans',sans-serif;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .mob-pvw-browser-content{display:flex;flex-direction:column;aspect-ratio:16/10;overflow:hidden;overscroll-behavior-x:none;touch-action:pan-y;}
   .mob-pvw-browser-content .mobile-preview-card{min-height:180px;border-radius:0;}
   .mob-pvw-browser-content iframe{flex:none;width:1440px;transform-origin:top left;}
@@ -645,7 +645,7 @@
   .bs-check input:checked{background:#3B82F6;border-color:#3B82F6}
   .bs-check input:checked::after{content:'';width:9px;height:5px;border:2px solid #fff;border-top:0;border-right:0;transform:translateY(-1px) rotate(-45deg)}
   .bs-chips{display:flex;flex-wrap:wrap;gap:5px}
-  .bs-chip{flex-grow:1;border:1px solid rgba(28,40,50,.14);border-radius:999px;padding:8px 9px;background:rgba(255,255,255,.6);font:600 13px/1.2 'Nunito Sans',sans-serif;color:#1C2832;cursor:pointer}
+  .bs-chip{flex-grow:1;border:1px solid rgba(28,40,50,.14);border-radius:999px;padding:8px 9px;background:rgba(255,255,255,.6);font:600 13px/1.2 'Avenir Next','Avenir','Nunito Sans',sans-serif;color:#1C2832;cursor:pointer}
   .bs-chip.on{background:#3B82F6;border-color:#3B82F6;color:#fff}
   .bs-hours{border-radius:16px;overflow:hidden}
   .bs-hours-row{display:flex;align-items:center;gap:8px;min-height:56px;padding:0 4px 0 6px;border-bottom:1px solid rgba(28,40,50,.24)}
@@ -663,7 +663,7 @@
   .bs-list-row small{display:block;font-size:13px;color:rgba(28,40,50,.52);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .bs-list-row .txt{flex:1;min-width:0}
   .bs-list-row::after{content:'›';font-size:22px;color:rgba(28,40,50,.52)}
-  .bs-add{width:100%;height:46px;margin:0 0 18px;border-radius:12px;border:1px solid rgba(59,130,246,.38);background:rgba(59,130,246,.10);font:700 14px/1.2 'Nunito Sans',sans-serif;color:#1C2832;cursor:pointer}
+  .bs-add{width:100%;height:46px;margin:0 0 18px;border-radius:12px;border:1px solid rgba(59,130,246,.38);background:rgba(59,130,246,.10);font:700 14px/1.2 'Avenir Next','Avenir','Nunito Sans',sans-serif;color:#1C2832;cursor:pointer}
   .bs-stack{display:flex;flex-direction:column;gap:10px}
   .bs-toggle-card{display:flex;align-items:center;gap:12px;margin-top:22px;padding:17px;border-radius:20px;border:1px solid rgba(28,40,50,.16);background:rgba(255,255,255,.45);cursor:pointer}
   .bs-toggle-text{flex:1}
@@ -684,9 +684,9 @@
   .bs-grid-row input{min-height:44px;border-radius:11px;padding:0 10px;font-size:14px}
   .bs-grid-row input:nth-child(1){flex:1.8}.bs-grid-row input:nth-child(2),.bs-grid-row input:nth-child(3){flex:1}
   .bs-sheet-body .bs-add{margin:4px 0 0}
-  .bs-sheet-save{width:100%;min-height:54px;margin-top:16px;border:0;border-radius:14px;background:#3B82F6;color:#fff;font:800 16px/1.2 'Nunito Sans',sans-serif;cursor:pointer}
+  .bs-sheet-save{width:100%;min-height:54px;margin-top:16px;border:0;border-radius:14px;background:#3B82F6;color:#fff;font:800 16px/1.2 'Avenir Next','Avenir','Nunito Sans',sans-serif;cursor:pointer}
   .bs-sheet-save:disabled{opacity:.45;cursor:default}
-  .bs-sheet-delete{display:block;margin:14px auto 0;border:0;background:none;font:700 14px/1.2 'Nunito Sans',sans-serif;color:#B42318;cursor:pointer}
+  .bs-sheet-delete{display:block;margin:14px auto 0;border:0;background:none;font:700 14px/1.2 'Avenir Next','Avenir','Nunito Sans',sans-serif;color:#B42318;cursor:pointer}
 
   /* ---- app-matched section list + preview loader (overrides older styles above) ---- */
   #builderList{grid-template-columns:1fr !important;gap:8px !important}
@@ -709,6 +709,13 @@
   .builder-section h3{font-family:var(--display);font-size:22px !important;font-weight:800 !important;letter-spacing:-.4px;color:#1C2832;margin:6px 0 10px !important}
   .builder-section .acct-field label{font-size:13px;font-weight:700;color:rgba(28,40,50,.72);margin-bottom:7px}
   .builder-section .section-icon,#builderList .section-icon{color:#3B82F6}
+  .bs-notes{display:block;width:100%;box-sizing:border-box;min-height:220px;margin-top:14px;padding:14px 15px;border:1px solid rgba(28,40,50,.14);border-radius:14px;background:rgba(255,255,255,.6);font:inherit;font-size:15px;line-height:1.5;color:#1C2832;resize:vertical;outline:none}
+  .bs-notes:focus{border-color:rgba(59,130,246,.55);background:#fff}
+  /* account cards in the app's style: white, borderless, small grey label over a bold value */
+  #accountPanel .info-card{border:0;border-radius:16px;box-shadow:none;padding:18px;margin-bottom:12px}
+  #accountPanel .info-card h2{font-size:12px;font-weight:700;color:rgba(28,40,50,.52);margin:0 0 8px;letter-spacing:0}
+  #accountPanel .info-row .value{font-weight:700;color:#1C2832}
+  .acct-logout{display:block;width:calc(100% - 32px);max-width:788px;margin:4px auto 32px;min-height:50px;border-radius:14px;border:1px solid rgba(28,40,50,.14);background:#fff;font-size:15px;font-weight:700;font-family:inherit;color:#B42318;cursor:pointer}
 </style>
 
 <body>
@@ -817,7 +824,8 @@
       </div>
     </div>
 
-    <div class="info-card-overlay" id="acctCardOverlay">
+    <button type="button" class="acct-logout" id="acctLogoutBtn">Log out</button>
+<div class="info-card-overlay" id="acctCardOverlay">
       <div class="info-card-overlay-head">
         <button class="info-card-overlay-back" id="acctCardBack" aria-label="Back">
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 14L6 9l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -877,7 +885,7 @@
               <button type="button" class="mobile-pvw-btn active" id="mobilePvwMobile">Mobile</button>
               <button type="button" class="mobile-pvw-btn" id="mobilePvwDesktop">Desktop</button>
             </div>
-            <a id="mobPreviewViewBtn" class="mob-preview-view" href="#" target="_blank" rel="noopener" hidden style="display:none;align-items:center;gap:5px;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);font:700 11px/1 'Nunito Sans',sans-serif;text-decoration:none;white-space:nowrap">Open<svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2h6v6M10 2 4.5 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+            <a id="mobPreviewViewBtn" class="mob-preview-view" href="#" target="_blank" rel="noopener" hidden style="display:none;align-items:center;gap:5px;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);font:700 11px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;text-decoration:none;white-space:nowrap">Open<svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2h6v6M10 2 4.5 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
           </div>
         </div>
         <p id="approveDesc" hidden class="preview-action-description">Take a look at the preview and let us know if you’re happy with it.</p>
@@ -998,6 +1006,7 @@
         <p class="info-hint">Add any offers, rewards or gift cards you want on your website. Leave it blank to skip.</p>
         <div id="offerList"></div>
         <label class="bs-toggle-card"><span class="bs-toggle-text"><b>Add a contact form</b><span>Messages will arrive in your BrightSite dashboard.</span></span><input type="checkbox" id="fContactForm" class="bs-switch"></label>
+        <textarea id="fDesignerNotes" class="bs-notes" placeholder="Add any notes for your designer. Paste in any info or descriptions you want included."></textarea>
       </div>
 
       <div class="builder-section" data-section-panel="reviews" hidden>
@@ -1055,7 +1064,7 @@
       <div class="fake-browser-bar">
         <span class="fake-browser-dots"><span></span><span></span><span></span></span>
         <span class="fake-browser-url" id="fakeBrowserUrl">brightsite.app</span>
-        <a id="fakeBrowserViewBtn" href="#" target="_blank" hidden style="font:600 11px/1 'Nunito Sans',sans-serif;color:#fff;background:rgba(255,255,255,.15);border-radius:5px;padding:4px 9px;text-decoration:none;white-space:nowrap;flex:none">Open preview</a>
+        <a id="fakeBrowserViewBtn" href="#" target="_blank" hidden style="font:600 11px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;color:#fff;background:rgba(255,255,255,.15);border-radius:5px;padding:4px 9px;text-decoration:none;white-space:nowrap;flex:none">Open preview</a>
       </div>
       <div class="fake-browser-content">
         <div id="deskPreviewPlaceholder" class="preview-placeholder">
@@ -1299,6 +1308,7 @@
   var _acctName = document.getElementById('acctName'); if (_acctName) _acctName.textContent = session.email || '';
   var _acctEmailTop = document.getElementById('acctEmailTop'); if (_acctEmailTop) _acctEmailTop.textContent = session.email || '';
   document.getElementById('acctEmailRow').textContent = session.email || '';
+  document.getElementById('acctLogoutBtn').addEventListener('click', function () { document.getElementById('logoutBtn').click(); });
   document.getElementById('logoutBtn').addEventListener('click', function () {
     localStorage.removeItem('bs_session');
     location.href = 'login.html';
@@ -1805,6 +1815,8 @@
     function setVal(id, v) { var el = document.getElementById(id); if (el) el.value = v || ''; }
     setVal('fName', raw.name);
     setVal('fCategory', raw.tagline);
+    // older web saves kept customer notes in `notes`, which otherwise holds the build-choice marker
+    setVal('fDesignerNotes', raw.designerNotes || (raw.notes && !/^Build choice:/.test(raw.notes) ? raw.notes : ''));
     setVal('fOwnerEmail', raw.ownerEmail || session.email);
     var same = document.getElementById('fSameEmail');
     if (same) same.checked = raw.sameEmail !== false;
@@ -3117,6 +3129,7 @@
       fullNameDisplay: document.getElementById('fFullNameDisplay').checked,
       address: document.getElementById('fAddress').value.trim(),
       ownerEmail: document.getElementById('fOwnerEmail').value.trim(),
+      designerNotes: document.getElementById('fDesignerNotes').value.trim(),
       sameEmail: document.getElementById('fSameEmail').checked,
       googleLink: document.getElementById('fGoogleLink').value.trim(),
       trustpilotLink: document.getElementById('fTrustpilotLink').value.trim(),
@@ -3186,7 +3199,7 @@
   }
 
   // Wire field change listeners for auto-save
-  ['fName','fPhone','fEmail2','fWebsite','fInstagram','fFacebook','fFullName','fAddress','fGoogleLink','fTrustpilotLink'].forEach(function(id) {
+  ['fName','fPhone','fEmail2','fWebsite','fInstagram','fFacebook','fFullName','fAddress','fGoogleLink','fTrustpilotLink','fDesignerNotes'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.addEventListener('input', function() { updateSectionChecks(); scheduleAutoSave(); });
   });

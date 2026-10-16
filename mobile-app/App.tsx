@@ -156,6 +156,7 @@ function businessBrief(biz: any): string {
     list('OPENING HOURS', r.hours || []),
     ...(r.serviceGroups || []).map((g: any) => list(`SERVICES: ${g.name}`, (g.items || []).map((it: string[]) => [it[0], it[2], it[1]].filter(Boolean).join(' | ')))),
     list('OFFERS', (r.offers || []).map((o: any) => `${o.name}: ${o.value}`)),
+    (r.designerNotes || (r.notes && !/^Build choice:/.test(r.notes) ? r.notes : '')) ? `\nNOTES FOR DESIGNER\n${r.designerNotes || r.notes}` : '',
     list('REVIEWS', (r.reviewItems || []).map((x: any) => [x.title, x.description, x.name].filter(Boolean).join(' — '))),
     list('PHOTOS', [r.logoImage && `Logo: ${r.logoImage}`, r.heroImage && `Hero: ${r.heroImage}`, ...(r.gallery || []).map((u: string, i: number) => `Gallery ${i + 1}: ${u}`)].filter(Boolean)),
     r.design ? `\nDESIGN SETTINGS\n${JSON.stringify(r.design)}` : '',
@@ -1540,7 +1541,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     return () => sub.subscription.unsubscribe();
   }, []);
   const [slug, setSlug] = useState<string | null>(null);
-  const [data, setData] = useState({ email: '', password: '', businessName: '', category: '', fullName: '', contactEmail: '', phone: '', website: '', instagram: '', facebook: '', address: '', reviewLink: '', reviewSource: null as null | 'Google' | 'Trustpilot', googleLink: '', trustpilotLink: '', ownerEmail: '', sameEmail: true });
+  const [data, setData] = useState({ email: '', password: '', businessName: '', category: '', fullName: '', contactEmail: '', phone: '', website: '', instagram: '', facebook: '', address: '', reviewLink: '', reviewSource: null as null | 'Google' | 'Trustpilot', googleLink: '', trustpilotLink: '', ownerEmail: '', sameEmail: true, designerNotes: '' });
   const [planAnnual, setPlanAnnual] = useState(false);
   const [saveError, setSaveError] = useState('');
   const businessRecord = useRef<Record<string, any>>({});
@@ -1569,6 +1570,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       category: raw.tagline || '',
       fullName: raw.fullName || '',
       ownerEmail: raw.ownerEmail || '',
+      // older web saves kept customer notes in `notes`, which otherwise holds the build-choice marker
+      designerNotes: raw.designerNotes || (raw.notes && !/^Build choice:/.test(raw.notes) ? raw.notes : ''),
       sameEmail: raw.sameEmail !== false,
       contactEmail: raw.email || accountEmail,
       phone: raw.phone || '',
@@ -1950,6 +1953,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       facebook: data.facebook,
       fullName: data.fullName,
       ownerEmail: data.ownerEmail.trim(),
+      designerNotes: data.designerNotes.trim(),
       sameEmail: data.sameEmail,
       fullNameDisplay: showFullName,
       address: data.address,
@@ -2258,7 +2262,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         </>;
       case 'extras': return <><Intro>Add any offers, rewards or gift cards you want on your website. Leave it blank to skip.</Intro>
         <ItemList items={offers} primary="name" secondary="value" addLabel="Add offer" onOpen={i => setSheet({ kind: 'offer', index: i })} />
-        <Pressable onPress={() => setContactForm(!contactForm)} style={s.formChoice}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color={C.primary} /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: 'rgba(28,40,50,.18)', true: C.primary }} thumbColor="#fff" {...({ activeThumbColor: '#fff' } as any)} /></Pressable></>;
+        <Pressable onPress={() => setContactForm(!contactForm)} style={s.formChoice}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color={C.primary} /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: 'rgba(28,40,50,.18)', true: C.primary }} thumbColor="#fff" {...({ activeThumbColor: '#fff' } as any)} /></Pressable>
+        <TextInput value={data.designerNotes} onChangeText={v => setData(d => ({ ...d, designerNotes: v }))} placeholder="Add any notes for your designer. Paste in any info or descriptions you want included." placeholderTextColor={C.placeholder} multiline autoCapitalize="sentences" style={[s.input, s.notesBox]} /></>;
     }
   };
 
@@ -2817,6 +2822,7 @@ const s = StyleSheet.create({
   listRow: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 8, borderRadius: 14, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line },
   gridRow: { flexDirection: 'row', gap: 6 },
   gridCell: { minHeight: 44, borderRadius: 11, paddingHorizontal: 10, fontFamily: FONT, fontSize: 14, color: C.ink, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line },
+  notesBox: { marginTop: 14, minHeight: 220, paddingTop: 14, paddingBottom: 14, textAlignVertical: 'top' },
   savedPill: { position: 'absolute', top: Platform.OS === 'ios' ? 58 : 24, alignSelf: 'center', zIndex: 200, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(28,40,50,.82)' },
   savedPillText: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: '#fff' },
   listRowSub: { fontFamily: FONT, fontSize: 13, color: C.inkMuted, marginTop: 2 },
