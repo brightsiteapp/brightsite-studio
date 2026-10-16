@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import { createClient } from '@supabase/supabase-js';
 import { registerWithCloudflare, markBusinessLive } from './_lib/activate.js';
 
 export default async function handler(req, res) {
@@ -36,6 +37,15 @@ export default async function handler(req, res) {
     await registerWithCloudflare(domain);
 
     await markBusinessLive(slug, domain, session.metadata?.publish_on_payment === 'true');
+    // the nightly domain-renewals job needs to know which subscription (and plan) pays for this domain
+    if (session.subscription && slug) {
+      const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+      const { data: row } = await supabase.from('businesses').select('data').eq('id', slug).single();
+      if (row) {
+        const raw = { ...(row.data?.raw || {}), chosenPlan: session.metadata?.plan === 'pro' ? 'pro' : 'essential', chosenAnnual: session.metadata?.billing === 'annual' };
+        await supabase.from('businesses').update({ data: { ...row.data, raw, stripeSubscriptionId: session.subscription } }).eq('id', slug);
+      }
+    }
 
     console.log(`Domain registered: ${domain} for slug: ${slug}`);
     return res.status(200).json({ received: true, domain });

@@ -4,7 +4,12 @@
   "redirects": [
     {
       "source": "/:path*",
-      "has": [{ "type": "host", "value": "www.brightsite.app" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "www.brightsite.app"
+        }
+      ],
       "destination": "https://brightsite.app/:path*",
       "permanent": true
     },
@@ -22,6 +27,12 @@
       "source": "/work.html",
       "destination": "/ourwork",
       "permanent": true
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/domain-renewals",
+      "schedule": "0 4 * * *"
     }
   ]
 }

@@ -63,6 +63,7 @@ export default async function handler(req, res) {
         cancel_url: `https://brightsite.app/account/dashboard?slug=${encodeURIComponent(slug || '')}&payment=cancelled`,
         customer_email: email || undefined,
         metadata,
+        subscription_data: { metadata },
       });
       return res.status(200).json({ url: session.url });
     }
@@ -76,6 +77,7 @@ export default async function handler(req, res) {
       return_url: returnUrl,
       customer_email: email || undefined,
       metadata,
+      subscription_data: { metadata },
     });
 
     res.status(200).json({ clientSecret: session.client_secret });
