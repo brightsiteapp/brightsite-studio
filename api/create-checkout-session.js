@@ -32,22 +32,24 @@ export default async function handler(req, res) {
     const lineItems = [{ price: prices.recurring, quantity: 1 }];
     if (prices.setup) lineItems.push({ price: prices.setup, quantity: 1 });
 
-    // optional domain registration (one-off)
+    // Domain (one-off): listed at its real price; the part the plan covers comes off as a one-time
+    // discount, so the customer sees the domain inside their total rather than as a £0 line.
+    let discounts;
     if (selectedDomain) {
       const quote = await quoteDomainInGbp(selectedDomain);
-      const chargePence = domainChargePence(plan, billing, quote.amountPence);
-      const domainIsFree = chargePence === 0;
+      const coveredPence = quote.amountPence - domainChargePence(plan, billing, quote.amountPence);
       lineItems.push({
         price_data: {
           currency: 'gbp',
-          product_data: {
-            name: 'Domain: ' + selectedDomain,
-            description: domainIsFree ? 'Included free with your plan' : chargePence < quote.amountPence ? '1-year registration (£12 included with your plan)' : '1-year registration',
-          },
-          unit_amount: chargePence,
+          product_data: { name: 'Domain: ' + selectedDomain, description: '1-year registration' },
+          unit_amount: quote.amountPence,
         },
         quantity: 1,
       });
+      if (coveredPence > 0) {
+        const coupon = await stripe.coupons.create({ amount_off: coveredPence, currency: 'gbp', duration: 'once', name: 'Domain included with your plan', max_redemptions: 1 });
+        discounts = [{ coupon: coupon.id }];
+      }
     }
 
     const metadata = { plan, billing, slug: slug || '', domain: selectedDomain, publish_on_payment: publishOnPayment ? 'true' : 'false' };
@@ -64,6 +66,7 @@ export default async function handler(req, res) {
         customer_email: email || undefined,
         metadata,
         subscription_data: { metadata },
+        discounts,
       });
       return res.status(200).json({ url: session.url });
     }
@@ -78,6 +81,7 @@ export default async function handler(req, res) {
       customer_email: email || undefined,
       metadata,
       subscription_data: { metadata },
+      discounts,
     });
 
     res.status(200).json({ clientSecret: session.client_secret });

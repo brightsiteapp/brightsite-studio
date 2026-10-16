@@ -21,8 +21,10 @@ export default async function handler(req, res) {
     if (prices.setup) await stripe.invoiceItems.create({ customer: customer.id, price: prices.setup });
     if (domain) {
       const quote = await quoteDomainInGbp(domain);
-      const amount = domainChargePence(plan, billing, quote.amountPence);
-      if (amount > 0) await stripe.invoiceItems.create({ customer: customer.id, currency: 'gbp', amount, description: `Domain: ${domain} (1-year registration${amount < quote.amountPence ? ', £12 included with your plan' : ''})` });
+      // listed at its real price, with the part the plan covers taken off as its own line
+      const covered = quote.amountPence - domainChargePence(plan, billing, quote.amountPence);
+      await stripe.invoiceItems.create({ customer: customer.id, currency: 'gbp', amount: quote.amountPence, description: `Domain: ${domain} (1-year registration)` });
+      if (covered > 0) await stripe.invoiceItems.create({ customer: customer.id, currency: 'gbp', amount: -covered, description: 'Domain included with your plan' });
     }
 
     const subscription = await stripe.subscriptions.create({
