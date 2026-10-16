@@ -170,6 +170,7 @@ body { background: var(--bg); min-height: 100vh; }
 /* ---- go-live btn ---- */
 .action-btn.live { border-color: var(--green); color: var(--green); }
 .action-btn.live:hover { background: var(--green-bg); }
+.draft-tag { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 999px; font-size: 10px; font-weight: 800; background: rgba(28,40,50,.08); color: #6b7280; margin-left: 6px; }
 .approved-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 999px; font-size: 10px; font-weight: 800; background: #e6f6ec; color: #1f9d55; margin-left: 4px; }
 /* ---- settings btn ---- */
 .settings-btn { border: 1px solid var(--line); border-radius: 999px; background: none; padding: 7px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); font-size: 17px; line-height: 1; }
@@ -514,7 +515,7 @@ function applyFilter() {
       '<span class="status-dot ' + s + '"></span>' +
       '<div class="account-info">' +
         '<div class="account-name-row">' +
-          '<div class="account-name">' + esc(name) + (d.demoApproved ? '<span class="approved-tag">✓ Approved</span>' : '') + '</div>' +
+          '<div class="account-name">' + esc(name) + (d.raw && d.raw.draft ? '<span class="draft-tag">Draft</span>' : '') + (d.demoApproved ? '<span class="approved-tag">✓ Approved</span>' : '') + '</div>' +
           '<div class="row-actions row-actions-inline" onclick="event.stopPropagation()">' +
         (d.demoApproved && s !== 'green' ? '<button type="button" class="action-btn live" onclick="openGoLiveModal(\'' + esc(slug) + '\',\'' + esc(name) + '\')" title="Go live">✓ Go live</button>' : '') +
         '<button type="button" class="action-btn" onclick="openDomainModal(\'' + esc(slug) + '\',\'' + esc(name) + '\')" title="Connect domain">' +

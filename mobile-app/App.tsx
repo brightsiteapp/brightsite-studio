@@ -2371,7 +2371,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
                 <View style={[aS.bizStatusBar, { backgroundColor: STATUS_COLORS[st] }]} />
                 <View style={aS.bizCardInner}>
                   <View style={{ flex: 1, marginRight: 8 }}>
-                    <Text style={aS.bizName} numberOfLines={1}>{name}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Text style={[aS.bizName, { flexShrink: 1 }]} numberOfLines={1}>{name}</Text>{biz?.data?.raw?.draft && <Text style={aS.draftTag}>Draft</Text>}</View>
                     <View style={aS.bizMeta}>
                       <View style={[aS.bizStatusDot, { backgroundColor: STATUS_COLORS[st] }]} />
                       <Text style={[aS.bizStatusText, { color: STATUS_COLORS[st] }]}>{STATUS_LABELS[st]}</Text>
@@ -2400,7 +2400,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
                 return <Pressable key={id} onPress={() => setAdminActiveThread(biz)} style={({ pressed }) => [aS.threadCard, pressed && s.pressed]}>
                   <View style={[aS.threadAvatar, unread && { backgroundColor: C.primary }]}><Text style={aS.threadAvatarText}>{(name[0] || '?').toUpperCase()}</Text></View>
                   <View style={{ flex: 1 }}>
-                    <View style={aS.threadTop}><Text style={aS.threadName} numberOfLines={1}>{name}</Text><Text style={aS.threadTime}>{lastMsg ? timeAgo(lastMsg.created_at) : ''}</Text></View>
+                    <View style={aS.threadTop}><Text style={aS.threadName} numberOfLines={1}>{name}</Text>{biz?.data?.raw?.draft && <Text style={aS.draftTag}>Draft</Text>}<Text style={aS.threadTime}>{lastMsg ? timeAgo(lastMsg.created_at) : ''}</Text></View>
                     <Text style={[aS.threadPreview, unread && { color: C.ink, fontWeight: '600' }]} numberOfLines={1}>{lastMsg?.body || ''}</Text>
                   </View>
                   {unread && <View style={aS.threadUnread} />}
@@ -2880,6 +2880,7 @@ const aS = StyleSheet.create({
   threadAvatarText: { fontFamily: FONT, fontSize: 16, fontWeight: '600', color: C.primary },
   threadTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3 },
   threadName: { fontFamily: FONT, fontSize: 16, fontWeight: '600', color: C.ink, flex: 1, marginRight: 8 },
+  draftTag: { fontFamily: FONT, fontSize: 11, fontWeight: '800', color: C.inkMuted, backgroundColor: 'rgba(28,40,50,.08)', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6, overflow: 'hidden', marginRight: 8 },
   threadTime: { fontFamily: FONT, fontSize: 12, fontWeight: '500', color: C.inkMuted },
   threadPreview: { fontFamily: FONT, fontSize: 14, color: C.inkSoft },
   threadUnread: { width: 9, height: 9, borderRadius: 5, backgroundColor: C.primary },

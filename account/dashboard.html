@@ -589,6 +589,11 @@
     flex:none;
   }
   @keyframes spin{to{transform:rotate(360deg)}}
+  .draft-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px;padding:14px 16px;border-radius:14px;background:var(--accent);color:#fff}
+  .draft-banner[hidden]{display:none}
+  .draft-banner strong{display:block;font-size:14px}
+  .draft-banner span{display:block;font-size:12.5px;opacity:.9;margin-top:2px}
+  .draft-banner button{flex:none;border:0;border-radius:999px;padding:9px 14px;background:#fff;color:var(--accent);font:800 12.5px/1 'Nunito Sans',sans-serif;cursor:pointer}
   /* app-style website header — mobile only */
   .website-app-header{display:none;}
   @media(max-width:799px){
@@ -778,6 +783,10 @@
 
   <section id="websitePanel" class="tab-content website-panel" aria-labelledby="mobileWebsiteTab">
     <div class="panel-inner">
+      <div class="draft-banner" id="draftBanner" hidden>
+        <div><strong>Finish your details</strong><span>Everything is saved. Send it to your designer when you’re ready.</span></div>
+        <button type="button" id="draftSendBtn">Send to designer</button>
+      </div>
 
       <!-- mobile-only app-style header (hidden on desktop) -->
       <div class="website-app-header" id="websiteAppHeader">
@@ -1691,8 +1700,50 @@
     renderWebsiteStatus();
     updateWebsiteAppHeader();
     renderWelcomeMessage();
-    showMessagesTab();
+    if (renderDraftBanner()) showWebsiteTab();
+    else showMessagesTab();
   }
+
+  // Signups started in the app are saved as drafts until sent; let them finish and send from here too.
+  function renderDraftBanner() {
+    var raw = (business && business.data && business.data.raw) || {};
+    var banner = document.getElementById('draftBanner');
+    if (!banner) return false;
+    banner.hidden = !raw.draft;
+    if (raw.draft) document.getElementById('websitePanel').classList.add('editing');
+    return !!raw.draft;
+  }
+
+  document.getElementById('draftSendBtn').addEventListener('click', function() {
+    var btn = this;
+    var raw = business.data.raw;
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    raw.draft = false;
+    delete raw.draftIndex;
+    raw.buildChoice = raw.buildChoice || 'designer';
+    saveBusiness().then(function() {
+      var notify = new FormData();
+      notify.append('Stage', 'new_signup');
+      notify.append('Business', raw.name || 'Unnamed business');
+      notify.append('Email', raw.email || session.email || '');
+      notify.append('Slug', slug);
+      fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/', { method: 'POST', body: notify }).catch(function() {});
+      fetch('/api/send-welcome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+        body: JSON.stringify({ slug: slug, fullName: raw.fullName || '', buildChoice: raw.buildChoice })
+      }).catch(function() {});
+      renderDraftBanner();
+      document.getElementById('websitePanel').classList.remove('editing');
+      showMessagesTab();
+    }).catch(function() {
+      raw.draft = true;
+      btn.disabled = false;
+      btn.textContent = 'Send to designer';
+      alert('We couldn’t send your details. Please check your connection and try again.');
+    });
+  });
 
   function renderWelcomeMessage() {
     var raw = (business && business.data && business.data.raw) || {};
