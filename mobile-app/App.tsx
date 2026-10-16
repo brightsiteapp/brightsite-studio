@@ -273,7 +273,8 @@ const paletteGroups = [
 ];
 const palettes = paletteGroups.flatMap(group => group.options);
 const fonts = ['Editorial', 'Rounded', 'Modern', 'Thin', 'Classic'];
-const BUSINESS_TYPES = ['Hair & Beauty', 'Aesthetics', 'Health & Wellness', 'Fitness', 'Automotive', 'Trades', 'Home & Garden', 'Food & Drink', 'Professional Services', 'Creative', 'Pets', 'Other'];
+// ordered so the chip rows come out roughly even in width
+const BUSINESS_TYPES = ['Hair & Beauty', 'Aesthetics', 'Fitness', 'Pets', 'Health & Wellness', 'Home & Garden', 'Food & Drink', 'Automotive', 'Trades', 'Professional Services', 'Creative', 'Other'];
 const HOME_SECTIONS_DEFAULT = ['Hero', 'About & Services', 'Reviews', 'Gallery', 'Contact'];
 const SERVICES_SECTIONS_DEFAULT = ['Services List', 'Contact CTA'];
 const CONTACT_SECTIONS_DEFAULT = ['Info & Hours', 'Map', 'Contact Form'];
@@ -2648,7 +2649,7 @@ const s = StyleSheet.create({
   domainError: { marginTop: 10, fontFamily: FONT, fontSize: 13, lineHeight: 18, color: C.danger }, domainResult: { marginTop: 14, padding: 15, borderRadius: 14, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: C.successSoft, borderWidth: 1, borderColor: 'rgba(31,138,84,.3)' }, domainName: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#1C2832' }, domainPrice: { fontFamily: FONT, fontSize: 13, color: C.success, fontWeight: '600', marginTop: 2 },
   formChoice: { marginTop: 22, padding: 17, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: 'rgba(255,255,255,.45)', borderWidth: 1, borderColor: 'rgba(28,40,50,.16)' }, formChoiceIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(59,130,246,.12)' }, formChoiceTitle: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#1C2832' }, formChoiceText: { fontFamily: FONT, fontSize: 13, color: C.inkSoft, marginTop: 3, lineHeight: 18 },
   rail: { position: 'absolute', left: 12, top: '25%', bottom: '25%', justifyContent: 'space-between', alignItems: 'center', zIndex: 140, elevation: 140 }, railButton: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }, railActive: { position: 'absolute', width: 27, height: 27, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: C.primary, borderWidth: 0, shadowColor: C.primary, shadowOpacity: .45, shadowRadius: 8, elevation: 8 }, railDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#1A1E22', borderWidth: 1, borderColor: 'rgba(0,0,0,.32)', shadowColor: '#000', shadowOpacity: .2, shadowRadius: 2 }, railDotOn: { backgroundColor: C.primary, borderColor: '#A9C8FF', shadowColor: C.primary, shadowOpacity: .45, shadowRadius: 5 },
-  reviewRowText: { flex: 1, fontFamily: FONT, fontSize: 14, fontWeight: '600', color: '#1C2832' },
+  reviewRowText: { fontFamily: FONT, fontSize: 15, lineHeight: 21, fontWeight: '600', color: '#1C2832' },
   addReviewBtn: { height: 46, borderRadius: 12, borderWidth: 1, borderColor: C.primaryBorder, backgroundColor: C.primarySoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 18 },
   addReviewText: { fontFamily: FONT, fontWeight: '700', fontSize: 14, color: C.ink },
   galleryGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', gap: 8, marginTop: 8, marginBottom: 12 },
@@ -2741,7 +2742,7 @@ const s = StyleSheet.create({
   siteGalleryImg: { width: '31.5%', aspectRatio: 1, borderRadius: 6 },
   fieldOptional: { fontWeight: '600', color: C.inkMuted, fontSize: 12 },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginBottom: 16 },
-  typeChip: { paddingHorizontal: 9, paddingVertical: 8 },
+  typeChip: { paddingHorizontal: 9, paddingVertical: 8, flexGrow: 1, justifyContent: 'center' },
   typeChipText: { fontSize: 13 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999, backgroundColor: C.field, borderWidth: 1, borderColor: C.line },
   chipOn: { backgroundColor: C.primary, borderColor: C.primary },
