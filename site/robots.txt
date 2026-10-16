@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /
+
+Sitemap: https://patrickstokes.brightsite.app/sitemap.xml

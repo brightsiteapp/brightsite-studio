@@ -1,0 +1,77 @@
+{
+  "trailingSlash": true,
+  "redirects": [
+    {
+      "source": "/patrickstokes-co-uk-yorkshire-property-market-right-now/",
+      "destination": "/guides/yorkshire-house-prices/",
+      "permanent": true
+    },
+    {
+      "source": "/how-to-reduce-stress-when-selling-a-home/",
+      "destination": "/guides/reduce-stress-selling-a-home/",
+      "permanent": true
+    },
+    {
+      "source": "/when-selling-your-hom-the-first-impression-count/",
+      "destination": "/guides/first-impressions-selling-your-home/",
+      "permanent": true
+    },
+    {
+      "source": "/patrickstokes-co-uk-qualified-estate-agent-in-beverley/",
+      "destination": "/guides/qualified-estate-agent-beverley/",
+      "permanent": true
+    },
+    {
+      "source": "/success-stories-property-sale/",
+      "destination": "/success-stories/",
+      "permanent": true
+    },
+    {
+      "source": "/testimonial/(.*)",
+      "destination": "/reviews/",
+      "permanent": true
+    },
+    {
+      "source": "/category/(.*)",
+      "destination": "/guides/",
+      "permanent": true
+    },
+    {
+      "source": "/gblocks_pattern_collections/(.*)",
+      "destination": "/",
+      "permanent": true
+    }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    }
+  ]
+}
