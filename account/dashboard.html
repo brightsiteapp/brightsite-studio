@@ -632,6 +632,9 @@
   .send-i{display:flex;flex-direction:column;align-items:center;gap:2px}
   .send-i span{display:block;width:5px;border-radius:3px;background:#fff}
   .send-i span:first-child{height:5px}.send-i span:last-child{height:11px}
+  /* Done next to 'Edit your website' only while editing (mobile edit mode), not on the plain list */
+  #editorDone{display:none !important}
+  .website-panel.editing #editorDone{display:inline-flex !important}
 </style>
 
 <body>
@@ -738,6 +741,7 @@
 
       <div class="website-editor-header" id="websiteEditorHeader">
         <h2 id="builderHeading">Edit your website</h2>
+        <button type="button" class="builder-done" id="editorDone">Done</button>
       </div>
 
       <!-- section list -->
@@ -1254,6 +1258,7 @@
     // data-back buttons inside the editor should also exit editing
     panel.addEventListener('click', function(e) {
       // only the main Done leaves the editor; a section's Back/Done returns to the section list
+      if (e.target.closest('#editorDone')) panel.classList.remove('editing');
     });
   })();
 
