@@ -574,6 +574,10 @@
   #builderList .sec-btn .chev{display:block !important}
   #builderList .section-tick{display:none}
   #builderList .sec-btn.is-complete .section-tick{display:grid}
+  /* red until the customer clicks Done on a card, then green; neutral once the preview is sent */
+  #builderList:not(.preview-sent) .sec-btn{background:#fff4f2 !important;border-color:#f1dcd7 !important}
+  #builderList:not(.preview-sent) .sec-btn.is-complete{background:#f0faf4 !important;border-color:#d2e9dc !important}
+  #builderList:not(.preview-sent) .section-tick{display:grid}
   .website-editor-header{display:flex !important;align-items:center;justify-content:space-between}
   @media(max-width:799px){.website-panel:not(.editing) #websiteEditorHeader{display:none !important}}
   .preview-placeholder{background:#141A1E !important;padding:32px 24px !important}
@@ -1576,10 +1580,7 @@
   function renderWelcomeMessage() {
     var raw = (business && business.data && business.data.raw) || {};
     var firstName = (raw.fullName || raw.name || '').trim().split(' ')[0] || 'there';
-    var isDesigner = raw.buildChoice === 'designer' || /Build choice: designer/i.test(raw.notes || '');
-    var body = isDesigner
-      ? 'Hey ' + firstName + ', welcome to BrightSite! I’m Tom, your designer.\n\n• I’m building your website now\n• You’ll get a notification when it’s ready to review\n• If I need anything else to build it, I’ll message you here\n• Got ideas or requests? Send them here as notes anytime'
-      : 'Hey ' + firstName + ', welcome to BrightSite! I’m Tom, your support.\n\n• Your design is saved and ready\n• Hit Make Live whenever you want it online\n• You’ll get a notification if I need anything from you\n• Got ideas or requests? Send them here as notes anytime';
+    var body = 'Hey ' + firstName + ', welcome to BrightSite! I’m Tom, your designer.\n\n• Head to the Website tab and fill in each info card with as much as you can\n• Tap Done on each card when it’s finished, and it turns green\n• The more you add, the better your website will be\n• Got ideas or requests? Send them here as notes anytime';
     var wrap = document.getElementById('msgsWelcome');
     var bubble = document.getElementById('msgsWelcomeBubble');
     if (wrap && bubble) { bubble.textContent = body; wrap.hidden = false; }
