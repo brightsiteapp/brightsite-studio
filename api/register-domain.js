@@ -30,16 +30,17 @@ export default async function handler(req, res) {
 
   const session = event.data.object;
   const isDomainOnly = session.metadata?.type === 'domain_registration';
-  const isCombined   = !isDomainOnly && !!session.metadata?.domain;
-  if (!isDomainOnly && !isCombined) return res.status(200).json({ received: true });
+  // Plan checkouts (with or without a domain) carry the site's slug; anything else isn't ours.
+  const isPlan = !isDomainOnly && !!session.metadata?.slug && !!session.metadata?.plan;
+  if (!isDomainOnly && !isPlan) return res.status(200).json({ received: true });
 
   const domain = session.metadata.domain;
   const slug   = session.metadata.slug;
 
   try {
-    await registerWithCloudflare(domain);
+    if (domain) await registerWithCloudflare(domain);
 
-    await markBusinessLive(slug, domain, session.metadata?.publish_on_payment === 'true');
+    await markBusinessLive(slug, domain || null, session.metadata?.publish_on_payment === 'true');
     // the nightly domain-renewals job needs to know which subscription (and plan) pays for this domain
     if (session.subscription && slug) {
       const supabase = supabaseAdmin();
@@ -50,7 +51,7 @@ export default async function handler(req, res) {
       }
     }
 
-    console.log(`Domain registered: ${domain} for slug: ${slug}`);
+    console.log(`Checkout complete for slug: ${slug}${domain ? `, domain registered: ${domain}` : ''}`);
     return res.status(200).json({ received: true, domain });
   } catch (err) {
     console.error('Domain registration error:', err.message);
