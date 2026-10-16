@@ -14,40 +14,6 @@
       "port": 8934
     },
     {
-      "name": "brightsite-studio",
-      "runtimeExecutable": "node",
-      "runtimeArgs": [
-        "desktop-app/server.js"
-      ],
-      "port": 4173
-    },
-    {
-      "name": "brightsite-studio-test",
-      "runtimeExecutable": "env",
-      "runtimeArgs": [
-        "HOME=/private/tmp/claude-501/-Users-tomconroy-Documents-Websites-wellness-web/054f3538-a6d6-4b05-9084-d802afc10a6d/scratchpad/testhome",
-        "PORT=4178",
-        "SUPABASE_URL=http://127.0.0.1:9",
-        "SUPABASE_ANON_KEY=sandbox",
-        "node",
-        "desktop-app/server.js"
-      ],
-      "port": 4178
-    },
-    {
-      "name": "brightsite-studio-v2-test",
-      "runtimeExecutable": "env",
-      "runtimeArgs": [
-        "HOME=/private/tmp/claude-501/-Users-tomconroy-Documents-Websites-wellness-web/5d3a5823-10c6-499e-8459-b1f3a01c4ba2/scratchpad/v2home",
-        "PORT=4179",
-        "SUPABASE_URL=http://127.0.0.1:9",
-        "SUPABASE_ANON_KEY=sandbox",
-        "node",
-        "desktop-app-v2/server.js"
-      ],
-      "port": 4179
-    },
-    {
       "name": "mobile-app-web",
       "runtimeExecutable": "npx",
       "runtimeArgs": [
