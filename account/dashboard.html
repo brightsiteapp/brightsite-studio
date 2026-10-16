@@ -1582,15 +1582,26 @@
     var raw = business.data.raw = business.data.raw || {};
     btn.disabled = true;
     btn.textContent = 'Sending…';
-    // Cancel any pending autosave so it doesn't race with our intentional save
     clearTimeout(autoSaveTimer);
     autoSaveTimer = null;
     raw.draft = false;
     raw.sentToDesigner = true;
-    delete raw.draftIndex;
     raw.buildChoice = raw.buildChoice || 'designer';
-    saveBusiness().then(function() {
-      // Save succeeded — fire-and-forget notifications
+    delete raw.draftIndex;
+    // Use the same direct upsert path as autosave — proven to work
+    var record = Object.assign({}, (business.data || {}), {
+      raw: raw,
+      slug: slug,
+      name: raw.name || business.name || '',
+      updatedAt: new Date().toISOString()
+    });
+    authenticatedFetch(SUPABASE_URL + '/rest/v1/rpc/upsert_business', {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ p_id: slug, p_name: record.name, p_user_id: session.user_id, p_data: record, p_updated_at: record.updatedAt })
+    }).then(function(res) {
+      if (!res.ok) return res.text().then(function(t) { throw new Error('Save failed (' + res.status + '): ' + t); });
+      // Fire-and-forget notifications
       var notify = new FormData();
       notify.append('Stage', 'new_signup');
       notify.append('Business', raw.name || 'Unnamed business');
@@ -1602,21 +1613,23 @@
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
         body: JSON.stringify({ slug: slug, fullName: raw.fullName || '', buildChoice: raw.buildChoice })
       }).catch(function() {});
-      // UI updates isolated so they can't feed back into the catch below
+      // Reset section ticks — design is now in progress
+      sectionDoneClicked = {};
+      updateSectionChecks();
       try {
         renderDraftBanner();
         document.getElementById('websitePanel').classList.remove('editing');
         updatePreviewCard();
         updateWebsiteAppHeader();
         showMessagesTab();
-      } catch (uiErr) { console.error('[sendToDesigner] UI update error', uiErr); }
+      } catch (uiErr) { console.error('[sendToDesigner] UI error', uiErr); }
     }).catch(function(err) {
-      console.error('[sendToDesigner] save failed', err);
+      console.error('[sendToDesigner] failed', err);
       raw.draft = true;
       raw.sentToDesigner = false;
       btn.disabled = false;
       btn.textContent = 'Send to designer';
-      alert('We couldn\'t send your details. Please check your connection and try again.');
+      alert('Couldn\'t send — ' + (err && err.message ? err.message : 'check your connection and try again.'));
     });
   }
 
