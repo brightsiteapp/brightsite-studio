@@ -1271,7 +1271,7 @@
         btn.disabled = true;
         goLive().then(function() { renderWebsiteStatus(); updateWebsiteAppHeader(); }).catch(function(err) {
           isLive = false; updateWebsiteAppHeader();
-          alert(/No website uploaded/.test(err.message) ? 'Your website is still being built. It will go live as soon as it’s ready.' : err.message);
+          alert(/No website uploaded/.test(err.message) ? 'Your website is still being built. It will go live as soon as it\'s ready.' : err.message);
         });
       };
     });
@@ -1422,7 +1422,7 @@
     if (urlNote) {
       urlNote.textContent = liveUrl
         ? 'Your live website address.'
-        : 'Your website is not live yet. We’ll let you know when it’s ready.';
+        : 'Your website is not live yet. We\'ll let you know when it\'s ready.';
     }
 
     if (viewBtn) {
@@ -1592,38 +1592,38 @@
     saveBusiness().then(function() {
       // Save succeeded — fire-and-forget notifications
       var notify = new FormData();
-      notify.append(‘Stage’, ‘new_signup’);
-      notify.append(‘Business’, raw.name || ‘Unnamed business’);
-      notify.append(‘Email’, raw.email || session.email || ‘’);
-      notify.append(‘Slug’, slug);
-      fetch(‘https://brightsite-notify-lead.notify-lead-worker.workers.dev/’, { method: ‘POST’, body: notify }).catch(function() {});
-      fetch(‘https://api.brightsite.app/api/send-welcome’, {
-        method: ‘POST’,
-        headers: { ‘Content-Type’: ‘application/json’, Authorization: ‘Bearer ‘ + session.access_token },
-        body: JSON.stringify({ slug: slug, fullName: raw.fullName || ‘’, buildChoice: raw.buildChoice })
+      notify.append('Stage', 'new_signup');
+      notify.append('Business', raw.name || 'Unnamed business');
+      notify.append('Email', raw.email || session.email || '');
+      notify.append('Slug', slug);
+      fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/', { method: 'POST', body: notify }).catch(function() {});
+      fetch('https://api.brightsite.app/api/send-welcome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+        body: JSON.stringify({ slug: slug, fullName: raw.fullName || '', buildChoice: raw.buildChoice })
       }).catch(function() {});
-      // UI updates isolated so they can’t feed back into the catch below
+      // UI updates isolated so they can't feed back into the catch below
       try {
         renderDraftBanner();
-        document.getElementById(‘websitePanel’).classList.remove(‘editing’);
+        document.getElementById('websitePanel').classList.remove('editing');
         updatePreviewCard();
         updateWebsiteAppHeader();
         showMessagesTab();
-      } catch (uiErr) { console.error(‘[sendToDesigner] UI update error’, uiErr); }
+      } catch (uiErr) { console.error('[sendToDesigner] UI update error', uiErr); }
     }).catch(function(err) {
-      console.error(‘[sendToDesigner] save failed’, err);
+      console.error('[sendToDesigner] save failed', err);
       raw.draft = true;
       raw.sentToDesigner = false;
       btn.disabled = false;
-      btn.textContent = ‘Send to designer’;
-      alert(‘We couldn’t send your details. Please check your connection and try again.’);
+      btn.textContent = 'Send to designer';
+      alert('We couldn\'t send your details. Please check your connection and try again.');
     });
   }
 
   function renderWelcomeMessage() {
     var raw = (business && business.data && business.data.raw) || {};
     var firstName = (raw.fullName || raw.name || '').trim().split(' ')[0] || 'there';
-    var body = 'Hey ' + firstName + ', welcome to BrightSite! I’m Tom, your designer.\n\n• Head to the Website tab and fill in each info card with as much as you can\n• The more you add, the better your website will be\n• Got ideas or requests? Send them here as notes anytime';
+    var body = 'Hey ' + firstName + ', welcome to BrightSite! I\'m Tom, your designer.\n\n• Head to the Website tab and fill in each info card with as much as you can\n• The more you add, the better your website will be\n• Got ideas or requests? Send them here as notes anytime';
     var wrap = document.getElementById('msgsWelcome');
     var bubble = document.getElementById('msgsWelcomeBubble');
     if (wrap && bubble) { bubble.textContent = body; wrap.hidden = false; }
@@ -2011,7 +2011,7 @@
     var name = businessFirstName();
     return sendSystemMessageOnce(
       'allDetailsMessageSent',
-      'Thanks, ' + name + ' — I’ve got everything I need now. I’m getting started on your first preview and should have it ready in the next day or two. I’ll message you here as soon as it’s ready.'
+      'Thanks, ' + name + ' — I\'ve got everything I need now. I\'m getting started on your first preview and should have it ready in the next day or two. I\'ll message you here as soon as it\'s ready.'
     );
   }
 
@@ -2189,8 +2189,8 @@
         // same wording as the app's loader; unsent drafts are asked to finish instead
         var todo = needsSending();
         el.dataset.state = todo ? 'todo' : 'building';
-        if (title) title.textContent = todo ? 'Let’s build your website' : 'Building your preview';
-        if (sub) sub.textContent = todo ? 'Fill in your info cards. The more you add, the better your site. Then send it to your designer.' : 'We’ll send you a notification as soon as it’s ready to review.';
+        if (title) title.textContent = todo ? 'Let\'s build your website' : 'Building your preview';
+        if (sub) sub.textContent = todo ? 'Fill in your info cards. The more you add, the better your site. Then send it to your designer.' : 'We\'ll send you a notification as soon as it\'s ready to review.';
       }
     });
   }
@@ -2282,7 +2282,7 @@
             showAvailable();
           } else { reset(); msg.className = 'bs-domain-msg err'; msg.textContent = 'That domain is taken. Try another name or ending.'; }
         })
-        .catch(function() { reset(); msg.className = 'bs-domain-msg err'; msg.textContent = 'Couldn’t check that domain right now.'; })
+        .catch(function() { reset(); msg.className = 'bs-domain-msg err'; msg.textContent = 'Couldn\'t check that domain right now.'; })
         .then(function() { checking = false; refreshSheet(); });
     }
     openSheet({
