@@ -1194,7 +1194,6 @@
       if (button) button.setAttribute('aria-selected', String(active));
       if (panel) panel.hidden = !active;
     });
-    if (typeof updateWebsiteAppHeader === 'function') updateWebsiteAppHeader();
   }
 
   function hideMessagesPanel() {
@@ -1219,9 +1218,7 @@
       var btn = document.getElementById(id);
       if (!btn) return;
       btn.disabled = false;
-      // like the app, Make Live only shows on the Website tab
-      var onWebsiteTab = document.getElementById('mobileWebsiteTab').getAttribute('aria-selected') === 'true';
-      if (!getPreviewUrl() || !onWebsiteTab) { btn.hidden = true; return; }
+      if (!getPreviewUrl()) { btn.hidden = true; return; }
       btn.hidden = false;
       if (isLive) {
         btn.textContent = 'Take Offline';
