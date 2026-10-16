@@ -285,7 +285,6 @@
   .msgs-time{font-size:10px;margin-top:3px;display:block}
   .msgs-time.me{color:rgba(255,255,255,.65);text-align:right}
   .msgs-time.them{color:#aaa}
-  .msgs-empty{min-height:280px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 6px;color:var(--muted);font-size:13px}
   .msgs-error{padding:10px 16px;color:#b23b2c;font-size:12px;text-align:center}
   .msgs-input-bar{
     flex:none;
@@ -411,11 +410,11 @@
   .sec-btn:hover{border-color:#cfb8b3;box-shadow:0 3px 10px rgba(65,45,40,.04)}
   .sec-btn{border-color:#f1dcd7;transition:background-color .25s ease,border-color .25s ease,box-shadow .18s ease}
   .sec-btn.is-complete{background:#f0faf4;border-color:#d2e9dc}
-  .sec-btn[data-section="notes"],.preview-sent .sec-btn{background:var(--card);border-color:var(--line)}
+  .preview-sent .sec-btn{background:var(--card);border-color:var(--line)}
   .section-icon{width:32px;height:32px;display:grid;place-items:center;border-radius:11px;background:rgba(255,255,255,.8);color:#b75e52;flex:none}
   .section-icon svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .is-complete .section-icon{color:#298559}
-  [data-section="notes"] .section-icon,.preview-sent .section-icon{color:#5275a5}
+  .preview-sent .section-icon{color:#5275a5}
   .sec-title{flex:1;min-width:0}
   .section-tick{margin-left:auto}
   .sec-btn .chev{width:6px;height:6px;border-right:1.6px solid currentColor;border-top:1.6px solid currentColor;transform:rotate(45deg);font-size:0!important;margin-left:3px}
@@ -436,26 +435,6 @@
   .builder-section .builder-done{display:none}
   .builder-section .section-head .builder-done{display:inline-flex}
   .builder-section h3{font-family:var(--display);font-size:15px;font-weight:700;margin-bottom:14px}
-  .svc-group{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;background:#faf7f2}
-  .svc-group-head{display:flex;align-items:center;gap:6px;margin-bottom:8px}
-  .svc-group-head input{flex:1;font:inherit;font-size:13.5px;font-weight:700;color:var(--ink);border:1px solid transparent;background:transparent;padding:6px 8px;border-radius:8px;min-width:0;box-sizing:border-box}
-  .svc-group-head input:focus,.svc-group-head input:hover{border-color:var(--line);background:#fff;outline:none}
-  .svc-row{display:flex;gap:6px;margin-bottom:7px;align-items:center}
-  .svc-row input{min-height:38px;padding:0 10px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:13px;box-sizing:border-box}
-  .svc-row .svc-name{flex:1 1 0;min-width:0}
-  .svc-row .svc-price{width:58px;flex:none;text-align:center}
-  .svc-row .svc-time{width:62px;flex:none;text-align:center}
-  .svc-remove{background:none;border:0;color:var(--muted);font-size:16px;line-height:1;cursor:pointer;width:28px;height:28px;border-radius:7px;flex:none}
-  .svc-remove:hover{background:#f3efe8;color:#b23b2c}
-  .dash-add{margin-top:2px;background:none;border:1px dashed var(--line);border-radius:9px;padding:8px 12px;font:inherit;font-size:12.5px;font-weight:600;color:var(--accent);cursor:pointer}
-  .dash-add:hover{border-color:var(--accent);background:rgba(59,130,246,.06)}
-  .hours-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
-  .hours-row:last-child{border-bottom:0}
-  .hours-check{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink);width:92px;flex:none;cursor:pointer}
-  .hours-check input{width:16px;height:16px;accent-color:var(--accent);flex:none}
-  .hours-times{display:flex;gap:6px;flex:1;min-width:0}
-  .hours-times input{flex:1;min-width:0;min-height:36px;padding:0 10px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:12.5px;box-sizing:border-box}
-  .hours-closed{flex:1;color:var(--muted);font-size:12.5px}
   .media-intro{margin:-4px 0 14px;color:var(--muted);font-size:12.5px;line-height:1.5}
   /* Compact, side-by-side media upload cards */
   .media-upload-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}
@@ -581,13 +560,6 @@
     color:#fcd34d;
     font-weight:600;
   }
-  .pvw-spinner{
-    width:13px;height:13px;border-radius:50%;
-    border:2px solid rgba(252,211,77,.35);
-    border-top-color:#fcd34d;
-    animation:spin .8s linear infinite;
-    flex:none;
-  }
   @keyframes spin{to{transform:rotate(360deg)}}
   .draft-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px;padding:14px 16px;border-radius:14px;background:var(--accent);color:#fff}
   .draft-banner[hidden]{display:none}
@@ -662,6 +634,81 @@
   .mobile-preview-wrap.mobile-view .mob-pvw-browser{display:none;}
   .mobile-preview-wrap.mobile-view .mob-pvw-phone{display:flex;}
 
+
+  /* ---- builder: app-matched controls (colours from the app's palette) ---- */
+  .builder-section .info-hint{margin:0 0 16px;font-size:14px;line-height:1.5;color:rgba(28,40,50,.72)}
+  .builder-section .acct-field input,.bs-stack input{width:100%;box-sizing:border-box;min-height:48px;padding:0 15px;border:1px solid rgba(28,40,50,.14);border-radius:14px;background:rgba(255,255,255,.6);font:inherit;font-size:15px;color:#1C2832;outline:none}
+  .builder-section .acct-field input:focus,.bs-stack input:focus{border-color:rgba(59,130,246,.55);background:#fff}
+  .builder-section .acct-field label .opt{font-size:11.5px;font-weight:600;color:rgba(28,40,50,.52);margin-left:4px}
+  .bs-check{display:flex;align-items:center;gap:9px;margin:-6px 0 14px;font-size:13.5px;font-weight:700;color:rgba(28,40,50,.72);cursor:pointer}
+  .bs-check input{appearance:none;-webkit-appearance:none;width:20px;height:20px;margin:0;border-radius:6px;border:1.5px solid rgba(28,40,50,.24);background:#fff;display:grid;place-items:center;cursor:pointer}
+  .bs-check input:checked{background:#3B82F6;border-color:#3B82F6}
+  .bs-check input:checked::after{content:'';width:9px;height:5px;border:2px solid #fff;border-top:0;border-right:0;transform:translateY(-1px) rotate(-45deg)}
+  .bs-chips{display:flex;flex-wrap:wrap;gap:5px}
+  .bs-chip{flex-grow:1;border:1px solid rgba(28,40,50,.14);border-radius:999px;padding:8px 9px;background:rgba(255,255,255,.6);font:600 13px/1.2 'Nunito Sans',sans-serif;color:#1C2832;cursor:pointer}
+  .bs-chip.on{background:#3B82F6;border-color:#3B82F6;color:#fff}
+  .bs-hours{border-radius:16px;overflow:hidden}
+  .bs-hours-row{display:flex;align-items:center;gap:8px;min-height:56px;padding:0 4px 0 6px;border-bottom:1px solid rgba(28,40,50,.24)}
+  .bs-hours-row:last-child{border-bottom:0}
+  .bs-hours-day{width:42px;font-weight:700;font-size:14px;color:#1C2832}
+  .bs-hours-times{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;color:rgba(28,40,50,.72)}
+  .bs-hours-times input,.bs-hours-times span.off{width:66px;height:36px;box-sizing:border-box;border-radius:10px;border:1px solid rgba(28,40,50,.14);background:rgba(255,255,255,.6);text-align:center;font:inherit;font-size:14px;color:#1C2832;outline:none;display:grid;place-items:center}
+  .bs-hours-times span.off{color:rgba(28,40,50,.52);background:transparent}
+  .bs-switch{appearance:none;-webkit-appearance:none;flex:none;width:51px;height:31px;margin:0;border-radius:999px;background:rgba(28,40,50,.18);position:relative;cursor:pointer;transition:background .2s}
+  .bs-switch::after{content:'';position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.2);transition:transform .2s}
+  .bs-switch:checked{background:#3B82F6}
+  .bs-switch:checked::after{transform:translateX(20px)}
+  .bs-list-row{width:100%;display:flex;align-items:center;gap:10px;min-height:56px;margin-bottom:8px;padding:10px 14px;border-radius:14px;border:1px solid rgba(28,40,50,.14);background:#fff;text-align:left;font:inherit;cursor:pointer}
+  .bs-list-row b{display:block;font-size:15px;line-height:21px;color:#1C2832;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bs-list-row small{display:block;font-size:13px;color:rgba(28,40,50,.52);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bs-list-row .txt{flex:1;min-width:0}
+  .bs-list-row::after{content:'›';font-size:22px;color:rgba(28,40,50,.52)}
+  .bs-add{width:100%;height:46px;margin:0 0 18px;border-radius:12px;border:1px solid rgba(59,130,246,.38);background:rgba(59,130,246,.10);font:700 14px/1.2 'Nunito Sans',sans-serif;color:#1C2832;cursor:pointer}
+  .bs-stack{display:flex;flex-direction:column;gap:10px}
+  .bs-toggle-card{display:flex;align-items:center;gap:12px;margin-top:22px;padding:17px;border-radius:20px;border:1px solid rgba(28,40,50,.16);background:rgba(255,255,255,.45);cursor:pointer}
+  .bs-toggle-text{flex:1}
+  .bs-toggle-text b{display:block;font-size:15px;color:#1C2832}
+  .bs-toggle-text span{display:block;font-size:13px;line-height:18px;color:rgba(28,40,50,.72);margin-top:3px}
+  .bs-sheet-veil{position:fixed;inset:0;z-index:400;display:flex;align-items:flex-end;justify-content:center;background:rgba(3,10,16,.6)}
+  .bs-sheet-veil[hidden]{display:none}
+  .bs-sheet{width:min(560px,100%);max-height:88vh;overflow:auto;box-sizing:border-box;padding:22px 22px calc(26px + env(safe-area-inset-bottom));border-radius:24px 24px 0 0;background:#F4EDE6;animation:bsSheetIn .22s ease-out}
+  @media(min-width:800px){.bs-sheet-veil{align-items:center}.bs-sheet{border-radius:24px}}
+  @keyframes bsSheetIn{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+  .bs-sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .bs-sheet-head h3{margin:0;font-family:var(--display);font-size:20px;font-weight:800;color:#1C2832}
+  .bs-sheet-close{border:0;background:none;font-size:28px;line-height:1;color:#1C2832;cursor:pointer}
+  .bs-sheet-body{display:flex;flex-direction:column;gap:8px}
+  .bs-sheet-body input,.bs-sheet-body textarea{width:100%;box-sizing:border-box;min-height:48px;padding:12px 15px;border:1px solid rgba(28,40,50,.14);border-radius:14px;background:#fff;font:inherit;font-size:15px;color:#1C2832;outline:none;resize:none}
+  .bs-sheet-body input.title{font-weight:700}
+  .bs-grid-row{display:flex;gap:6px}
+  .bs-grid-row input{min-height:44px;border-radius:11px;padding:0 10px;font-size:14px}
+  .bs-grid-row input:nth-child(1){flex:1.8}.bs-grid-row input:nth-child(2),.bs-grid-row input:nth-child(3){flex:1}
+  .bs-sheet-body .bs-add{margin:4px 0 0}
+  .bs-sheet-save{width:100%;min-height:54px;margin-top:16px;border:0;border-radius:14px;background:#3B82F6;color:#fff;font:800 16px/1.2 'Nunito Sans',sans-serif;cursor:pointer}
+  .bs-sheet-save:disabled{opacity:.45;cursor:default}
+  .bs-sheet-delete{display:block;margin:14px auto 0;border:0;background:none;font:700 14px/1.2 'Nunito Sans',sans-serif;color:#B42318;cursor:pointer}
+
+  /* ---- app-matched section list + preview loader (overrides older styles above) ---- */
+  #builderList{grid-template-columns:1fr !important;gap:8px !important}
+  #builderList .sec-btn{height:auto !important;min-height:58px;padding:10px 14px !important;gap:10px !important;background:#fff !important;border:1px solid rgba(28,40,50,.14) !important;border-radius:14px;font-size:15px !important;font-weight:600;color:#1C2832;box-shadow:none}
+  #builderList .sec-btn .chev{display:block !important}
+  #builderList .section-tick{display:none}
+  #builderList .sec-btn.is-complete .section-tick{display:grid}
+  .website-editor-header{display:flex !important;align-items:center;justify-content:space-between}
+  @media(max-width:799px){.website-panel:not(.editing) #websiteEditorHeader{display:none !important}}
+  .preview-placeholder{background:#141A1E !important;padding:32px 24px !important}
+  .preview-placeholder::before{content:'' !important;position:relative !important;inset:auto !important;width:64px;height:70px;margin-bottom:28px;flex:none;
+    background:url(../img/brightsite-b-white.png) center/contain no-repeat !important;
+    filter:drop-shadow(0 0 7px #7FB2FF) drop-shadow(0 0 22px #3B82F6);animation:bsBPulse 2.8s ease-in-out infinite !important}
+  @keyframes bsBPulse{0%,100%{opacity:.35;transform:scale(.92)}50%{opacity:1;transform:scale(1)}}
+  .preview-placeholder-biz{display:none !important}
+  .preview-placeholder .preview-placeholder-title{background:none !important;-webkit-text-fill-color:#fff !important;color:#fff;animation:none !important;filter:none !important;font-size:18px !important;margin-bottom:6px !important}
+  .preview-placeholder .preview-placeholder-sub{color:rgba(255,255,255,.6) !important;font-weight:400 !important;font-size:14px;max-width:240px}
+  @media(max-width:799px){#mobilePreviewWrap .preview-control-row .mobile-pvw-toggle{display:none}}
+  .website-panel.in-section #websiteEditorHeader{display:none !important}
+  .builder-section h3{font-family:var(--display);font-size:22px !important;font-weight:800 !important;letter-spacing:-.4px;color:#1C2832;margin:6px 0 10px !important}
+  .builder-section .acct-field label{font-size:13px;font-weight:700;color:rgba(28,40,50,.72);margin-bottom:7px}
+  .builder-section .section-icon,#builderList .section-icon{color:#3B82F6}
 </style>
 
 <body>
@@ -792,8 +839,8 @@
       <div class="website-app-header" id="websiteAppHeader">
         <button type="button" class="wah-make-live" id="wahMakeLive" hidden></button>
         <div class="mobile-pvw-toggle wah-toggle">
-          <button type="button" class="mobile-pvw-btn active" id="wahDesktop">Desktop</button>
-          <button type="button" class="mobile-pvw-btn" id="wahMobile">Mobile</button>
+          <button type="button" class="mobile-pvw-btn active" id="wahMobile">Mobile</button>
+          <button type="button" class="mobile-pvw-btn" id="wahDesktop">Desktop</button>
         </div>
         <button type="button" class="wah-edit" id="wahEdit">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5Z"/></svg>
@@ -808,19 +855,18 @@
 
       <!-- section list -->
       <div id="builderList">
-        <button type="button" class="sec-btn" data-section="name"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="14" rx="3"/><path d="M8 7V4h8v3M9 21v-6h6v6"/></svg></span><span class="sec-title">Business Info</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
-        <button type="button" class="sec-btn" data-section="contact"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3h4l2 5-3 2a15 15 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2C10 21 3 14 3 5a2 2 0 0 1 2-2Z"/></svg></span><span class="sec-title">Contact Info</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
-        <button type="button" class="sec-btn" data-section="hours"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg></span><span class="sec-title">Opening Hours</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
-        <button type="button" class="sec-btn" data-section="address"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2"/></svg></span><span class="sec-title">Location / Address</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
-        <button type="button" class="sec-btn" data-section="prices"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 4h9l9 9-8 8-10-10Z"/><circle cx="8" cy="8" r="1"/></svg></span><span class="sec-title">Services &amp; Details</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
+        <button type="button" class="sec-btn" data-section="business"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="14" rx="3"/><path d="M8 7V4h8v3M9 21v-6h6v6"/></svg></span><span class="sec-title">Business information</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
+        <button type="button" class="sec-btn" data-section="details"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3h4l2 5-3 2a15 15 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2C10 21 3 14 3 5a2 2 0 0 1 2-2Z"/></svg></span><span class="sec-title">Business details</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
+        <button type="button" class="sec-btn" data-section="hours"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg></span><span class="sec-title">Opening hours</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
+        <button type="button" class="sec-btn" data-section="prices"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 4h9l9 9-8 8-10-10Z"/><circle cx="8" cy="8" r="1"/></svg></span><span class="sec-title">Services &amp; prices</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
+        <button type="button" class="sec-btn" data-section="media"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8" cy="8" r="2"/><path d="m3 17 6-5 4 4 3-3 5 5"/></svg></span><span class="sec-title">Photos &amp; logo</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
+        <button type="button" class="sec-btn" data-section="extras"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8S10 3 7.5 4.5 9 8 12 8Zm0 0s2-5 4.5-3.5S15 8 12 8Z"/></svg></span><span class="sec-title">Offers &amp; extras</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
         <button type="button" class="sec-btn" data-section="reviews"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z"/></svg></span><span class="sec-title">Reviews</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
-        <button type="button" class="sec-btn" data-section="media"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8" cy="8" r="2"/><path d="m3 17 6-5 4 4 3-3 5 5"/></svg></span><span class="sec-title">Media</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
         <p class="builder-guidance" id="builderGuidance" hidden></p>
-        <button type="button" class="sec-btn" data-section="notes"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h4"/></svg></span><span class="sec-title">Notes</span><span class="chev">›</span></button>
       </div>
 
       <!-- mobile preview card + toggle (hidden on desktop) -->
-      <div class="mobile-preview-wrap" id="mobilePreviewWrap">
+      <div class="mobile-preview-wrap mobile-view" id="mobilePreviewWrap">
         <div id="approveSection" class="preview-actions">
           <div class="preview-review-actions">
             <button type="button" id="requestChangesBtn" hidden class="preview-action preview-action-change">Request changes</button>
@@ -828,8 +874,8 @@
           </div>
           <div class="preview-control-row">
             <div class="mobile-pvw-toggle">
-              <button type="button" class="mobile-pvw-btn active" id="mobilePvwDesktop">Desktop</button>
-              <button type="button" class="mobile-pvw-btn" id="mobilePvwMobile">Mobile</button>
+              <button type="button" class="mobile-pvw-btn active" id="mobilePvwMobile">Mobile</button>
+              <button type="button" class="mobile-pvw-btn" id="mobilePvwDesktop">Desktop</button>
             </div>
             <a id="mobPreviewViewBtn" class="mob-preview-view" href="#" target="_blank" rel="noopener" hidden style="display:none;align-items:center;gap:5px;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);font:700 11px/1 'Nunito Sans',sans-serif;text-decoration:none;white-space:nowrap">Open<svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2h6v6M10 2 4.5 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
           </div>
@@ -868,64 +914,57 @@
       </div>
 
       <!-- section detail panels (only one shown at a time) -->
-      <div class="builder-section" data-section-panel="name" hidden>
-        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
-        <h3>Business Info</h3>
-        <div class="acct-field"><label for="fName">Business name</label><input type="text" id="fName"></div>
-        <div class="acct-field"><label for="fCategory">Business type</label><select id="fCategory" style="width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--ink);font:inherit;font-size:14px;outline:none"><option value="" disabled>Select a type</option><option>Hair &amp; Beauty</option><option>Aesthetics</option><option>Health &amp; Wellness</option><option>Fitness</option><option>Automotive</option><option>Trades</option><option>Home &amp; Garden</option><option>Food &amp; Drink</option><option>Professional Services</option><option>Creative</option><option>Pets</option><option>Other</option></select></div>
-        <div style="border-top:1px solid var(--line);margin-top:14px;padding-top:14px">
-          <div class="acct-field" style="margin-bottom:0">
-            <label for="fFullName">Full Name</label>
-            <input type="text" id="fFullName" placeholder="e.g. Jane Smith">
-            <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer">
-              <input type="checkbox" id="fFullNameDisplay" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
-              Display full name on website
-            </label>
-          </div>
+<div class="bs-sheet-veil" id="bsSheet" hidden>
+        <div class="bs-sheet" role="dialog" aria-modal="true" aria-labelledby="bsSheetTitle">
+          <div class="bs-sheet-head"><h3 id="bsSheetTitle"></h3><button type="button" class="bs-sheet-close" id="bsSheetClose" aria-label="Close">×</button></div>
+          <div class="bs-sheet-body" id="bsSheetBody"></div>
+          <button type="button" class="bs-sheet-save" id="bsSheetSave">Save</button>
+          <button type="button" class="bs-sheet-delete" id="bsSheetDelete" hidden>Remove</button>
         </div>
       </div>
 
-      <div class="builder-section" data-section-panel="contact" hidden>
+      <div class="builder-section" data-section-panel="business" hidden>
         <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
-        <h3>Contact info</h3>
-        <div class="acct-field"><label for="fEmail2">Email</label><input type="email" id="fEmail2" placeholder="you@example.com"></div>
-        <div class="acct-field"><label for="fPhone">Phone number <span style="font-size:11px;font-weight:600;color:var(--muted)">(optional)</span></label><input type="text" id="fPhone" placeholder="e.g. 020 7946 0958"></div>
-        <div class="acct-field"><label for="fWebsite">Existing website <span style="font-size:11px;font-weight:600;color:var(--muted)">(optional)</span></label><input type="url" id="fWebsite" placeholder="e.g. https://yoursite.com"></div>
-        <div class="acct-field"><label for="fInstagram">Instagram <span style="font-size:11px;font-weight:600;color:var(--muted)">(optional)</span></label><input type="text" id="fInstagram" placeholder="e.g. @yourbusiness"></div>
-        <div class="acct-field"><label for="fFacebook">Facebook <span style="font-size:11px;font-weight:600;color:var(--muted)">(optional)</span></label><input type="text" id="fFacebook" placeholder="e.g. facebook.com/yourbusiness"></div>
+        <h3>Business information</h3>
+        <p class="info-hint">Tell us the essentials. Anything you leave blank simply won’t appear on your website.</p>
+        <div class="acct-field"><label for="fFullName">Full name</label><input type="text" id="fFullName" placeholder="e.g. Jane Smith" autocomplete="name"></div>
+        <label class="bs-check"><input type="checkbox" id="fFullNameDisplay"><span>Display full name on website</span></label>
+        <div class="acct-field"><label for="fOwnerEmail">Email</label><input type="email" id="fOwnerEmail" placeholder="you@email.com" autocomplete="email"></div>
+        <label class="bs-check"><input type="checkbox" id="fSameEmail" checked><span>Same as business email</span></label>
+        <div class="acct-field"><label for="fName">Business name</label><input type="text" id="fName" placeholder="e.g. Sisko Hair" autocomplete="organization"></div>
+        <div class="acct-field"><label>Business type</label><div class="bs-chips" id="typeChips"></div><input type="hidden" id="fCategory"></div>
+      </div>
+
+      <div class="builder-section" data-section-panel="details" hidden>
+        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
+        <h3>Business details</h3>
+        <p class="info-hint">Add whichever ways customers should contact you. Leave anything blank to skip it.</p>
+        <div class="acct-field"><label for="fEmail2">Email</label><input type="email" id="fEmail2" placeholder="you@business.co.uk"></div>
+        <div class="acct-field"><label for="fPhone">Phone <span class="opt">optional</span></label><input type="tel" id="fPhone" placeholder="e.g. 07700 900123" autocomplete="tel"></div>
+        <div class="acct-field"><label for="fAddress">Address <span class="opt">optional</span></label><input type="text" id="fAddress" placeholder="e.g. 12 High Street, London" autocomplete="street-address"></div>
+        <div class="acct-field"><label for="fInstagram">Instagram <span class="opt">optional</span></label><input type="text" id="fInstagram" placeholder="@yourbusiness"></div>
+        <div class="acct-field"><label for="fFacebook">Facebook <span class="opt">optional</span></label><input type="url" id="fFacebook" placeholder="facebook.com/yourbusiness"></div>
+        <div class="acct-field"><label for="fWebsite">Existing website <span class="opt">optional</span></label><input type="url" id="fWebsite" placeholder="yoursite.com"></div>
       </div>
 
       <div class="builder-section" data-section-panel="hours" hidden>
         <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
         <h3>Opening hours</h3>
-        <div id="hoursRows"></div>
-      </div>
-
-      <div class="builder-section" data-section-panel="address" hidden>
-        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
-        <h3>Location / address</h3>
-        <div class="acct-field"><label for="fAddress">Address</label><input type="text" id="fAddress" placeholder="e.g. 12 High Street, London"></div>
+        <p class="info-hint">Switch off days you’re closed. Times can be changed later.</p>
+        <div class="bs-hours" id="hoursRows"></div>
       </div>
 
       <div class="builder-section" data-section-panel="prices" hidden>
         <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
-        <h3>Services &amp; details</h3>
+        <h3>Services &amp; prices</h3>
+        <p class="info-hint">Add a category (e.g. Massages), then the services in it with their prices.</p>
         <div id="svcGroups"></div>
-        <button type="button" class="dash-add" id="svcGroupAdd">+ Add section</button>
-      </div>
-
-      <div class="builder-section" data-section-panel="reviews" hidden>
-        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
-        <h3>Reviews</h3>
-        <p class="info-hint" style="margin-bottom:14px">Add a few customer quotes yourself, or link us to your Google or Trustpilot reviews.</p>
-        <div class="acct-field"><label>Customer review quotes</label><div id="reviewEntries"></div><button type="button" class="dash-add" id="reviewAdd">+ Add review</button></div>
-        <div class="acct-field"><label for="fReviewLink">Google or Trustpilot review link</label><input type="url" id="fReviewLink" placeholder="https://www.google.com/..."></div>
       </div>
 
       <div class="builder-section" data-section-panel="media" hidden>
         <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
-        <h3>Media</h3>
-        <p class="media-intro">Add the images that make your website feel like your business.</p>
+        <h3>Photos &amp; logo</h3>
+        <p class="media-intro">Add the images you want to use. Everything here is optional and can be changed later.</p>
         <div class="media-upload-grid">
           <label class="media-upload-rect">
             <div class="media-upload-rect-inner" id="logoRectInner">
@@ -953,14 +992,20 @@
         </div>
       </div>
 
-      <div class="builder-section" data-section-panel="notes" hidden>
+      <div class="builder-section" data-section-panel="extras" hidden>
         <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
-        <h3>Notes</h3>
-        <p class="info-hint">Tell us anything useful about your business or what you’d like us to focus on.</p>
-        <div class="acct-field" style="margin-top:10px">
-          <label for="developerNote">Your note</label>
-          <textarea id="developerNote" placeholder="e.g. We’d love to highlight our new treatment menu..." style="min-height:120px;resize:vertical"></textarea>
-        </div>
+        <h3>Offers &amp; extras</h3>
+        <p class="info-hint">Add any offers, rewards or gift cards you want on your website. Leave it blank to skip.</p>
+        <div id="offerList"></div>
+        <label class="bs-toggle-card"><span class="bs-toggle-text"><b>Add a contact form</b><span>Messages will arrive in your BrightSite dashboard.</span></span><input type="checkbox" id="fContactForm" class="bs-switch"></label>
+      </div>
+
+      <div class="builder-section" data-section-panel="reviews" hidden>
+        <div class="section-head"><button type="button" class="section-back" data-back>‹ Edit your website</button><button type="button" class="builder-done" data-back>Done</button></div>
+        <h3>Reviews</h3>
+        <p class="info-hint">Add customer reviews for your website. Each one is optional.</p>
+        <div id="reviewList"></div>
+        <div class="bs-stack"><input type="url" id="fGoogleLink" placeholder="Google reviews link"><input type="url" id="fTrustpilotLink" placeholder="Trustpilot link"></div>
       </div>
 
     </div>
@@ -1321,7 +1366,8 @@
   var business = null;
   var slug = null;
   var services = []; window._services = services;
-  var reviewQuotes = [];
+  var reviewItems = [];
+  var offers = [];
   var media = { logoImage: null, heroImage: null, gallery: [] };
   var generatedHeroImage = null;
   var outlineHeroImage = null;
@@ -1339,7 +1385,6 @@
   var hoursEdited = false;
   var sectionDoneClicked = {}; // tracks which sections the user has clicked Done on
   var DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  var SECTION_PAGE = { name: 'home', media: 'home', reviews: 'home', contact: 'contact', hours: 'contact', address: 'contact', prices: 'services' };
 
   function defaultHours() {
     return ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(function (day, i) {
@@ -1447,9 +1492,8 @@
     });
     // data-back buttons inside the editor should also exit editing
     panel.addEventListener('click', function(e) {
-      if (e.target.closest('[data-back]')) {
-        panel.classList.remove('editing');
-      }
+      // only the main Done leaves the editor; a section's Back/Done returns to the section list
+      if (e.target.closest('#editorDone')) panel.classList.remove('editing');
     });
   })();
 
@@ -1761,6 +1805,14 @@
     function setVal(id, v) { var el = document.getElementById(id); if (el) el.value = v || ''; }
     setVal('fName', raw.name);
     setVal('fCategory', raw.tagline);
+    setVal('fOwnerEmail', raw.ownerEmail || session.email);
+    var same = document.getElementById('fSameEmail');
+    if (same) same.checked = raw.sameEmail !== false;
+    setVal('fGoogleLink', raw.googleLink || (raw.reviewSource === 'Google' ? raw.reviewLink : ''));
+    setVal('fTrustpilotLink', raw.trustpilotLink || (raw.reviewSource === 'Trustpilot' ? raw.reviewLink : ''));
+    var cf = document.getElementById('fContactForm');
+    if (cf) cf.checked = !!raw.contactForm;
+    renderTypeChips();
     setVal('fPhone', raw.phone);
     setVal('fEmail2', raw.email);
     setVal('fWebsite', raw.website);
@@ -1768,8 +1820,6 @@
     setVal('fFacebook', raw.facebook);
     setVal('fFullName', raw.fullName);
     setVal('fAddress', raw.address);
-    setVal('developerNote', raw.notes);
-    setVal('fReviewLink', raw.reviewLink);
     var fnDisp = document.getElementById('fFullNameDisplay');
     if (fnDisp) fnDisp.checked = !!raw.fullNameDisplay;
 
@@ -1785,8 +1835,12 @@
     renderServices();
 
     // Reviews
-    reviewQuotes = Array.isArray(raw.reviewQuotes) ? raw.reviewQuotes.slice() : [];
-    renderReviewEntries();
+    // older web saves only had plain quote strings
+    reviewItems = Array.isArray(raw.reviewItems) ? raw.reviewItems.slice()
+      : (raw.reviewQuotes || []).filter(Boolean).map(function(q) { return { title: '', description: q, name: '' }; });
+    offers = Array.isArray(raw.offers) ? raw.offers.slice() : [];
+    renderReviewList();
+    renderOfferList();
 
     // Media
     media.logoImage = raw.logoImage ? mediaUrl(raw.logoImage) : null;
@@ -2650,6 +2704,7 @@
 
   function openSection(id) {
     activeSection = id;
+    document.getElementById('websitePanel').classList.toggle('in-section', !!id);
     document.getElementById('builderList').hidden = !!id;
     var editorDone = document.getElementById('editorDone');
     if (editorDone) editorDone.hidden = false;
@@ -2679,15 +2734,8 @@
   var _prevAllDone = false;
 
   function updateSectionChecks() {
-    var complete = {
-      name: !!sectionDoneClicked.name,
-      contact: !!sectionDoneClicked.contact,
-      hours: !!sectionDoneClicked.hours,
-      address: !!sectionDoneClicked.address,
-      prices: !!sectionDoneClicked.prices,
-      reviews: !!sectionDoneClicked.reviews,
-      media: !!sectionDoneClicked.media
-    };
+    var complete = {};
+    ['business', 'details', 'hours', 'prices', 'media', 'extras', 'reviews'].forEach(function(k) { complete[k] = !!sectionDoneClicked[k]; });
     var previewReady = !!getPreviewUrl();
     var builderList = document.getElementById('builderList');
     if (builderList) builderList.classList.toggle('preview-sent', previewReady);
@@ -2701,10 +2749,10 @@
       sendAllDetailsReceivedMessage();
     }
     _prevAllDone = allDone;
-    updatePreviewCard(allDone);
+    updatePreviewCard();
   }
 
-  function updatePreviewCard(allDone) {
+  function updatePreviewCard() {
     var placeholders = [
       document.getElementById('deskPreviewPlaceholder'),
       document.getElementById('deskPreviewPlaceholderMob'),
@@ -2720,14 +2768,12 @@
         el.style.display = 'none';
         if (title) title.innerHTML = isLive ? 'Website<br>Live' : 'Preview<br>Ready';
         if (sub) sub.textContent = 'Tap to view your website preview ↗';
-      } else if (allDone) {
-        el.dataset.state = 'building';
-        if (title) title.innerHTML = 'Building<br>Preview';
-        if (sub) sub.innerHTML = '1–2 days<span class="pvw-spinner"></span>';
       } else {
-        el.dataset.state = 'pending';
-        if (title) title.innerHTML = 'Fill in your<br>details';
-        if (sub) sub.textContent = 'Complete all sections — add info until all ticks are green';
+        // same wording as the app's loader; unsent drafts are asked to finish instead
+        var draft = !!(business && business.data && business.data.raw && business.data.raw.draft);
+        el.dataset.state = draft ? 'pending' : 'building';
+        if (title) title.textContent = draft ? 'Finish your details' : 'Building your preview';
+        if (sub) sub.textContent = draft ? 'Send them to your designer when you’re ready.' : 'We’ll send you a notification as soon as it’s ready to review.';
       }
     });
   }
@@ -2742,141 +2788,214 @@
     fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/', { method: 'POST', body: fd, keepalive: true }).catch(function() {});
   }
 
+  // ---------------- builder: shared bottom sheet (matches the app's pop-up) ----------------
+  var sheetSave = null, sheetDelete = null, sheetReady = null;
+  function el(tag, attrs, text) {
+    var e = document.createElement(tag);
+    Object.keys(attrs || {}).forEach(function(k) { if (attrs[k] != null) e.setAttribute(k, attrs[k]); });
+    if (text) e.textContent = text;
+    return e;
+  }
+  function openSheet(opts) {
+    document.getElementById('bsSheetTitle').textContent = opts.title;
+    var body = document.getElementById('bsSheetBody');
+    body.innerHTML = '';
+    sheetReady = opts.build(body);
+    sheetSave = opts.onSave;
+    sheetDelete = opts.onDelete || null;
+    document.getElementById('bsSheetDelete').hidden = !sheetDelete;
+    document.getElementById('bsSheetDelete').textContent = opts.deleteLabel || 'Remove';
+    refreshSheet();
+    document.getElementById('bsSheet').hidden = false;
+    var first = body.querySelector('input,textarea');
+    if (first) setTimeout(function() { first.focus(); }, 60);
+  }
+  function refreshSheet() { document.getElementById('bsSheetSave').disabled = !(sheetReady && sheetReady()); }
+  function closeSheet() { document.getElementById('bsSheet').hidden = true; }
+  document.getElementById('bsSheetBody').addEventListener('input', refreshSheet);
+  document.getElementById('bsSheetClose').addEventListener('click', closeSheet);
+  document.getElementById('bsSheet').addEventListener('click', function(e) { if (e.target === this) closeSheet(); });
+  document.getElementById('bsSheetSave').addEventListener('click', function() { if (sheetSave) sheetSave(); closeSheet(); });
+  document.getElementById('bsSheetDelete').addEventListener('click', function() { if (sheetDelete) sheetDelete(); closeSheet(); });
+
+  // simple one-item sheet: fields [{key, placeholder, multiline, optional}]
+  function openItemSheet(title, fields, initial, onSave, onDelete) {
+    var inputs = {};
+    openSheet({
+      title: title,
+      build: function(body) {
+        fields.forEach(function(f) {
+          var inp = el(f.multiline ? 'textarea' : 'input', { placeholder: f.placeholder, rows: f.multiline ? '3' : null });
+          if (!f.multiline) inp.type = 'text';
+          inp.value = (initial && initial[f.key]) || '';
+          inputs[f.key] = inp;
+          body.appendChild(inp);
+        });
+        return function() { return fields.every(function(f) { return f.optional || inputs[f.key].value.trim(); }); };
+      },
+      onSave: function() { var out = {}; fields.forEach(function(f) { out[f.key] = inputs[f.key].value.trim(); }); onSave(out); },
+      onDelete: onDelete
+    });
+  }
+
+  function listRow(title, sub, onClick) {
+    var b = el('button', { type: 'button', 'class': 'bs-list-row' });
+    var t = el('span', { 'class': 'txt' });
+    t.appendChild(el('b', {}, title));
+    if (sub) t.appendChild(el('small', {}, sub));
+    b.appendChild(t);
+    b.addEventListener('click', onClick);
+    return b;
+  }
+  function addButton(label, onClick) {
+    var b = el('button', { type: 'button', 'class': 'bs-add' }, '+ ' + label);
+    b.addEventListener('click', onClick);
+    return b;
+  }
+
+  // ---------------- builder: business type chips ----------------
+  var BUSINESS_TYPES = ['Hair & Beauty', 'Aesthetics', 'Fitness', 'Pets', 'Health & Wellness', 'Home & Garden', 'Food & Drink', 'Automotive', 'Trades', 'Professional Services', 'Creative', 'Other'];
+  function renderTypeChips() {
+    var wrap = document.getElementById('typeChips');
+    var input = document.getElementById('fCategory');
+    if (!wrap) return;
+    var current = input.value;
+    var custom = current && BUSINESS_TYPES.indexOf(current) < 0;
+    wrap.innerHTML = '';
+    BUSINESS_TYPES.forEach(function(type) {
+      var isOther = type === 'Other';
+      var on = current === type || (isOther && custom);
+      var chip = el('button', { type: 'button', 'class': 'bs-chip' + (on ? ' on' : '') }, isOther && custom ? current : type);
+      chip.addEventListener('click', function() {
+        if (isOther) {
+          openItemSheet('Your business type', [{ key: 'type', placeholder: 'e.g. Dog grooming' }], custom ? { type: current } : null, function(v) {
+            input.value = v.type; renderTypeChips(); scheduleAutoSave();
+          });
+          return;
+        }
+        input.value = type; renderTypeChips(); updateSectionChecks(); scheduleAutoSave();
+      });
+      wrap.appendChild(chip);
+    });
+  }
+
   // ---------------- builder: hours ----------------
   function renderHours() {
     var container = document.getElementById('hoursRows');
     if (!container) return;
     container.innerHTML = '';
     hoursStructured.forEach(function(d, i) {
-      var row = document.createElement('div');
-      row.className = 'hours-row';
-      var chk = document.createElement('label');
-      chk.className = 'hours-check';
-      var inp = document.createElement('input');
-      inp.type = 'checkbox'; inp.checked = d.open;
-      inp.addEventListener('change', function() {
-        hoursStructured[i].open = inp.checked;
-        hoursEdited = true;
-        renderHours();
-        scheduleAutoSave();
-      });
-      chk.appendChild(inp);
-      chk.appendChild(document.createTextNode(d.day.slice(0, 3)));
-      row.appendChild(chk);
+      var row = el('div', { 'class': 'bs-hours-row' });
+      row.appendChild(el('span', { 'class': 'bs-hours-day' }, d.day.slice(0, 3)));
+      var times = el('div', { 'class': 'bs-hours-times' });
       if (d.open) {
-        var times = document.createElement('div');
-        times.className = 'hours-times';
-        var fromInp = document.createElement('input');
-        fromInp.type = 'text'; fromInp.value = d.from; fromInp.placeholder = '9:00am';
-        fromInp.addEventListener('input', function() { hoursStructured[i].from = fromInp.value; hoursEdited = true; scheduleAutoSave(); });
-        var toInp = document.createElement('input');
-        toInp.type = 'text'; toInp.value = d.to; toInp.placeholder = '6:00pm';
-        toInp.addEventListener('input', function() { hoursStructured[i].to = toInp.value; hoursEdited = true; scheduleAutoSave(); });
-        times.appendChild(fromInp);
-        times.appendChild(document.createTextNode('–'));
-        times.appendChild(toInp);
-        row.appendChild(times);
+        ['from', 'to'].forEach(function(key, n) {
+          var inp = el('input', { type: 'text', 'aria-label': d.day + (n ? ' closing time' : ' opening time') });
+          inp.value = d[key];
+          inp.addEventListener('input', function() { hoursStructured[i][key] = inp.value; hoursEdited = true; scheduleAutoSave(); });
+          if (n) times.appendChild(el('span', {}, '–'));
+          times.appendChild(inp);
+        });
       } else {
-        var cl = document.createElement('span');
-        cl.className = 'hours-closed';
-        cl.textContent = 'Closed';
-        row.appendChild(cl);
+        times.appendChild(el('span', { 'class': 'off' }, '—'));
+        times.appendChild(el('span', {}, '–'));
+        times.appendChild(el('span', { 'class': 'off' }, '—'));
       }
+      row.appendChild(times);
+      var sw = el('input', { type: 'checkbox', 'class': 'bs-switch', 'aria-label': d.day + ' open' });
+      sw.checked = d.open;
+      sw.addEventListener('change', function() { hoursStructured[i].open = sw.checked; hoursEdited = true; renderHours(); scheduleAutoSave(); });
+      row.appendChild(sw);
       container.appendChild(row);
     });
   }
 
-  // ---------------- builder: services ----------------
+  // ---------------- builder: services (categories with a name/time/price grid) ----------------
   function servicesFromRaw(raw) {
-    if (Array.isArray(raw.serviceGroups) && raw.serviceGroups.length) {
-      return raw.serviceGroups.map(function(g) {
-        return { name: g.name || '', items: (g.items || []).map(function(it) {
-          return Array.isArray(it) ? { name: it[0] || '', price: it[1] || '', time: it[2] || '' } : { name: it.name || '', price: it.price || '', time: it.time || '' };
-        })};
-      });
-    }
-    if (Array.isArray(raw.services) && raw.services.length) {
-      return [{ name: '', items: raw.services.map(function(s) { return { name: s.name || s, price: s.price || '', time: s.time || '' }; }) }];
-    }
-    return [{ name: '', items: [{ name: '', price: '', time: '' }] }];
+    if (!Array.isArray(raw.serviceGroups)) return [];
+    return raw.serviceGroups.map(function(g) {
+      return { name: g.name || '', items: (g.items || []).map(function(it) {
+        return Array.isArray(it) ? { name: it[0] || '', price: it[1] || '', time: it[2] || '' } : { name: it.name || '', price: it.price || '', time: it.time || '' };
+      }).filter(function(it) { return it.name; }) };
+    }).filter(function(g) { return g.name || g.items.length; });
   }
 
   function servicesToRaw(svcs) {
     return { serviceGroups: svcs.map(function(g) { return { name: g.name, items: g.items.map(function(it) { return [it.name, it.price, it.time || '']; }) }; }) };
   }
 
+  function openCategorySheet(index) {
+    var group = index === null ? null : services[index];
+    var nameInp, grid;
+    function addRow(it) {
+      var row = el('div', { 'class': 'bs-grid-row' });
+      [['name', 'Name'], ['time', 'Time'], ['price', 'Price']].forEach(function(c) {
+        var inp = el('input', { type: 'text', placeholder: c[1], 'data-key': c[0] });
+        inp.value = (it && it[c[0]]) || '';
+        row.appendChild(inp);
+      });
+      grid.appendChild(row);
+    }
+    function rows() {
+      return Array.prototype.map.call(grid.children, function(r) {
+        var v = {}; r.querySelectorAll('input').forEach(function(i) { v[i.dataset.key] = i.value.trim(); }); return v;
+      }).filter(function(r) { return r.name; });
+    }
+    openSheet({
+      title: group ? 'Edit category' : 'Add category',
+      build: function(body) {
+        nameInp = el('input', { type: 'text', 'class': 'title', placeholder: 'Category name, e.g. Massages' });
+        nameInp.value = group ? group.name : '';
+        body.appendChild(nameInp);
+        grid = el('div', { 'class': 'bs-stack', style: 'gap:8px' });
+        body.appendChild(grid);
+        (group ? group.items.concat([{}]) : [{}, {}, {}]).forEach(addRow);
+        body.appendChild(addButton('Add more', function() { addRow({}); }));
+        return function() { return nameInp.value.trim() && rows().length > 0; };
+      },
+      onSave: function() {
+        var next = { name: nameInp.value.trim(), items: rows() };
+        if (group) services[index] = next; else services.push(next);
+        renderServices(); updateSectionChecks(); scheduleAutoSave();
+      },
+      onDelete: group ? function() { services.splice(index, 1); renderServices(); updateSectionChecks(); scheduleAutoSave(); } : null,
+      deleteLabel: 'Remove category'
+    });
+  }
+
   function renderServices() {
     var container = document.getElementById('svcGroups');
     if (!container) return;
     container.innerHTML = '';
-    services.forEach(function(group, gi) {
-      var gDiv = document.createElement('div');
-      gDiv.className = 'svc-group';
-      var head = document.createElement('div');
-      head.className = 'svc-group-head';
-      var nameInp = document.createElement('input');
-      nameInp.type = 'text'; nameInp.placeholder = 'Section name'; nameInp.value = group.name;
-      nameInp.addEventListener('input', function() { services[gi].name = nameInp.value; scheduleAutoSave(); });
-      var remGrp = document.createElement('button');
-      remGrp.className = 'svc-remove'; remGrp.textContent = '×'; remGrp.title = 'Remove section';
-      remGrp.addEventListener('click', function() { services.splice(gi, 1); renderServices(); scheduleAutoSave(); });
-      head.appendChild(nameInp); head.appendChild(remGrp);
-      gDiv.appendChild(head);
-      group.items.forEach(function(item, ii) {
-        var row = document.createElement('div');
-        row.className = 'svc-row';
-        var nInp = document.createElement('input');
-        nInp.type = 'text'; nInp.className = 'svc-name'; nInp.placeholder = 'Service name'; nInp.value = item.name;
-        nInp.addEventListener('input', function() { services[gi].items[ii].name = nInp.value; updateSectionChecks(); scheduleAutoSave(); });
-        var pInp = document.createElement('input');
-        pInp.type = 'text'; pInp.className = 'svc-price'; pInp.placeholder = '£'; pInp.value = item.price;
-        pInp.addEventListener('input', function() { services[gi].items[ii].price = pInp.value; scheduleAutoSave(); });
-        var tInp = document.createElement('input');
-        tInp.type = 'text'; tInp.className = 'svc-time'; tInp.placeholder = 'Time'; tInp.value = item.time || '';
-        tInp.addEventListener('input', function() { services[gi].items[ii].time = tInp.value; scheduleAutoSave(); });
-        var rem = document.createElement('button');
-        rem.className = 'svc-remove'; rem.textContent = '×';
-        rem.addEventListener('click', function() { services[gi].items.splice(ii, 1); renderServices(); scheduleAutoSave(); });
-        row.appendChild(nInp); row.appendChild(pInp); row.appendChild(tInp); row.appendChild(rem);
-        gDiv.appendChild(row);
-      });
-      var addItem = document.createElement('button');
-      addItem.className = 'dash-add'; addItem.textContent = '+ Add item';
-      addItem.addEventListener('click', function() { services[gi].items.push({ name: '', price: '', time: '' }); renderServices(); });
-      gDiv.appendChild(addItem);
-      container.appendChild(gDiv);
+    services.forEach(function(g, i) {
+      container.appendChild(listRow(g.name || 'Untitled category', g.items.length + (g.items.length === 1 ? ' service' : ' services'), function() { openCategorySheet(i); }));
     });
+    container.appendChild(addButton('Add category', function() { openCategorySheet(null); }));
   }
 
-  document.getElementById('svcGroupAdd').addEventListener('click', function() {
-    services.push({ name: '', items: [{ name: '', price: '', time: '' }] });
-    renderServices();
-  });
-
-  // ---------------- builder: reviews ----------------
-  function renderReviewEntries() {
-    var container = document.getElementById('reviewEntries');
+  // ---------------- builder: offers & reviews (list + sheet) ----------------
+  function renderItemList(containerId, list, primary, secondary, addLabel, sheetTitle, fields, rerender) {
+    var container = document.getElementById(containerId);
     if (!container) return;
     container.innerHTML = '';
-    reviewQuotes.forEach(function(q, i) {
-      var row = document.createElement('div');
-      row.style.cssText = 'display:flex;gap:6px;margin-bottom:8px;align-items:flex-start';
-      var ta = document.createElement('textarea');
-      ta.value = q; ta.placeholder = 'Customer review…';
-      ta.style.cssText = 'flex:1;min-height:60px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:13px;resize:vertical;box-sizing:border-box';
-      ta.addEventListener('input', function() { reviewQuotes[i] = ta.value; updateSectionChecks(); scheduleAutoSave(); });
-      var rem = document.createElement('button');
-      rem.className = 'svc-remove'; rem.textContent = '×';
-      rem.addEventListener('click', function() { reviewQuotes.splice(i, 1); renderReviewEntries(); scheduleAutoSave(); });
-      row.appendChild(ta); row.appendChild(rem);
-      container.appendChild(row);
+    list.forEach(function(item, i) {
+      container.appendChild(listRow(item[primary] || item[secondary], item[primary] ? item[secondary] : '', function() {
+        openItemSheet('Edit ' + sheetTitle, fields, item, function(v) { list[i] = Object.assign({}, item, v); rerender(); scheduleAutoSave(); },
+          function() { list.splice(i, 1); rerender(); scheduleAutoSave(); });
+      }));
     });
+    container.appendChild(addButton(addLabel, function() {
+      openItemSheet('Add ' + sheetTitle, fields, null, function(v) { list.push(v); rerender(); updateSectionChecks(); scheduleAutoSave(); });
+    }));
   }
-
-  document.getElementById('reviewAdd').addEventListener('click', function() {
-    reviewQuotes.push('');
-    renderReviewEntries();
-  });
+  function renderReviewList() {
+    renderItemList('reviewList', reviewItems, 'title', 'description', 'Add review', 'review',
+      [{ key: 'title', placeholder: 'Review title, e.g. Amazing service' }, { key: 'description', placeholder: 'Review and name', multiline: true }], renderReviewList);
+  }
+  function renderOfferList() {
+    renderItemList('offerList', offers, 'name', 'value', 'Add offer', 'offer',
+      [{ key: 'name', placeholder: 'Offer, e.g. Loyalty card' }, { key: 'value', placeholder: 'Discount or price, e.g. 10% off' }], renderOfferList);
+  }
 
   // ---------------- builder: media uploads ----------------
   function mediaUrl(v) { return v || null; }
@@ -2997,9 +3116,14 @@
       fullName: document.getElementById('fFullName').value.trim(),
       fullNameDisplay: document.getElementById('fFullNameDisplay').checked,
       address: document.getElementById('fAddress').value.trim(),
-      notes: document.getElementById('developerNote').value.trim(),
-      reviewLink: document.getElementById('fReviewLink').value.trim(),
-      reviewQuotes: reviewQuotes.slice(),
+      ownerEmail: document.getElementById('fOwnerEmail').value.trim(),
+      sameEmail: document.getElementById('fSameEmail').checked,
+      googleLink: document.getElementById('fGoogleLink').value.trim(),
+      trustpilotLink: document.getElementById('fTrustpilotLink').value.trim(),
+      reviewItems: reviewItems.slice(),
+      reviewQuotes: reviewItems.map(function(r) { return [r.title, r.description, r.name].filter(Boolean).join(' — '); }),
+      offers: offers.slice(),
+      contactForm: document.getElementById('fContactForm').checked,
       hours: hoursToRawLines(hoursStructured),
       hoursStructured: hoursStructured.slice(),
       hoursEdited: hoursEdited,
@@ -3008,6 +3132,9 @@
       chosenAnnual: selectedAnnual
     });
     Object.assign(raw, servicesToRaw(services));
+    // older site templates read a single link; Trustpilot wins because it shows a badge
+    raw.reviewLink = raw.trustpilotLink || raw.googleLink;
+    raw.reviewSource = raw.trustpilotLink ? 'Trustpilot' : raw.googleLink ? 'Google' : null;
 
     // Upload any pending images first, then save
     var uploadTasks = [];
@@ -3059,11 +3186,18 @@
   }
 
   // Wire field change listeners for auto-save
-  ['fName','fCategory','fPhone','fEmail2','fWebsite','fInstagram','fFacebook','fFullName','fAddress','developerNote','fReviewLink'].forEach(function(id) {
+  ['fName','fPhone','fEmail2','fWebsite','fInstagram','fFacebook','fFullName','fAddress','fGoogleLink','fTrustpilotLink'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.addEventListener('input', function() { updateSectionChecks(); scheduleAutoSave(); });
   });
   document.getElementById('fFullNameDisplay').addEventListener('change', scheduleAutoSave);
+  document.getElementById('fContactForm').addEventListener('change', scheduleAutoSave);
+  // "Same as business email" mirrors the owner email into the business email field
+  function syncSameEmail() {
+    if (document.getElementById('fSameEmail').checked) document.getElementById('fEmail2').value = document.getElementById('fOwnerEmail').value;
+  }
+  document.getElementById('fOwnerEmail').addEventListener('input', function() { syncSameEmail(); scheduleAutoSave(); });
+  document.getElementById('fSameEmail').addEventListener('change', function() { syncSameEmail(); scheduleAutoSave(); });
 
   // Approve / request changes buttons
   (function() {
