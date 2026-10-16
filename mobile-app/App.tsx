@@ -1923,7 +1923,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     transitionTo(next);
   };
 
-  // draft: saves progress mid-signup without uploading photos, notifying anyone, or clearing the local draft
+  // draft: saves progress mid-signup (photos included) without notifying anyone or clearing the local draft
   const syncOnboardingToBackend = async (choice: 'designer' | 'template', opts: { draft?: boolean } = {}): Promise<boolean> => {
     if (!session?.user?.id) return false;
     const draft = !!opts.draft;
@@ -1977,17 +1977,20 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     for (let attempt = 0; attempt < 4; attempt++) {
       const chosenSlug = attempt === 0 ? baseSlug : `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
       try {
-        const upload = (type: string, uri?: string) => draft ? Promise.resolve(uri && /^https?:\/\//.test(uri) ? uri : null) : uploadMediaToR2(authed.access_token, chosenSlug, type, uri);
         const [logoImage, heroImage, ...galleryImages] = await Promise.all([
-          upload('logo', media.logo),
-          upload('hero', media.hero),
-          ...media.gallery.map((uri, i) => upload(`gallery_${i}`, uri)),
+          uploadMediaToR2(authed.access_token, chosenSlug, 'logo', media.logo),
+          uploadMediaToR2(authed.access_token, chosenSlug, 'hero', media.hero),
+          ...media.gallery.map((uri, i) => uploadMediaToR2(authed.access_token, chosenSlug, `gallery_${i}`, uri)),
         ]);
         const raw = { ...buildRaw(logoImage, heroImage, galleryImages), draft, draftIndex: draft ? index : undefined };
         await saveBusiness(chosenSlug, { raw }, authed);
         setSlug(chosenSlug);
+        // swap each uploaded photo's phone copy for its Cloudflare URL without touching photos added meanwhile
+        const uploaded = new Map<string, string>();
+        [[media.logo, logoImage], [media.hero, heroImage], ...media.gallery.map((u, i) => [u, galleryImages[i]])].forEach(([from, to]) => { if (from && to) uploaded.set(from, to); });
+        const swap = (u?: string) => (u && uploaded.get(u)) || u;
+        setMedia(cur => ({ logo: swap(cur.logo), hero: swap(cur.hero), gallery: cur.gallery.map(u => swap(u) as string) }));
         if (draft) return true;
-        setMedia({ logo: raw.logoImage, hero: raw.heroImage, gallery: raw.gallery });
         const failedUploads = [media.logo && !logoImage, media.hero && !heroImage, ...media.gallery.map((u, i) => u && !galleryImages[i])].filter(Boolean).length;
         if (failedUploads) setSaveError(`${failedUploads} photo${failedUploads > 1 ? 's' : ''} couldn’t upload. You can add them again from Edit.`);
         if (!editingInfo) {
