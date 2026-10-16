@@ -55,6 +55,30 @@ const STRIPE_PUBLISHABLE_KEY = 'pk_live_51UFf7iGqCP7G2YApFHjoKMHkxsEIrf0SJiBpxeT
 const SUPABASE_URL = 'https://vlisyfshmxdsjuybirxe.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_gYdn5HCo63B0qZj3tG-7ow_myAMHeEB';
 const UPLOAD_WORKER = 'https://brightsite-upload.notify-lead-worker.workers.dev';
+
+// Catches typos (gmial.com) and made-up domains before an account is created.
+const COMMON_EMAIL_DOMAINS = ['gmail.com', 'googlemail.com', 'hotmail.com', 'hotmail.co.uk', 'outlook.com', 'live.com', 'live.co.uk', 'yahoo.com', 'yahoo.co.uk', 'icloud.com', 'me.com', 'aol.com', 'btinternet.com', 'sky.com', 'protonmail.com'];
+const editDistance = (a: string, b: string) => {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++)
+    d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return d[a.length][b.length];
+};
+const emailProblem = async (email: string): Promise<string | null> => {
+  const m = /^[^\s@]+@([a-z0-9-]+(\.[a-z0-9-]+)+)$/i.exec(email);
+  if (!m) return 'Enter a valid email address.';
+  const domain = m[1].toLowerCase();
+  if (!COMMON_EMAIL_DOMAINS.includes(domain)) {
+    const near = COMMON_EMAIL_DOMAINS.find(d => editDistance(domain, d) <= 2);
+    if (near) return `Did you mean ${email.split('@')[0]}@${near}?`;
+  }
+  try {
+    const dns = await (await fetch(`https://cloudflare-dns.com/dns-query?type=MX&name=${encodeURIComponent(domain)}`, { headers: { accept: 'application/dns-json' } })).json();
+    const hasMx = (dns.Answer || []).some((a: any) => a.type === 15);
+    return dns.Status === 0 && hasMx ? null : 'That email address can’t receive mail. Check it’s spelled correctly.';
+  } catch { return null; } // never block signup because the check itself failed
+};
 const R2_PUBLIC_URL = 'https://pub-38c2019362f64b6780e0b217ba84be8c.r2.dev';
 const NOTIFY_API = 'https://brightsite-notify-lead.notify-lead-worker.workers.dev/';
 
@@ -1888,6 +1912,10 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     setAuthBusy(true);
     setAuthStatus(authMode === 'signup' ? 'Creating your account…' : 'Logging you in…');
     const credentials = { email: data.email.trim().toLowerCase(), password: data.password };
+    if (authMode === 'signup') {
+      const problem = await emailProblem(credentials.email);
+      if (problem) { setAuthBusy(false); setAuthStatus(''); setValidationMessage(problem); return; }
+    }
     const result = authMode === 'signup'
       ? await supabase.auth.signUp(credentials)
       : await supabase.auth.signInWithPassword(credentials);

@@ -263,6 +263,8 @@
 
     submitBtn.disabled = true;
     showStatus(isSignup ? 'Creating your account…' : 'Logging in…');
+    (isSignup ? emailProblem(email) : Promise.resolve(null)).then(function (problem) {
+    if (problem) { showStatus(problem, 'err'); submitBtn.disabled = false; return; }
 
     var endpoint = isSignup
       ? SUPABASE_URL + '/auth/v1/signup'
@@ -331,7 +333,36 @@
         showStatus('Network error — please try again.', 'err');
         submitBtn.disabled = false;
       });
+    });
   });
+
+  // Catches typos (gmial.com) and made-up domains before an account is created.
+  var COMMON_EMAIL_DOMAINS = ['gmail.com', 'googlemail.com', 'hotmail.com', 'hotmail.co.uk', 'outlook.com', 'live.com', 'live.co.uk', 'yahoo.com', 'yahoo.co.uk', 'icloud.com', 'me.com', 'aol.com', 'btinternet.com', 'sky.com', 'protonmail.com'];
+  function editDistance(a, b) {
+    var d = [], i, j;
+    for (i = 0; i <= a.length; i++) d[i] = [i];
+    for (j = 1; j <= b.length; j++) d[0][j] = j;
+    for (i = 1; i <= a.length; i++) for (j = 1; j <= b.length; j++)
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    return d[a.length][b.length];
+  }
+  function emailProblem(email) {
+    var m = /^[^\s@]+@([a-z0-9-]+(\.[a-z0-9-]+)+)$/i.exec(email);
+    if (!m) return Promise.resolve('Enter a valid email address.');
+    var domain = m[1].toLowerCase();
+    if (COMMON_EMAIL_DOMAINS.indexOf(domain) === -1) {
+      for (var k = 0; k < COMMON_EMAIL_DOMAINS.length; k++) {
+        if (editDistance(domain, COMMON_EMAIL_DOMAINS[k]) <= 2) return Promise.resolve('Did you mean ' + email.split('@')[0] + '@' + COMMON_EMAIL_DOMAINS[k] + '?');
+      }
+    }
+    return fetch('https://cloudflare-dns.com/dns-query?type=MX&name=' + encodeURIComponent(domain), { headers: { accept: 'application/dns-json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (dns) {
+        var hasMx = (dns.Answer || []).some(function (a) { return a.type === 15; });
+        return dns.Status === 0 && hasMx ? null : 'That email address can’t receive mail. Check it’s spelled correctly.';
+      })
+      .catch(function () { return null; }); // never block signup because the check itself failed
+  }
 })();
 </script>
 </body>
