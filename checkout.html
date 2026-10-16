@@ -4,17 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Checkout · BrightSite</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --accent: #2F7DED;
-    --ink: #1D252B;
+    --accent: #3B82F6;
+    --ink: #1C2832;
     --muted: #69747B;
     --line: #E8E4DE;
-    --bg: #F5F2EE;
+    --bg: #F4EDE6;
   }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'Avenir Next', Avenir, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: var(--bg);
     color: var(--ink);
     min-height: 100vh;
@@ -37,7 +40,8 @@
     border-radius: 7px;
     display: flex; align-items: center; justify-content: center;
   }
-  .logo span { color: #fff; font-size: 14px; }
+  .logo { padding: 5px; object-fit: contain; }
+  .plan-icon img { width: 20px; height: 20px; object-fit: contain; }
   .header-title { font-size: 15px; font-weight: 700; color: var(--ink); }
   .header-secure {
     margin-left: auto;
@@ -52,8 +56,9 @@
   .plan-summary {
     background: #fff;
     border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 16px;
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 6px 20px rgba(28,40,50,.06);
     margin-bottom: 16px;
   }
   .plan-summary-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px; }
@@ -64,7 +69,7 @@
     font-size: 15px; color: #fff; flex-shrink: 0;
   }
   .plan-info { flex: 1; }
-  .plan-name { font-size: 15px; font-weight: 700; color: var(--ink); }
+  .plan-name { font-size: 17px; font-weight: 700; color: var(--ink); }
   .plan-price { font-size: 12px; color: var(--muted); margin-top: 2px; }
   .plan-billing-toggle {
     display: flex; gap: 0; padding: 3px;
@@ -97,14 +102,14 @@
     padding: 14px 16px; font-size: 13px; color: #DC2626; margin-bottom: 16px;
   }
 
-  #checkout-wrap { background: #fff; border-radius: 14px; overflow: hidden; }
+  #checkout-wrap { background: #fff; border-radius: 18px; overflow: hidden; box-shadow: 0 6px 20px rgba(28,40,50,.06); }
 
   .success-box {
     display: none;
     background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 14px;
     padding: 28px 20px; text-align: center;
   }
-  .success-icon { font-size: 36px; margin-bottom: 12px; }
+  .success-icon { width:60px;height:60px;border-radius:16px;background:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto 14px; }
   .success-title { font-size: 18px; font-weight: 700; color: #15803D; margin-bottom: 6px; }
   .success-body { font-size: 14px; color: #166534; }
 </style>
@@ -113,8 +118,8 @@
 <body>
 
 <div class="header">
-  <div class="logo"><span>✦</span></div>
-  <span class="header-title">BrightSite Checkout</span>
+  <img class="logo" src="/img/brightsite-b-white.png" alt="BrightSite">
+  <span class="header-title">BrightSite</span>
   <span class="header-secure"><span class="lock">🔒</span> Secure</span>
 </div>
 
@@ -122,7 +127,7 @@
   <div class="plan-summary">
     <div class="plan-summary-label">Your plan</div>
     <div class="plan-row">
-      <div class="plan-icon">✦</div>
+      <div class="plan-icon"><img src="/img/brightsite-b-white.png" alt=""></div>
       <div class="plan-info">
         <div class="plan-name" id="plan-name">Essential</div>
         <div class="plan-price" id="plan-price">£0 setup · £17–19/mo</div>
@@ -144,7 +149,7 @@
   <div id="checkout-wrap" style="display:none"></div>
 
   <div class="success-box" id="success-box">
-    <div class="success-icon">✅</div>
+    <div class="success-icon"><img src="/img/brightsite-b-white.png" alt="" style="width:30px;height:30px;object-fit:contain"></div>
     <div class="success-title">Payment successful!</div>
     <div class="success-body">Your plan is confirmed. We'll be in touch shortly to get your site set up.</div>
   </div>
