@@ -1,8 +1,11 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { registerWithCloudflare, markBusinessLive } from './_lib/activate.js';
+import { runDomainRenewals } from './_lib/domain-renewals.js';
 
 export default async function handler(req, res) {
+  // GET is the nightly domain-renewals cron; POST is Stripe's checkout webhook
+  if (req.method === 'GET') return runDomainRenewals(req, res);
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });

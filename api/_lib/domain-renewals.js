@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
-import { getLiveDomainQuote } from './_lib/domain-pricing.js';
+import { getLiveDomainQuote } from './domain-pricing.js';
 
 // Nightly (Vercel cron). Cloudflare auto-renews every domain on BrightSite's account, so:
 //  - cancelled / unpaid customers: switch auto-renew off so we stop paying for their domain
@@ -52,7 +52,8 @@ async function findSubscription(stripe, data) {
   return subs.data.find(s => LIVE_STATUSES.includes(s.status)) || subs.data[0] || null;
 }
 
-export default async function handler(req, res) {
+// Served through api/register-domain.js (GET) to stay within Vercel Hobby's 12-function limit.
+export async function runDomainRenewals(req, res) {
   if (!process.env.CRON_SECRET || req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: 'Unauthorized' });
   }

@@ -31,7 +31,7 @@
   ],
   "crons": [
     {
-      "path": "/api/domain-renewals",
+      "path": "/api/register-domain",
       "schedule": "0 4 * * *"
     }
   ]
