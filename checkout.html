@@ -49,7 +49,20 @@
     color: var(--muted);
     display: flex; align-items: center; gap: 5px;
   }
-  .lock { font-size: 12px; }
+  .header-back { margin-left: auto; font-size: 13px; font-weight: 600; color: var(--muted); text-decoration: none; }
+  .header-back:hover { color: var(--ink); }
+  .header-back + .header-secure { margin-left: 16px; }
+  .plan-note { font-size: 12px; color: var(--accent); font-weight: 600; margin-top: 3px; }
+  .plan-note:empty { display: none; }
+  .loading-slow { display: none; margin-top: 10px; font-size: 13px; color: var(--muted); }
+  .loading-slow a { color: var(--accent); font-weight: 600; }
+  .trust { display: none; margin-top: 16px; text-align: center; font-size: 12px; color: var(--muted); }
+  .trust span + span::before { content: '·'; margin: 0 8px; }
+  .trust a { color: var(--muted); }
+  .trust-links { margin-top: 6px; }
+  .success-domain { margin-top: 8px; font-size: 13px; }
+  .success-domain:empty { display: none; }
+  .success-btn { display: inline-block; margin-top: 18px; background: var(--accent); color: #fff; text-decoration: none; font-weight: 700; font-size: 14px; padding: 12px 22px; border-radius: 12px; }
 
   .container { padding: 20px 16px 48px; max-width: 480px; margin: 0 auto; }
 
@@ -106,12 +119,12 @@
 
   .success-box {
     display: none;
-    background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 14px;
+    background: #fff; border: 1px solid var(--line); border-radius: 18px; max-width: 480px; margin: 0 auto;
     padding: 28px 20px; text-align: center;
   }
   .success-icon { width:60px;height:60px;border-radius:16px;background:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto 14px; }
-  .success-title { font-size: 18px; font-weight: 700; color: #15803D; margin-bottom: 6px; }
-  .success-body { font-size: 14px; color: #166534; }
+  .success-title { font-size: 18px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+  .success-body { font-size: 14px; color: var(--muted); }
   @media (min-width: 900px) {
     .container { max-width: 1080px; padding: 32px 32px 64px; }
     .plan-summary { display: flex; align-items: center; gap: 20px; }
@@ -127,7 +140,8 @@
 <div class="header">
   <img class="logo" src="/img/brightsite-b-white.png" alt="BrightSite">
   <span class="header-title">BrightSite</span>
-  <span class="header-secure"><span class="lock">🔒</span> Secure</span>
+  <a class="header-back" id="back-link" href="/account/dashboard">‹ Back to dashboard</a>
+  <span class="header-secure"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> Secure</span>
 </div>
 
 <div class="container">
@@ -137,8 +151,9 @@
     <div class="plan-row">
       <div class="plan-icon"><img src="/img/brightsite-b-white.png" alt=""></div>
       <div class="plan-info">
-        <div class="plan-name" id="plan-name">Essential</div>
-        <div class="plan-price" id="plan-price">£0 setup · £17–19/mo</div>
+        <div class="plan-name" id="plan-name">&nbsp;</div>
+        <div class="plan-price" id="plan-price">&nbsp;</div>
+        <div class="plan-note" id="plan-note"></div>
       </div>
     </div>
     <div class="plan-billing-toggle" id="billing-toggle">
@@ -154,14 +169,22 @@
   <div id="loading">
     <div class="spinner"></div>
     <div class="loading-text">Loading secure checkout…</div>
+    <div class="loading-slow" id="loading-slow">Taking longer than usual. <a href="javascript:location.reload()">Refresh</a></div>
   </div>
 
   <div id="checkout-wrap" style="display:none"></div>
 
+  <div class="trust" id="trust">
+    <span>Cancel anytime</span><span>Secure payment by Stripe</span><span>Questions? <a href="mailto:brightsiteapp@gmail.com">brightsiteapp@gmail.com</a></span>
+    <div class="trust-links"><a href="/terms.html">Terms</a> · <a href="/terms.html#privacy">Privacy</a></div>
+  </div>
+
   <div class="success-box" id="success-box">
     <div class="success-icon"><img src="/img/brightsite-b-white.png" alt="" style="width:30px;height:30px;object-fit:contain"></div>
-    <div class="success-title">Payment successful!</div>
-    <div class="success-body">Your plan is confirmed. We'll be in touch shortly to get your site set up.</div>
+    <div class="success-title">Payment successful</div>
+    <div class="success-body">Your website is going live now.</div>
+    <div class="success-body success-domain" id="success-domain"></div>
+    <a class="success-btn" id="success-btn" href="/account/dashboard">Go to your dashboard</a>
   </div>
   </main>
 </div>
@@ -189,13 +212,16 @@
   };
 
   var info = PLAN_INFO[plan] || PLAN_INFO.essential;
-  document.getElementById('plan-name').textContent = info.name;
+  var siteLabel = addonDomain || (slug ? slug + '.brightsite.app' : '');
+  document.getElementById('plan-name').textContent = info.name + (siteLabel ? ' · ' + siteLabel : '');
+  var dashUrl = '/account/dashboard' + (slug ? '?slug=' + encodeURIComponent(slug) : '');
+  document.getElementById('back-link').href = dashUrl;
+  document.getElementById('success-btn').href = dashUrl;
 
   // Render add-on badges if selected
   var addonBadges = '';
   if (addonBooking) addonBadges += '<span style="display:inline-block;margin-top:8px;margin-right:6px;padding:3px 10px;background:#EBF3FE;color:#2F7DED;border-radius:999px;font-size:11px;font-weight:700;">+ Booking form £19/mo</span>';
   if (addonStore)   addonBadges += '<span style="display:inline-block;margin-top:8px;margin-right:6px;padding:3px 10px;background:#EBF3FE;color:#2F7DED;border-radius:999px;font-size:11px;font-weight:700;">+ Online store £19/mo</span>';
-  if (addonDomain)  addonBadges += '<span style="display:inline-block;margin-top:8px;padding:3px 10px;background:#EBF3FE;color:#2F7DED;border-radius:999px;font-size:11px;font-weight:700;">+ Domain: ' + addonDomain + '</span>';
   if (addonBadges) {
     var addonEl = document.createElement('div');
     addonEl.style.marginTop = '4px';
@@ -208,10 +234,17 @@
   var errorEl    = document.getElementById('error-msg');
   var successEl  = document.getElementById('success-box');
   var checkout   = null;
+  var trustEl    = document.getElementById('trust');
+  var slowEl     = document.getElementById('loading-slow');
+  var slowTimer  = null;
 
   function updatePriceLabel() {
     var inf = PLAN_INFO[plan] || PLAN_INFO.essential;
     document.getElementById('plan-price').textContent = selectedAnnual ? inf.setupAnnual : inf.setupMonthly;
+    var covered = selectedAnnual || plan === 'pro';
+    document.getElementById('plan-note').textContent = selectedAnnual
+      ? 'Annual: £204/yr (£17/mo)' + (covered ? ' · domain included up to £12' : '')
+      : (covered ? 'Domain included up to £12' : 'Switch to annual to save £24 and get a free domain');
   }
   updatePriceLabel();
 
@@ -235,9 +268,13 @@
     checkoutEl.style.display = 'none';
     errorEl.style.display = 'none';
     loadingEl.style.display = 'block';
+    trustEl.style.display = 'none';
+    slowEl.style.display = 'none';
+    clearTimeout(slowTimer);
+    slowTimer = setTimeout(function () { slowEl.style.display = 'block'; }, 10000);
 
     var billing = selectedAnnual ? 'annual' : 'monthly';
-    var returnUrl = 'https://brightsite.app/checkout?success=1&plan=' + encodeURIComponent(plan) + '&slug=' + encodeURIComponent(slug);
+    var returnUrl = 'https://brightsite.app/checkout?success=1&plan=' + encodeURIComponent(plan) + '&slug=' + encodeURIComponent(slug) + (addonDomain ? '&addon_domain=' + encodeURIComponent(addonDomain) : '');
 
     fetch('https://api.brightsite.app/api/create-checkout-session', {
       method: 'POST',
@@ -252,11 +289,14 @@
       })
       .then(function (co) {
         checkout = co;
+        clearTimeout(slowTimer);
         loadingEl.style.display = 'none';
+        trustEl.style.display = 'block';
         checkoutEl.style.display = 'block';
         co.mount(checkoutEl);
       })
       .catch(function (err) {
+        clearTimeout(slowTimer);
         loadingEl.style.display = 'none';
         errorEl.textContent = 'Could not load checkout: ' + err.message + '. Please try again.';
         errorEl.style.display = 'block';
@@ -267,6 +307,7 @@
   if (params.get('success') === '1') {
     loadingEl.style.display = 'none';
     document.querySelector('.plan-summary').style.display = 'none';
+    if (addonDomain) document.getElementById('success-domain').textContent = addonDomain + ' can take up to 24 hours to connect.';
     successEl.style.display = 'block';
   } else {
     loadCheckout();
