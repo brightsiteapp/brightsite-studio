@@ -1580,7 +1580,7 @@
   function renderWelcomeMessage() {
     var raw = (business && business.data && business.data.raw) || {};
     var firstName = (raw.fullName || raw.name || '').trim().split(' ')[0] || 'there';
-    var body = 'Hey ' + firstName + ', welcome to BrightSite! I’m Tom, your designer.\n\n• Head to the Website tab and fill in each info card with as much as you can\n• Tap Done on each card when it’s finished, and it turns green\n• The more you add, the better your website will be\n• Got ideas or requests? Send them here as notes anytime';
+    var body = 'Hey ' + firstName + ', welcome to BrightSite! I’m Tom, your designer.\n\n• Head to the Website tab and fill in each info card with as much as you can\n• The more you add, the better your website will be\n• Got ideas or requests? Send them here as notes anytime';
     var wrap = document.getElementById('msgsWelcome');
     var bubble = document.getElementById('msgsWelcomeBubble');
     if (wrap && bubble) { bubble.textContent = body; wrap.hidden = false; }
