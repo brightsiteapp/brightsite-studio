@@ -58,6 +58,7 @@ export async function runDomainRenewals(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   const dry = req.query?.dry === '1';
+  if (req.query?.diag === '1') { const k = process.env.SUPABASE_SERVICE_ROLE_KEY || ''; return res.status(200).json({ prefix: k.slice(0, 10), length: k.length, trimmedLength: k.trim().length, url: process.env.SUPABASE_URL }); } // TEMP
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
   const supabase = supabaseAdmin();
   const { data: rows, error } = await supabase.from('businesses').select('id,data').eq('data->>domainRegistered', 'true');
