@@ -78,7 +78,8 @@ export default async function handler(req, res) {
       mode: 'subscription',
       line_items: lineItems,
       return_url: returnUrl,
-      customer_email: email || undefined,
+      // No customer_email: Stripe locks a pre-filled email, and customers may want
+      // receipts at a personal or business address. Renewals use the saved subscription ID.
       metadata,
       subscription_data: { metadata },
       discounts,
