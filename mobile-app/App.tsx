@@ -1283,7 +1283,8 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
 
   const isLive = websiteStatus === 'live';
   const isTodo = websiteStatus === 'todo';
-  const isBuilding = websiteStatus === 'building' || isTodo;
+  const isLoadingSite = websiteStatus === 'loading';
+  const isBuilding = websiteStatus === 'building' || isTodo || isLoadingSite;
   const isReady = websiteStatus === 'ready';
   const isPublishing = websiteStatus === 'publishing';
   const isReadyRef = useRef(isReady || isPublishing);
@@ -1331,7 +1332,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
       <View style={s.dashboardBrandRow}>
         <Logo height={17} />
         {onAdminBack && <Pressable hitSlop={10} onPress={onAdminBack} style={s.adminBackBtn}><Ionicons name="chevron-back" size={15} color={C.primary} /><Text style={s.adminBackText}>Admin</Text></Pressable>}
-        <View style={[s.statusPill, { backgroundColor: status.bg }]}><Animated.View style={[s.statusDot, { backgroundColor: status.color, opacity: isPublishing ? pulseAnim : 1 }]} /><Text style={[s.statusPillText, { color: status.color }]}>{status.label}</Text></View>
+        {!isLoadingSite && <View style={[s.statusPill, { backgroundColor: status.bg }]}><Animated.View style={[s.statusDot, { backgroundColor: status.color, opacity: isPublishing ? pulseAnim : 1 }]} /><Text style={[s.statusPillText, { color: status.color }]}>{status.label}</Text></View>}
       </View>
       <View style={s.dashboardTabsTop}>{['Website', 'Messages', 'Account'].map(name => <Pressable key={name} onPress={() => setTab(name)} style={[s.dashboardTab, tab === name && s.dashboardTabOn]}><Text style={[s.dashboardTabText, tab === name && s.dashboardTabTextOn]}>{name}</Text></Pressable>)}</View>
       {!!saveError && <View style={s.saveBanner}><Ionicons name="alert-circle" size={16} color={C.danger} /><Text style={s.saveBannerText}>{saveError}</Text></View>}
@@ -1399,8 +1400,8 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
             ? <View style={s.buildingWrap}>
               <View style={[s.phoneFrame, s.buildingPhone]}>
                 <Animated.View style={[s.buildingGlow, isTodo && s.todoGlow, { opacity: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.35, 1] }), transform: [{ scale: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.92, 1] }) }] }]}><View style={[s.buildingGlowInner, isTodo && s.todoGlowInner]}><Image source={require('./assets/brightsite-b-white.png')} resizeMode="contain" style={s.buildingLogo} /></View></Animated.View>
-                <Text style={[s.buildingText, { color: '#fff', marginTop: 28 }]}>{isTodo ? 'Let’s build your website' : 'Building your preview'}</Text>
-                <Text style={[s.buildingSub, { color: 'rgba(255,255,255,.6)' }]}>{isTodo ? 'Fill in your info cards. The more you add, the better your site. Then send it to your designer.' : 'We’ll send you a notification as soon as it’s ready to review.'}</Text>
+                {!isLoadingSite && <Text style={[s.buildingText, { color: '#fff', marginTop: 28 }]}>{isTodo ? 'Let’s build your website' : 'Building your preview'}</Text>}
+                {!isLoadingSite && <Text style={[s.buildingSub, { color: 'rgba(255,255,255,.6)' }]}>{isTodo ? 'Fill in your info cards. The more you add, the better your site. Then send it to your designer.' : 'We’ll send you a notification as soon as it’s ready to review.'}</Text>}
               </View>
             </View>
             : <>
@@ -1589,7 +1590,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [editingInfo, setEditingInfo] = useState(false);
   const [savingInfo, setSavingInfo] = useState(false);
   const [buildChoice, setBuildChoice] = useState<'designer' | 'template' | null>(null);
-  const [websiteStatus, setWebsiteStatus] = useState<'todo' | 'building' | 'ready' | 'publishing' | 'live'>('building');
+  const [websiteStatus, setWebsiteStatus] = useState<'loading' | 'todo' | 'building' | 'ready' | 'publishing' | 'live'>('loading');
   const [session, setSession] = useState<any>(null);
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, fresh) => { if (fresh) setSession(fresh); });

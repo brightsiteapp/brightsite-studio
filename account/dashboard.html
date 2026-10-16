@@ -579,6 +579,7 @@
   #builderList:not(.preview-sent) .sec-btn.is-complete{background:#f0faf4 !important;border-color:#d2e9dc !important}
   #builderList .section-tick{display:grid !important}
   /* before the details are sent: amber B, and Send to designer waits for every card to be green */
+  .preview-placeholder[data-state="loading"]::before{filter:drop-shadow(0 0 7px rgba(255,255,255,.45)) drop-shadow(0 0 18px rgba(255,255,255,.18)) !important}
   .preview-placeholder[data-state="todo"]::before{filter:drop-shadow(0 0 7px #FFD27F) drop-shadow(0 0 22px #F59E0B) !important}
   .wah-make-live:disabled{opacity:.45;cursor:not-allowed}
   @media(max-width:430px){
@@ -788,10 +789,10 @@
             <div class="mob-pvw-browser-url" id="mobPreviewUrl">preview.brightsite.app</div>
           </div>
           <div class="mob-pvw-browser-content">
-            <div class="preview-placeholder mobile-preview-card" id="mobilePreviewCard">
+            <div class="preview-placeholder mobile-preview-card" id="mobilePreviewCard" data-state="loading">
               <div class="preview-placeholder-biz" id="mobilePreviewBizName">Your business</div>
-              <div class="preview-placeholder-title">Fill in your<br>details</div>
-              <div class="preview-placeholder-sub">Complete all sections — add info until all ticks are green</div>
+              <div class="preview-placeholder-title"></div>
+              <div class="preview-placeholder-sub"></div>
             </div>
             <iframe id="mobPreviewFrame" src="about:blank" title="Website preview" style="display:none;width:100%;height:100%;border:0"></iframe>
           </div>
@@ -801,10 +802,10 @@
           <div class="mob-pvw-phone-shell">
             <div class="mob-pvw-phone-notch"></div>
             <div class="mob-pvw-phone-screen">
-              <div class="preview-placeholder mobile-preview-card" id="mobilePreviewCardMob">
+              <div class="preview-placeholder mobile-preview-card" id="mobilePreviewCardMob" data-state="loading">
                 <div class="preview-placeholder-biz" id="mobilePreviewBizNameMob">Your business</div>
-                <div class="preview-placeholder-title">Fill in your<br>details</div>
-                <div class="preview-placeholder-sub">Complete all sections — add info until all ticks are green</div>
+                <div class="preview-placeholder-title"></div>
+                <div class="preview-placeholder-sub"></div>
               </div>
               <iframe id="mobPreviewFrameMob" src="about:blank" title="Website preview mobile" style="display:none;width:100%;height:100%;border:0"></iframe>
             </div>
@@ -956,10 +957,10 @@
         <a id="fakeBrowserViewBtn" href="#" target="_blank" hidden style="font:600 11px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;color:#fff;background:rgba(255,255,255,.15);border-radius:5px;padding:4px 9px;text-decoration:none;white-space:nowrap;flex:none">Open preview</a>
       </div>
       <div class="fake-browser-content">
-        <div id="deskPreviewPlaceholder" class="preview-placeholder">
+        <div id="deskPreviewPlaceholder" class="preview-placeholder" data-state="loading">
           <div class="preview-placeholder-biz" id="deskPreviewBizName">Your business</div>
-          <div class="preview-placeholder-title">Fill in your<br>details</div>
-          <div class="preview-placeholder-sub">Complete all sections — add info until all ticks are green</div>
+          <div class="preview-placeholder-title"></div>
+          <div class="preview-placeholder-sub"></div>
         </div>
         <iframe id="deskPreviewFrame" src="about:blank" title="Website preview" style="display:none;width:100%;height:100%;border:0;flex:1"></iframe>
       </div>
@@ -969,10 +970,10 @@
       <div class="fake-phone-shell">
         <div class="fake-phone-notch"></div>
         <div class="fake-phone-screen">
-          <div id="deskPreviewPlaceholderMob" class="preview-placeholder">
+          <div id="deskPreviewPlaceholderMob" class="preview-placeholder" data-state="loading">
             <div class="preview-placeholder-biz" id="deskPreviewBizNameMob"></div>
-            <div class="preview-placeholder-title">Fill in your<br>details</div>
-            <div class="preview-placeholder-sub">Complete all sections — add info until all ticks are green</div>
+            <div class="preview-placeholder-title"></div>
+            <div class="preview-placeholder-sub"></div>
           </div>
           <iframe id="deskPreviewFrameMob" src="about:blank" title="Website preview mobile" style="display:none;width:100%;height:100%;border:0"></iframe>
         </div>
@@ -2166,7 +2167,12 @@
       if (!el) return;
       var title = el.querySelector('.preview-placeholder-title');
       var sub = el.querySelector('.preview-placeholder-sub');
-      if (getPreviewUrl()) {
+      if (!business) {
+        // account still loading: just the B, no wording that might change a moment later
+        el.dataset.state = 'loading';
+        if (title) title.textContent = '';
+        if (sub) sub.textContent = '';
+      } else if (getPreviewUrl()) {
         el.dataset.state = 'ready';
         el.style.display = 'none';
         if (title) title.innerHTML = isLive ? 'Website<br>Live' : 'Preview<br>Ready';
