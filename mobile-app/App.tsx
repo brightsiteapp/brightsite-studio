@@ -1333,7 +1333,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           {isBuilding
             ? <View style={s.buildingWrap}>
               <View style={[s.phoneFrame, s.buildingPhone]}>
-                <Animated.View style={[s.buildingGlow, { opacity: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.35, 1] }), transform: [{ scale: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.92, 1] }) }] }]}><Image source={require('./assets/brightsite-b-white.png')} resizeMode="contain" style={s.buildingLogo} /></Animated.View>
+                <Animated.View style={[s.buildingGlow, { opacity: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.35, 1] }), transform: [{ scale: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.92, 1] }) }] }]}><View style={s.buildingGlowInner}><Image source={require('./assets/brightsite-b-white.png')} resizeMode="contain" style={s.buildingLogo} /></View></Animated.View>
                 <Text style={[s.buildingText, { color: '#fff', marginTop: 28 }]}>Building your preview</Text>
                 <Text style={[s.buildingSub, { color: 'rgba(255,255,255,.6)' }]}>We’ll send you a notification as soon as it’s ready to review.</Text>
               </View>
@@ -2674,7 +2674,8 @@ const s = StyleSheet.create({
   buildingPhone: { backgroundColor: '#141A1E', alignItems: 'center', justifyContent: 'center' },
   // with no background, iOS traces the B's own shape, so the shadow reads as a blue glowing outline
   buildingLogo: { width: 64, height: 70 },
-  buildingGlow: { shadowColor: '#3B82F6', shadowOpacity: .95, shadowRadius: 14, shadowOffset: { width: 0, height: 0 } },
+  buildingGlow: { shadowColor: '#3B82F6', shadowOpacity: 1, shadowRadius: 22, shadowOffset: { width: 0, height: 0 } },
+  buildingGlowInner: { shadowColor: '#7FB2FF', shadowOpacity: 1, shadowRadius: 7, shadowOffset: { width: 0, height: 0 } },
   buildingText: { fontFamily: FONT, fontSize: 18, fontWeight: '800', color: C.ink },
   buildingSub: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: C.inkSoft, textAlign: 'center', marginTop: 6, paddingHorizontal: 24 },
   previewOpenBadge: { position: 'absolute', bottom: 12, right: 12, flexDirection: 'row', gap: 6, alignItems: 'center', backgroundColor: 'rgba(0,0,0,.6)', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999 },
