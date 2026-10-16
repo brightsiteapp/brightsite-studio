@@ -311,7 +311,7 @@
   .sec-btn .chev{font-size:13px;color:var(--muted);flex:none}
   .sec-title{display:flex;align-items:center;gap:9px}
   .section-tick{width:18px;height:18px;border:2px solid #d55b5b;border-radius:50%;display:grid;place-items:center;color:#d55b5b;font-size:11px;line-height:1;flex:none}
-  .section-tick::before{content:'!'}
+  .section-tick::before{content:'✕'}
   .sec-btn.is-complete .section-tick{border-color:#249b58;background:#249b58;color:#fff}
   .sec-btn.is-complete .section-tick::before{content:'✓'}
   .preview-sent .section-tick{display:none}
@@ -577,7 +577,7 @@
   /* red until the customer clicks Done on a card, then green; neutral once the preview is sent */
   #builderList:not(.preview-sent) .sec-btn{background:#fff4f2 !important;border-color:#f1dcd7 !important}
   #builderList:not(.preview-sent) .sec-btn.is-complete{background:#f0faf4 !important;border-color:#d2e9dc !important}
-  #builderList:not(.preview-sent) .section-tick{display:grid}
+  #builderList .section-tick{display:grid !important}
   .website-editor-header{display:flex !important;align-items:center;justify-content:space-between}
   @media(max-width:799px){.website-panel:not(.editing) #websiteEditorHeader{display:none !important}}
   .preview-placeholder{background:#141A1E !important;padding:32px 24px !important}
