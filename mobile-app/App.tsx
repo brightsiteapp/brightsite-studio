@@ -1645,6 +1645,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const checkSiteLive = async (id: string, record: any, isDesigner: boolean) => {
     try {
       const st = await (await fetch(`${UPLOAD_WORKER}/status/${encodeURIComponent(id)}`)).json();
+      // Sites published before the site worker (hosted elsewhere) keep their saved status.
+      if (!st.hasSite && record.published && record.liveUrl && !/sites\.brightsite\.app/.test(record.liveUrl)) return;
       if (st.live) { setWebsiteStatus('live'); if (st.url) businessRecord.current = { ...businessRecord.current, liveUrl: st.url }; return; }
       if (record.published) setWebsiteStatus(st.hasSite ? 'publishing' : 'building');
       else if (record.planActive && !record.manuallyOffline) setWebsiteStatus(st.hasSite ? 'publishing' : 'building');

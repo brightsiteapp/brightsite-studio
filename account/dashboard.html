@@ -1326,6 +1326,8 @@
     if (!slug) return;
     fetch(UPLOAD_WORKER + '/status/' + encodeURIComponent(slug)).then(function(r) { return r.json(); }).then(function(st) {
       var data = (business && business.data) || {};
+      // Sites published before the site worker (hosted elsewhere) keep their saved status.
+      if (!st.hasSite && data.published && data.liveUrl && !/sites\.brightsite\.app/.test(data.liveUrl)) return;
       // Paid, site uploaded, not taken offline on purpose: make sure it's actually being served.
       if (!st.live && st.hasSite && isPaying && !data.manuallyOffline && !isAdminView) {
         goLive().then(function() { renderWebsiteStatus(); updateWebsiteAppHeader(); }).catch(function() {});
