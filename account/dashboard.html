@@ -709,7 +709,8 @@
   .builder-section h3{font-family:var(--display);font-size:22px !important;font-weight:800 !important;letter-spacing:-.4px;color:#1C2832;margin:6px 0 10px !important}
   .builder-section .acct-field label{font-size:13px;font-weight:700;color:rgba(28,40,50,.72);margin-bottom:7px}
   .builder-section .section-icon,#builderList .section-icon{color:#3B82F6}
-  .bs-notes{display:block;width:100%;box-sizing:border-box;min-height:220px;margin-top:14px;padding:14px 15px;border:1px solid rgba(28,40,50,.14);border-radius:14px;background:rgba(255,255,255,.6);font:inherit;font-size:15px;line-height:1.5;color:#1C2832;resize:vertical;outline:none}
+  .bs-notes-label{display:block;margin:22px 0 7px;font-size:13px;font-weight:700;color:rgba(28,40,50,.72)}
+  .bs-notes{display:block;width:100%;box-sizing:border-box;min-height:220px;margin-top:0;padding:14px 15px;border:1px solid rgba(28,40,50,.14);border-radius:14px;background:rgba(255,255,255,.6);font:inherit;font-size:15px;line-height:1.5;color:#1C2832;resize:vertical;outline:none}
   .bs-notes:focus{border-color:rgba(59,130,246,.55);background:#fff}
   /* account cards in the app's style: white, borderless, small grey label over a bold value */
   #accountPanel .info-card{border:0;border-radius:16px;box-shadow:none;padding:18px;margin-bottom:12px}
@@ -1006,6 +1007,7 @@
         <p class="info-hint">Add any offers, rewards or gift cards you want on your website. Leave it blank to skip.</p>
         <div id="offerList"></div>
         <label class="bs-toggle-card"><span class="bs-toggle-text"><b>Add a contact form</b><span>Messages will arrive in your BrightSite dashboard.</span></span><input type="checkbox" id="fContactForm" class="bs-switch"></label>
+        <label for="fDesignerNotes" class="bs-notes-label">Notes</label>
         <textarea id="fDesignerNotes" class="bs-notes" placeholder="Add any notes for your designer. Paste in any info or descriptions you want included."></textarea>
       </div>
 

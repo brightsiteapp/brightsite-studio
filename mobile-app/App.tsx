@@ -2263,6 +2263,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       case 'extras': return <><Intro>Add any offers, rewards or gift cards you want on your website. Leave it blank to skip.</Intro>
         <ItemList items={offers} primary="name" secondary="value" addLabel="Add offer" onOpen={i => setSheet({ kind: 'offer', index: i })} />
         <Pressable onPress={() => setContactForm(!contactForm)} style={s.formChoice}><View style={s.formChoiceIcon}><Ionicons name="mail-outline" size={22} color={C.primary} /></View><View style={{ flex: 1 }}><Text style={s.formChoiceTitle}>Add a contact form</Text><Text style={s.formChoiceText}>Messages will arrive in your BrightSite dashboard.</Text></View><Switch value={contactForm} onValueChange={setContactForm} trackColor={{ false: 'rgba(28,40,50,.18)', true: C.primary }} thumbColor="#fff" {...({ activeThumbColor: '#fff' } as any)} /></Pressable>
+        <Text style={[s.fieldLabel, { marginTop: 22, marginBottom: 0 }]}>Notes</Text>
         <TextInput value={data.designerNotes} onChangeText={v => setData(d => ({ ...d, designerNotes: v }))} placeholder="Add any notes for your designer. Paste in any info or descriptions you want included." placeholderTextColor={C.placeholder} multiline autoCapitalize="sentences" style={[s.input, s.notesBox]} /></>;
     }
   };
@@ -2822,7 +2823,7 @@ const s = StyleSheet.create({
   listRow: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 8, borderRadius: 14, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line },
   gridRow: { flexDirection: 'row', gap: 6 },
   gridCell: { minHeight: 44, borderRadius: 11, paddingHorizontal: 10, fontFamily: FONT, fontSize: 14, color: C.ink, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line },
-  notesBox: { marginTop: 14, minHeight: 220, paddingTop: 14, paddingBottom: 14, textAlignVertical: 'top' },
+  notesBox: { marginTop: 7, minHeight: 220, paddingTop: 14, paddingBottom: 14, textAlignVertical: 'top' },
   savedPill: { position: 'absolute', top: Platform.OS === 'ios' ? 58 : 24, alignSelf: 'center', zIndex: 200, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(28,40,50,.82)' },
   savedPillText: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: '#fff' },
   listRowSub: { fontFamily: FONT, fontSize: 13, color: C.inkMuted, marginTop: 2 },
