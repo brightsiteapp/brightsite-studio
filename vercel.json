@@ -34,5 +34,15 @@
       "path": "/api/register-domain",
       "schedule": "0 4 * * *"
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/s/:slug",
+      "destination": "https://brightsite-upload.notify-lead-worker.workers.dev/site/:slug/"
+    },
+    {
+      "source": "/s/:slug/:path*",
+      "destination": "https://brightsite-upload.notify-lead-worker.workers.dev/site/:slug/:path*"
+    }
   ]
 }

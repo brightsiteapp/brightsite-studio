@@ -1,11 +1,13 @@
 import Stripe from 'stripe';
 import { supabaseAdmin } from './supabase-admin.js';
 import { getLiveDomainQuote } from './domain-pricing.js';
+import { connectDomainToSite, setSiteLive } from './activate.js';
 
 // Nightly (Vercel cron). Cloudflare auto-renews every domain on BrightSite's account, so:
 //  - cancelled / unpaid customers: switch auto-renew off so we stop paying for their domain
 //  - annual or Pro customers: nothing — the plan includes the domain
 //  - monthly Free customers: within 30 days of expiry, add the renewal to their next invoice (once per expiry)
+//  - domains that weren't ready to connect at payment time: connect them and move the site onto them
 // Add ?dry=1 to report what would happen without changing anything.
 
 const CF = `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/registrar`;
@@ -70,6 +72,16 @@ export async function runDomainRenewals(req, res) {
     const entry = { slug: row.id, domain };
     report.push(entry);
     try {
+      if (data.domainConnected === false && data.published) {
+        entry.connect = 'connect domain to site';
+        if (!dry) {
+          await connectDomainToSite(domain);
+          const result = await setSiteLive(row.id, true, domain);
+          if (result.error) throw new Error(result.error);
+          Object.assign(data, { domainConnected: true, domainError: '', liveUrl: result.url });
+          await supabase.from('businesses').update({ data }).eq('id', row.id);
+        }
+      }
       const cf = await cloudflareDomain(domain);
       entry.expires = cf.expires_at;
       entry.autoRenew = cf.auto_renew;

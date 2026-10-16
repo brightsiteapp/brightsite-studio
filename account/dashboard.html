@@ -1229,9 +1229,11 @@
         btn.className = 'wah-make-live live';
         btn.onclick = function() {
           if (!confirm('Take your website offline?')) return;
-          business.data = Object.assign({}, business.data || {}, { manuallyOffline: true, published: false });
-          isLive = false;
-          saveBusiness().then(updateWebsiteAppHeader).catch(function() {});
+          workerPublish(false).then(function() {
+            business.data = Object.assign({}, business.data || {}, { manuallyOffline: true, published: false });
+            isLive = false;
+            return saveBusiness();
+          }).then(function() { renderWebsiteStatus(); updateWebsiteAppHeader(); }).catch(function(err) { alert(err.message); });
         };
         return;
       }
@@ -1242,7 +1244,10 @@
         btn.textContent = 'Publishing…';
         btn.className = 'wah-make-live pending';
         btn.disabled = true;
-        saveBusiness({ publish: true }).then(function() { isLive = true; updateWebsiteAppHeader(); }).catch(updateWebsiteAppHeader);
+        goLive().then(function() { renderWebsiteStatus(); updateWebsiteAppHeader(); }).catch(function(err) {
+          isLive = false; updateWebsiteAppHeader();
+          alert(/No website uploaded/.test(err.message) ? 'Your website is still being built. It will go live as soon as it’s ready.' : err.message);
+        });
       };
     });
   }
@@ -1298,6 +1303,38 @@
   document.getElementById('mobileMessagesTab').addEventListener('click', function() {
     showMessagesTab();
   });
+
+  // ---------------- live site ----------------
+  // "Live" comes from the site worker, which only says live while it's really serving the site.
+  function workerPublish(live) {
+    return fetch(UPLOAD_WORKER + '/publish', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug: slug, live: live })
+    }).then(function(r) { return r.json().then(function(j) { if (!r.ok) throw new Error(j.error || 'Could not update your website'); return j; }); });
+  }
+
+  function goLive() {
+    return workerPublish(true).then(function(res) {
+      business.data = Object.assign({}, business.data || {}, { liveUrl: res.url });
+      isLive = true;
+      return saveBusiness({ publish: true });
+    });
+  }
+
+  function checkSiteLive() {
+    if (!slug) return;
+    fetch(UPLOAD_WORKER + '/status/' + encodeURIComponent(slug)).then(function(r) { return r.json(); }).then(function(st) {
+      var data = (business && business.data) || {};
+      // Paid, site uploaded, not taken offline on purpose: make sure it's actually being served.
+      if (!st.live && st.hasSite && isPaying && !data.manuallyOffline && !isAdminView) {
+        goLive().then(function() { renderWebsiteStatus(); updateWebsiteAppHeader(); }).catch(function() {});
+        return;
+      }
+      if (st.url) business.data = Object.assign({}, data, { liveUrl: st.url });
+      if (isLive !== !!st.live) { isLive = !!st.live; renderWebsiteStatus(); updateWebsiteAppHeader(); }
+    }).catch(function() {});
+  }
 
   // ---------------- render ----------------
   function toSiteUrl(value) {
@@ -1469,12 +1506,6 @@
     isLive = !!data.published;
     hasUnpublishedChanges = !!(isLive && data.needsPublish);
 
-    // Preserve the existing automatic publish behaviour when a paid account
-    // has a connected domain, unless the customer explicitly took the site offline.
-    if (isPaying && !isLive && (data.customDomain || data.domain) && !isAdminView && !data.manuallyOffline) {
-      isLive = true;
-      saveBusiness({ publish: true }).catch(function() {});
-    }
 
     var resolvedEmail = raw.email || session.email || '';
     var name = raw.name || business.name || '';
@@ -1493,6 +1524,7 @@
     populateBuilderFields(raw);
     renderWebsiteStatus();
     updateWebsiteAppHeader();
+    checkSiteLive();
     renderWelcomeMessage();
     if (renderDraftBanner()) showWebsiteTab();
     else showMessagesTab();

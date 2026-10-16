@@ -1637,6 +1637,30 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     setBuildChoice(isDesigner ? 'designer' : 'template');
     const hasPreview = !!(record.demoUrl || record.previewUrl || record.liveUrl);
     setWebsiteStatus(record.published ? 'live' : record.needsPublish && !record.published ? 'publishing' : isDesigner && !hasPreview ? 'building' : 'ready');
+    if (slugOf(record)) checkSiteLive(slugOf(record), record, isDesigner);
+  };
+
+  // The pill only says Live while the site worker is really serving the site.
+  const slugOf = (record: any) => record?.slug || slug;
+  const checkSiteLive = async (id: string, record: any, isDesigner: boolean) => {
+    try {
+      const st = await (await fetch(`${UPLOAD_WORKER}/status/${encodeURIComponent(id)}`)).json();
+      if (st.live) { setWebsiteStatus('live'); if (st.url) businessRecord.current = { ...businessRecord.current, liveUrl: st.url }; return; }
+      if (record.published) setWebsiteStatus(st.hasSite ? 'publishing' : 'building');
+      else if (record.planActive && !record.manuallyOffline) setWebsiteStatus(st.hasSite ? 'publishing' : 'building');
+      else if (isDesigner && !st.hasSite && !(record.demoUrl || record.previewUrl)) setWebsiteStatus('building');
+    } catch {}
+  };
+
+  const workerPublish = async (id: string, live: boolean) => {
+    const res = await fetch(`${UPLOAD_WORKER}/publish`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug: id, live }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.error || 'Could not update your website');
+    return json as { live: boolean; url: string | null };
   };
 
   const saveBusiness = async (id: string, patch: { raw?: Record<string, any>; [key: string]: any }, auth: any = session) => {
@@ -2114,10 +2138,17 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     if (!slug || !session) return false;
     try {
       if (live) {
-        await saveBusiness(slug, { published: false, manuallyOffline: false, needsPublish: true });
-        setWebsiteStatus('publishing');
-        Alert.alert('Publishing your website', "This usually takes around 5 minutes while your domain registers. You’ll get a notification as soon as it’s live!");
+        try {
+          const res = await workerPublish(slug, true);
+          await saveBusiness(slug, { published: true, manuallyOffline: false, needsPublish: false, liveUrl: res.url });
+          setWebsiteStatus('live');
+        } catch (err: any) {
+          await saveBusiness(slug, { published: false, manuallyOffline: false, needsPublish: true });
+          setWebsiteStatus('publishing');
+          Alert.alert('Publishing your website', /No website uploaded/.test(err?.message || '') ? 'Your website is still being built. It will go live as soon as it’s ready.' : 'We’ll finish publishing shortly. You’ll get a notification as soon as it’s live!');
+        }
       } else {
+        await workerPublish(slug, false);
         await saveBusiness(slug, { published: false, manuallyOffline: true });
         setWebsiteStatus('ready');
       }

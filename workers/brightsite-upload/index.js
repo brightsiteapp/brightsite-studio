@@ -6,6 +6,14 @@
 //   POST /upload            — same, with the key ("slug/file") in the x-file-name header (app + dashboard)
 //   DELETE /delete/:slug/*  — delete a file
 //   GET  /list/:slug/*      — list objects under a prefix, return [{ name, size }]
+//   POST /publish           — { slug, live, domain? } turn a site on/off (Bearer PUBLISH_KEY, admin JWT,
+//                             or the owner's JWT when their plan is active)
+//   GET  /status/:slug      — { live, url } — whether the site is really being served
+//   GET  /site/:slug/*      — serve a live site (brightsite.app/s/<slug> rewrites here)
+//   any GET on a customer's own domain — serve the site mapped to that host
+//
+// Sites are the zips uploaded on admin.html, stored at <slug>/site/. A site is served only
+// while live/<slug> exists; domains/<host> maps a customer's domain to its slug.
 //
 // CORS is open to brightsite.app and localhost (dev).
 
@@ -104,6 +112,70 @@ function contentTypeFor(key) {
   return map[ext] || 'application/octet-stream';
 }
 
+
+const SITE_BASE = 'https://brightsite.app/s/';
+const WORKER_HOST = 'brightsite-upload.notify-lead-worker.workers.dev';
+
+function cleanHost(h) { return String(h || '').toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/^www\./, ''); }
+
+async function siteIndexExists(env, slug) {
+  return !!(await env.MEDIA.head(`${slug}/site/index.html`));
+}
+
+async function isLive(env, slug) {
+  return !!(await env.MEDIA.head(`live/${slug}`));
+}
+
+async function siteUrlFor(env, slug) {
+  const marker = await env.MEDIA.get(`live/${slug}`);
+  const domain = marker ? ((await marker.json().catch(() => ({}))).domain || '') : '';
+  return domain ? `https://${domain}` : `${SITE_BASE}${slug}`;
+}
+
+const NOT_LIVE_PAGE = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Coming soon</title><body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#F4EDE6;font-family:Avenir Next,-apple-system,sans-serif;color:#1C2832;text-align:center"><div><h1 style="font-size:24px;margin:0 0 8px">Coming soon</h1><p style="color:#69747B;margin:0">This website isn’t live yet.</p></div>';
+
+// Serves <slug>/site/<path>, trying path, path/index.html and path.html. basePath is set when
+// served under brightsite.app/s/<slug>/ so the site's relative links resolve there.
+async function serveSite(env, slug, path, basePath) {
+  if (!slug || !(await isLive(env, slug))) {
+    return new Response(NOT_LIVE_PAGE, { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+  }
+  const rel = decodeURIComponent(path).replace(/^\/+/, '').replace(/\.\.+/g, '');
+  const candidates = rel === '' || rel.endsWith('/')
+    ? [`${rel}index.html`]
+    : [rel, `${rel}/index.html`, `${rel}.html`];
+  for (const c of candidates) {
+    const obj = await env.MEDIA.get(`${slug}/site/${c}`);
+    if (!obj) continue;
+    const type = contentTypeFor(c);
+    const headers = { 'Content-Type': type, 'Cache-Control': type.startsWith('text/html') ? 'public, max-age=60' : 'public, max-age=3600' };
+    if (basePath && type.startsWith('text/html')) {
+      let html = await obj.text();
+      if (!/<base\s/i.test(html)) html = html.replace(/<head([^>]*)>/i, `<head$1><base href="${basePath}">`);
+      return new Response(html, { headers });
+    }
+    return new Response(obj.body, { headers });
+  }
+  const notFound = await env.MEDIA.get(`${slug}/site/404.html`);
+  return new Response(notFound ? notFound.body : 'Page not found', { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+}
+
+// Who may switch a site on or off: the server (PUBLISH_KEY), the admin, or the owner —
+// owners may only go live while their plan is paid.
+async function authorisePublish(request, env, slug, live) {
+  const auth = request.headers.get('Authorization') || '';
+  if (env.PUBLISH_KEY && auth === `Bearer ${env.PUBLISH_KEY}`) return;
+  try { await verifyAdminAuth(request); return; } catch {}
+  await verifyAuth(request, slug);
+  if (!live) return;
+  const token = auth.slice(7);
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/businesses?select=data&id=eq.${encodeURIComponent(slug)}&limit=1`, {
+    headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${token}` }
+  });
+  const rows = res.ok ? await res.json() : [];
+  if (!rows[0]?.data?.planActive) throw new Error('Forbidden');
+}
+
 export default {
   async fetch(request, env) {
     const origin = request.headers.get('Origin') || '';
@@ -116,6 +188,42 @@ export default {
     }
 
     try {
+      // Customer's own domain: everything on that host is their site.
+      const host = url.hostname.toLowerCase();
+      if (request.method === 'GET' && host !== WORKER_HOST && !host.endsWith('.workers.dev') && host !== 'localhost' && host !== '127.0.0.1') {
+        const mapped = await env.MEDIA.get(`domains/${cleanHost(host)}`);
+        return serveSite(env, mapped ? (await mapped.text()).trim() : '', path, '');
+      }
+
+      const siteMatch = path.match(/^\/site\/([a-z0-9-]+)(\/.*)?$/);
+      if (request.method === 'GET' && siteMatch) {
+        return serveSite(env, siteMatch[1], siteMatch[2] || '/', `/s/${siteMatch[1]}/`);
+      }
+
+      const statusMatch = path.match(/^\/status\/([a-z0-9-]+)$/);
+      if (request.method === 'GET' && statusMatch) {
+        const slug = statusMatch[1];
+        const live = (await isLive(env, slug)) && (await siteIndexExists(env, slug));
+        return json({ live, url: live ? await siteUrlFor(env, slug) : null, hasSite: await siteIndexExists(env, slug) }, 200, origin);
+      }
+
+      if (request.method === 'POST' && path === '/publish') {
+        const { slug, live, domain } = await request.json();
+        if (!/^[a-z0-9-]+$/.test(slug || '')) return json({ error: 'Bad slug' }, 400, origin);
+        await authorisePublish(request, env, slug, !!live);
+        const host = cleanHost(domain);
+        if (live) {
+          if (!(await siteIndexExists(env, slug))) return json({ error: 'No website uploaded yet' }, 409, origin);
+          const previous = await env.MEDIA.get(`live/${slug}`);
+          const keepDomain = previous ? ((await previous.json().catch(() => ({}))).domain || '') : '';
+          const finalDomain = host || keepDomain;
+          await env.MEDIA.put(`live/${slug}`, JSON.stringify({ domain: finalDomain, at: new Date().toISOString() }), { httpMetadata: { contentType: 'application/json' } });
+          if (finalDomain) await env.MEDIA.put(`domains/${finalDomain}`, slug);
+        } else {
+          await env.MEDIA.delete(`live/${slug}`);
+        }
+        return json({ live: !!live, url: live ? await siteUrlFor(env, slug) : null }, 200, origin);
+      }
       // PUT /upload/:slug/* — customer image upload
       const uploadMatch = path.match(/^\/upload\/([^/]+)\/(.+)$/);
       if (request.method === 'PUT' && uploadMatch) {

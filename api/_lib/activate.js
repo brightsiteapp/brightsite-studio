@@ -20,6 +20,44 @@ export async function registerWithCloudflare(domain) {
   return json.result;
 }
 
+const SITE_WORKER = 'https://brightsite-upload.notify-lead-worker.workers.dev';
+
+async function cf(path, init = {}) {
+  const res = await fetch(`https://api.cloudflare.com/client/v4${path}`, {
+    ...init,
+    headers: { Authorization: `Bearer ${CF_API_TOKEN}`, 'Content-Type': 'application/json', ...(init.headers || {}) },
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!json.success) throw new Error(JSON.stringify(json.errors || res.status));
+  return json.result;
+}
+
+// Points a domain registered through Cloudflare (and its www) at the site worker.
+export async function connectDomainToSite(domain) {
+  const zones = await cf(`/zones?name=${encodeURIComponent(domain)}`);
+  if (!zones?.length) throw new Error(`No Cloudflare zone for ${domain} yet`);
+  for (const hostname of [domain, `www.${domain}`]) {
+    await cf(`/accounts/${CF_ACCOUNT_ID}/workers/domains`, {
+      method: 'PUT',
+      body: JSON.stringify({ environment: 'production', hostname, service: 'brightsite-upload', zone_id: zones[0].id }),
+    });
+  }
+}
+
+// Switches the uploaded site on (or off) in the site worker. Returns { live, url } or { error }.
+export async function setSiteLive(slug, live, domain) {
+  const res = await fetch(`${SITE_WORKER}/publish`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${process.env.SITE_PUBLISH_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slug, live, domain: domain || '' }),
+  });
+  const json = await res.json().catch(() => ({}));
+  return res.ok ? json : { error: json.error || `publish failed (${res.status})`, status: res.status };
+}
+
+// After payment: the plan is active, the domain is connected, and the uploaded site is switched on.
+// Only a site the worker really serves is marked published; if no site has been uploaded yet it
+// waits (needsPublish) and admin.html publishes it on upload.
 export async function markBusinessLive(slug, domain, publishOnPayment) {
   if (!slug) return;
   const supabase = supabaseAdmin();
@@ -27,10 +65,28 @@ export async function markBusinessLive(slug, domain, publishOnPayment) {
     .from('businesses').select('name,data').eq('id', slug).single();
   if (readError) throw readError;
   const previous = row?.data || {};
+
+  let domainConnected = false;
+  let domainError = '';
+  if (domain) {
+    try { await connectDomainToSite(domain); domainConnected = true; }
+    catch (err) { domainError = err.message; console.error(`Connecting ${domain} failed:`, err.message); }
+  }
+
+  let published = !!previous.published;
+  let liveUrl = previous.liveUrl || '';
+  let publishError = '';
+  if (publishOnPayment) {
+    const result = await setSiteLive(slug, true, domainConnected ? domain : '');
+    if (result.error) publishError = result.error;
+    else { published = true; liveUrl = result.url; }
+  }
+
   const nextData = {
     ...previous,
-    ...(domain ? { customDomain: domain, domain, liveUrl: `https://${domain}`, domainRegistered: true } : {}),
-    ...(publishOnPayment ? { published: true, planActive: true, needsPublish: false, manuallyOffline: false } : {}),
+    planActive: true,
+    ...(domain ? { customDomain: domain, domain, domainRegistered: true, domainConnected, domainError } : {}),
+    ...(publishOnPayment ? { published, liveUrl, needsPublish: !published, manuallyOffline: false, publishError } : {}),
   };
   const { error: updateError } = await supabase
     .from('businesses')
@@ -38,10 +94,9 @@ export async function markBusinessLive(slug, domain, publishOnPayment) {
     .eq('id', slug);
   if (updateError) throw updateError;
 
-  if (publishOnPayment) {
+  if (publishOnPayment && published) {
     const businessName = row?.name || previous?.raw?.name || '';
-    const siteUrl = domain ? `https://${domain}` : previous.liveUrl || '';
-    await notifyClientLive(supabase, slug, previous.pushToken, businessName, siteUrl);
+    await notifyClientLive(supabase, slug, previous.pushToken, businessName, liveUrl);
   }
 }
 

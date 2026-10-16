@@ -795,6 +795,15 @@ document.getElementById('uploadConfirm').addEventListener('click', function() {
   });
 });
 
+// Switches a customer's uploaded site on/off in the site worker (serves brightsite.app/s/<slug> and their domain).
+function publishSite(slug, live, domain) {
+  return fetch(UPLOAD_WORKER + '/publish', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + (adminSession && adminSession.access_token ? adminSession.access_token : ''), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slug: slug, live: live, domain: domain || '' })
+  }).then(function(r) { return r.json().then(function(j) { if (!r.ok) throw new Error(j.error || 'Publish failed'); return j; }); });
+}
+
 function patchBusinessAfterUpload(demoUrl, failed, btn, status, progressWrap) {
   fetch(SUPABASE_URL + '/rest/v1/businesses?select=id,name,data&id=eq.' + encodeURIComponent(uploadTargetSlug), {
     headers: authHeaders()
@@ -805,10 +814,22 @@ function patchBusinessAfterUpload(demoUrl, failed, btn, status, progressWrap) {
     var hadPreview = !!(existing.data && (existing.data.demoUploaded || existing.data.demoUrl));
     var patch = { demoUploaded: true, previewSent: true, demoReady: true };
     if (demoUrl) patch.demoUrl = demoUrl;
-    var newData = Object.assign({}, existing.data || {}, patch);
+    var d0 = existing.data || {};
+    // Paid customers waiting on their site (or already live) go live as soon as it's uploaded.
+    var shouldPublish = d0.planActive && !d0.manuallyOffline && (d0.needsPublish || d0.published);
+    var publishing = shouldPublish
+      ? publishSite(uploadTargetSlug, true, d0.domainConnected ? d0.customDomain : '').then(function(res) {
+          Object.assign(patch, { published: true, needsPublish: false, liveUrl: res.url, publishError: '' });
+          return true;
+        }).catch(function(err) { patch.publishError = err.message; return false; })
+      : Promise.resolve(false);
+    return publishing.then(function(wentLive) {
+    var newData = Object.assign({}, d0, patch);
     var firstName = ((existing.data && existing.data.raw && existing.data.raw.fullName) || '').trim().split(' ')[0] || 'there';
     var businessName = (existing.name || (existing.data && existing.data.raw && existing.data.raw.name) || '').trim();
-    var notification = hadPreview
+    var notification = wentLive && !d0.published
+      ? ('🎉 Your website is live at ' + patch.liveUrl + '! Share it with everyone.')
+      : hadPreview
       ? ('We\'ve updated your preview for ' + (businessName || 'your website') + ' — please take another look.')
       : ('Hey ' + firstName + ', I\'ve finished the preview for your ' + (businessName || 'website') + '. Let me know if any changes, if not feel free to go ahead and make it live!');
     return fetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(uploadTargetSlug), {
@@ -817,6 +838,7 @@ function patchBusinessAfterUpload(demoUrl, failed, btn, status, progressWrap) {
       body: JSON.stringify({ data: newData })
     }).then(function(response) {
       return { response: response, notification: notification };
+    });
     });
   })
   .then(function(result) {
@@ -865,15 +887,18 @@ document.getElementById('goLiveConfirm').addEventListener('click', function() {
   .then(function(r) { return r.json(); })
   .then(function(rows) {
     var existing = (rows && rows[0]) || {};
-    var patch = { published: true };
-    if (liveUrl) patch.liveUrl = liveUrl;
-    var newData = Object.assign({}, existing.data || {}, patch);
+    var d0 = existing.data || {};
+    return publishSite(goLiveTargetSlug, true, d0.domainConnected ? d0.customDomain : '').then(function(res) {
+    var patch = { published: true, needsPublish: false, manuallyOffline: false, publishError: '', liveUrl: liveUrl || res.url };
+    var newData = Object.assign({}, d0, patch);
     return fetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(goLiveTargetSlug), {
       method: 'PATCH',
       headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
       body: JSON.stringify({ data: newData, updated_at: new Date().toISOString() })
     }).then(function(response) {
+      existing.data = newData;
       return { response: response, existing: existing };
+    });
     });
   })
   .then(function(result) {
@@ -882,7 +907,7 @@ document.getElementById('goLiveConfirm').addEventListener('click', function() {
     btn.textContent = 'Mark as live ✓'; btn.disabled = false;
     if (r.ok) {
       var businessName = existing.name || (existing.data && existing.data.raw && existing.data.raw.name) || '';
-      var siteUrl = liveUrl || (existing.data && existing.data.liveUrl) || '';
+      var siteUrl = (existing.data && existing.data.liveUrl) || liveUrl || '';
       var liveMsg = '🎉 Your website is live' + (siteUrl ? ' at ' + siteUrl : '') + '! Share it with everyone.';
       sendBusinessMessage(goLiveTargetSlug, liveMsg);
       sendPushNotification(existing.data && existing.data.pushToken, businessName ? businessName + ' is live! 🎉' : 'Your website is live! 🎉', siteUrl ? 'Tap to open ' + siteUrl : 'Your website is now live and ready to share.');
@@ -894,9 +919,9 @@ document.getElementById('goLiveConfirm').addEventListener('click', function() {
       status.textContent = 'Save failed.'; status.className = 'modal-status err';
     }
   })
-  .catch(function() {
+  .catch(function(err) {
     btn.textContent = 'Mark as live ✓'; btn.disabled = false;
-    status.textContent = 'Network error.'; status.className = 'modal-status err';
+    status.textContent = (err && err.message) || 'Network error.'; status.className = 'modal-status err';
   });
 });
 
