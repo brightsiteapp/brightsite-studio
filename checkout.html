@@ -112,6 +112,10 @@
   .success-icon { width:60px;height:60px;border-radius:16px;background:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto 14px; }
   .success-title { font-size: 18px; font-weight: 700; color: #15803D; margin-bottom: 6px; }
   .success-body { font-size: 14px; color: #166534; }
+  @media (min-width: 900px) {
+    .container { max-width: 1040px; padding: 40px 32px 64px; display: grid; grid-template-columns: 340px 1fr; gap: 28px; align-items: start; }
+    .side { position: sticky; top: 92px; }
+  }
 </style>
 <script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script><script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -124,6 +128,7 @@
 </div>
 
 <div class="container">
+  <aside class="side">
   <div class="plan-summary">
     <div class="plan-summary-label">Your plan</div>
     <div class="plan-row">
@@ -139,6 +144,8 @@
     </div>
   </div>
 
+  </aside>
+  <main class="pay">
   <div id="error-msg"></div>
 
   <div id="loading">
@@ -153,6 +160,7 @@
     <div class="success-title">Payment successful!</div>
     <div class="success-body">Your plan is confirmed. We'll be in touch shortly to get your site set up.</div>
   </div>
+  </main>
 </div>
 
 <script src="https://js.stripe.com/v3/"></script>
