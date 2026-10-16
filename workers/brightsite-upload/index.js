@@ -3,6 +3,7 @@
 //
 // Routes (all require a valid Supabase JWT in Authorization header):
 //   PUT  /upload/:slug/*    — store a file, return { url }
+//   POST /upload            — same, with the key ("slug/file") in the x-file-name header (app + dashboard)
 //   DELETE /delete/:slug/*  — delete a file
 //   GET  /list/:slug/*      — list objects under a prefix, return [{ name, size }]
 //
@@ -24,8 +25,8 @@ function corsHeaders(origin) {
   const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
     'Access-Control-Allow-Origin': allowed,
-    'Access-Control-Allow-Methods': 'GET, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Authorization, Content-Type, x-slug, x-admin',
+    'Access-Control-Allow-Methods': 'GET, PUT, POST, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Authorization, Content-Type, x-slug, x-admin, x-file-name',
     'Access-Control-Max-Age': '86400'
   };
 }
@@ -131,6 +132,16 @@ export default {
         return json({ url: `${R2_PUBLIC_URL}/${key}`, path: relPath }, 200, origin);
       }
 
+      // POST /upload — key comes from x-file-name as "slug/file"
+      if (request.method === 'POST' && path === '/upload') {
+        const key = (request.headers.get('x-file-name') || '').replace(/^\/+/, '');
+        const [slug, ...rest] = key.split('/');
+        if (!slug || !rest.length || key.includes('..')) return json({ error: 'Bad file name' }, 400, origin);
+        await verifyAuth(request, slug);
+        await env.MEDIA.put(key, await request.arrayBuffer(), { httpMetadata: { contentType: contentTypeFor(key) } });
+        return json({ key, url: `${R2_PUBLIC_URL}/${key}` }, 200, origin);
+      }
+
       // DELETE /delete/:slug/* — remove a file
       const deleteMatch = path.match(/^\/delete\/([^/]+)\/(.+)$/);
       if (request.method === 'DELETE' && deleteMatch) {
@@ -165,6 +176,24 @@ export default {
       const status = err.message === 'Unauthorized' || err.message === 'Missing token' ? 401
         : err.message === 'Forbidden' ? 403 : 500;
       return json({ error: err.message }, status, origin);
+    }
+  },
+
+  // Daily: delete photos from signups left as unsent drafts for 30+ days. The database clears
+  // their photo links and returns their slugs; only top-level logo/hero/gallery files are removed.
+  async scheduled(event, env) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/stale_draft_media`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_key: env.CLEANUP_KEY }),
+    });
+    if (!res.ok) { console.error('stale_draft_media failed', res.status, await res.text()); return; }
+    const slugs = await res.json();
+    for (const slug of slugs) {
+      const listed = await env.MEDIA.list({ prefix: `${slug}/` });
+      const photos = listed.objects.map(o => o.key).filter(k => /^[^/]+\/(logo|hero|gallery)[^/]*$/.test(k));
+      if (photos.length) await env.MEDIA.delete(photos);
+      console.log(`cleaned ${photos.length} photos for draft ${slug}`);
     }
   }
 };

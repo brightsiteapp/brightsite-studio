@@ -1977,6 +1977,11 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     for (let attempt = 0; attempt < 4; attempt++) {
       const chosenSlug = attempt === 0 ? baseSlug : `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
       try {
+        // the upload worker only accepts photos for a business this user already owns, so create the row first
+        if (!slug) {
+          const remote = (u?: string) => (u && /^https?:\/\//.test(u) ? u : null);
+          await saveBusiness(chosenSlug, { raw: { ...buildRaw(remote(media.logo), remote(media.hero), media.gallery.map(remote)), draft: true } }, authed);
+        }
         const [logoImage, heroImage, ...galleryImages] = await Promise.all([
           uploadMediaToR2(authed.access_token, chosenSlug, 'logo', media.logo),
           uploadMediaToR2(authed.access_token, chosenSlug, 'hero', media.hero),

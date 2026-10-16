@@ -3013,17 +3013,17 @@
     var uploadTasks = [];
     if (pendingUploads.logo) {
       var logoFile = pendingUploads.logo;
-      uploadTasks.push(uploadMedia(logoFile, 'logo').then(function(url) { raw.logoImage = url; pendingUploads.logo = null; media.logoImage = url; renderMediaThumbs(); }));
+      uploadTasks.push(uploadMedia(logoFile, 'logo').then(function(url) { if (!url) return; raw.logoImage = url; pendingUploads.logo = null; media.logoImage = url; renderMediaThumbs(); }));
     }
     if (pendingUploads.hero) {
       var heroFile = pendingUploads.hero;
-      uploadTasks.push(uploadMedia(heroFile, 'hero').then(function(url) { raw.heroImage = url; pendingUploads.hero = null; media.heroImage = url; renderMediaThumbs(); }));
+      uploadTasks.push(uploadMedia(heroFile, 'hero').then(function(url) { if (!url) return; raw.heroImage = url; pendingUploads.hero = null; media.heroImage = url; renderMediaThumbs(); }));
     }
     if (pendingUploads.gallery.length) {
       var galleryFiles = pendingUploads.gallery.slice();
       pendingUploads.gallery = [];
       galleryFiles.forEach(function(f) {
-        uploadTasks.push(uploadMedia(f, 'gallery').then(function(url) { media.gallery.push(url); raw.gallery = media.gallery.slice(); renderGallery(); }));
+        uploadTasks.push(uploadMedia(f, 'gallery').then(function(url) { if (!url) return; media.gallery.push(url); raw.gallery = media.gallery.slice(); renderGallery(); }));
       });
     }
     raw.gallery = media.gallery.slice();
@@ -3051,7 +3051,11 @@
       method: 'POST',
       headers: { 'x-file-name': key, 'Content-Type': file.type, Authorization: 'Bearer ' + session.access_token },
       body: file
-    }).then(function(r) { return r.json(); }).then(function(d) { return R2_PUBLIC_URL + '/' + (d.key || key); });
+    }).then(function(r) {
+      if (!r.ok) throw new Error('Upload failed (' + r.status + ')');
+      return r.json();
+    }).then(function(d) { return R2_PUBLIC_URL + '/' + (d.key || key); })
+      .catch(function(err) { console.warn('[upload]', err); return null; }); // stays pending and retries on the next save
   }
 
   // Wire field change listeners for auto-save
