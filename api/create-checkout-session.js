@@ -47,7 +47,10 @@ export default async function handler(req, res) {
         quantity: 1,
       });
       if (coveredPence > 0) {
-        const coupon = await stripe.coupons.create({ amount_off: coveredPence, currency: 'gbp', duration: 'once', name: 'Domain included with your plan', max_redemptions: 1 });
+        // One reusable coupon per amount, so loading checkout doesn't create a new coupon each time.
+        const couponId = `domain-included-${coveredPence}`;
+        const coupon = await stripe.coupons.retrieve(couponId).catch(() =>
+          stripe.coupons.create({ id: couponId, amount_off: coveredPence, currency: 'gbp', duration: 'once', name: 'Domain included with your plan' }));
         discounts = [{ coupon: coupon.id }];
       }
     }
