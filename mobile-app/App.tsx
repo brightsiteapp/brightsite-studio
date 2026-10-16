@@ -1163,7 +1163,7 @@ function MessageThread({ session, slug, viewer, otherName, placeholder, intro }:
   </>;
 }
 
-function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, onEdit, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, onPaid, saveError, planAnnual, planPro, media, isPaying, buildChoice, session, slug, onAdminBack, onDomainChosen }: any) {
+function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, onEdit, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, onPaid, saveError, planAnnual, planPro, media, isPaying, buildChoice, session, slug, onAdminBack, onDomainChosen, infoComplete, onSendToDesigner }: any) {
   const [previewMode, setPreviewMode] = useState<'mobile' | 'desktop'>('mobile');
   const [showPassword, setShowPassword] = useState(false);
   const [showEditMenu, setShowEditMenu] = useState(false);
@@ -1282,7 +1282,8 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
   }, [slug]);
 
   const isLive = websiteStatus === 'live';
-  const isBuilding = websiteStatus === 'building';
+  const isTodo = websiteStatus === 'todo';
+  const isBuilding = websiteStatus === 'building' || isTodo;
   const isReady = websiteStatus === 'ready';
   const isPublishing = websiteStatus === 'publishing';
   const isReadyRef = useRef(isReady || isPublishing);
@@ -1307,6 +1308,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
     return () => loop.stop();
   }, [isPublishing]);
   const status = isLive ? { label: 'Live', color: C.success, bg: C.successSoft }
+    : isTodo ? { label: 'Add your info', color: C.warning, bg: C.warningSoft }
     : isBuilding ? { label: 'Being built', color: C.warning, bg: C.warningSoft }
     : isPublishing ? { label: 'Publishing...', color: C.primary, bg: C.primarySoft }
     : isPaying ? { label: 'Offline', color: C.danger, bg: C.dangerSoft }
@@ -1374,7 +1376,12 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
                       <Ionicons name="rocket-outline" size={13} color="#fff" />
                       <Text style={s.makeLiveBtnText}>Make Live</Text>
                     </Pressable>
-              : <View />}
+              : isTodo
+                ? <Pressable disabled={!infoComplete} onPress={() => onSendToDesigner?.()} style={({ pressed }) => [s.makeLiveBtn, !infoComplete && { opacity: .45 }, pressed && s.pressed]}>
+                    <Ionicons name="paper-plane-outline" size={13} color="#fff" />
+                    <Text style={s.makeLiveBtnText}>Send to designer</Text>
+                  </Pressable>
+                : <View />}
             {!isBuilding && <View style={{ position: 'absolute', left: 0, right: 0, alignItems: 'center', pointerEvents: 'box-none' as any }}><DeviceToggle mode={previewMode} setMode={setPreviewMode} /></View>}
             <View>
               <Pressable onPress={() => isBuilding ? onEditInfo?.() : setShowEditMenu(v => !v)} style={({ pressed }) => [s.dashboardEdit, pressed && s.pressed]}>
@@ -1391,9 +1398,9 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           {isBuilding
             ? <View style={s.buildingWrap}>
               <View style={[s.phoneFrame, s.buildingPhone]}>
-                <Animated.View style={[s.buildingGlow, { opacity: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.35, 1] }), transform: [{ scale: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.92, 1] }) }] }]}><View style={s.buildingGlowInner}><Image source={require('./assets/brightsite-b-white.png')} resizeMode="contain" style={s.buildingLogo} /></View></Animated.View>
-                <Text style={[s.buildingText, { color: '#fff', marginTop: 28 }]}>Building your preview</Text>
-                <Text style={[s.buildingSub, { color: 'rgba(255,255,255,.6)' }]}>We’ll send you a notification as soon as it’s ready to review.</Text>
+                <Animated.View style={[s.buildingGlow, isTodo && s.todoGlow, { opacity: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.35, 1] }), transform: [{ scale: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.92, 1] }) }] }]}><View style={[s.buildingGlowInner, isTodo && s.todoGlowInner]}><Image source={require('./assets/brightsite-b-white.png')} resizeMode="contain" style={s.buildingLogo} /></View></Animated.View>
+                <Text style={[s.buildingText, { color: '#fff', marginTop: 28 }]}>{isTodo ? 'Let’s build your website' : 'Building your preview'}</Text>
+                <Text style={[s.buildingSub, { color: 'rgba(255,255,255,.6)' }]}>{isTodo ? 'Fill in your info cards. The more you add, the better your site. Then send it to your designer.' : 'We’ll send you a notification as soon as it’s ready to review.'}</Text>
               </View>
             </View>
             : <>
@@ -1582,7 +1589,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [editingInfo, setEditingInfo] = useState(false);
   const [savingInfo, setSavingInfo] = useState(false);
   const [buildChoice, setBuildChoice] = useState<'designer' | 'template' | null>(null);
-  const [websiteStatus, setWebsiteStatus] = useState<'building' | 'ready' | 'publishing' | 'live'>('building');
+  const [websiteStatus, setWebsiteStatus] = useState<'todo' | 'building' | 'ready' | 'publishing' | 'live'>('building');
   const [session, setSession] = useState<any>(null);
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, fresh) => { if (fresh) setSession(fresh); });
@@ -1660,8 +1667,9 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     const isDesigner = raw.buildChoice === 'designer' || /Build choice: designer/.test(raw.notes || '');
     setBuildChoice(isDesigner ? 'designer' : 'template');
     const hasPreview = !!(record.demoUrl || record.previewUrl || record.liveUrl);
-    setWebsiteStatus(record.published ? 'live' : record.needsPublish && !record.published ? 'publishing' : isDesigner && !hasPreview ? 'building' : 'ready');
-    if (slugOf(record)) checkSiteLive(slugOf(record), record, isDesigner);
+    const todo = !hasPreview && !record.published && !(raw.sentToDesigner || raw.draft === false);
+    setWebsiteStatus(todo ? 'todo' : record.published ? 'live' : record.needsPublish && !record.published ? 'publishing' : isDesigner && !hasPreview ? 'building' : 'ready');
+    if (slugOf(record) && !todo) checkSiteLive(slugOf(record), record, isDesigner);
   };
 
   // The pill only says Live while the site worker is really serving the site.
@@ -2071,7 +2079,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           uploadMediaToR2(authed.access_token, chosenSlug, 'hero', media.hero),
           ...media.gallery.map((uri, i) => uploadMediaToR2(authed.access_token, chosenSlug, `gallery_${i}`, uri)),
         ]);
-        const raw = { ...buildRaw(logoImage, heroImage, galleryImages), draft, draftIndex: draft ? index : undefined };
+        const raw = { ...buildRaw(logoImage, heroImage, galleryImages), draft, draftIndex: draft ? index : undefined, ...(draft || editingInfo ? {} : { sentToDesigner: true }) };
         await saveBusiness(chosenSlug, { raw }, authed);
         setSlug(chosenSlug);
         // swap each uploaded photo's phone copy for its Cloudflare URL without touching photos added meanwhile
@@ -2087,7 +2095,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           // Register push token and send welcome message via server
           const pushToken = await registerPushToken();
           if (pushToken) savePushToken(authed.access_token, chosenSlug, pushToken).catch(() => {});
-          fetch('https://brightsite.app/api/send-welcome', {
+          fetch('https://api.brightsite.app/api/send-welcome', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authed.access_token}` },
             body: JSON.stringify({ slug: chosenSlug, fullName: data.fullName, buildChoice: choice, pushToken: pushToken || undefined }),
@@ -2142,7 +2150,24 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     return () => clearTimeout(t);
   }, [editingInfo, data, hours, services, reviewsList, offers, contactForm]);
 
-  const sendToDesigner = () => { void syncOnboardingToBackend('designer'); setBuildChoice('designer'); setAppScreen('loading'); };
+  const sendToDesigner = () => { void syncOnboardingToBackend('designer'); setBuildChoice('designer'); setWebsiteStatus('building'); setAppScreen('loading'); };
+
+  // Details filled in on the website: send them from the dashboard without re-running the cards.
+  const sendFromDashboard = async () => {
+    if (!slug || !session) return;
+    try {
+      await saveBusiness(slug, { raw: { draft: false, sentToDesigner: true, buildChoice: 'designer' } });
+      setBuildChoice('designer');
+      setWebsiteStatus('building');
+      fetch('https://api.brightsite.app/api/send-welcome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ slug, fullName: data.fullName, buildChoice: 'designer' }),
+      }).catch(() => {});
+    } catch { Alert.alert('Something went wrong', 'We couldn’t send your details. Please try again.'); }
+  };
+  const SECTION_KEYS = ['business', 'details', 'hours', 'prices', 'media', 'extras', 'reviews'];
+  const infoComplete = SECTION_KEYS.every(k => businessRecord.current.raw?.sectionDoneClicked?.[k]);
 
   // runs after setData has committed so the sync sees the pasted links
   useEffect(() => {
@@ -2539,7 +2564,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   }
 
   if (appScreen === 'dashboard') return <FadeIn>
-    <DashboardHome onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean, isPro: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true }; setPlanAnnual(isAnnual); setPlanPro(isPro); setWebsiteStatus('publishing'); }} onEditInfo={() => { if (adminViewingBusiness) return; setEditingInfo(true); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} saveError={saveError} planAnnual={planAnnual} planPro={planPro} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onEdit={() => { setEditFrom('dashboard'); setAppScreen('design-editor'); }} onDomainChosen={(d: string, sfx: string) => { setDomain(d); setSuffix(sfx); setDomainReady(true); }} />
+    <DashboardHome onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean, isPro: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true }; setPlanAnnual(isAnnual); setPlanPro(isPro); setWebsiteStatus('publishing'); }} infoComplete={infoComplete} onSendToDesigner={sendFromDashboard} onEditInfo={() => { if (adminViewingBusiness) return; setEditingInfo(websiteStatus !== 'todo'); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} saveError={saveError} planAnnual={planAnnual} planPro={planPro} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onEdit={() => { setEditFrom('dashboard'); setAppScreen('design-editor'); }} onDomainChosen={(d: string, sfx: string) => { setDomain(d); setSuffix(sfx); setDomainReady(true); }} />
   </FadeIn>;
 
   if (appScreen === 'design-editor') return <FadeIn><DesignEditorFullscreen palette={palette} setPalette={setPalette} font={font} setFont={setFont} siteTexts={siteTexts} setSiteTexts={setSiteTexts} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} data={data} services={services} hours={hours} contactForm={contactForm} onBack={() => {
@@ -2836,6 +2861,8 @@ const s = StyleSheet.create({
   buildingLogo: { width: 64, height: 70 },
   buildingGlow: { shadowColor: '#3B82F6', shadowOpacity: 1, shadowRadius: 22, shadowOffset: { width: 0, height: 0 } },
   buildingGlowInner: { shadowColor: '#7FB2FF', shadowOpacity: 1, shadowRadius: 7, shadowOffset: { width: 0, height: 0 } },
+  todoGlow: { shadowColor: '#F59E0B' },
+  todoGlowInner: { shadowColor: '#FFD27F' },
   buildingText: { fontFamily: FONT, fontSize: 18, fontWeight: '800', color: C.ink },
   buildingSub: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: C.inkSoft, textAlign: 'center', marginTop: 6, paddingHorizontal: 24 },
   previewOpenBadge: { position: 'absolute', bottom: 12, right: 12, flexDirection: 'row', gap: 6, alignItems: 'center', backgroundColor: 'rgba(0,0,0,.6)', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999 },
