@@ -67,6 +67,7 @@ export default async function handler(req, res) {
         metadata,
         subscription_data: { metadata },
         discounts,
+        allow_promotion_codes: discounts ? undefined : true,
       });
       return res.status(200).json({ url: session.url });
     }
@@ -83,6 +84,8 @@ export default async function handler(req, res) {
       metadata,
       subscription_data: { metadata },
       discounts,
+      // Stripe allows either a fixed discount or a promo code box, not both.
+      allow_promotion_codes: discounts ? undefined : true,
     });
 
     res.status(200).json({ clientSecret: session.client_secret });
