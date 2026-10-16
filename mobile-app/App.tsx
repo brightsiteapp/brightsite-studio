@@ -1696,7 +1696,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       .limit(10);
     if (error) throw error;
     const realRow = rows?.find((row: any) => !(row.data && row.data.stub)) || rows?.[0];
-    if (realRow && !(realRow.data && realRow.data.stub)) {
+    const serverDraft = realRow?.data?.raw?.draft ? realRow : null;
+    if (realRow && !(realRow.data && realRow.data.stub) && !serverDraft) {
       setSlug(realRow.id);
       hydrateFromRecord(realRow.data || {}, email);
       registerPushToken().then(token => {
@@ -1706,7 +1707,12 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       setAppScreen('dashboard');
       return;
     }
-    // No business record — restore any saved draft
+    // Unsent signup saved on the server: load it, then let a newer on-phone draft (with local photos) win.
+    if (serverDraft) {
+      setSlug(serverDraft.id);
+      hydrateFromRecord(serverDraft.data, email);
+    }
+    // No sent business record — restore any saved draft
     try {
       const raw = await AsyncStorage.getItem(DRAFT_KEY);
       if (raw) {
@@ -1728,6 +1734,13 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         }
       }
     } catch {}
+    if (serverDraft) {
+      const resumeAt = Math.min(Math.max(1, serverDraft.data.raw.draftIndex || 1), steps.length - 1);
+      setIndex(resumeAt);
+      motion.setValue(resumeAt * CARD_TRAVEL);
+      setAppScreen('onboarding');
+      return;
+    }
     setIndex(1);
     motion.setValue(CARD_TRAVEL);
     setChooseMode('pick');
@@ -1910,12 +1923,14 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     transitionTo(next);
   };
 
-  const syncOnboardingToBackend = async (choice: 'designer' | 'template') => {
-    if (!session?.user?.id) return;
+  // draft: saves progress mid-signup without uploading photos, notifying anyone, or clearing the local draft
+  const syncOnboardingToBackend = async (choice: 'designer' | 'template', opts: { draft?: boolean } = {}): Promise<boolean> => {
+    if (!session?.user?.id) return false;
+    const draft = !!opts.draft;
     // the stored session can be hours old; getSession refreshes an expired token first
     const { data: fresh } = await supabase.auth.getSession();
     const authed = fresh.session || session;
-    setSaveError('');
+    if (!draft) setSaveError('');
     const baseSlug = slug || slugify(domainReady ? domain : data.businessName) || `site-${session.user.id.slice(0, 8)}`;
     const hoursStructured = hours.map(h => ({ day: h.label, open: h.enabled, from: h.start, to: h.end }));
     const groups: Record<string, { name: string; items: [string, string, string][] }> = {};
@@ -1962,14 +1977,16 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     for (let attempt = 0; attempt < 4; attempt++) {
       const chosenSlug = attempt === 0 ? baseSlug : `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
       try {
+        const upload = (type: string, uri?: string) => draft ? Promise.resolve(uri && /^https?:\/\//.test(uri) ? uri : null) : uploadMediaToR2(authed.access_token, chosenSlug, type, uri);
         const [logoImage, heroImage, ...galleryImages] = await Promise.all([
-          uploadMediaToR2(authed.access_token, chosenSlug, 'logo', media.logo),
-          uploadMediaToR2(authed.access_token, chosenSlug, 'hero', media.hero),
-          ...media.gallery.map((uri, i) => uploadMediaToR2(authed.access_token, chosenSlug, `gallery_${i}`, uri)),
+          upload('logo', media.logo),
+          upload('hero', media.hero),
+          ...media.gallery.map((uri, i) => upload(`gallery_${i}`, uri)),
         ]);
-        const raw = buildRaw(logoImage, heroImage, galleryImages);
+        const raw = { ...buildRaw(logoImage, heroImage, galleryImages), draft, draftIndex: draft ? index : undefined };
         await saveBusiness(chosenSlug, { raw }, authed);
         setSlug(chosenSlug);
+        if (draft) return true;
         setMedia({ logo: raw.logoImage, hero: raw.heroImage, gallery: raw.gallery });
         const failedUploads = [media.logo && !logoImage, media.hero && !heroImage, ...media.gallery.map((u, i) => u && !galleryImages[i])].filter(Boolean).length;
         if (failedUploads) setSaveError(`${failedUploads} photo${failedUploads > 1 ? 's' : ''} couldn’t upload. You can add them again from Edit.`);
@@ -1985,16 +2002,38 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           }).catch(() => {});
         }
         AsyncStorage.removeItem(DRAFT_KEY).catch(() => {});
-        return;
+        return true;
       } catch (err: any) {
         if (err?.conflict && !slug) continue;
         console.error('[sync] could not save business', err);
-        setSaveError('We couldn’t save your details. Check your connection — we’ll try again when you tap Save.');
-        return;
+        if (!draft) setSaveError('We couldn’t save your details. Check your connection — we’ll try again when you tap Save.');
+        return false;
       }
     }
-    setSaveError('We couldn’t save your details. Please try again.');
+    if (!draft) setSaveError('We couldn’t save your details. Please try again.');
+    return false;
   };
+
+  // Mid-signup, save progress to the server whenever they change card, so it survives a new phone or reinstall.
+  const draftPill = useRef(new Animated.Value(0)).current;
+  const draftBusy = useRef(false);
+  const lastDraftIndex = useRef(index);
+  useEffect(() => {
+    const moved = lastDraftIndex.current !== index;
+    lastDraftIndex.current = index;
+    if (!moved || !authSession || appScreen !== 'onboarding' || editingInfo || index < 1 || !data.businessName.trim() || draftBusy.current) return;
+    draftBusy.current = true;
+    void syncOnboardingToBackend(buildChoice || 'designer', { draft: true }).then(ok => {
+      draftBusy.current = false;
+      if (!ok) return;
+      draftPill.setValue(0);
+      Animated.sequence([
+        Animated.timing(draftPill, { toValue: 1, duration: 180, useNativeDriver: true }),
+        Animated.delay(900),
+        Animated.timing(draftPill, { toValue: 0, duration: 320, useNativeDriver: true }),
+      ]).start();
+    });
+  }, [index]);
 
   const autoSaveBusy = useRef(false);
   const autoSaveSkip = useRef(true);
@@ -2512,6 +2551,9 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         </View>;
       })}</Animated.View>
     </View>
+    <Animated.View pointerEvents="none" style={[s.savedPill, { opacity: draftPill, transform: [{ translateY: draftPill.interpolate({ inputRange: [0, 1], outputRange: [-6, 0] }) }] }]}>
+      <Ionicons name="checkmark-circle" size={14} color="#fff" /><Text style={s.savedPillText}>All changes saved</Text>
+    </Animated.View>
     <ItemSheet open={typeSheet} title="Your business type" fields={[{ key: 'type', placeholder: 'e.g. Dog grooming' }]}
       initial={data.category && !BUSINESS_TYPES.includes(data.category) ? { type: data.category } : null}
       onSave={item => { setData(d => ({ ...d, category: item.type.trim() })); setTypeSheet(false); }} onClose={() => setTypeSheet(false)} />
@@ -2767,6 +2809,8 @@ const s = StyleSheet.create({
   listRow: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 8, borderRadius: 14, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line },
   gridRow: { flexDirection: 'row', gap: 6 },
   gridCell: { minHeight: 44, borderRadius: 11, paddingHorizontal: 10, fontFamily: FONT, fontSize: 14, color: C.ink, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line },
+  savedPill: { position: 'absolute', top: Platform.OS === 'ios' ? 58 : 24, alignSelf: 'center', zIndex: 200, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(28,40,50,.82)' },
+  savedPillText: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: '#fff' },
   listRowSub: { fontFamily: FONT, fontSize: 13, color: C.inkMuted, marginTop: 2 },
   sheetDelete: { alignItems: 'center', paddingTop: 14 },
   sheetDeleteText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.danger },
