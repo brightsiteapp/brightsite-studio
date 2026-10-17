@@ -1603,6 +1603,7 @@
       updatePreviewCard();
       updateWebsiteAppHeader();
       showMessagesTab();
+      sendAllDetailsReceivedMessage();
     }).catch(function() {
       raw.draft = true;
       raw.sentToDesigner = false;
@@ -2148,7 +2149,6 @@
     var allDone = Object.values(complete).filter(Boolean).length >= Object.keys(complete).length;
     if (allDone && !_prevAllDone) {
       sendStageEmail('all_details_complete');
-      sendAllDetailsReceivedMessage();
     }
     _prevAllDone = allDone;
     updatePreviewCard();
