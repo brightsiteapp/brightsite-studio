@@ -595,6 +595,11 @@
     background:url(../img/brightsite-b-white.png) center/contain no-repeat !important;
     filter:drop-shadow(0 0 7px #7FB2FF) drop-shadow(0 0 22px #3B82F6);animation:bsBPulse 2.8s ease-in-out infinite !important}
   @keyframes bsBPulse{0%,100%{opacity:.35;transform:scale(.92)}50%{opacity:1;transform:scale(1)}}
+  .preview-placeholder::before{z-index:1;transition:filter .9s ease}
+  .preview-placeholder > *{position:relative;z-index:3}
+  .preview-placeholder > canvas.bs-fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+  .preview-placeholder > canvas.bs-fx.front{z-index:2}
+  .preview-placeholder.bs-sending::before{filter:drop-shadow(0 0 3px rgba(255,255,255,.35)) !important;animation:none !important;opacity:.9}
   .preview-placeholder-biz{display:none !important}
   .preview-placeholder .preview-placeholder-title{background:none !important;-webkit-text-fill-color:#fff !important;color:#fff;animation:none !important;filter:none !important;font-size:18px !important;margin-bottom:6px !important}
   .preview-placeholder .preview-placeholder-sub{color:rgba(255,255,255,.6) !important;font-weight:400 !important;font-size:14px;max-width:240px}
@@ -1578,6 +1583,82 @@
 
   document.getElementById('draftSendBtn').addEventListener('click', function() { sendToDesigner(this); });
 
+  // Send to designer: the amber glow breaks into particles that swirl round the B and settle in blue
+  function playSendParticles(done) {
+    var els = ['deskPreviewPlaceholder', 'deskPreviewPlaceholderMob', 'mobilePreviewCard', 'mobilePreviewCardMob']
+      .map(function(id) { return document.getElementById(id); })
+      .filter(function(el) { return el && el.offsetWidth && getComputedStyle(el).display !== 'none'; });
+    if (!els.length || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) { done(); return; }
+    var DUR = 2600, dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var AMBER = [[255, 210, 127], [245, 158, 11]], BLUE = [[127, 178, 255], [59, 130, 246]];
+    function mix(a, b, t) { return [0, 1, 2].map(function(i) { return Math.round(a[i] + (b[i] - a[i]) * t); }); }
+    function ease(t) { return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+    var scenes = els.map(function(el) {
+      el.classList.add('bs-sending');
+      var back = document.createElement('canvas'), front = document.createElement('canvas');
+      back.className = 'bs-fx'; front.className = 'bs-fx front';
+      el.insertBefore(back, el.firstChild); el.appendChild(front);
+      var w = el.clientWidth, h = el.clientHeight;
+      [back, front].forEach(function(c) { c.width = w * dpr; c.height = h * dpr; });
+      var title = el.querySelector('.preview-placeholder-title');
+      var r = el.getBoundingClientRect(), tr = title ? title.getBoundingClientRect() : null;
+      var cy = tr && tr.height ? tr.top - r.top - 28 - 35 : h / 2, cx = w / 2;
+      var ps = [];
+      for (var i = 0; i < 320; i++) {
+        var a0 = Math.random() * Math.PI * 2;
+        ps.push({
+          a0: a0,
+          spin: (2.2 + Math.random() * 2.2) * Math.PI,        // total turns over the whole run
+          r0: 26 + Math.random() * 18,                          // starts in the halo
+          rMax: 62 + Math.random() * 60,                        // widest orbit mid-flight
+          tilt: .28 + Math.random() * .3,                       // squashed ellipse: front/back depth
+          lift: (Math.random() - .5) * 24,
+          size: .5 + Math.pow(Math.random(), 3) * 1.9,
+          delay: Math.random() * .14,
+          shade: Math.random()
+        });
+      }
+      return { el: el, back: back.getContext('2d'), front: front.getContext('2d'), canvases: [back, front], ps: ps, cx: cx, cy: cy, w: w, h: h };
+    });
+    var start = performance.now();
+    function frame(now) {
+      var t = Math.min(1, (now - start) / DUR);
+      scenes.forEach(function(sc) {
+        [sc.back, sc.front].forEach(function(ctx) {
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          ctx.clearRect(0, 0, sc.w, sc.h);
+          ctx.globalCompositeOperation = 'lighter';
+        });
+        sc.ps.forEach(function(p) {
+          var lt = Math.max(0, Math.min(1, (t - p.delay) / (1 - p.delay)));
+          var e = ease(lt);
+          var ang = p.a0 + p.spin * e;
+          var swell = Math.sin(Math.PI * e);
+          var rad = p.r0 + (p.rMax - p.r0) * swell - 14 * e * e;
+          var x = sc.cx + Math.cos(ang) * rad;
+          var depth = Math.sin(ang);                            // >0 = in front of the B
+          var y = sc.cy + depth * rad * p.tilt + p.lift * swell;
+          var fadeIn = Math.min(1, lt / .12), fadeOut = 1 - Math.max(0, (lt - .82) / .18);
+          var alpha = fadeIn * fadeOut * (.45 + .55 * (depth + 1) / 2);
+          var colT = Math.max(0, Math.min(1, (e - .25) / .5));
+          var c = mix(mix(AMBER[0], AMBER[1], p.shade), mix(BLUE[0], BLUE[1], p.shade), colT);
+          var size = p.size * (.75 + .5 * (depth + 1) / 2);
+          var ctx = depth > 0 ? sc.front : sc.back;
+          ctx.fillStyle = 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + (alpha * .18).toFixed(3) + ')';
+          ctx.beginPath(); ctx.arc(x, y, size * 3.2, 0, 6.2832); ctx.fill();
+          ctx.fillStyle = 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + alpha.toFixed(3) + ')';
+          ctx.beginPath(); ctx.arc(x, y, size, 0, 6.2832); ctx.fill();
+        });
+        // B takes on the blue glow as the particles settle
+        if (t > .72 && sc.el.classList.contains('bs-sending')) { sc.el.dataset.state = 'building'; sc.el.classList.remove('bs-sending'); }
+      });
+      if (t < 1) { requestAnimationFrame(frame); return; }
+      scenes.forEach(function(sc) { sc.canvases.forEach(function(c) { c.remove(); }); sc.el.classList.remove('bs-sending'); });
+      done();
+    }
+    requestAnimationFrame(frame);
+  }
+
   function sendToDesigner(btn) {
     var raw = business.data.raw = business.data.raw || {};
     btn.disabled = true;
@@ -1600,10 +1681,11 @@
       }).catch(function() {});
       renderDraftBanner();
       document.getElementById('websitePanel').classList.remove('editing');
-      updatePreviewCard();
-      updateWebsiteAppHeader();
-      showMessagesTab();
-      sendAllDetailsReceivedMessage();
+      playSendParticles(function() {
+        updatePreviewCard();
+        updateWebsiteAppHeader();
+        setTimeout(function() { showMessagesTab(); sendAllDetailsReceivedMessage(); }, 500);
+      });
     }).catch(function() {
       raw.draft = true;
       raw.sentToDesigner = false;
