@@ -2616,6 +2616,7 @@
   var autoSaveTimer = null;
   var autoSaveInFlight = false;
   var autoSaveQueued = false;
+  var autoSaveWarned = false;
   var hasPendingEdit = false;
 
   function scheduleAutoSave() {
@@ -2689,10 +2690,12 @@
         body: JSON.stringify({ p_id: slug, p_name: record.name, p_user_id: session.user_id, p_data: record, p_updated_at: record.updatedAt })
       });
     }).then(function(res) {
+      if (!res.ok) return res.text().then(function(t) { throw new Error('Save failed (' + res.status + '): ' + t); });
       autoSaveInFlight = false;
       if (autoSaveQueued) { autoSaveQueued = false; runAutoSave(); }
     }).catch(function(err) {
       console.warn('[autoSave] error', err);
+      if (!autoSaveWarned) { autoSaveWarned = true; alert('Your changes couldn\u2019t be saved. Please refresh the page and try again.'); }
       autoSaveInFlight = false;
       hasPendingEdit = true;
     });
@@ -2753,8 +2756,13 @@
           return authenticatedFetch(SUPABASE_URL + '/rest/v1/businesses?select=*&id=eq.' + encodeURIComponent(pendingSlug), { headers: authHeaders() })
             .then(function(r) { return r.json(); })
             .then(function(r2) {
-              if (r2 && r2.length) { business = r2[0]; slug = business.id; renderDashboard(); }
-              else { showSetup(); }
+              var row = r2 && r2[0];
+              if (row && (!row.user_id || row.user_id === session.user_id)) { business = row; slug = business.id; renderDashboard(); }
+              else {
+                // leftover slug from another account's signup in this browser: never load it, it can't be saved
+                if (row) { localStorage.removeItem('bs_pending_slug'); params.delete('slug'); }
+                showSetup();
+              }
             });
         }
       })
@@ -2773,7 +2781,7 @@
     return (s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
   }
 
-  function createSetupBusiness(pendingName, pendingSlug) {
+  function createSetupBusiness(pendingName, pendingSlug, retried) {
     var name = (pendingName || '').trim();
     var chosenSlug = slugify(pendingSlug || name);
     var pendingType = params.get('type') || localStorage.getItem('bs_pending_business_type') || 'Professional Services';
@@ -2804,6 +2812,10 @@
       })
       .catch(function(err) {
         console.error('[createSetupBusiness] error:', err);
+        if (/another account/i.test(err.message) && !retried) {
+          localStorage.removeItem('bs_pending_slug');
+          return createSetupBusiness(name, chosenSlug + '-' + String(session.user_id || Date.now()).slice(0, 6), true);
+        }
         var provisional = { slug: chosenSlug, name: name, raw: { name: name, email: session.email || '', tagline: pendingType, services: [], gallery: [] }, updatedAt: new Date().toISOString() };
         business = { id: chosenSlug, name: name, user_id: session.user_id, data: provisional };
         slug = chosenSlug;
