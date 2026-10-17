@@ -1604,16 +1604,17 @@
       var r = el.getBoundingClientRect(), tr = title ? title.getBoundingClientRect() : null;
       var cy = tr && tr.height ? tr.top - r.top - 28 - 35 : h / 2, cx = w / 2;
       var ps = [];
-      for (var i = 0; i < 320; i++) {
+      for (var i = 0; i < 420; i++) {
         var a0 = Math.random() * Math.PI * 2;
         ps.push({
           a0: a0,
           spin: (2.2 + Math.random() * 2.2) * Math.PI,        // total turns over the whole run
-          r0: 26 + Math.random() * 18,                          // starts in the halo
-          rMax: 62 + Math.random() * 60,                        // widest orbit mid-flight
-          tilt: .28 + Math.random() * .3,                       // squashed ellipse: front/back depth
-          lift: (Math.random() - .5) * 24,
-          size: .5 + Math.pow(Math.random(), 3) * 1.9,
+          r0: 28 + Math.random() * 10,                          // starts on the glow round the B
+          rMax: 36 + Math.random() * 20,                        // stays hugging the B
+          tilt: .5 + Math.random() * .35,                       // steep ellipse so they sweep across its face
+          lift: (Math.random() - .5) * 14,
+          size: .3 + Math.pow(Math.random(), 4) * 1.05,
+          tw: Math.random() * 40,
           delay: Math.random() * .14,
           shade: Math.random()
         });
@@ -1634,19 +1635,25 @@
           var e = ease(lt);
           var ang = p.a0 + p.spin * e;
           var swell = Math.sin(Math.PI * e);
-          var rad = p.r0 + (p.rMax - p.r0) * swell - 14 * e * e;
+          var rad = p.r0 + (p.rMax - p.r0) * swell - 10 * e * e;
           var x = sc.cx + Math.cos(ang) * rad;
           var depth = Math.sin(ang);                            // >0 = in front of the B
           var y = sc.cy + depth * rad * p.tilt + p.lift * swell;
           var fadeIn = Math.min(1, lt / .12), fadeOut = 1 - Math.max(0, (lt - .82) / .18);
-          var alpha = fadeIn * fadeOut * (.45 + .55 * (depth + 1) / 2);
+          var alpha = fadeIn * fadeOut * (.45 + .55 * (depth + 1) / 2) * (.65 + .35 * Math.sin(now * .018 + p.tw));
           var colT = Math.max(0, Math.min(1, (e - .25) / .5));
           var c = mix(mix(AMBER[0], AMBER[1], p.shade), mix(BLUE[0], BLUE[1], p.shade), colT);
           var size = p.size * (.75 + .5 * (depth + 1) / 2);
-          var ctx = depth > 0 ? sc.front : sc.back;
-          ctx.fillStyle = 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + (alpha * .18).toFixed(3) + ')';
-          ctx.beginPath(); ctx.arc(x, y, size * 3.2, 0, 6.2832); ctx.fill();
-          ctx.fillStyle = 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + alpha.toFixed(3) + ')';
+          var ctx = depth > -.35 ? sc.front : sc.back;
+          var rgb = c[0] + ',' + c[1] + ',' + c[2];
+          // short motion trail behind each spark
+          var pa = ang - .09 * (1 - Math.abs(2 * e - 1)) - .02;
+          ctx.strokeStyle = 'rgba(' + rgb + ',' + (alpha * .35).toFixed(3) + ')';
+          ctx.lineWidth = size * .9;
+          ctx.beginPath(); ctx.moveTo(sc.cx + Math.cos(pa) * rad, sc.cy + Math.sin(pa) * rad * p.tilt + p.lift * swell); ctx.lineTo(x, y); ctx.stroke();
+          ctx.fillStyle = 'rgba(' + rgb + ',' + (alpha * .12).toFixed(3) + ')';
+          ctx.beginPath(); ctx.arc(x, y, size * 2.2, 0, 6.2832); ctx.fill();
+          ctx.fillStyle = 'rgba(' + rgb + ',' + alpha.toFixed(3) + ')';
           ctx.beginPath(); ctx.arc(x, y, size, 0, 6.2832); ctx.fill();
         });
         // B takes on the blue glow as the particles settle
