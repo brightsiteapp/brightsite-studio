@@ -1590,6 +1590,7 @@
       .map(function(id) { return document.getElementById(id); })
       .filter(function(el) { return el && el.offsetWidth && getComputedStyle(el).display !== 'none'; });
     if (!els.length || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) { done(); return; }
+    var RINGS = [0, Math.PI / 4, Math.PI / 2, 3 * Math.PI / 4];
     var DUR = 2600, dpr = Math.min(window.devicePixelRatio || 1, 2);
     var AMBER = [[255, 210, 127], [245, 158, 11]], BLUE = [[127, 178, 255], [59, 130, 246]];
     function mix(a, b, t) { return [0, 1, 2].map(function(i) { return Math.round(a[i] + (b[i] - a[i]) * t); }); }
@@ -1605,15 +1606,16 @@
       var r = el.getBoundingClientRect(), tr = title ? title.getBoundingClientRect() : null;
       var cy = tr && tr.height ? tr.top - r.top - 28 - 35 : h / 2, cx = w / 2;
       var ps = [];
-      for (var i = 0; i < 420; i++) {
+      for (var i = 0; i < 520; i++) {
         var a0 = Math.random() * Math.PI * 2;
         ps.push({
           a0: a0,
           spin: (2.2 + Math.random() * 2.2) * Math.PI,        // total turns over the whole run
-          r0: 28 + Math.random() * 10,                          // starts on the glow round the B
-          rMax: 36 + Math.random() * 20,                        // stays hugging the B
-          tilt: .5 + Math.random() * .35,                       // steep ellipse so they sweep across its face
-          lift: (Math.random() - .5) * 14,
+          r0: 40 + Math.random() * 5,                           // starts on the glow round the B
+          rMax: 50 + Math.random() * 6,                         // thin rings just outside the B
+          ring: i % 4,                                          // four tilted rings, like orbits round an atom
+          tilt: .24 + Math.random() * .03,
+          lift: (Math.random() - .5) * 6,
           size: .3 + Math.pow(Math.random(), 4) * 1.05,
           tw: Math.random() * 40,
           delay: Math.random() * .14,
@@ -1636,10 +1638,12 @@
           var e = ease(lt);
           var ang = p.a0 + p.spin * e;
           var swell = Math.sin(Math.PI * e);
-          var rad = p.r0 + (p.rMax - p.r0) * swell - 10 * e * e;
-          var x = sc.cx + Math.cos(ang) * rad;
+          var rad = p.r0 + (p.rMax - p.r0) * swell - 6 * e * e;
+          var rot = RINGS[p.ring];
           var depth = Math.sin(ang);                            // >0 = in front of the B
-          var y = sc.cy + depth * rad * p.tilt + p.lift * swell;
+          var lx = Math.cos(ang) * rad, ly = depth * rad * p.tilt + p.lift * swell;
+          var x = sc.cx + lx * Math.cos(rot) - ly * Math.sin(rot);
+          var y = sc.cy + lx * Math.sin(rot) + ly * Math.cos(rot);
           var fadeIn = Math.min(1, lt / .12), fadeOut = 1 - Math.max(0, (lt - .82) / .18);
           var alpha = fadeIn * fadeOut * (.45 + .55 * (depth + 1) / 2) * (.65 + .35 * Math.sin(now * .018 + p.tw));
           var colT = Math.max(0, Math.min(1, (e - .25) / .5));
@@ -1649,9 +1653,10 @@
           var rgb = c[0] + ',' + c[1] + ',' + c[2];
           // short motion trail behind each spark
           var pa = ang - .09 * (1 - Math.abs(2 * e - 1)) - .02;
+          var plx = Math.cos(pa) * rad, ply = Math.sin(pa) * rad * p.tilt + p.lift * swell;
           ctx.strokeStyle = 'rgba(' + rgb + ',' + (alpha * .35).toFixed(3) + ')';
           ctx.lineWidth = size * .9;
-          ctx.beginPath(); ctx.moveTo(sc.cx + Math.cos(pa) * rad, sc.cy + Math.sin(pa) * rad * p.tilt + p.lift * swell); ctx.lineTo(x, y); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(sc.cx + plx * Math.cos(rot) - ply * Math.sin(rot), sc.cy + plx * Math.sin(rot) + ply * Math.cos(rot)); ctx.lineTo(x, y); ctx.stroke();
           ctx.fillStyle = 'rgba(' + rgb + ',' + (alpha * .12).toFixed(3) + ')';
           ctx.beginPath(); ctx.arc(x, y, size * 2.2, 0, 6.2832); ctx.fill();
           ctx.fillStyle = 'rgba(' + rgb + ',' + alpha.toFixed(3) + ')';
