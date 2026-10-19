@@ -1,0 +1,14 @@
+{
+  "name": "BrightSite",
+  "short_name": "BrightSite",
+  "description": "Manage your BrightSite website",
+  "start_url": "/account/dashboard.html",
+  "scope": "/account/",
+  "display": "standalone",
+  "background_color": "#F7F2EC",
+  "theme_color": "#F7F2EC",
+  "icons": [
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/account/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

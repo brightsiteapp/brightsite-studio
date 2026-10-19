@@ -20,6 +20,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="../favicon.png" type="image/png">
 <meta name="theme-color" content="#F7F2EC">
+<link rel="manifest" href="/account/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="BrightSite">
 <link rel="stylesheet" href="../styles.css">
 
 <style>
@@ -2921,6 +2925,8 @@
   }
 
   loadBusiness();
+
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/account/sw.js', { scope: '/account/' }).catch(function() {});
 
   // Fallback: hide loading screen after 5s if renderDashboard hasn't fired
   setTimeout(function() {
