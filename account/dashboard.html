@@ -2414,8 +2414,8 @@
         toggle.appendChild(b);
       });
       body.appendChild(toggle);
-      [{ id: 'essential', name: 'Free', note: 'Website built free · 1–3 pages', build: '£0', buildLabel: 'build' },
-       { id: 'pro', name: 'Pro', note: 'For websites over 3 pages', build: '£199', buildLabel: 'one-off build', tag: '3+ PAGES' }].forEach(function(o) {
+      [{ id: 'essential', name: 'Free', note: 'Website built free · 1–5 pages', build: '£0', buildLabel: 'build' },
+       { id: 'pro', name: 'Pro', note: 'For websites over 5 pages', build: '£199', buildLabel: 'one-off build', tag: '5+ PAGES' }].forEach(function(o) {
         var card = el('button', { type: 'button', 'class': 'bs-plan' + (plan === o.id ? ' on' : '') });
         var left = el('span', { 'class': 'l' });
         if (o.tag) left.appendChild(el('em', {}, o.tag));

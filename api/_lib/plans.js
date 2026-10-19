@@ -1,5 +1,5 @@
 // Plans as shown on pricing.html. "essential" is the Free plan (website built free, pay hosting);
-// Pro adds a one-off £199 build fee for sites over 3 pages. Both use the same hosting prices.
+// Pro adds a one-off £199 build fee for sites over 5 pages. Both use the same hosting prices.
 const HOSTING = {
   monthly: 'price_1UGhbEGqCP7G2YApAOKm8Goo', // £19/mo
   annual: 'price_1UGpjvGqCP7G2YAptYGCKsFl',  // £204/yr (£17/mo)

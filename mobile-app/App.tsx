@@ -309,8 +309,8 @@ function domainNote(pence: number, included: boolean) {
 
 // Same plans as pricing.html; "essential" is the Free plan.
 const PLAN_OPTIONS = [
-  { id: 'essential' as const, name: 'Free', note: 'Website built free · 1–3 pages', build: '£0', buildLabel: 'build', tag: null },
-  { id: 'pro' as const, name: 'Pro', note: 'For websites over 3 pages', build: '£199', buildLabel: 'one-off build', tag: '3+ PAGES' },
+  { id: 'essential' as const, name: 'Free', note: 'Website built free · 1–5 pages', build: '£0', buildLabel: 'build', tag: null },
+  { id: 'pro' as const, name: 'Pro', note: 'For websites over 5 pages', build: '£199', buildLabel: 'one-off build', tag: '5+ PAGES' },
 ];
 const BUSINESS_TYPES = ['Hair & Beauty', 'Aesthetics', 'Fitness', 'Pets', 'Health & Wellness', 'Home & Garden', 'Food & Drink', 'Automotive', 'Trades', 'Professional Services', 'Creative', 'Other'];
 const HOME_SECTIONS_DEFAULT = ['Hero', 'About & Services', 'Reviews', 'Gallery', 'Contact'];
