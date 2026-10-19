@@ -608,6 +608,26 @@
   .preview-placeholder .preview-placeholder-title{background:none !important;-webkit-text-fill-color:#fff !important;color:#fff;animation:none !important;filter:none !important;font-size:18px !important;margin-bottom:6px !important}
   .preview-placeholder .preview-placeholder-sub{color:rgba(255,255,255,.6) !important;font-weight:400 !important;font-size:14px;max-width:240px}
   @media(max-width:799px){#mobilePreviewWrap .preview-control-row .mobile-pvw-toggle{display:none}}
+  .path-choice{display:none}
+  @media(max-width:799px){
+    .path-choice:not([hidden]){display:block;margin:0 0 16px}
+    .path-choice-step[hidden]{display:none}
+    .path-choice h2{margin:0 0 6px;font-family:var(--display);font-size:20px;letter-spacing:-.02em;color:var(--ink)}
+    .path-intro{margin:0 0 14px;font-size:13.5px;color:var(--muted);line-height:1.5}
+    .path-card{display:flex;flex-direction:column;gap:4px;width:100%;margin:0 0 10px;padding:16px;border:1px solid var(--line);border-radius:16px;background:#fff;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+    .path-card strong{font-size:16px}
+    .path-card span:last-child{font-size:13px;color:var(--muted);line-height:1.45}
+    .path-card.main{background:var(--accent);border-color:var(--accent);color:#fff}
+    .path-card.main span:last-child{color:rgba(255,255,255,.88)}
+    .path-tag{font-size:10.5px;font-weight:800;letter-spacing:.06em;color:rgba(255,255,255,.8)}
+    .path-card .path-tag.muted{color:var(--muted)}
+    .path-back{border:0;background:none;padding:0;margin:0 0 10px;font:inherit;font-size:13px;font-weight:700;color:var(--accent);cursor:pointer}
+    .path-label{display:block;margin:0 0 6px;font-size:13px;font-weight:700;color:var(--ink)}
+    #pathLinks{display:block;width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--ink);font:inherit;font-size:14px;resize:vertical;outline:none}
+    .path-send{display:block;width:100%;margin-top:12px;min-height:46px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+    .path-send:disabled{opacity:.45;cursor:not-allowed}
+    .path-hint{margin:8px 0 0;font-size:12px;color:var(--muted);text-align:center}
+  }
   .website-panel.in-section #websiteEditorHeader{display:none !important}
   .builder-section h3{font-family:var(--display);font-size:22px !important;font-weight:800 !important;letter-spacing:-.4px;color:#1C2832;margin:6px 0 10px !important}
   .builder-section .acct-field label{font-size:13px;font-weight:700;color:rgba(28,40,50,.72);margin-bottom:7px}
@@ -748,6 +768,32 @@
       <div class="draft-banner" id="draftBanner" hidden>
         <div><strong>Finish your details</strong><span>Everything is saved. Send it to your designer when you’re ready.</span></div>
         <button type="button" id="draftSendBtn">Send to designer</button>
+      </div>
+
+      <div class="path-choice" id="pathChoice" hidden>
+        <div class="path-choice-step" data-step="pick">
+          <h2>How would you like to build your website?</h2>
+          <p class="path-intro">You can change anything later.</p>
+          <button type="button" class="path-card main" id="pathAuto">
+            <span class="path-tag">RECOMMENDED · 2 MINUTES</span>
+            <strong>Automatic</strong>
+            <span>Share your links and our designer builds it for you.</span>
+          </button>
+          <button type="button" class="path-card" id="pathManual">
+            <span class="path-tag muted">ABOUT 10 MINUTES</span>
+            <strong>Manual</strong>
+            <span>Enter your details, hours, services and photos yourself.</span>
+          </button>
+        </div>
+        <div class="path-choice-step" data-step="links" hidden>
+          <button type="button" class="path-back" id="pathBack">‹ Back</button>
+          <h2>Share your links</h2>
+          <p class="path-intro">Add your existing website, Google or social media links. Our designer will take it from there.</p>
+          <label class="path-label" for="pathLinks">Existing website, Google or social media links</label>
+          <textarea id="pathLinks" rows="3" placeholder="e.g. yoursite.com, g.page/yourbusiness, facebook.com/yourbusiness"></textarea>
+          <button type="button" class="path-send" id="pathSend" disabled>Send to designer</button>
+          <p class="path-hint">Add at least one link</p>
+        </div>
       </div>
 
       <!-- mobile-only app-style header (hidden on desktop) -->
@@ -1563,7 +1609,7 @@
     updateWebsiteAppHeader();
     checkSiteLive();
     renderWelcomeMessage();
-    if (renderDraftBanner()) showWebsiteTab();
+    if (renderDraftBanner() || renderPathChoice()) showWebsiteTab();
     else showMessagesTab();
   }
 
@@ -1676,6 +1722,21 @@
     requestAnimationFrame(frame);
   }
 
+  function notifyDesignerSignup(raw) {
+    var notify = new FormData();
+    notify.append('Stage', 'new_signup');
+    notify.append('Business', raw.name || 'Unnamed business');
+    notify.append('Email', raw.email || session.email || '');
+    notify.append('Slug', slug);
+    if (raw.autoLinks) notify.append('Links', raw.autoLinks);
+    fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/', { method: 'POST', body: notify }).catch(function() {});
+    fetch('https://api.brightsite.app/api/send-welcome', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+      body: JSON.stringify({ slug: slug, fullName: raw.fullName || '', buildChoice: raw.buildChoice })
+    }).catch(function() {});
+  }
+
   function sendToDesigner(btn) {
     var raw = business.data.raw = business.data.raw || {};
     btn.disabled = true;
@@ -1685,17 +1746,7 @@
     delete raw.draftIndex;
     raw.buildChoice = raw.buildChoice || 'designer';
     saveBusiness().then(function() {
-      var notify = new FormData();
-      notify.append('Stage', 'new_signup');
-      notify.append('Business', raw.name || 'Unnamed business');
-      notify.append('Email', raw.email || session.email || '');
-      notify.append('Slug', slug);
-      fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/', { method: 'POST', body: notify }).catch(function() {});
-      fetch('https://api.brightsite.app/api/send-welcome', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
-        body: JSON.stringify({ slug: slug, fullName: raw.fullName || '', buildChoice: raw.buildChoice })
-      }).catch(function() {});
+      notifyDesignerSignup(raw);
       renderDraftBanner();
       document.getElementById('websitePanel').classList.remove('editing');
       playSendParticles(function() {
@@ -2103,9 +2154,77 @@
     var name = businessFirstName();
     return sendSystemMessageOnce(
       'allDetailsMessageSent',
-      'Thanks, ' + name + ' — I’ve got everything I need now. I’m getting started on your first preview and should have it ready in the next day or two. I’ll message you here as soon as it’s ready.'
+      'Thanks for submitting, ' + name + '. Tom is now designing your website. Feel free to change or add any info.'
     );
   }
+
+  function sendAutoLinksMessage() {
+    var name = businessFirstName();
+    return sendSystemMessageOnce(
+      'autoLinksMessageSent',
+      'Thanks, ' + name + ' — we have your links. Fill in any additional info you think is important (opening hours, services, prices, photos) in the Website tab. The more you add, the better your website will be.'
+    );
+  }
+
+  function renderPathChoice() {
+    var raw = (business && business.data && business.data.raw) || {};
+    var show = !!business && needsSending() && !raw.signupPath && !raw.draft;
+    var box = document.getElementById('pathChoice');
+    if (box) box.hidden = !show;
+    return show;
+  }
+
+  function showPathStep(step) {
+    document.querySelectorAll('#pathChoice .path-choice-step').forEach(function(el) { el.hidden = el.dataset.step !== step; });
+  }
+
+  document.getElementById('pathAuto').addEventListener('click', function() {
+    showPathStep('links');
+    document.getElementById('pathLinks').focus();
+  });
+  document.getElementById('pathBack').addEventListener('click', function() { showPathStep('pick'); });
+  document.getElementById('pathManual').addEventListener('click', function() {
+    var raw = business.data.raw = business.data.raw || {};
+    raw.signupPath = 'manual';
+    raw.buildChoice = raw.buildChoice || 'designer';
+    saveBusiness().then(function() {
+      renderPathChoice();
+    }).catch(function() {
+      delete raw.signupPath;
+      alert('We couldn’t save your choice. Please check your connection and try again.');
+    });
+  });
+  document.getElementById('pathLinks').addEventListener('input', function() {
+    document.getElementById('pathSend').disabled = this.value.trim().length < 4;
+  });
+  document.getElementById('pathSend').addEventListener('click', function() {
+    var btn = this;
+    var links = document.getElementById('pathLinks').value.trim();
+    if (!links) return;
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    var raw = business.data.raw = business.data.raw || {};
+    raw.signupPath = 'auto';
+    raw.autoLinks = links;
+    raw.draft = false;
+    raw.sentToDesigner = true;
+    raw.buildChoice = raw.buildChoice || 'designer';
+    saveBusiness().then(function() {
+      notifyDesignerSignup(raw);
+      renderPathChoice();
+      updatePreviewCard();
+      updateWebsiteAppHeader();
+      showMessagesTab();
+      sendAutoLinksMessage();
+    }).catch(function() {
+      delete raw.signupPath;
+      delete raw.autoLinks;
+      raw.sentToDesigner = false;
+      btn.disabled = false;
+      btn.textContent = 'Send to designer';
+      alert('We couldn’t send your links. Please check your connection and try again.');
+    });
+  });
 
   function msgsSend() {
     var input = document.getElementById('msgsInput');
