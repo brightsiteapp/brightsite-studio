@@ -209,6 +209,51 @@ body { background: var(--bg); min-height: 100vh; }
   .thread-list { max-height: 36vh; }
   .thread-pane { min-height: 70vh; }
 }
+.workspace { display: grid; grid-template-columns: 320px 1fr; gap: 16px; height: calc(100vh - 66px); padding: 16px 20px; box-sizing: border-box; }
+.client-col, .work-col { background: var(--card); border: 1px solid var(--line); border-radius: 14px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.client-col-head { display: flex; align-items: center; gap: 8px; padding: 12px; border-bottom: 1px solid var(--line); }
+.client-col-head input { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; font: inherit; outline: none; }
+.client-count { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.client-list { flex: 1; overflow-y: auto; }
+.client-item { display: block; position: relative; width: 100%; text-align: left; padding: 12px 14px 12px 30px; border: 0; border-bottom: 1px solid var(--line); background: none; font: inherit; cursor: pointer; }
+.client-item:hover { background: #f6f8fc; }
+.client-item.active { background: #eef3ff; }
+.client-item .status-dot { position: absolute; left: 12px; top: 16px; }
+.client-item .row-dot { position: absolute; left: auto; margin-top: 0; right: 12px; top: 14px; width: 9px; height: 9px; border-radius: 50%; background: #dc2626; }
+.client-name { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 16px; }
+.client-meta { margin-top: 2px; font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.work-empty { margin: auto; color: var(--muted); }
+#wsPane { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+#wsPane[hidden] { display: none; }
+.work-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--line); }
+.work-head strong { font-size: 15px; }
+.work-status { margin-left: 8px; font-size: 12px; color: var(--muted); }
+.work-head a { font-size: 12.5px; font-weight: 600; color: var(--accent); text-decoration: none; white-space: nowrap; }
+.work-tabs { display: flex; gap: 4px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+.work-tab { position: relative; border: 0; background: none; padding: 7px 14px; border-radius: 999px; font: inherit; font-weight: 600; color: var(--muted); cursor: pointer; }
+.work-tab.active { background: var(--bg); color: var(--ink); }
+.work-tab .tab-dot { top: 4px; right: 3px; }
+.work-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.work-panel[hidden] { display: none; }
+#dashFrame { flex: 1; width: 100%; border: 0; min-height: 0; }
+#ws-msgs .thread-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; background: #fbf9f6; }
+#ws-msgs .composer { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--line); }
+#ws-msgs .composer textarea { flex: 1; resize: none; min-height: 44px; max-height: 140px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; font: inherit; outline: none; }
+#ws-msgs .composer button { border: 0; border-radius: 12px; padding: 0 18px; background: var(--accent); color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+#ws-msgs .composer button:disabled { opacity: .5; cursor: not-allowed; }
+.admin-panel { padding: 18px; overflow-y: auto; }
+.admin-facts { display: grid; grid-template-columns: 120px 1fr; gap: 8px 12px; font-size: 14px; margin-bottom: 18px; }
+.admin-facts .k { color: var(--muted); }
+.admin-facts a { color: var(--accent); }
+.admin-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.admin-actions button, .admin-actions a { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 8px 14px; font: inherit; font-size: 13px; font-weight: 600; color: var(--ink); cursor: pointer; text-decoration: none; }
+.admin-actions button.danger { color: var(--red); }
+.admin-actions button:disabled { opacity: .5; cursor: not-allowed; }
+@media (max-width: 760px) {
+  .workspace { grid-template-columns: 1fr; height: auto; }
+  .client-list { max-height: 34vh; }
+  .work-col { min-height: 70vh; }
+}
 </style>
 </head>
 <body>
@@ -236,51 +281,46 @@ body { background: var(--bg); min-height: 100vh; }
     <img src="../img/brightsite-logo.png" alt="BrightSite">
     <div class="app-header-divider"></div>
     <span class="admin-badge">Admin</span>
-    <nav class="admin-tabs">
-      <button type="button" class="admin-tab active" id="tabClients">Clients</button>
-      <button type="button" class="admin-tab" id="tabMessages">Messages<span class="tab-dot" id="adminMsgDot" hidden></span></button>
-    </nav>
     <div class="app-header-right">
       <button type="button" class="settings-btn" id="settingsBtn" title="Settings">⚙</button>
       <button type="button" class="logout-btn" id="logoutBtn">Sign out</button>
     </div>
   </header>
 
-  <div class="page-body" id="clientsView">
-    <div class="filter-bar">
-      <button type="button" class="filter-pill active" data-filter="all" id="filterAll">All <span class="count" id="cAll"></span></button>
-      <button type="button" class="filter-pill" data-filter="red"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#b23b2c;margin-right:4px;vertical-align:middle"></span>Build <span class="count" id="cRed"></span></button>
-      <button type="button" class="filter-pill" data-filter="yellow"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e8a320;margin-right:4px;vertical-align:middle"></span>Preview <span class="count" id="cYellow"></span></button>
-      <button type="button" class="filter-pill" data-filter="green"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#1f9d55;margin-right:4px;vertical-align:middle"></span>Live <span class="count" id="cGreen"></span></button>
-    </div>
-    <div class="filter-bar-row2">
-      <input type="search" class="search-input" id="searchInput" placeholder="Search name or slug…" style="width:100%;box-sizing:border-box">
-    </div>
-
-    <div class="accounts-list" id="accountsList">
-      <div class="loading-row"><span class="spinner"></span> Loading accounts…</div>
-    </div>
-    <div class="page-count" id="pageCount"></div>
-  </div>
-
-  <div class="page-body" id="messagesView" hidden>
-    <div class="msgs-layout">
-      <div class="thread-list" id="threadList"></div>
-      <div class="thread-pane">
-        <div class="thread-empty" id="threadEmpty">Choose a client to see their messages.</div>
-        <div id="threadContent" hidden>
-          <div class="thread-head">
-            <strong id="threadTitle"></strong>
-            <a href="#" id="threadOpenDash">Open their dashboard</a>
-          </div>
+  <div class="workspace">
+    <aside class="client-col">
+      <div class="client-col-head">
+        <input type="search" id="searchInput" placeholder="Search clients…">
+        <span class="client-count" id="clientCount"></span>
+      </div>
+      <div class="client-list" id="clientList"><div class="loading-row"><span class="spinner"></span> Loading clients…</div></div>
+    </aside>
+    <section class="work-col">
+      <div class="work-empty" id="wsEmpty">Choose a client on the left.</div>
+      <div id="wsPane" hidden>
+        <div class="work-head">
+          <div><strong id="wsTitle"></strong><span class="work-status" id="wsStatus"></span></div>
+          <a id="wsOpenNew" target="_blank" rel="noopener">Open in new tab ↗</a>
+        </div>
+        <nav class="work-tabs">
+          <button type="button" class="work-tab active" id="tab-dash">Dashboard</button>
+          <button type="button" class="work-tab" id="tab-msgs">Messages<span class="tab-dot" id="msgsTabDot" hidden></span></button>
+          <button type="button" class="work-tab" id="tab-admin">Admin</button>
+        </nav>
+        <div class="work-panel" id="ws-dash"><iframe id="dashFrame" title="Client dashboard"></iframe></div>
+        <div class="work-panel" id="ws-msgs" hidden>
           <div class="thread-body" id="threadBody"></div>
           <div class="composer">
             <textarea id="composerInput" rows="1" placeholder="Reply as Tom…"></textarea>
             <button type="button" id="composerSend">Send</button>
           </div>
         </div>
+        <div class="work-panel admin-panel" id="ws-admin" hidden>
+          <div class="admin-facts" id="adminFacts"></div>
+          <div class="admin-actions" id="adminActions"></div>
+        </div>
       </div>
-    </div>
+    </section>
   </div>
 </div>
 
@@ -448,7 +488,7 @@ function sendPushNotification(pushToken, title, body) {
 }
 
 function loadBusinesses() {
-  document.getElementById('accountsList').innerHTML = '<div class="loading-row"><span class="spinner"></span> Loading accounts…</div>';
+  document.getElementById('clientList').innerHTML = '<div class="loading-row"><span class="spinner"></span> Loading accounts…</div>';
 
   fetch(API_BASE_URL + '/api/admin-businesses', {
     headers: { 'Authorization': 'Bearer ' + (adminSession && adminSession.access_token || '') }
@@ -471,7 +511,7 @@ function loadBusinesses() {
     // Fetch auth users list to get emails (requires service role — use what we have)
     // We'll try to fetch user emails from auth.users via admin session
     allBusinesses = rows;
-    renderThreads();
+    renderClientList();
     fetchUserEmails(rows);
   })
   .catch(function(err) {
@@ -515,7 +555,7 @@ function timeAgo(iso) {
 }
 
 function renderError(msg) {
-  document.getElementById('accountsList').innerHTML = '<div class="empty-state"><p>' + msg + '</p></div>';
+  document.getElementById('clientList').innerHTML = '<div class="empty-state"><p>' + msg + '</p></div>';
 }
 
 function renderBusinesses(businesses, emails) {
@@ -527,103 +567,12 @@ function renderBusinesses(businesses, emails) {
     return new Date(b.updated_at || 0) - new Date(a.updated_at || 0);
   });
 
-  // Count
-  var counts = { all: sorted.length, stub: 0, red: 0, yellow: 0, green: 0 };
-  sorted.forEach(function(b) { counts[statusOf(b)]++; });
-
-  document.getElementById('cAll').textContent = counts.all;
-  document.getElementById('cRed').textContent = counts.red;
-  document.getElementById('cYellow').textContent = counts.yellow;
-  document.getElementById('cGreen').textContent = counts.green;
-
-
   allBusinesses = sorted;
   applyFilter();
 }
 
 function applyFilter() {
-  var q = (document.getElementById('searchInput').value || '').toLowerCase();
-  var filtered = allBusinesses.filter(function(b) {
-    if (currentFilter !== 'all' && statusOf(b) !== currentFilter) return false;
-    if (q) {
-      var name = (b.name || '').toLowerCase();
-      var id = (b.id || '').toLowerCase();
-      if (!name.includes(q) && !id.includes(q)) return false;
-    }
-    return true;
-  });
-
-  var list = document.getElementById('accountsList');
-  if (filtered.length === 0) {
-    list.innerHTML = '<div class="empty-state"><p>No accounts found.</p></div>';
-    document.getElementById('pageCount').textContent = '';
-    return;
-  }
-
-  document.getElementById('pageCount').textContent = 'Showing ' + filtered.length + ' account' + (filtered.length === 1 ? '' : 's');
-
-  list.innerHTML = filtered.map(function(b) {
-    var s = statusOf(b);
-    var d = b.data || {};
-    var domain = d.customDomain || d.domain || '';
-    var liveUrl = d.liveUrl || '';
-    var slug = b.id || '';
-    var name = b.name || slug || '(unnamed)';
-    var email = (b.data && b.data.email) || (b.data && b.data.raw && b.data.raw.email) || '';
-
-    return '<div class="account-row status-' + s + '" data-slug="' + esc(slug) + '" data-name="' + esc(name) + '">' +
-      '<span class="status-dot ' + s + '"></span>' +
-      '<div class="account-info">' +
-        '<div class="account-name-row">' +
-          '<div class="account-name">' + esc(name) + (d.raw && d.raw.draft ? '<span class="draft-tag">Draft</span>' : '') + (d.demoApproved ? '<span class="approved-tag">✓ Approved</span>' : '') + '</div>' +
-          '<div class="row-actions row-actions-inline" onclick="event.stopPropagation()">' +
-        (d.demoApproved && s !== 'green' ? '<button type="button" class="action-btn live" onclick="openGoLiveModal(\'' + esc(slug) + '\',\'' + esc(name) + '\')" title="Go live">✓ Go live</button>' : '') +
-        '<button type="button" class="action-btn" onclick="openDomainModal(\'' + esc(slug) + '\',\'' + esc(name) + '\')" title="Connect domain">' +
-          '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 1.5c-2 2-2 9 0 13M8 1.5c2 2 2 9 0 13M1.5 8h13"/></svg>' +
-          '<span class="btn-label">Domain</span></button>' +
-        '<button type="button" class="action-btn" onclick="openUploadModal(\'' + esc(slug) + '\',\'' + esc(name) + '\')" title="Upload site files">' +
-          '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 11V4M5 6.5l3-3 3 3M3 13h10"/></svg>' +
-          '<span class="btn-label">Upload</span></button>' +
-        '<button type="button" class="action-btn" onclick="openAccountDashboard(\'' + esc(slug) + '\')" title="View dashboard">' +
-          '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 2.5l2.5 2.5-8 8H3v-2.5l8-8z"/><path d="M9.5 4l2 2"/></svg>' +
-          '<span class="btn-label">View</span></button>' +
-        '<button type="button" class="action-btn danger" onclick="openDeleteModal(\'' + esc(slug) + '\',\'' + esc(name) + '\')" title="Delete account">' +
-          '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 4.5h11M6 4.5V3h4v1.5M6.5 7v5M9.5 7v5M3.5 4.5l.7 8.5h7.6l.7-8.5"/></svg>' +
-          '<span class="btn-label">Delete</span></button>' +
-          '</div>' + // close row-actions-inline
-        '</div>' + // close account-name-row
-        '<div class="account-meta">' +
-          (email ? '<span class="account-email">' + esc(email) + '</span>' : '') +
-          (domain ? '<span class="account-slug" style="color:#4f7be0">· ' + esc(domain) + '</span>' + (s === 'green' ? '<span style="display:inline-flex;align-items:center;gap:3px;margin-left:4px;padding:1px 7px;border-radius:999px;background:#e6f6ec;color:#1f9d55;font-size:10px;font-weight:700"><span style="width:4px;height:4px;border-radius:50%;background:currentColor"></span>Live</span>' : '<span style="display:inline-flex;align-items:center;gap:3px;margin-left:4px;padding:1px 7px;border-radius:999px;background:#fdf2dd;color:#8a5d08;font-size:10px;font-weight:700">Not live</span>') : '') +
-          (liveUrl ? '<a href="' + esc(liveUrl) + '" target="_blank" rel="noopener" style="font-size:11px;color:#1f9d55;margin-left:4px" onclick="event.stopPropagation()">↗ view live</a>' : '') +
-          '<span class="account-updated" style="margin-left:auto">· ' + timeAgo(b.updated_at) + '</span>' +
-        '</div>' +
-      '</div>' +
-      '<span class="status-tag ' + s + '">' + statusLabel(s) + '</span>' +
-      '<div class="row-actions row-actions-desktop" onclick="event.stopPropagation()">' +
-        (d.demoApproved && s !== 'green' ? '<button type="button" class="action-btn live" onclick="openGoLiveModal(\'' + esc(slug) + '\',\'' + esc(name) + '\')" title="Go live">✓ Go live</button>' : '') +
-        '<button type="button" class="action-btn" onclick="openDomainModal(\'' + esc(slug) + '\',\'' + esc(name) + '\')" title="Connect domain">' +
-          '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 1.5c-2 2-2 9 0 13M8 1.5c2 2 2 9 0 13M1.5 8h13"/></svg>' +
-          '<span class="btn-label">Domain</span></button>' +
-        '<button type="button" class="action-btn" onclick="openUploadModal(\'' + esc(slug) + '\',\'' + esc(name) + '\')" title="Upload site files">' +
-          '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 11V4M5 6.5l3-3 3 3M3 13h10"/></svg>' +
-          '<span class="btn-label">Upload</span></button>' +
-        '<button type="button" class="action-btn" onclick="openAccountDashboard(\'' + esc(slug) + '\')" title="View dashboard">' +
-          '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 2.5l2.5 2.5-8 8H3v-2.5l8-8z"/><path d="M9.5 4l2 2"/></svg>' +
-          '<span class="btn-label">View</span></button>' +
-        '<button type="button" class="action-btn danger" onclick="openDeleteModal(\'' + esc(slug) + '\',\'' + esc(name) + '\')" title="Delete account">' +
-          '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 4.5h11M6 4.5V3h4v1.5M6.5 7v5M9.5 7v5M3.5 4.5l.7 8.5h7.6l.7-8.5"/></svg>' +
-          '<span class="btn-label">Delete</span></button>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-
-  // Row click → open account
-  list.querySelectorAll('.account-row').forEach(function(row) {
-    row.addEventListener('click', function() {
-      openAccountDashboard(row.dataset.slug);
-    });
-  });
+  renderClientList();
 }
 
 function esc(s) {
@@ -1248,10 +1197,11 @@ document.getElementById('deleteConfirm').addEventListener('click', function() {
   });
 });
 
-// ---- messages ----
+// ---- workspace ----
 var adminThreads = {};
 var adminThreadsLoaded = false;
 var activeThreadId = null;
+var activeTab = 'dash';
 var adminPollTimer = null;
 var lastRenderedCount = -1;
 
@@ -1266,6 +1216,11 @@ function latestCustomerTime(id) {
 function latestMessageTime(id) {
   var msgs = adminThreads[id] || [];
   return msgs.length ? new Date(msgs[msgs.length - 1].created_at).getTime() : 0;
+}
+
+function businessUpdatedTime(id) {
+  var b = bizById(id);
+  return b && b.updated_at ? new Date(b.updated_at).getTime() : 0;
 }
 
 function isUnread(id) {
@@ -1284,11 +1239,15 @@ function markThreadSeen(id) {
 
 function updateAdminDot() {
   var any = Object.keys(adminThreads).some(isUnread);
-  document.getElementById('adminMsgDot').hidden = !any;
+  document.getElementById('msgsTabDot').hidden = !any;
+}
+
+function bizById(id) {
+  return allBusinesses.find(function(x) { return x.id === id; }) || null;
 }
 
 function bizName(id) {
-  var b = allBusinesses.find(function(x) { return x.id === id; });
+  var b = bizById(id);
   var raw = b && b.data && b.data.raw;
   return (raw && raw.name) || (b && b.name) || id;
 }
@@ -1302,59 +1261,86 @@ function loadAdminMessages() {
       adminThreads = next;
       adminThreadsLoaded = true;
       updateAdminDot();
-      renderThreads();
-      if (activeThreadId) renderThread(false);
+      renderClientList();
+      if (activeThreadId && activeTab === 'msgs') renderThread(false);
     })
     .catch(function(e) { console.warn('[admin messages] load failed', e); });
 }
 
-function businessUpdatedTime(id) {
-  var b = allBusinesses.find(function(x) { return x.id === id; });
-  return b && b.updated_at ? new Date(b.updated_at).getTime() : 0;
-}
-
-function renderThreads() {
-  var list = document.getElementById('threadList');
-  if (!adminThreadsLoaded) { list.innerHTML = '<div class="loading-row"><span class="spinner"></span> Loading messages…</div>'; return; }
-  var seen = {};
-  var ids = allBusinesses.map(function(b) { return b.id; }).concat(Object.keys(adminThreads));
-  ids = ids.filter(function(id) { if (seen[id]) return false; seen[id] = true; return true; });
-  function sortTime(id) { return latestMessageTime(id) || businessUpdatedTime(id); }
-  ids.sort(function(a, b) { return sortTime(b) - sortTime(a); });
-  if (!ids.length) { list.innerHTML = '<div class="empty-state"><p>No clients yet.</p></div>'; return; }
+function renderClientList() {
+  var list = document.getElementById('clientList');
+  var q = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+  var ids = allBusinesses.filter(function(b) {
+    if (!q) return true;
+    return (bizName(b.id) + ' ' + (b.id || '')).toLowerCase().indexOf(q) > -1;
+  }).map(function(b) { return b.id; });
+  ids.sort(function(a, b) {
+    return (latestMessageTime(b) || businessUpdatedTime(b)) - (latestMessageTime(a) || businessUpdatedTime(a));
+  });
+  document.getElementById('clientCount').textContent = ids.length + (ids.length === 1 ? ' client' : ' clients');
+  if (!ids.length) { list.innerHTML = '<div class="empty-state"><p>No clients found.</p></div>'; return; }
   list.innerHTML = ids.map(function(id) {
+    var b = bizById(id);
+    var s = statusOf(b);
     var msgs = adminThreads[id] || [];
     var last = msgs[msgs.length - 1];
-    var preview = last ? (last.sender === 'admin' ? 'You: ' : '') + last.body : 'No messages yet';
-    var time = last ? timeAgo(last.created_at) : '';
-    return '<button type="button" class="thread-item' + (id === activeThreadId ? ' active' : '') + '" data-id="' + esc(id) + '">' +
+    var meta = !adminThreadsLoaded ? '…' : last
+      ? timeAgo(last.created_at) + ' · ' + (last.sender === 'admin' ? 'You: ' : '') + last.body
+      : 'No messages yet';
+    return '<button type="button" class="client-item' + (id === activeThreadId ? ' active' : '') + '" data-id="' + esc(id) + '">' +
+      '<span class="status-dot ' + s + '"></span>' +
       (isUnread(id) ? '<span class="row-dot"></span>' : '') +
-      '<span class="thread-time">' + esc(time) + '</span>' +
-      '<div class="thread-name">' + esc(bizName(id)) + '</div>' +
-      '<div class="thread-preview">' + esc(preview) + '</div>' +
+      '<div class="client-name">' + esc(bizName(id)) + '</div>' +
+      '<div class="client-meta">' + esc(meta) + '</div>' +
       '</button>';
   }).join('');
-  list.querySelectorAll('.thread-item').forEach(function(btn) {
-    btn.addEventListener('click', function() { openThread(btn.dataset.id); });
+  list.querySelectorAll('.client-item').forEach(function(btn) {
+    btn.addEventListener('click', function() { selectClient(btn.dataset.id); });
   });
 }
 
-function openThread(id) {
+function selectClient(id) {
   activeThreadId = id;
-  markThreadSeen(id);
   lastRenderedCount = -1;
-  renderThreads();
-  renderThread(true);
+  markThreadSeen(id);
+  var b = bizById(id);
+  var d = (b && b.data) || {};
+  var s = statusOf(b);
+  document.getElementById('wsEmpty').hidden = true;
+  document.getElementById('wsPane').hidden = false;
+  document.getElementById('wsTitle').textContent = bizName(id);
+  document.getElementById('wsStatus').textContent = statusLabel(s);
+  document.getElementById('wsOpenNew').href = '/account/dashboard.html?bs_admin_slug=' + encodeURIComponent(id);
+  renderClientList();
   updateAdminDot();
-  document.getElementById('composerInput').focus();
+  showWorkTab('dash');
+}
+
+function showWorkTab(name) {
+  activeTab = name;
+  ['dash', 'msgs', 'admin'].forEach(function(t) {
+    document.getElementById('ws-' + t).hidden = t !== name;
+    document.getElementById('tab-' + t).classList.toggle('active', t === name);
+  });
+  if (!activeThreadId) return;
+  if (name === 'dash') {
+    var frame = document.getElementById('dashFrame');
+    if (frame.getAttribute('data-slug') !== activeThreadId) {
+      frame.setAttribute('data-slug', activeThreadId);
+      frame.src = '/account/dashboard.html?bs_admin_slug=' + encodeURIComponent(activeThreadId);
+    }
+  }
+  if (name === 'msgs') {
+    markThreadSeen(activeThreadId);
+    renderThread(true);
+    updateAdminDot();
+    renderClientList();
+    document.getElementById('composerInput').focus();
+  }
+  if (name === 'admin') renderAdminPanel();
 }
 
 function renderThread(forceScroll) {
-  var content = document.getElementById('threadContent');
-  var empty = document.getElementById('threadEmpty');
-  if (!activeThreadId) { content.hidden = true; empty.hidden = false; return; }
-  content.hidden = false;
-  empty.hidden = true;
   var msgs = adminThreads[activeThreadId] || [];
   var body = document.getElementById('threadBody');
   var changed = msgs.length !== lastRenderedCount;
@@ -1367,11 +1353,73 @@ function renderThread(forceScroll) {
   }).join('');
   if (forceScroll || changed) body.scrollTop = body.scrollHeight;
   lastRenderedCount = msgs.length;
-  document.getElementById('threadTitle').textContent = bizName(activeThreadId);
-  var biz = allBusinesses.find(function(x) { return x.id === activeThreadId; });
-  var link = document.getElementById('threadOpenDash');
-  link.onclick = function(e) { e.preventDefault(); openAccountDashboard(activeThreadId); };
-  link.hidden = !biz;
+}
+
+function renderAdminPanel() {
+  var b = bizById(activeThreadId);
+  if (!b) return;
+  var d = b.data || {};
+  var raw = d.raw || {};
+  var s = statusOf(b);
+  var name = bizName(activeThreadId);
+  var domain = d.customDomain || d.domain || '';
+  var email = raw.email || raw.ownerEmail || '';
+  var slug = esc(activeThreadId);
+  var facts = [
+    ['Status', statusLabel(s)],
+    ['Plan', d.planActive ? 'Paying' : 'Not paid'],
+    ['Email', email || '—'],
+    ['Domain', domain || '—'],
+    ['Live URL', d.liveUrl ? '<a href="' + esc(d.liveUrl) + '" target="_blank" rel="noopener">' + esc(d.liveUrl) + '</a>' : '—']
+  ];
+  document.getElementById('adminFacts').innerHTML = facts.map(function(f) {
+    return '<span class="k">' + esc(f[0]) + '</span><span>' + (f[0] === 'Live URL' ? f[1] : esc(f[1])) + '</span>';
+  }).join('');
+  var actions = '<button type="button" onclick="copyClientInfo(\'' + slug + '\', this)">Copy info</button>' +
+    '<button type="button" onclick="openDomainModal(\'' + slug + '\',\'' + esc(name) + '\')">Connect domain</button>' +
+    '<button type="button" onclick="openUploadModal(\'' + slug + '\',\'' + esc(name) + '\')">Upload site files</button>' +
+    (d.demoApproved && s !== 'green' ? '<button type="button" onclick="openGoLiveModal(\'' + slug + '\',\'' + esc(name) + '\')">Mark as live</button>' : '') +
+    '<button type="button" class="danger" onclick="openDeleteModal(\'' + slug + '\',\'' + esc(name) + '\')">Delete account</button>';
+  document.getElementById('adminActions').innerHTML = actions;
+}
+
+function copyClientInfo(id, btn) {
+  var b = bizById(id);
+  if (!b) return;
+  var raw = (b.data && b.data.raw) || {};
+  var lines = [
+    'Business: ' + (raw.name || b.name || ''),
+    'Contact name: ' + (raw.fullName || ''),
+    'Business type: ' + (raw.tagline || ''),
+    'Email: ' + (raw.email || raw.ownerEmail || ''),
+    'Phone: ' + (raw.phone || ''),
+    'Address: ' + (raw.address || ''),
+    'Website: ' + (raw.website || ''),
+    'Instagram: ' + (raw.instagram || ''),
+    'Facebook: ' + (raw.facebook || ''),
+    'Google reviews: ' + (raw.googleLink || ''),
+    'Trustpilot: ' + (raw.trustpilotLink || ''),
+    'Build choice: ' + (raw.signupPath || raw.buildChoice || ''),
+    'Links sent: ' + (raw.autoLinks || ''),
+    '',
+    'Opening hours:',
+    raw.hours || '',
+    '',
+    'Notes from client:',
+    raw.designerNotes || raw.notes || ''
+  ];
+  var text = lines.filter(function(l) { return !/: $/.test(l); }).join('\n').replace(/\n{3,}/g, '\n\n');
+  var done = function() {
+    if (!btn) return;
+    var old = btn.textContent;
+    btn.textContent = 'Copied ✓';
+    setTimeout(function() { btn.textContent = old; }, 1500);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done, function() { alert(text); });
+  } else {
+    alert(text);
+  }
 }
 
 function sendAdminReply() {
@@ -1390,7 +1438,7 @@ function sendAdminReply() {
       if (!r.ok) return r.text().then(function(t) { throw new Error('HTTP ' + r.status + ': ' + t); });
       input.value = '';
       input.style.height = '';
-      return loadAdminMessages().then(function() { markThreadSeen(threadId); renderThreads(); renderThread(true); updateAdminDot(); });
+      return loadAdminMessages().then(function() { markThreadSeen(threadId); renderThread(true); renderClientList(); updateAdminDot(); });
     })
     .catch(function(e) { alert('Message not sent: ' + e.message); })
     .then(function() { btn.disabled = false; });
@@ -1404,17 +1452,9 @@ document.getElementById('composerInput').addEventListener('input', function() {
   this.style.height = '';
   this.style.height = Math.min(this.scrollHeight, 140) + 'px';
 });
-
-function showAdminTab(name) {
-  var msgs = name === 'messages';
-  document.getElementById('clientsView').hidden = msgs;
-  document.getElementById('messagesView').hidden = !msgs;
-  document.getElementById('tabClients').classList.toggle('active', !msgs);
-  document.getElementById('tabMessages').classList.toggle('active', msgs);
-  if (msgs) { renderThreads(); if (activeThreadId) markThreadSeen(activeThreadId); updateAdminDot(); renderThread(false); }
-}
-document.getElementById('tabClients').addEventListener('click', function() { showAdminTab('clients'); });
-document.getElementById('tabMessages').addEventListener('click', function() { showAdminTab('messages'); });
+document.getElementById('tab-dash').addEventListener('click', function() { showWorkTab('dash'); });
+document.getElementById('tab-msgs').addEventListener('click', function() { showWorkTab('msgs'); });
+document.getElementById('tab-admin').addEventListener('click', function() { showWorkTab('admin'); });
 
 function startAdminMessaging() {
   loadAdminMessages();
