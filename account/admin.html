@@ -249,6 +249,17 @@ body { background: var(--bg); min-height: 100vh; }
 .admin-actions button, .admin-actions a { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 8px 14px; font: inherit; font-size: 13px; font-weight: 600; color: var(--ink); cursor: pointer; text-decoration: none; }
 .admin-actions button.danger { color: var(--red); }
 .admin-actions button:disabled { opacity: .5; cursor: not-allowed; }
+.adm-block { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.adm-block:last-child { border-bottom: 0; }
+.adm-title { font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.adm-line { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 14px; margin-bottom: 10px; }
+.adm-line a { color: var(--accent); font-weight: 600; text-decoration: none; word-break: break-all; }
+.adm-muted { color: var(--muted); }
+.adm-tick { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: var(--green); color: #fff; font-size: 11px; font-weight: 700; }
+.adm-note { font-size: 12px; color: var(--muted); }
+.adm-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.adm-btns button, .adm-btns a { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 7px 13px; font: inherit; font-size: 13px; font-weight: 600; color: var(--ink); cursor: pointer; text-decoration: none; }
+.adm-btns button.danger { color: var(--red); }
 @media (max-width: 760px) {
   .workspace { grid-template-columns: 1fr; height: auto; }
   .client-list { max-height: 34vh; }
@@ -376,15 +387,15 @@ body { background: var(--bg); min-height: 100vh; }
 <!-- GO LIVE MODAL -->
 <div class="modal-veil hidden" id="goLiveModal">
   <div class="modal">
-    <h2>Make live — <span id="goLiveModalName"></span></h2>
-    <p>This marks the site as live. If you've connected a domain, enter it below so the client can see it on their dashboard.</p>
+    <h2>Override — <span id="goLiveModalName"></span></h2>
+    <p>For legacy customers who paid outside the site. This marks them as paid and makes the site live without Stripe. If you've connected a domain, enter the live address below.</p>
     <div class="modal-field">
       <label>Live URL (optional)</label>
       <input type="text" id="goLiveUrl" placeholder="https://theirbusiness.co.uk">
     </div>
     <div class="modal-actions">
       <button type="button" class="modal-cancel" id="goLiveCancel">Cancel</button>
-      <button type="button" class="modal-confirm" id="goLiveConfirm">Mark as live ✓</button>
+      <button type="button" class="modal-confirm" id="goLiveConfirm">Mark paid & live ✓</button>
     </div>
     <div class="modal-status" id="goLiveStatus"></div>
   </div>
@@ -569,6 +580,7 @@ function renderBusinesses(businesses, emails) {
 
   allBusinesses = sorted;
   applyFilter();
+  if (activeThreadId && activeTab === 'admin') renderAdminPanel();
 }
 
 function applyFilter() {
@@ -897,6 +909,12 @@ document.getElementById('goLiveConfirm').addEventListener('click', function() {
   .then(function(rows) {
     var existing = (rows && rows[0]) || {};
     var d0 = existing.data || {};
+    d0 = Object.assign({}, d0, { planActive: true, manualPlan: true, manualPlanAt: new Date().toISOString() });
+    return fetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(goLiveTargetSlug), {
+      method: 'PATCH',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ data: d0 })
+    }).then(function() {
     return publishSite(goLiveTargetSlug, true, d0.domainConnected ? d0.customDomain : '').then(function(res) {
     var patch = { published: true, needsPublish: false, manuallyOffline: false, publishError: '', liveUrl: liveUrl || res.url };
     var newData = Object.assign({}, d0, patch);
@@ -909,11 +927,12 @@ document.getElementById('goLiveConfirm').addEventListener('click', function() {
       return { response: response, existing: existing };
     });
     });
+    });
   })
   .then(function(result) {
     var r = result.response;
     var existing = result.existing;
-    btn.textContent = 'Mark as live ✓'; btn.disabled = false;
+    btn.textContent = 'Mark paid & live ✓'; btn.disabled = false;
     if (r.ok) {
       var businessName = existing.name || (existing.data && existing.data.raw && existing.data.raw.name) || '';
       var siteUrl = (existing.data && existing.data.liveUrl) || liveUrl || '';
@@ -929,7 +948,7 @@ document.getElementById('goLiveConfirm').addEventListener('click', function() {
     }
   })
   .catch(function(err) {
-    btn.textContent = 'Mark as live ✓'; btn.disabled = false;
+    btn.textContent = 'Mark paid & live ✓'; btn.disabled = false;
     status.textContent = (err && err.message) || 'Network error.'; status.className = 'modal-status err';
   });
 });
@@ -1362,25 +1381,94 @@ function renderAdminPanel() {
   var raw = d.raw || {};
   var s = statusOf(b);
   var name = bizName(activeThreadId);
+  var slug = esc(activeThreadId);
+  var nameArg = esc(name);
   var domain = d.customDomain || d.domain || '';
   var email = raw.email || raw.ownerEmail || '';
-  var slug = esc(activeThreadId);
   var facts = [
     ['Status', statusLabel(s)],
-    ['Plan', d.planActive ? 'Paying' : 'Not paid'],
+    ['Plan', (d.planActive ? 'Paid' : 'Not paid') + (d.manualPlan ? ' (legacy override)' : '')],
     ['Email', email || '—'],
-    ['Domain', domain || '—'],
     ['Live URL', d.liveUrl ? '<a href="' + esc(d.liveUrl) + '" target="_blank" rel="noopener">' + esc(d.liveUrl) + '</a>' : '—']
   ];
   document.getElementById('adminFacts').innerHTML = facts.map(function(f) {
     return '<span class="k">' + esc(f[0]) + '</span><span>' + (f[0] === 'Live URL' ? f[1] : esc(f[1])) + '</span>';
   }).join('');
-  var actions = '<button type="button" onclick="copyClientInfo(\'' + slug + '\', this)">Copy info</button>' +
-    '<button type="button" onclick="openDomainModal(\'' + slug + '\',\'' + esc(name) + '\')">Connect domain</button>' +
-    '<button type="button" onclick="openUploadModal(\'' + slug + '\',\'' + esc(name) + '\')">Upload site files</button>' +
-    (d.demoApproved && s !== 'green' ? '<button type="button" onclick="openGoLiveModal(\'' + slug + '\',\'' + esc(name) + '\')">Mark as live</button>' : '') +
-    '<button type="button" class="danger" onclick="openDeleteModal(\'' + slug + '\',\'' + esc(name) + '\')">Delete account</button>';
-  document.getElementById('adminActions').innerHTML = actions;
+
+  var domainBlock = domain
+    ? '<div class="adm-line"><span class="adm-tick" aria-hidden="true">✓</span><a href="https://' + esc(domain) + '" target="_blank" rel="noopener">' + esc(domain) + '</a>' +
+      (d.domainConnected ? '' : '<span class="adm-note">DNS not confirmed</span>') + '</div>' +
+      '<div class="adm-btns"><button type="button" onclick="openDomainModal(\'' + slug + '\',\'' + nameArg + '\')">Edit</button>' +
+      '<button type="button" class="danger" onclick="removeDomain(\'' + slug + '\')">Remove</button></div>'
+    : '<div class="adm-line adm-muted">No domain connected</div>' +
+      '<div class="adm-btns"><button type="button" onclick="openDomainModal(\'' + slug + '\',\'' + nameArg + '\')">Connect domain</button></div>';
+
+  var uploaded = !!(d.demoUrl || d.demoUploaded);
+  var uploadBlock = uploaded
+    ? '<div class="adm-line"><span class="adm-tick" aria-hidden="true">✓</span>Site uploaded' +
+      (d.demoUrl ? '<span class="adm-note">index.html ready</span>' : '') + '</div>' +
+      '<div class="adm-btns">' +
+      (d.demoUrl ? '<a href="' + esc(d.demoUrl) + '" target="_blank" rel="noopener">View site</a>' : '') +
+      '<button type="button" onclick="openUploadModal(\'' + slug + '\',\'' + nameArg + '\')">Replace</button>' +
+      '<button type="button" class="danger" onclick="removeUpload(\'' + slug + '\')">Remove</button></div>'
+    : '<div class="adm-line adm-muted">No site uploaded</div>' +
+      '<div class="adm-btns"><button type="button" onclick="openUploadModal(\'' + slug + '\',\'' + nameArg + '\')">Upload site files</button></div>';
+
+  var planBlock = '<div class="adm-line">' + (d.planActive ? '<span class="adm-tick" aria-hidden="true">✓</span>Paid' : 'Not paid') +
+    (d.manualPlan ? '<span class="adm-note">set manually</span>' : '') + '</div>' +
+    '<div class="adm-btns"><button type="button" onclick="openGoLiveModal(\'' + slug + '\',\'' + nameArg + '\')">Override: mark paid & live</button></div>';
+
+  document.getElementById('adminActions').innerHTML =
+    '<div class="adm-block"><div class="adm-title">Domain</div>' + domainBlock + '</div>' +
+    '<div class="adm-block"><div class="adm-title">Website files</div>' + uploadBlock + '</div>' +
+    '<div class="adm-block"><div class="adm-title">Plan</div>' + planBlock + '</div>' +
+    '<div class="adm-block"><div class="adm-title">Account</div><div class="adm-btns">' +
+    '<button type="button" onclick="copyClientInfo(\'' + slug + '\', this)">Copy info</button>' +
+    '<button type="button" class="danger" onclick="openDeleteModal(\'' + slug + '\',\'' + nameArg + '\')">Delete account</button></div></div>';
+}
+
+function patchClientData(slug, mutate) {
+  return fetch(SUPABASE_URL + '/rest/v1/businesses?select=id,data&id=eq.' + encodeURIComponent(slug), { headers: authHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(rows) {
+      var d = Object.assign({}, (rows && rows[0] && rows[0].data) || {});
+      mutate(d);
+      return fetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(slug), {
+        method: 'PATCH',
+        headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+        body: JSON.stringify({ data: d })
+      });
+    })
+    .then(function(r) {
+      if (!r.ok) throw new Error('Save failed (' + r.status + ')');
+      return loadBusinesses();
+    });
+}
+
+function removeDomain(slug) {
+  var b = bizById(slug);
+  var domain = b && b.data && (b.data.customDomain || b.data.domain);
+  if (!domain || !confirm('Remove ' + domain + ' from this client? This doesn’t change their DNS.')) return;
+  patchClientData(slug, function(d) {
+    delete d.customDomain;
+    delete d.domain;
+    d.domainConnected = false;
+  }).catch(function(e) { alert(e.message); });
+}
+
+function removeUpload(slug) {
+  var b = bizById(slug);
+  var live = b && b.data && b.data.published;
+  var msg = live
+    ? 'Remove the uploaded preview for this client? Their live site keeps running, but the preview link will be cleared.'
+    : 'Remove the uploaded site for this client? You can upload it again afterwards.';
+  if (!confirm(msg)) return;
+  patchClientData(slug, function(d) {
+    delete d.demoUrl;
+    d.demoUploaded = false;
+    d.demoReady = false;
+    d.previewSent = false;
+  }).catch(function(e) { alert(e.message); });
 }
 
 function copyClientInfo(id, btn) {
