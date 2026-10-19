@@ -211,9 +211,11 @@ body { background: var(--bg); min-height: 100vh; }
 }
 .workspace { display: grid; grid-template-columns: 320px 1fr; gap: 16px; height: calc(100vh - 66px); padding: 16px 20px; box-sizing: border-box; }
 .client-col, .work-col { background: var(--card); border: 1px solid var(--line); border-radius: 14px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
-.client-col-head { display: flex; align-items: center; gap: 8px; padding: 12px; border-bottom: 1px solid var(--line); }
-.client-col-head input { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; font: inherit; outline: none; }
-.client-count { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.client-col-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px; border-bottom: 1px solid var(--line); }
+.client-col-head input { flex: 1 1 100%; min-width: 0; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; font: inherit; outline: none; }
+.client-col-head select { flex: none; padding: 7px 30px 7px 12px; border: 1px solid var(--line); border-radius: 10px; font: inherit; font-size: 13px; font-weight: 600; color: var(--ink); background: var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2369747b' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 11px center; -webkit-appearance: none; appearance: none; cursor: pointer; outline: none; }
+.client-col-head select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+.client-count { margin-left: auto; font-size: 12px; color: var(--muted); white-space: nowrap; }
 .client-list { flex: 1; overflow-y: auto; }
 .client-item { display: block; position: relative; width: 100%; text-align: left; padding: 12px 14px 12px 30px; border: 0; border-bottom: 1px solid var(--line); background: none; font: inherit; cursor: pointer; }
 .client-item:hover { background: #f6f8fc; }
@@ -270,8 +272,11 @@ body { background: var(--bg); min-height: 100vh; }
   .ws-back { display: inline-block; }
   .work-head > div:nth-child(2) { min-width: 0; flex: 1; }
   #dashFrame { min-height: calc(100vh - 170px); }
-  .work-head { padding: 10px 14px; }
-  .work-head a { font-size: 12px; }
+  .work-head { padding: 10px 14px; gap: 10px; }
+  .work-head > div:nth-child(2) { min-width: 0; flex: 1; display: flex; flex-direction: column; }
+  #wsTitle { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 16px; }
+  .work-status { margin: 2px 0 0; }
+  #wsOpenNew { display: none; }
 }
 </style>
 </head>
@@ -310,6 +315,14 @@ body { background: var(--bg); min-height: 100vh; }
     <aside class="client-col">
       <div class="client-col-head">
         <input type="search" id="searchInput" placeholder="Search clients…">
+        <select id="clientFilter" aria-label="Filter clients">
+          <option value="all">All</option>
+          <option value="unread">Unread</option>
+          <option value="red">To build</option>
+          <option value="yellow">Preview sent</option>
+          <option value="green">Live</option>
+          <option value="stub">Setup pending</option>
+        </select>
         <span class="client-count" id="clientCount"></span>
       </div>
       <div class="client-list" id="clientList"><div class="loading-row"><span class="spinner"></span> Loading clients…</div></div>
@@ -1298,7 +1311,10 @@ function loadAdminMessages() {
 function renderClientList() {
   var list = document.getElementById('clientList');
   var q = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+  var f = document.getElementById('clientFilter').value;
   var ids = allBusinesses.filter(function(b) {
+    if (f === 'unread' && !isUnread(b.id)) return false;
+    if (f !== 'all' && f !== 'unread' && statusOf(b) !== f) return false;
     if (!q) return true;
     return (bizName(b.id) + ' ' + (b.id || '')).toLowerCase().indexOf(q) > -1;
   }).map(function(b) { return b.id; });
@@ -1550,6 +1566,8 @@ document.getElementById('composerInput').addEventListener('input', function() {
   this.style.height = '';
   this.style.height = Math.min(this.scrollHeight, 140) + 'px';
 });
+document.getElementById('clientFilter').addEventListener('change', renderClientList);
+document.getElementById('searchInput').addEventListener('input', renderClientList);
 document.getElementById('wsBack').addEventListener('click', function() {
   document.querySelector('.workspace').classList.remove('detail');
   window.scrollTo(0, 0);
