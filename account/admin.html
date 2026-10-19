@@ -1308,20 +1308,30 @@ function loadAdminMessages() {
     .catch(function(e) { console.warn('[admin messages] load failed', e); });
 }
 
+function businessUpdatedTime(id) {
+  var b = allBusinesses.find(function(x) { return x.id === id; });
+  return b && b.updated_at ? new Date(b.updated_at).getTime() : 0;
+}
+
 function renderThreads() {
   var list = document.getElementById('threadList');
   if (!adminThreadsLoaded) { list.innerHTML = '<div class="loading-row"><span class="spinner"></span> Loading messages…</div>'; return; }
-  var ids = Object.keys(adminThreads).filter(function(id) { return adminThreads[id].length; });
-  ids.sort(function(a, b) { return latestMessageTime(b) - latestMessageTime(a); });
-  if (!ids.length) { list.innerHTML = '<div class="empty-state"><p>No messages yet.</p></div>'; return; }
+  var seen = {};
+  var ids = allBusinesses.map(function(b) { return b.id; }).concat(Object.keys(adminThreads));
+  ids = ids.filter(function(id) { if (seen[id]) return false; seen[id] = true; return true; });
+  function sortTime(id) { return latestMessageTime(id) || businessUpdatedTime(id); }
+  ids.sort(function(a, b) { return sortTime(b) - sortTime(a); });
+  if (!ids.length) { list.innerHTML = '<div class="empty-state"><p>No clients yet.</p></div>'; return; }
   list.innerHTML = ids.map(function(id) {
-    var msgs = adminThreads[id];
+    var msgs = adminThreads[id] || [];
     var last = msgs[msgs.length - 1];
+    var preview = last ? (last.sender === 'admin' ? 'You: ' : '') + last.body : 'No messages yet';
+    var time = last ? timeAgo(last.created_at) : '';
     return '<button type="button" class="thread-item' + (id === activeThreadId ? ' active' : '') + '" data-id="' + esc(id) + '">' +
       (isUnread(id) ? '<span class="row-dot"></span>' : '') +
-      '<span class="thread-time">' + esc(timeAgo(last.created_at)) + '</span>' +
+      '<span class="thread-time">' + esc(time) + '</span>' +
       '<div class="thread-name">' + esc(bizName(id)) + '</div>' +
-      '<div class="thread-preview">' + (last.sender === 'admin' ? 'You: ' : '') + esc(last.body) + '</div>' +
+      '<div class="thread-preview">' + esc(preview) + '</div>' +
       '</button>';
   }).join('');
   list.querySelectorAll('.thread-item').forEach(function(btn) {
@@ -1348,7 +1358,8 @@ function renderThread(forceScroll) {
   var msgs = adminThreads[activeThreadId] || [];
   var body = document.getElementById('threadBody');
   var changed = msgs.length !== lastRenderedCount;
-  body.innerHTML = msgs.map(function(m) {
+  if (!msgs.length) body.innerHTML = '<div class="thread-empty">No messages yet. Send the first one below.</div>';
+  else body.innerHTML = msgs.map(function(m) {
     var out = m.sender === 'admin';
     var when = new Date(m.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     return '<div class="bubble ' + (out ? 'out' : 'in') + '">' + esc(m.body) +
