@@ -335,6 +335,7 @@ body { background: var(--bg); color: var(--ink); }
 .client-col-head .search-wrap select option { color: var(--ink); }
 .client-full { font-weight: 500; color: var(--muted); }
 .work-tabs .tabs-inner { max-width: none; }
+.adm-wait { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: #fdf2dd; color: #8a5d08; font-size: 11px; font-weight: 800; }
 .adm-edit { display: none; border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 12.5px; font-weight: 700; color: var(--ink); cursor: pointer; }
 @media (max-width: 760px) {
   .adm-card.collapsible .adm-edit { display: inline-block; }
@@ -434,14 +435,14 @@ body { background: var(--bg); color: var(--ink); }
 <div class="modal-veil hidden" id="domainModal">
   <div class="modal">
     <h2>Connect domain</h2>
-    <p>Enter the custom domain for <strong id="domainModalName"></strong>. This saves a note — contact the client to confirm DNS setup.</p>
+    <p>Enter the custom domain for <strong id="domainModalName"></strong>. This connects it to their website. If it was bought outside BrightSite, you’ll get two nameservers to set at their registrar.</p>
     <div class="modal-field">
       <label>Domain</label>
       <input type="text" id="domainInput" placeholder="e.g. willowbeauty.co.uk">
     </div>
     <div class="modal-actions">
       <button type="button" class="modal-cancel" id="domainCancel">Cancel</button>
-      <button type="button" class="modal-confirm" id="domainConfirm">Save domain</button>
+      <button type="button" class="modal-confirm" id="domainConfirm">Connect domain</button>
     </div>
     <div class="modal-status" id="domainStatus"></div>
   </div>
@@ -1194,50 +1195,55 @@ function tryAddVercelDomain(liveUrl, statusEl) {
 }
 
 // domain modal — deploys site files to Vercel and aliases the domain
+function connectDomainRequest(slug, domain) {
+  return fetch(API_BASE_URL + '/api/admin-businesses', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + (adminSession && adminSession.access_token || ''), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slug: slug, domain: domain })
+  }).then(function(r) {
+    return r.json().catch(function() { return {}; }).then(function(j) {
+      if (!r.ok) throw new Error(j.error || ('Failed (' + r.status + ')'));
+      return j;
+    });
+  });
+}
+
 document.getElementById('domainConfirm').addEventListener('click', function() {
   var domain = document.getElementById('domainInput').value.trim();
   var status = document.getElementById('domainStatus');
   if (!domain) { status.textContent = 'Enter a domain first.'; status.className = 'modal-status err'; return; }
-
   var btn = document.getElementById('domainConfirm');
-  btn.textContent = 'Saving…'; btn.disabled = true;
-
-  fetch(SUPABASE_URL + '/rest/v1/businesses?select=id,data&id=eq.' + encodeURIComponent(domainTargetSlug), {
-    headers: authHeaders()
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(rows) {
-    var existing = (rows && rows[0]) || {};
-    var newData = Object.assign({}, existing.data || {}, { customDomain: domain });
-    return fetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(domainTargetSlug), {
-      method: 'PATCH',
-      headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
-      body: JSON.stringify({ data: newData })
-    });
-  })
-  .then(function(r) {
-    btn.textContent = 'Save domain'; btn.disabled = false;
-    if (r.ok) {
-      status.textContent = 'Domain saved.'; status.className = 'modal-status ok';
-      var vercelToken, vercelProject;
-      try { vercelToken = localStorage.getItem('bs_vercel_token'); vercelProject = localStorage.getItem('bs_vercel_project'); } catch(e) {}
-      if (vercelToken && vercelProject) {
-        // Deploy files and alias domain, then close
-        deployAndAliasToVercel(domainTargetSlug, domain, status).then(function() {
-          setTimeout(function() { document.getElementById('domainModal').classList.add('hidden'); loadBusinesses(); }, 1500);
-        });
-      } else {
-        setTimeout(function() { document.getElementById('domainModal').classList.add('hidden'); loadBusinesses(); }, 2000);
-      }
+  btn.textContent = 'Connecting…'; btn.disabled = true;
+  status.textContent = ''; status.className = 'modal-status';
+  connectDomainRequest(domainTargetSlug, domain).then(function(res) {
+    btn.textContent = 'Connect domain'; btn.disabled = false;
+    if (res.connected) {
+      status.textContent = 'Connected. The site will load on this domain within a few minutes.';
+      status.className = 'modal-status ok';
+      setTimeout(function() { document.getElementById('domainModal').classList.add('hidden'); loadBusinesses(); }, 1800);
     } else {
-      status.textContent = 'Save failed. Check connection.'; status.className = 'modal-status err';
+      status.innerHTML = 'Almost there. At the client’s registrar, change the nameservers to:<br><strong>' +
+        (res.nameservers || []).map(esc).join('<br>') + '</strong><br>It connects automatically once that’s done (usually within a few hours).';
+      status.className = 'modal-status ok';
+      loadBusinesses();
     }
-  })
-  .catch(function() {
-    btn.textContent = 'Save domain'; btn.disabled = false;
-    status.textContent = 'Network error.'; status.className = 'modal-status err';
+  }).catch(function(err) {
+    btn.textContent = 'Connect domain'; btn.disabled = false;
+    status.textContent = err.message; status.className = 'modal-status err';
   });
 });
+
+function recheckDomain(slug, btn) {
+  var b = bizById(slug);
+  var domain = b && b.data && (b.data.customDomain || b.data.domain);
+  if (!domain) return;
+  btn.disabled = true; btn.textContent = 'Checking…';
+  connectDomainRequest(slug, domain).then(function(res) {
+    if (!res.connected) alert('Not connected yet. The nameservers haven’t switched over, so try again later.');
+    loadBusinesses();
+  }).catch(function(err) { alert(err.message); }).then(function() { btn.disabled = false; btn.textContent = 'Check again'; });
+}
+
 
 // ---- settings modal ----
 document.getElementById('settingsBtn').addEventListener('click', function() {
@@ -1512,10 +1518,11 @@ function renderAdminPanel() {
       ? '<button type="button" onclick="openUploadModal(\'' + slug + '\',\'' + nameArg + '\')">Replace</button><button type="button" class="danger" onclick="removeUpload(\'' + slug + '\')">Remove</button>'
       : '<button type="button" class="primary" onclick="openUploadModal(\'' + slug + '\',\'' + nameArg + '\')">Upload</button>', true);
   html += row('Domain',
-    domain ? tick + '<a href="https://' + esc(domain) + '" target="_blank" rel="noopener">' + esc(domain) + '</a>' + (d.domainConnected ? '' : '<span class="adm-note">DNS not confirmed</span>')
+    domain ? (d.domainConnected ? tick : '<span class="adm-wait" aria-hidden="true">…</span>') + '<a href="https://' + esc(domain) + '" target="_blank" rel="noopener">' + esc(domain) + '</a>' +
+      (d.domainConnected ? '' : '<span class="adm-note">' + (d.domainNameservers && d.domainNameservers.length ? 'Waiting for nameservers: ' + d.domainNameservers.map(esc).join(', ') : 'Not connected yet') + '</span>')
       : '<span class="adm-muted">No domain</span>',
     domain
-      ? '<button type="button" onclick="openDomainModal(\'' + slug + '\',\'' + nameArg + '\')">Edit</button><button type="button" class="danger" onclick="removeDomain(\'' + slug + '\')">Remove</button>'
+      ? (d.domainConnected ? '' : '<button type="button" onclick="recheckDomain(\'' + slug + '\', this)">Check again</button>') + '<button type="button" onclick="openDomainModal(\'' + slug + '\',\'' + nameArg + '\')">Edit</button><button type="button" class="danger" onclick="removeDomain(\'' + slug + '\')">Remove</button>'
       : '<button type="button" class="primary" onclick="openDomainModal(\'' + slug + '\',\'' + nameArg + '\')">Connect</button>', true);
   html += row('Plan',
     d.planActive ? tick + 'Paid' + (d.manualPlan ? '<span class="adm-note">set manually</span>' : '') : '<span class="adm-muted">Not paid</span>',

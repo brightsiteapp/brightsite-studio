@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import { supabaseAdmin } from './supabase-admin.js';
 import { getLiveDomainQuote } from './domain-pricing.js';
-import { connectDomainToSite, setSiteLive } from './activate.js';
+import { connectDomainToSite, setSiteLive, connectAnyDomain } from './activate.js';
 
 // Nightly (Vercel cron). Cloudflare auto-renews every domain on BrightSite's account, so:
 //  - cancelled / unpaid customers: switch auto-renew off so we stop paying for their domain
@@ -66,6 +66,24 @@ export async function runDomainRenewals(req, res) {
   if (error) return res.status(500).json({ error: error.message });
 
   const report = [];
+  const { data: external } = await supabase.from('businesses').select('id,data')
+    .eq('data->>domainExternal', 'true').eq('data->>domainConnected', 'false');
+  for (const row of external || []) {
+    const data = row.data || {};
+    const domain = data.customDomain || data.domain;
+    const entry = { slug: row.id, domain, external: true };
+    report.push(entry);
+    try {
+      const result = dry ? { status: 'dry-run' } : await connectAnyDomain(row.id, domain, !!data.published);
+      entry.status = result.status;
+      if (result.connected) {
+        Object.assign(data, { domainConnected: true, domainError: '', ...(result.liveUrl ? { liveUrl: result.liveUrl } : {}) });
+        await supabase.from('businesses').update({ data }).eq('id', row.id);
+      }
+    } catch (err) {
+      entry.error = err.message;
+    }
+  }
   for (const row of rows) {
     const data = row.data || {};
     const domain = data.customDomain || data.domain;

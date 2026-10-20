@@ -44,6 +44,34 @@ export async function connectDomainToSite(domain) {
   }
 }
 
+export function normaliseDomain(input) {
+  return String(input || '').trim().toLowerCase()
+    .replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/[/?#].*$/, '').replace(/\.$/, '');
+}
+
+// Connects any domain to a client's site. Domains not yet in our Cloudflare account are added,
+// and the client must switch their registrar's nameservers before the zone goes active.
+export async function connectAnyDomain(slug, domain, published) {
+  let zones = await cf(`/zones?name=${encodeURIComponent(domain)}`);
+  let zone = zones && zones[0];
+  if (!zone) {
+    zone = await cf('/zones', {
+      method: 'POST',
+      body: JSON.stringify({ name: domain, account: { id: CF_ACCOUNT_ID }, type: 'full' }),
+    });
+  }
+  const result = { status: zone.status, nameservers: zone.name_servers || [], connected: false, liveUrl: '' };
+  if (zone.status !== 'active') return result;
+  await connectDomainToSite(domain);
+  result.connected = true;
+  if (published) {
+    const live = await setSiteLive(slug, true, domain);
+    if (live.error) throw new Error(live.error);
+    result.liveUrl = live.url;
+  }
+  return result;
+}
+
 // Switches the uploaded site on (or off) in the site worker. Returns { live, url } or { error }.
 export async function setSiteLive(slug, live, domain) {
   const res = await fetch(`${SITE_WORKER}/publish`, {
