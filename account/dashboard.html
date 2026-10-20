@@ -1057,7 +1057,12 @@
   var adminSession = null;
   try { adminSession = JSON.parse(localStorage.getItem('bs_admin') || 'null'); } catch(e) {}
   var isAdminView = !!(params.get('bs_admin_slug') && adminSession && adminSession.admin);
-  if (isAdminView) {
+  if (isAdminView && params.get('embed') === '1') {
+    var embedStyle = document.createElement('style');
+    embedStyle.textContent = '.app-header,#mobileViewTabs,#msgsPanel,#accountPanel{display:none!important}#websitePanel[hidden]{display:block!important}';
+    document.head.appendChild(embedStyle);
+  }
+  if (isAdminView && params.get('embed') !== '1') {
     document.addEventListener('DOMContentLoaded', function() {
       var right = document.querySelector('.app-header-right');
       if (right) {

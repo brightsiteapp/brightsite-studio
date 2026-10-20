@@ -278,6 +278,62 @@ body { background: var(--bg); min-height: 100vh; }
   .work-status { margin: 2px 0 0; }
   #wsOpenNew { display: none; }
 }
+
+/* customer-dashboard look */
+:root { --bg: #F4EDE6; --card: #fff; --ink: #1C2832; --muted: #757b80; --line: rgba(28,40,50,.12); --accent: #3B82F6; font-family: 'Avenir Next','Avenir','Nunito Sans',-apple-system,sans-serif; }
+body { background: var(--bg); color: var(--ink); }
+.app-header { background: rgba(255,255,255,.72); backdrop-filter: blur(22px) saturate(1.3); -webkit-backdrop-filter: blur(22px) saturate(1.3); min-height: 58px; padding: 10px 18px; }
+.admin-badge { background: rgba(59,130,246,.12); color: var(--accent); }
+.workspace { gap: 14px; padding: 14px 18px; height: calc(100vh - 58px); }
+.client-col, .work-col { border: 0; border-radius: 18px; box-shadow: 0 4px 18px rgba(37,59,88,.05); }
+.client-col-head { border-bottom: 1px solid var(--line); padding: 14px; }
+.client-col-head input, .client-col-head select { border-color: var(--line); border-radius: 12px; background-color: var(--bg); }
+.client-col-head input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
+.client-item { border-bottom: 0; margin: 2px 8px; width: calc(100% - 16px); border-radius: 12px; padding: 11px 12px 11px 30px; }
+.client-item:hover { background: rgba(28,40,50,.04); }
+.client-item.active { background: rgba(59,130,246,.1); }
+.client-item .status-dot { top: 15px; left: 12px; width: 9px; height: 9px; }
+.client-name { font-weight: 700; font-size: 14px; }
+.work-head { border-bottom: 0; padding: 16px 18px 6px; gap: 10px; justify-content: flex-start; }
+.work-head strong { font-size: 18px; font-weight: 800; letter-spacing: -.02em; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.status-pill { flex: none; font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: rgba(28,40,50,.07); color: var(--muted); }
+.status-pill.red { background: #fdf0ee; color: #b23b2c; }
+.status-pill.yellow { background: #fdf2dd; color: #8a5d08; }
+.status-pill.green { background: #e6f6ec; color: #1f9d55; }
+.work-tabs { border-bottom: 1px solid var(--line); padding: 8px 18px 12px; }
+.work-tabs .tabs-inner { display: flex; gap: 0; padding: 4px; border-radius: 14px; background: rgba(28,40,50,.07); width: 100%; max-width: 420px; }
+.work-tab { flex: 1; min-height: 36px; border-radius: 11px; padding: 0 10px; font-size: 13px; font-weight: 700; color: rgba(28,40,50,.55); }
+.work-tab.active { background: var(--accent); color: #fff; box-shadow: 0 1px 6px rgba(47,125,237,.25); }
+.work-tab .tab-dot { top: 6px; right: 8px; width: 7px; height: 7px; }
+#ws-msgs .thread-body { background: var(--bg); }
+#ws-msgs .composer textarea { border-radius: 14px; border-color: var(--line); }
+#ws-msgs .composer button { border-radius: 14px; background: var(--accent); }
+.bubble.in { border: 0; box-shadow: 0 1px 3px rgba(28,40,50,.06); }
+.admin-panel { padding: 16px 18px; background: var(--bg); }
+.admin-actions { display: flex; flex-direction: column; gap: 10px; max-width: 640px; }
+.adm-card { background: #fff; border-radius: 16px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(28,40,50,.05); }
+.adm-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.adm-main { min-width: 0; }
+.adm-title { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: none; letter-spacing: 0; margin: 0 0 3px; }
+.adm-line { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin: 0; font-size: 14.5px; font-weight: 600; }
+.adm-line a { color: var(--ink); text-decoration: none; border-bottom: 1px solid rgba(28,40,50,.2); }
+.adm-note a { color: inherit; }
+.adm-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.adm-btns button { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 7px 13px; font: inherit; font-size: 12.5px; font-weight: 700; color: var(--ink); cursor: pointer; }
+.adm-btns button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.adm-btns button.danger { color: #b23b2c; }
+.adm-delete { align-self: flex-start; margin-top: 8px; border: 0; background: none; padding: 6px 2px; font: inherit; font-size: 12.5px; font-weight: 700; color: #b23b2c; cursor: pointer; }
+.admin-actions .adm-line a { border: 0; border-bottom: 1px solid rgba(28,40,50,.2); border-radius: 0; padding: 0; background: none; font-size: inherit; color: var(--ink); }
+.admin-actions .adm-note a { border: 0; color: inherit; font-weight: 600; }
+.admin-actions .adm-delete { border: 0; background: none; border-radius: 0; padding: 6px 2px; color: #b23b2c; }
+.work-tab .tab-dot { right: 10px; top: 8px; }
+@media (max-width: 760px) {
+  .workspace { padding: 10px; height: auto; min-height: calc(100vh - 58px); }
+  .work-head { padding: 12px 14px 4px; }
+  .work-tabs { padding: 8px 12px 10px; }
+  .work-tabs .tabs-inner { max-width: none; }
+  .adm-row { align-items: flex-start; }
+}
 </style>
 </head>
 <body>
@@ -332,14 +388,14 @@ body { background: var(--bg); min-height: 100vh; }
       <div id="wsPane" hidden>
         <div class="work-head">
           <button type="button" class="ws-back" id="wsBack" aria-label="Back to clients">‹ Clients</button>
-          <div><strong id="wsTitle"></strong><span class="work-status" id="wsStatus"></span></div>
-          <a id="wsOpenNew" target="_blank" rel="noopener">Open in new tab ↗</a>
+          <strong id="wsTitle"></strong>
+          <span class="status-pill" id="wsStatus"></span>
         </div>
-        <nav class="work-tabs">
+        <nav class="work-tabs"><div class="tabs-inner">
           <button type="button" class="work-tab active" id="tab-dash">Dashboard</button>
           <button type="button" class="work-tab" id="tab-msgs">Messages<span class="tab-dot" id="msgsTabDot" hidden></span></button>
           <button type="button" class="work-tab" id="tab-admin">Admin</button>
-        </nav>
+        </div></nav>
         <div class="work-panel" id="ws-dash"><iframe id="dashFrame" title="Client dashboard"></iframe></div>
         <div class="work-panel" id="ws-msgs" hidden>
           <div class="thread-body" id="threadBody"></div>
@@ -349,7 +405,6 @@ body { background: var(--bg); min-height: 100vh; }
           </div>
         </div>
         <div class="work-panel admin-panel" id="ws-admin" hidden>
-          <div class="admin-facts" id="adminFacts"></div>
           <div class="admin-actions" id="adminActions"></div>
         </div>
       </div>
@@ -623,7 +678,6 @@ document.querySelectorAll('[data-filter]').forEach(function(btn) {
   });
 });
 
-document.getElementById('searchInput').addEventListener('input', applyFilter);
 
 // ---- open account dashboard (as admin) ----
 function openAccountDashboard(slug) {
@@ -1354,8 +1408,9 @@ function selectClient(id) {
   document.getElementById('wsPane').hidden = false;
   document.querySelector('.workspace').classList.add('detail');
   document.getElementById('wsTitle').textContent = bizName(id);
-  document.getElementById('wsStatus').textContent = statusLabel(s);
-  document.getElementById('wsOpenNew').href = '/account/dashboard.html?bs_admin_slug=' + encodeURIComponent(id);
+  var pill = document.getElementById('wsStatus');
+  pill.textContent = statusLabel(s);
+  pill.className = 'status-pill ' + s;
   renderClientList();
   updateAdminDot();
   showWorkTab('dash');
@@ -1372,7 +1427,7 @@ function showWorkTab(name) {
     var frame = document.getElementById('dashFrame');
     if (frame.getAttribute('data-slug') !== activeThreadId) {
       frame.setAttribute('data-slug', activeThreadId);
-      frame.src = '/account/dashboard.html?bs_admin_slug=' + encodeURIComponent(activeThreadId);
+      frame.src = '/account/dashboard.html?embed=1&bs_admin_slug=' + encodeURIComponent(activeThreadId);
     }
   }
   if (name === 'msgs') {
@@ -1405,52 +1460,38 @@ function renderAdminPanel() {
   if (!b) return;
   var d = b.data || {};
   var raw = d.raw || {};
-  var s = statusOf(b);
   var name = bizName(activeThreadId);
   var slug = esc(activeThreadId);
   var nameArg = esc(name);
   var domain = d.customDomain || d.domain || '';
   var email = raw.email || raw.ownerEmail || '';
-  var facts = [
-    ['Status', statusLabel(s)],
-    ['Plan', (d.planActive ? 'Paid' : 'Not paid') + (d.manualPlan ? ' (legacy override)' : '')],
-    ['Email', email || '—'],
-    ['Live URL', d.liveUrl ? '<a href="' + esc(d.liveUrl) + '" target="_blank" rel="noopener">' + esc(d.liveUrl) + '</a>' : '—']
-  ];
-  document.getElementById('adminFacts').innerHTML = facts.map(function(f) {
-    return '<span class="k">' + esc(f[0]) + '</span><span>' + (f[0] === 'Live URL' ? f[1] : esc(f[1])) + '</span>';
-  }).join('');
-
-  var domainBlock = domain
-    ? '<div class="adm-line"><span class="adm-tick" aria-hidden="true">✓</span><a href="https://' + esc(domain) + '" target="_blank" rel="noopener">' + esc(domain) + '</a>' +
-      (d.domainConnected ? '' : '<span class="adm-note">DNS not confirmed</span>') + '</div>' +
-      '<div class="adm-btns"><button type="button" onclick="openDomainModal(\'' + slug + '\',\'' + nameArg + '\')">Edit</button>' +
-      '<button type="button" class="danger" onclick="removeDomain(\'' + slug + '\')">Remove</button></div>'
-    : '<div class="adm-line adm-muted">No domain connected</div>' +
-      '<div class="adm-btns"><button type="button" onclick="openDomainModal(\'' + slug + '\',\'' + nameArg + '\')">Connect domain</button></div>';
-
   var uploaded = !!(d.demoUrl || d.demoUploaded);
-  var uploadBlock = uploaded
-    ? '<div class="adm-line"><span class="adm-tick" aria-hidden="true">✓</span>Site uploaded' +
-      (d.demoUrl ? '<span class="adm-note">index.html ready</span>' : '') + '</div>' +
-      '<div class="adm-btns">' +
-      (d.demoUrl ? '<a href="' + esc(d.demoUrl) + '" target="_blank" rel="noopener">View site</a>' : '') +
-      '<button type="button" onclick="openUploadModal(\'' + slug + '\',\'' + nameArg + '\')">Replace</button>' +
-      '<button type="button" class="danger" onclick="removeUpload(\'' + slug + '\')">Remove</button></div>'
-    : '<div class="adm-line adm-muted">No site uploaded</div>' +
-      '<div class="adm-btns"><button type="button" onclick="openUploadModal(\'' + slug + '\',\'' + nameArg + '\')">Upload site files</button></div>';
-
-  var planBlock = '<div class="adm-line">' + (d.planActive ? '<span class="adm-tick" aria-hidden="true">✓</span>Paid' : 'Not paid') +
-    (d.manualPlan ? '<span class="adm-note">set manually</span>' : '') + '</div>' +
-    '<div class="adm-btns"><button type="button" onclick="openGoLiveModal(\'' + slug + '\',\'' + nameArg + '\')">Override: mark paid & live</button></div>';
-
-  document.getElementById('adminActions').innerHTML =
-    '<div class="adm-block"><div class="adm-title">Domain</div>' + domainBlock + '</div>' +
-    '<div class="adm-block"><div class="adm-title">Website files</div>' + uploadBlock + '</div>' +
-    '<div class="adm-block"><div class="adm-title">Plan</div>' + planBlock + '</div>' +
-    '<div class="adm-block"><div class="adm-title">Account</div><div class="adm-btns">' +
-    '<button type="button" onclick="copyClientInfo(\'' + slug + '\', this)">Copy info</button>' +
-    '<button type="button" class="danger" onclick="openDeleteModal(\'' + slug + '\',\'' + nameArg + '\')">Delete account</button></div></div>';
+  var tick = '<span class="adm-tick" aria-hidden="true">✓</span>';
+  function row(title, line, btns) {
+    return '<div class="adm-card"><div class="adm-row"><div class="adm-main"><div class="adm-title">' + title + '</div><div class="adm-line">' + line + '</div></div>' +
+      '<div class="adm-btns">' + btns + '</div></div></div>';
+  }
+  var html = '';
+  html += row('Contact', esc(email || 'No email'),
+    '<button type="button" onclick="copyClientInfo(\'' + slug + '\', this)">Copy info</button>');
+  html += row('Website files',
+    uploaded ? tick + (d.demoUrl ? '<a href="' + esc(d.demoUrl) + '" target="_blank" rel="noopener">View uploaded site</a>' : 'Uploaded') +
+      (d.liveUrl ? '<span class="adm-note">Live at <a href="' + esc(d.liveUrl) + '" target="_blank" rel="noopener">' + esc(d.liveUrl.replace(/^https?:\/\//, '')) + '</a></span>' : '')
+      : '<span class="adm-muted">Nothing uploaded</span>',
+    uploaded
+      ? '<button type="button" onclick="openUploadModal(\'' + slug + '\',\'' + nameArg + '\')">Replace</button><button type="button" class="danger" onclick="removeUpload(\'' + slug + '\')">Remove</button>'
+      : '<button type="button" class="primary" onclick="openUploadModal(\'' + slug + '\',\'' + nameArg + '\')">Upload</button>');
+  html += row('Domain',
+    domain ? tick + '<a href="https://' + esc(domain) + '" target="_blank" rel="noopener">' + esc(domain) + '</a>' + (d.domainConnected ? '' : '<span class="adm-note">DNS not confirmed</span>')
+      : '<span class="adm-muted">No domain</span>',
+    domain
+      ? '<button type="button" onclick="openDomainModal(\'' + slug + '\',\'' + nameArg + '\')">Edit</button><button type="button" class="danger" onclick="removeDomain(\'' + slug + '\')">Remove</button>'
+      : '<button type="button" class="primary" onclick="openDomainModal(\'' + slug + '\',\'' + nameArg + '\')">Connect</button>');
+  html += row('Plan',
+    d.planActive ? tick + 'Paid' + (d.manualPlan ? '<span class="adm-note">set manually</span>' : '') : '<span class="adm-muted">Not paid</span>',
+    d.planActive && d.published ? '' : '<button type="button" onclick="openGoLiveModal(\'' + slug + '\',\'' + nameArg + '\')">Override: paid &amp; live</button>');
+  html += '<button type="button" class="adm-delete" onclick="openDeleteModal(\'' + slug + '\',\'' + nameArg + '\')">Delete account</button>';
+  document.getElementById('adminActions').innerHTML = html;
 }
 
 function patchClientData(slug, mutate) {
