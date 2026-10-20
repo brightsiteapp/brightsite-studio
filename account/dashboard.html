@@ -582,6 +582,7 @@
   #builderList:not(.preview-sent) .sec-btn{background:#fff4f2 !important;border-color:#f1dcd7 !important}
   #builderList:not(.preview-sent) .sec-btn.is-complete{background:#f0faf4 !important;border-color:#d2e9dc !important}
   #builderList .section-tick{display:grid !important}
+  #builderList.preview-sent .section-tick{display:none !important}
   /* before the details are sent: amber B, and Send to designer waits for every card to be green */
   #fakeBrowserViewBtn{display:none!important}
   .preview-placeholder[data-state="loading"]::before{filter:drop-shadow(0 0 7px rgba(255,255,255,.45)) drop-shadow(0 0 18px rgba(255,255,255,.18)) !important}
@@ -609,9 +610,9 @@
   .preview-placeholder .preview-placeholder-title{background:none !important;-webkit-text-fill-color:#fff !important;color:#fff;animation:none !important;filter:none !important;font-size:18px !important;margin-bottom:6px !important}
   .preview-placeholder .preview-placeholder-sub{color:rgba(255,255,255,.6) !important;font-weight:400 !important;font-size:14px;max-width:240px}
   @media(max-width:799px){#mobilePreviewWrap .preview-control-row .mobile-pvw-toggle{display:none}}
-  .path-choice{display:none}
-  @media(max-width:799px){
-    .path-choice:not([hidden]){display:block;margin:0 0 16px}
+  .path-choice[hidden]{display:none}
+
+    .path-choice:not([hidden]){display:block;max-width:560px;margin:8px auto 20px}
     .path-choice-step[hidden]{display:none}
     .path-choice h2{margin:0 0 6px;font-family:var(--display);font-size:20px;letter-spacing:-.02em;color:var(--ink)}
     .path-intro{margin:0 0 14px;font-size:13.5px;color:var(--muted);line-height:1.5}
@@ -628,7 +629,9 @@
     .path-send{display:block;width:100%;margin-top:12px;min-height:46px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
     .path-send:disabled{opacity:.45;cursor:not-allowed}
     .path-hint{margin:8px 0 0;font-size:12px;color:var(--muted);text-align:center}
-  }
+  
+  body.choosing #deskMakeLive,body.choosing #wahMakeLive{display:none!important}
+  .website-panel.choosing #builderList,.website-panel.choosing #websiteEditorHeader,.website-panel.choosing #websiteAppHeader{display:none!important}
   .website-panel.in-section #websiteEditorHeader{display:none !important}
   .builder-section h3{font-family:var(--display);font-size:22px !important;font-weight:800 !important;letter-spacing:-.4px;color:#1C2832;margin:6px 0 10px !important}
   .builder-section .acct-field label{font-size:13px;font-weight:700;color:rgba(28,40,50,.72);margin-bottom:7px}
@@ -1777,6 +1780,7 @@
     saveBusiness().then(function() {
       notifyDesignerSignup(raw);
       renderDraftBanner();
+      updateSectionChecks();
       document.getElementById('websitePanel').classList.remove('editing');
       playSendParticles(function() {
         updatePreviewCard();
@@ -2200,6 +2204,9 @@
     var show = !!business && needsSending() && !raw.signupPath && !raw.draft;
     var box = document.getElementById('pathChoice');
     if (box) box.hidden = !show;
+    var panel = document.getElementById('websitePanel');
+    if (panel) panel.classList.toggle('choosing', show);
+    document.body.classList.toggle('choosing', show);
     return show;
   }
 
@@ -2218,6 +2225,7 @@
     raw.buildChoice = raw.buildChoice || 'designer';
     saveBusiness().then(function() {
       renderPathChoice();
+      document.getElementById('websitePanel').classList.add('editing');
     }).catch(function() {
       delete raw.signupPath;
       alert('We couldn’t save your choice. Please check your connection and try again.');
@@ -2241,6 +2249,7 @@
     saveBusiness().then(function() {
       notifyDesignerSignup(raw);
       renderPathChoice();
+      updateSectionChecks();
       updatePreviewCard();
       updateWebsiteAppHeader();
       showMessagesTab();
@@ -2388,10 +2397,11 @@
     ['business', 'details', 'hours', 'prices', 'media', 'extras', 'reviews'].forEach(function(k) { complete[k] = !!sectionDoneClicked[k]; });
     var previewReady = !!getPreviewUrl();
     var builderList = document.getElementById('builderList');
-    if (builderList) builderList.classList.toggle('preview-sent', previewReady);
+    var detailsSent = previewReady || !needsSending();
+    if (builderList) builderList.classList.toggle('preview-sent', detailsSent);
     Object.keys(complete).forEach(function(s) {
       var btn = document.querySelector('[data-section="' + s + '"]');
-      if (btn) { btn.classList.toggle('is-complete', complete[s] && !previewReady); btn.setAttribute('aria-label', btn.querySelector('.sec-title').textContent + (complete[s] ? ', complete' : ', to do')); }
+      if (btn) { btn.classList.toggle('is-complete', complete[s] && !detailsSent); btn.setAttribute('aria-label', btn.querySelector('.sec-title').textContent + (complete[s] ? ', complete' : ', to do')); }
     });
     var allDone = Object.values(complete).filter(Boolean).length >= Object.keys(complete).length;
     if (allDone && !_prevAllDone) {
