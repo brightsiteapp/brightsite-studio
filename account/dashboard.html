@@ -630,7 +630,6 @@
     .path-send:disabled{opacity:.45;cursor:not-allowed}
     .path-hint{margin:8px 0 0;font-size:12px;color:var(--muted);text-align:center}
   
-  body.choosing #deskMakeLive,body.choosing #wahMakeLive{display:none!important}
   .website-panel.choosing #builderList,.website-panel.choosing #websiteEditorHeader,.website-panel.choosing #websiteAppHeader{display:none!important}
   .website-panel.in-section #websiteEditorHeader{display:none !important}
   .builder-section h3{font-family:var(--display);font-size:22px !important;font-weight:800 !important;letter-spacing:-.4px;color:#1C2832;margin:6px 0 10px !important}
@@ -1307,8 +1306,9 @@
         if (btn.hidden) return;
         btn.textContent = 'Send to designer';
         btn.className = 'wah-make-live go';
-        btn.disabled = !allSectionsDone();
-        if (btn.disabled) btn.title = 'Finish every info card first';
+        var choosing = document.body.classList.contains('choosing');
+        btn.disabled = choosing || !allSectionsDone();
+        if (btn.disabled) btn.title = choosing ? 'Choose how to build your website first' : 'Finish every info card first';
         btn.onclick = function() { sendToDesigner(btn); };
         return;
       }
@@ -2207,6 +2207,7 @@
     var panel = document.getElementById('websitePanel');
     if (panel) panel.classList.toggle('choosing', show);
     document.body.classList.toggle('choosing', show);
+    updateWebsiteAppHeader();
     return show;
   }
 
