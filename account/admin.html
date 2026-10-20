@@ -455,7 +455,7 @@ body { background: var(--bg); color: var(--ink); }
 <div class="modal-veil hidden" id="deleteModal">
   <div class="modal">
     <h2>Delete account?</h2>
-    <p>This will permanently remove <strong id="deleteModalName"></strong> and all their data. This cannot be undone.</p>
+    <p>This permanently removes <strong id="deleteModalName"></strong>: their account and login, messages and website record. It also cancels any subscription and takes their site offline. This can’t be undone.</p>
     <div class="modal-actions">
       <button type="button" class="modal-cancel" id="deleteCancel">Cancel</button>
       <button type="button" class="modal-confirm danger" id="deleteConfirm">Delete</button>
@@ -1293,17 +1293,25 @@ document.getElementById('deleteConfirm').addEventListener('click', function() {
   var btn = document.getElementById('deleteConfirm');
   btn.textContent = 'Deleting…'; btn.disabled = true;
 
-  fetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(deleteTargetSlug), {
-    method: 'DELETE',
-    headers: authHeaders()
+  fetch(API_BASE_URL + '/api/admin-businesses', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + (adminSession && adminSession.access_token || ''), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'delete-account', slug: deleteTargetSlug })
   })
-  .then(function(r) {
+  .then(function(r) { return r.json().catch(function() { return {}; }).then(function(j) { return { ok: r.ok, j: j }; }); })
+  .then(function(res) {
     btn.textContent = 'Delete'; btn.disabled = false;
-    if (r.ok) {
+    if (res.ok) {
       document.getElementById('deleteModal').classList.add('hidden');
+      if (activeThreadId === deleteTargetSlug) {
+        activeThreadId = null;
+        document.getElementById('wsPane').hidden = true;
+        document.getElementById('wsEmpty').hidden = false;
+        document.querySelector('.workspace').classList.remove('detail');
+      }
       loadBusinesses();
     } else {
-      status.textContent = 'Delete failed.'; status.className = 'modal-status err';
+      status.textContent = res.j.error || 'Delete failed.'; status.className = 'modal-status err';
     }
   })
   .catch(function() {
