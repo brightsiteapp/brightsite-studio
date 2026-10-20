@@ -42,7 +42,9 @@ export default async function handler(request, response) {
 
   if (request.method === 'POST') {
     const body = typeof request.body === 'string' ? JSON.parse(request.body || '{}') : (request.body || {});
-    return body.action === 'delete-account' ? deleteAccount(request, response, body) : connectDomain(request, response);
+    if (body.action === 'delete-account') return deleteAccount(request, response, body);
+    if (body.action === 'list-logins' || body.action === 'delete-logins') return manageLogins(request, response, body);
+    return connectDomain(request, response);
   }
   if (request.method !== 'GET') {
     response.setHeader('Allow', 'GET, POST');
@@ -178,4 +180,46 @@ async function deleteAccount(request, response, body) {
     }
   }
   return json(response, 200, { ok: true, done });
+}
+
+// Logins left behind by deletes made before the account delete removed them too.
+async function manageLogins(request, response, body) {
+  const token = bearerToken(request);
+  if (!token) return json(response, 401, { error: 'Authentication required' });
+  const admin = await currentUser(ACCOUNTS_SUPABASE_URL, ACCOUNTS_SUPABASE_ANON_KEY, token).catch(() => null);
+  const adminEmail = String(admin?.email || '').trim().toLowerCase();
+  if (!adminEmail || !ADMIN_EMAILS.has(adminEmail)) return json(response, 403, { error: 'Administrator access required' });
+
+  const supabase = supabaseAdmin();
+  const users = [];
+  for (let page = 1; page < 50; page++) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) return json(response, 502, { error: error.message });
+    users.push(...data.users);
+    if (data.users.length < 200) break;
+  }
+  const { data: businesses, error: bizErr } = await supabase.from('businesses').select('id,name,user_id,updated_at');
+  if (bizErr) return json(response, 502, { error: bizErr.message });
+  const owners = new Set(businesses.map(b => b.user_id).filter(Boolean));
+  const isAdmin = u => ADMIN_EMAILS.has(String(u.email || '').toLowerCase());
+  const orphans = users.filter(u => !owners.has(u.id) && !isAdmin(u));
+
+  if (body.action === 'list-logins') {
+    return json(response, 200, {
+      logins: users.map(u => ({ id: u.id, email: u.email, created: u.created_at, lastSignIn: u.last_sign_in_at, hasBusiness: owners.has(u.id), admin: isAdmin(u) })),
+      businesses: businesses.map(b => ({ id: b.id, name: b.name, owner: b.user_id, updated: b.updated_at })),
+      orphanIds: orphans.map(u => u.id),
+    });
+  }
+
+  const requested = new Set(Array.isArray(body.ids) ? body.ids : []);
+  const removed = [];
+  const skipped = [];
+  for (const u of orphans) {
+    if (!requested.has(u.id)) continue;
+    const { error } = await supabase.auth.admin.deleteUser(u.id);
+    (error ? skipped : removed).push(u.email + (error ? ': ' + error.message : ''));
+  }
+  for (const id of requested) if (!orphans.some(u => u.id === id)) skipped.push(id + ': still owns a business or is an admin');
+  return json(response, 200, { removed, skipped });
 }
