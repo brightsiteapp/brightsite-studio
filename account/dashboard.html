@@ -1408,8 +1408,31 @@
     });
   }
 
+  var domainFinishTimer = null;
+  function finishDomainSetup() {
+    var data = (business && business.data) || {};
+    var domain = data.customDomain || data.domain;
+    if (isAdminView || !isPaying || !domain || data.domainConnected !== false) {
+      if (domainFinishTimer) { clearInterval(domainFinishTimer); domainFinishTimer = null; }
+      return;
+    }
+    fetch('https://api.brightsite.app/api/check-domain', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+      body: JSON.stringify({ slug: slug })
+    }).then(function(r) { return r.json(); }).then(function(res) {
+      if (!res.connected) return;
+      business.data = Object.assign({}, business.data || {}, { domainConnected: true }, res.liveUrl ? { liveUrl: res.liveUrl } : {});
+      if (domainFinishTimer) { clearInterval(domainFinishTimer); domainFinishTimer = null; }
+      renderWebsiteStatus();
+      renderAccountCards();
+    }).catch(function() {});
+    if (!domainFinishTimer) domainFinishTimer = setInterval(finishDomainSetup, 60000);
+  }
+
   function checkSiteLive() {
     if (!slug) return;
+    finishDomainSetup();
     fetch(UPLOAD_WORKER + '/status/' + encodeURIComponent(slug)).then(function(r) { return r.json(); }).then(function(st) {
       var data = (business && business.data) || {};
       // Sites published before the site worker (hosted elsewhere) keep their saved status.
@@ -1842,7 +1865,7 @@
     document.getElementById('billingBtn').hidden = !isPaying;
     var domain = data.customDomain || data.domain || pendingDomain || '';
     set('acctDomainTitle', domain || 'No domain yet');
-    set('acctDomainSub', isLive ? 'Connected to your website' : domain ? 'Connects when your website goes live' : 'You can choose one when you go live');
+    set('acctDomainSub', domain && isPaying && data.domainConnected === false ? 'Connecting to your website… this usually takes a few minutes' : isLive ? 'Connected to your website' : domain ? 'Connects when your website goes live' : 'You can choose one when you go live');
     renderWebsiteStatus();
   }
 

@@ -97,8 +97,13 @@ export async function markBusinessLive(slug, domain, publishOnPayment) {
   let domainConnected = false;
   let domainError = '';
   if (domain) {
-    try { await connectDomainToSite(domain); domainConnected = true; }
-    catch (err) { domainError = err.message; console.error(`Connecting ${domain} failed:`, err.message); }
+    // A just-registered domain's zone can take a few seconds to appear, so try a few times.
+    for (let attempt = 0; attempt < 4 && !domainConnected; attempt++) {
+      if (attempt) await new Promise(r => setTimeout(r, 2000));
+      try { await connectDomainToSite(domain); domainConnected = true; domainError = ''; }
+      catch (err) { domainError = err.message; }
+    }
+    if (!domainConnected) console.error(`Connecting ${domain} failed:`, domainError);
   }
 
   let published = !!previous.published;
