@@ -1,7 +1,7 @@
 const ALLOWED_ORIGINS = ['https://brightsite.app'];
-import { quoteDomainInGbp } from './_lib/domain-pricing.js';
-import { supabaseAdmin } from './_lib/supabase-admin.js';
-import { connectAnyDomain } from './_lib/activate.js';
+import { quoteDomainInGbp } from '../domain-pricing.js';
+import { supabaseAdmin } from '../supabase-admin.js';
+import { connectAnyDomain } from '../activate.js';
 
 const ACCOUNTS_URL = 'https://vlisyfshmxdsjuybirxe.supabase.co';
 const ACCOUNTS_ANON = 'sb_publishable_gYdn5HCo63B0qZj3tG-7ow_myAMHeEB';

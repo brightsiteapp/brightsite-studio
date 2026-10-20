@@ -37,6 +37,26 @@
   ],
   "rewrites": [
     {
+      "source": "/api/business-lookup",
+      "destination": "/api/lookup?fn=business-lookup"
+    },
+    {
+      "source": "/api/check-domain",
+      "destination": "/api/lookup?fn=check-domain"
+    },
+    {
+      "source": "/api/facebook-lookup",
+      "destination": "/api/lookup?fn=facebook-lookup"
+    },
+    {
+      "source": "/api/place-autocomplete",
+      "destination": "/api/lookup?fn=place-autocomplete"
+    },
+    {
+      "source": "/api/place-photo",
+      "destination": "/api/lookup?fn=place-photo"
+    },
+    {
       "source": "/:slug",
       "has": [
         {
