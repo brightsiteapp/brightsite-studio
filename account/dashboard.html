@@ -2191,6 +2191,14 @@
     );
   }
 
+  function sendManualStartMessage() {
+    var name = businessFirstName();
+    return sendSystemMessageOnce(
+      'manualStartMessageSent',
+      'Thanks, ' + name + '! Fill in each info card in the Website tab with as much as you can. The more you add, the better your website will be. When you’re done, press Send to designer.'
+    );
+  }
+
   function sendAutoLinksMessage() {
     var name = businessFirstName();
     return sendSystemMessageOnce(
@@ -2227,6 +2235,7 @@
     saveBusiness().then(function() {
       renderPathChoice();
       document.getElementById('websitePanel').classList.add('editing');
+      sendManualStartMessage();
     }).catch(function() {
       delete raw.signupPath;
       alert('We couldn’t save your choice. Please check your connection and try again.');
