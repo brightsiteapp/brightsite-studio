@@ -892,6 +892,7 @@
         <div class="acct-field"><label for="fPhone">Phone <span class="opt">optional</span></label><input type="tel" id="fPhone" placeholder="e.g. 07700 900123" autocomplete="tel"></div>
         <div class="acct-field"><label for="fAddress">Address <span class="opt">optional</span></label><input type="text" id="fAddress" placeholder="e.g. 12 High Street, London" autocomplete="street-address"></div>
         <div class="acct-field"><label for="fInstagram">Instagram <span class="opt">optional</span></label><input type="text" id="fInstagram" placeholder="@yourbusiness"></div>
+        <div class="acct-field"><label for="fGoogleLink">Google Business link <span class="opt">optional</span></label><input type="url" id="fGoogleLink" placeholder="https://g.page/your-business"></div>
         <div class="acct-field"><label for="fFacebook">Facebook <span class="opt">optional</span></label><input type="url" id="fFacebook" placeholder="facebook.com/yourbusiness"></div>
         <div class="acct-field"><label for="fWebsite">Existing website <span class="opt">optional</span></label><input type="url" id="fWebsite" placeholder="yoursite.com"></div>
       </div>
@@ -956,7 +957,7 @@
         <h3>Reviews</h3>
         <p class="info-hint">Add customer reviews for your website. Each one is optional.</p>
         <div id="reviewList"></div>
-        <div class="bs-stack"><input type="url" id="fGoogleLink" placeholder="Google reviews link"><input type="url" id="fTrustpilotLink" placeholder="Trustpilot link"></div>
+        <div class="bs-stack"><input type="url" id="fTrustpilotLink" placeholder="Trustpilot link"></div>
       </div>
 
     </div>
@@ -1302,8 +1303,16 @@
       btn.disabled = false;
       btn.title = '';
       if (!getPreviewUrl()) {
-        btn.hidden = !needsSending();
-        if (btn.hidden) return;
+        btn.hidden = false;
+        if (!needsSending()) {
+          // Already with the designer: Make Live stays greyed out until the website is uploaded
+          btn.textContent = 'Make Live';
+          btn.className = 'wah-make-live go';
+          btn.disabled = true;
+          btn.title = 'Available once your website is uploaded';
+          btn.onclick = null;
+          return;
+        }
         btn.textContent = 'Send to designer';
         btn.className = 'wah-make-live go';
         var choosing = document.body.classList.contains('choosing');
