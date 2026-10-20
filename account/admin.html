@@ -327,6 +327,22 @@ body { background: var(--bg); color: var(--ink); }
 .admin-actions .adm-note a { border: 0; color: inherit; font-weight: 600; }
 .admin-actions .adm-delete { border: 0; background: none; border-radius: 0; padding: 6px 2px; color: #b23b2c; }
 .work-tab .tab-dot { right: 10px; top: 8px; }
+.search-wrap { position: relative; flex: 1 1 100%; }
+.search-wrap input { width: 100%; box-sizing: border-box; padding-right: 52px !important; }
+.client-col-head .search-wrap select { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 44px; height: 30px; padding: 0; border: 0; border-radius: 9px; color: transparent; font-size: 13px; background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='14' viewBox='0 0 26 14'%3E%3Cpath d='M1 2h12l-4.6 5.2V12l-2.8-1.4V7.2z' fill='none' stroke='%2369747b' stroke-width='1.4' stroke-linejoin='round'/%3E%3Cpath d='M18 5l3 3 3-3' fill='none' stroke='%2369747b' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center; cursor: pointer; }
+.client-col-head .search-wrap select.on { background-color: rgba(59,130,246,.14); }
+.client-col-head .search-wrap select:focus { box-shadow: none; }
+.client-col-head .search-wrap select option { color: var(--ink); }
+.client-full { font-weight: 500; color: var(--muted); }
+.work-tabs .tabs-inner { max-width: none; }
+.adm-edit { display: none; border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 12.5px; font-weight: 700; color: var(--ink); cursor: pointer; }
+@media (max-width: 760px) {
+  .adm-card.collapsible .adm-edit { display: inline-block; }
+  .adm-card.collapsible .adm-btns { display: none; flex-basis: 100%; }
+  .adm-card.collapsible.open .adm-btns { display: flex; }
+  .adm-card.collapsible.open .adm-edit { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .adm-row { align-items: center; }
+}
 @media (max-width: 760px) {
   .workspace { padding: 10px; height: auto; min-height: calc(100vh - 58px); }
   .work-head { padding: 12px 14px 4px; }
@@ -370,8 +386,9 @@ body { background: var(--bg); color: var(--ink); }
   <div class="workspace">
     <aside class="client-col">
       <div class="client-col-head">
+        <div class="search-wrap">
         <input type="search" id="searchInput" placeholder="Search clients…">
-        <select id="clientFilter" aria-label="Filter clients">
+        <select id="clientFilter" aria-label="Filter clients" title="Filter">
           <option value="all">All</option>
           <option value="unread">Unread</option>
           <option value="red">To build</option>
@@ -379,7 +396,8 @@ body { background: var(--bg); color: var(--ink); }
           <option value="green">Live</option>
           <option value="stub">Setup pending</option>
         </select>
-        <span class="client-count" id="clientCount"></span>
+        </div>
+        <span class="client-count" id="clientCount" hidden></span>
       </div>
       <div class="client-list" id="clientList"><div class="loading-row"><span class="spinner"></span> Loading clients…</div></div>
     </aside>
@@ -1341,6 +1359,17 @@ function bizById(id) {
   return allBusinesses.find(function(x) { return x.id === id; }) || null;
 }
 
+function fullNameOf(id) {
+  var b = bizById(id);
+  return (b && b.data && b.data.raw && b.data.raw.fullName) || '';
+}
+
+function bizLabel(id) {
+  var b = bizById(id);
+  var full = b && b.data && b.data.raw && b.data.raw.fullName;
+  return full ? bizName(id) + ' (' + full + ')' : bizName(id);
+}
+
 function bizName(id) {
   var b = bizById(id);
   var raw = b && b.data && b.data.raw;
@@ -1388,7 +1417,7 @@ function renderClientList() {
     return '<button type="button" class="client-item' + (id === activeThreadId ? ' active' : '') + '" data-id="' + esc(id) + '">' +
       '<span class="status-dot ' + s + '"></span>' +
       (isUnread(id) ? '<span class="row-dot"></span>' : '') +
-      '<div class="client-name">' + esc(bizName(id)) + '</div>' +
+      '<div class="client-name">' + esc(bizName(id)) + (fullNameOf(id) ? ' <span class="client-full">(' + esc(fullNameOf(id)) + ')</span>' : '') + '</div>' +
       '<div class="client-meta">' + esc(meta) + '</div>' +
       '</button>';
   }).join('');
@@ -1407,7 +1436,7 @@ function selectClient(id) {
   document.getElementById('wsEmpty').hidden = true;
   document.getElementById('wsPane').hidden = false;
   document.querySelector('.workspace').classList.add('detail');
-  document.getElementById('wsTitle').textContent = bizName(id);
+  document.getElementById('wsTitle').textContent = bizLabel(id);
   var pill = document.getElementById('wsStatus');
   pill.textContent = statusLabel(s);
   pill.className = 'status-pill ' + s;
@@ -1449,7 +1478,7 @@ function renderThread(forceScroll) {
     var out = m.sender === 'admin';
     var when = new Date(m.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     return '<div class="bubble ' + (out ? 'out' : 'in') + '">' + esc(m.body) +
-      '<div class="bubble-meta">' + (out ? 'Tom' : esc(bizName(activeThreadId))) + ' · ' + esc(when) + '</div></div>';
+      '<div class="bubble-meta">' + (out ? 'Tom' : esc(bizLabel(activeThreadId))) + ' · ' + esc(when) + '</div></div>';
   }).join('');
   if (forceScroll || changed) body.scrollTop = body.scrollHeight;
   lastRenderedCount = msgs.length;
@@ -1467,8 +1496,9 @@ function renderAdminPanel() {
   var email = raw.email || raw.ownerEmail || '';
   var uploaded = !!(d.demoUrl || d.demoUploaded);
   var tick = '<span class="adm-tick" aria-hidden="true">✓</span>';
-  function row(title, line, btns) {
-    return '<div class="adm-card"><div class="adm-row"><div class="adm-main"><div class="adm-title">' + title + '</div><div class="adm-line">' + line + '</div></div>' +
+  function row(title, line, btns, collapse) {
+    return '<div class="adm-card' + (collapse ? ' collapsible' : '') + '"><div class="adm-row"><div class="adm-main"><div class="adm-title">' + title + '</div><div class="adm-line">' + line + '</div></div>' +
+      (collapse ? '<button type="button" class="adm-edit" onclick="this.closest(\'.adm-card\').classList.toggle(\'open\')">Edit</button>' : '') +
       '<div class="adm-btns">' + btns + '</div></div></div>';
   }
   var html = '';
@@ -1480,13 +1510,13 @@ function renderAdminPanel() {
       : '<span class="adm-muted">Nothing uploaded</span>',
     uploaded
       ? '<button type="button" onclick="openUploadModal(\'' + slug + '\',\'' + nameArg + '\')">Replace</button><button type="button" class="danger" onclick="removeUpload(\'' + slug + '\')">Remove</button>'
-      : '<button type="button" class="primary" onclick="openUploadModal(\'' + slug + '\',\'' + nameArg + '\')">Upload</button>');
+      : '<button type="button" class="primary" onclick="openUploadModal(\'' + slug + '\',\'' + nameArg + '\')">Upload</button>', true);
   html += row('Domain',
     domain ? tick + '<a href="https://' + esc(domain) + '" target="_blank" rel="noopener">' + esc(domain) + '</a>' + (d.domainConnected ? '' : '<span class="adm-note">DNS not confirmed</span>')
       : '<span class="adm-muted">No domain</span>',
     domain
       ? '<button type="button" onclick="openDomainModal(\'' + slug + '\',\'' + nameArg + '\')">Edit</button><button type="button" class="danger" onclick="removeDomain(\'' + slug + '\')">Remove</button>'
-      : '<button type="button" class="primary" onclick="openDomainModal(\'' + slug + '\',\'' + nameArg + '\')">Connect</button>');
+      : '<button type="button" class="primary" onclick="openDomainModal(\'' + slug + '\',\'' + nameArg + '\')">Connect</button>', true);
   html += row('Plan',
     d.planActive ? tick + 'Paid' + (d.manualPlan ? '<span class="adm-note">set manually</span>' : '') : '<span class="adm-muted">Not paid</span>',
     d.planActive && d.published ? '' : '<button type="button" onclick="openGoLiveModal(\'' + slug + '\',\'' + nameArg + '\')">Override: paid &amp; live</button>');
@@ -1607,7 +1637,10 @@ document.getElementById('composerInput').addEventListener('input', function() {
   this.style.height = '';
   this.style.height = Math.min(this.scrollHeight, 140) + 'px';
 });
-document.getElementById('clientFilter').addEventListener('change', renderClientList);
+document.getElementById('clientFilter').addEventListener('change', function() {
+  this.classList.toggle('on', this.value !== 'all');
+  renderClientList();
+});
 document.getElementById('searchInput').addEventListener('input', renderClientList);
 document.getElementById('wsBack').addEventListener('click', function() {
   document.querySelector('.workspace').classList.remove('detail');
