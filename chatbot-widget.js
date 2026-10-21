@@ -21,9 +21,11 @@
     var s = document.createElement('style');
     s.textContent = [
       '#bs-bot{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:8px;cursor:pointer}',
-      '#bs-bot-model{width:90px;height:120px;border-radius:50% 50% 44% 44%;overflow:hidden;filter:drop-shadow(0 4px 14px rgba(0,0,0,.22));animation:bsBob 2.4s ease-in-out infinite;transition:transform .2s;background:transparent}',
+      '#bs-bot-model{width:90px;height:120px;background:transparent;border:0;outline:none;transform-origin:50% 100%;animation:bsIdle 3.2s ease-in-out infinite}',
+      '#bs-bot-model.jump{animation:bsJump .6s cubic-bezier(.3,.7,.4,1)}',
       '#bs-bot-model.stopped{animation:none}',
-      '@keyframes bsBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}',
+      '@keyframes bsIdle{0%,100%{transform:translateY(0) rotate(0) scaleY(1)}25%{transform:rotate(-1.5deg)}50%{transform:translateY(-2px) scaleY(1.015)}75%{transform:rotate(1.5deg)}}',
+      '@keyframes bsJump{0%{transform:scaleY(1)}15%{transform:scaleY(.9) scaleX(1.06)}45%{transform:translateY(-18px) scaleY(1.05)}75%{transform:translateY(0) scaleY(.94) scaleX(1.04)}100%{transform:scaleY(1)}}',
       '#bs-bubble{max-width:200px;background:#fff;border:1.5px solid var(--accent,#3b7cf4);border-radius:14px 14px 4px 14px;padding:9px 13px;font-size:13px;font-weight:600;line-height:1.4;color:#111;box-shadow:0 3px 14px rgba(0,0,0,.12);opacity:0;transform:translateY(6px) scale(.96);transition:opacity .3s,transform .3s;pointer-events:none;text-align:right}',
       '#bs-bubble.show{opacity:1;transform:translateY(0) scale(1)}',
       '#bs-actions{display:flex;flex-direction:column;gap:7px;align-items:flex-end;animation:bsFadeIn .3s ease}',
@@ -43,8 +45,7 @@
       '<div id="bs-bubble"></div>',
       '<model-viewer id="bs-bot-model"',
       '  src="/img/bot/avatar.glb"',
-      '  auto-rotate',
-      '  rotation-per-second="30deg"',
+      '  interaction-prompt="none"',
       '  disable-zoom',
       '  camera-orbit="0deg 80deg 2.2m"',
       '  shadow-intensity="0"',
@@ -104,6 +105,18 @@
     if (wrap) wrap.insertBefore(actions, wrap.firstChild);
   }
 
+  function scheduleJump() {
+    setTimeout(function () {
+      var m = document.getElementById('bs-bot-model');
+      if (!m) return;
+      if (!opened) {
+        m.classList.add('jump');
+        setTimeout(function () { m.classList.remove('jump'); }, 650);
+      }
+      scheduleJump();
+    }, 5000 + Math.random() * 6000);
+  }
+
   function init() {
     injectStyles();
 
@@ -116,6 +129,7 @@
     }
 
     buildWidget();
+    scheduleJump();
 
     // Start speech bubbles after a short delay
     setTimeout(nextMessage, 1200);
