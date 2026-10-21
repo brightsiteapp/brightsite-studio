@@ -27,26 +27,26 @@
     var s = document.createElement('style');
     s.textContent = [
       '#bs-bot{position:fixed;bottom:28px;right:36px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:6px;font-family:inherit}',
-      '#bs-bubble{position:relative;max-width:220px;background:#3B82F6;color:#fff;border-radius:16px 16px 4px 16px;padding:10px 14px;font-size:13.5px;font-weight:700;line-height:1.35;box-shadow:0 6px 20px rgba(59,130,246,.35);opacity:0;transform:translateY(6px) scale(.95);transform-origin:100% 100%;transition:opacity .3s,transform .3s;pointer-events:none}',
+      '#bs-bubble{position:relative;z-index:1;margin-right:14px;max-width:220px;background:#3B82F6;color:#fff;border-radius:16px 16px 4px 16px;padding:10px 14px;font-size:13.5px;font-weight:700;line-height:1.35;box-shadow:0 6px 20px rgba(59,130,246,.35);opacity:0;transform:translateY(6px) scale(.95);transform-origin:100% 100%;transition:opacity .3s,transform .3s;pointer-events:none}',
       '#bs-bubble:after{content:"";position:absolute;right:26px;bottom:-7px;width:14px;height:14px;background:#3B82F6;transform:rotate(45deg);border-radius:0 0 3px 0}',
       '#bs-bubble.show{opacity:1;transform:none}',
-      '#bs-actions{display:none;flex-direction:column;gap:7px;align-items:flex-end}',
+      '#bs-actions{position:relative;z-index:3;display:none;flex-direction:column;gap:7px;align-items:flex-end}',
       '#bs-bot.open #bs-actions{display:flex;animation:bsIn .25s ease}',
       '#bs-bot.open #bs-bubble{display:none}',
       '@keyframes bsIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}',
       '#bs-actions a{display:flex;align-items:center;gap:7px;padding:10px 18px;border-radius:999px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.15)}',
       '#bs-actions .bs-signup{background:#3B82F6}',
       '#bs-actions .bs-wa{background:#25D366}',
-      '#bs-figure{position:relative}',
-      '#bs-bot-model{display:block;width:120px;height:150px;background:transparent;cursor:pointer;--poster-color:transparent;--progress-bar-height:0}',
-      '#bs-min{position:absolute;top:2px;right:0;width:22px;height:22px;border-radius:50%;border:0;background:#fff;color:#3B82F6;font:800 15px/1 inherit;box-shadow:0 2px 8px rgba(0,0,0,.18);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:2}',
+      '#bs-figure{position:relative;z-index:2;margin-top:-80px;pointer-events:none}',
+      '#bs-bot-model{display:block;width:130px;height:230px;pointer-events:auto;background:transparent;cursor:pointer;--poster-color:transparent;--progress-bar-height:0}',
+      '#bs-min{position:absolute;top:84px;pointer-events:auto;right:0;width:22px;height:22px;border-radius:50%;border:0;background:#fff;color:#3B82F6;font:800 15px/1 inherit;box-shadow:0 2px 8px rgba(0,0,0,.18);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:2}',
       '#bs-bot.min #bs-bubble,#bs-bot.min #bs-actions,#bs-bot.min #bs-figure{display:none}',
       '#bs-icon{display:none;width:54px;height:54px;border-radius:50%;border:0;background:#3B82F6;box-shadow:0 6px 18px rgba(59,130,246,.4);cursor:pointer;align-items:center;justify-content:center;padding:0;transition:transform .15s}',
       '#bs-icon:hover{transform:scale(1.07)}',
       '#bs-icon img{width:24px;height:auto}',
       '#bs-bot.min #bs-icon{display:flex}',
       '#bs-bot.min{bottom:20px;right:20px}',
-      '@media(max-width:640px){#bs-bot{bottom:80px;right:20px}#bs-bot.min{bottom:80px}#bs-bot-model{width:96px;height:120px}#bs-bubble{max-width:180px;font-size:12.5px}}'
+      '@media(max-width:640px){#bs-bot{bottom:80px;right:20px}#bs-bot.min{bottom:80px}#bs-bot-model{width:104px;height:184px}#bs-figure{margin-top:-64px}#bs-bubble{max-width:180px;font-size:12.5px}}'
     ].join('');
     document.head.appendChild(s);
   }
@@ -63,7 +63,7 @@
       '<div id="bs-figure">' +
         '<button id="bs-min" type="button" aria-label="Minimise">–</button>' +
         '<model-viewer id="bs-bot-model" src="/img/bot/avatar.glb?v=20261021-2" animation-name="Idle" autoplay' +
-        ' camera-orbit="0deg 80deg auto" field-of-view="26deg" disable-zoom disable-pan disable-tap' +
+        ' camera-orbit="0deg 82deg auto" camera-target="auto 1.25m auto" field-of-view="30deg" disable-zoom disable-pan disable-tap' +
         ' interaction-prompt="none" shadow-intensity="0" exposure="1.05" alt="BrightSite assistant"></model-viewer>' +
       '</div>' +
       '<button id="bs-icon" type="button" aria-label="Open BrightSite assistant"><img src="/img/brightsite-b-white.png" alt=""></button>';
@@ -106,9 +106,20 @@
     playJump();
   }
 
+  // Jump clip is 1s (30 frames @ 30fps); switch back to Idle ourselves so it never loops
+  var jumping = false;
   function playJump() {
+    if (jumping) return;
+    jumping = true;
     model.animationName = 'Jump';
-    model.play({ repetitions: 1 });
+    model.currentTime = 0;
+    model.play();
+    setTimeout(function () {
+      model.animationName = 'Idle';
+      model.currentTime = 0;
+      model.play();
+      jumping = false;
+    }, 980);
   }
 
   function scheduleJump() {
@@ -144,11 +155,6 @@
       document.head.appendChild(mv);
     }
     build();
-    // after a one-shot Jump, return to the Idle loop
-    model.addEventListener('finished', function () {
-      model.animationName = 'Idle';
-      model.play();
-    });
     setTimeout(cycle, 1200);
     scheduleJump();
   }
