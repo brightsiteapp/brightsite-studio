@@ -26,7 +26,7 @@
   function injectStyles() {
     var s = document.createElement('style');
     s.textContent = [
-      '#bs-bot{position:fixed;bottom:16px;right:16px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:6px;font-family:inherit}',
+      '#bs-bot{position:fixed;bottom:28px;right:36px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:6px;font-family:inherit}',
       '#bs-bubble{position:relative;max-width:220px;background:#3B82F6;color:#fff;border-radius:16px 16px 4px 16px;padding:10px 14px;font-size:13.5px;font-weight:700;line-height:1.35;box-shadow:0 6px 20px rgba(59,130,246,.35);opacity:0;transform:translateY(6px) scale(.95);transform-origin:100% 100%;transition:opacity .3s,transform .3s;pointer-events:none}',
       '#bs-bubble:after{content:"";position:absolute;right:26px;bottom:-7px;width:14px;height:14px;background:#3B82F6;transform:rotate(45deg);border-radius:0 0 3px 0}',
       '#bs-bubble.show{opacity:1;transform:none}',
@@ -40,9 +40,13 @@
       '#bs-figure{position:relative}',
       '#bs-bot-model{display:block;width:120px;height:150px;background:transparent;cursor:pointer;--poster-color:transparent;--progress-bar-height:0}',
       '#bs-min{position:absolute;top:2px;right:0;width:22px;height:22px;border-radius:50%;border:0;background:#fff;color:#3B82F6;font:800 15px/1 inherit;box-shadow:0 2px 8px rgba(0,0,0,.18);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:2}',
-      '#bs-bot.min #bs-bubble,#bs-bot.min #bs-actions{display:none}',
-      '#bs-bot.min #bs-bot-model{width:64px;height:80px}',
-      '@media(max-width:640px){#bs-bot{bottom:76px}#bs-bot-model{width:96px;height:120px}#bs-bubble{max-width:180px;font-size:12.5px}}'
+      '#bs-bot.min #bs-bubble,#bs-bot.min #bs-actions,#bs-bot.min #bs-figure{display:none}',
+      '#bs-icon{display:none;width:54px;height:54px;border-radius:50%;border:0;background:#3B82F6;box-shadow:0 6px 18px rgba(59,130,246,.4);cursor:pointer;align-items:center;justify-content:center;padding:0;transition:transform .15s}',
+      '#bs-icon:hover{transform:scale(1.07)}',
+      '#bs-icon img{width:24px;height:auto}',
+      '#bs-bot.min #bs-icon{display:flex}',
+      '#bs-bot.min{bottom:20px;right:20px}',
+      '@media(max-width:640px){#bs-bot{bottom:80px;right:20px}#bs-bot.min{bottom:80px}#bs-bot-model{width:96px;height:120px}#bs-bubble{max-width:180px;font-size:12.5px}}'
     ].join('');
     document.head.appendChild(s);
   }
@@ -58,10 +62,11 @@
       '</div>' +
       '<div id="bs-figure">' +
         '<button id="bs-min" type="button" aria-label="Minimise">–</button>' +
-        '<model-viewer id="bs-bot-model" src="/img/bot/avatar.glb" animation-name="Idle" autoplay' +
+        '<model-viewer id="bs-bot-model" src="/img/bot/avatar.glb?v=20261021-2" animation-name="Idle" autoplay' +
         ' camera-orbit="0deg 80deg auto" field-of-view="26deg" disable-zoom disable-pan disable-tap' +
         ' interaction-prompt="none" shadow-intensity="0" exposure="1.05" alt="BrightSite assistant"></model-viewer>' +
-      '</div>';
+      '</div>' +
+      '<button id="bs-icon" type="button" aria-label="Open BrightSite assistant"><img src="/img/brightsite-b-white.png" alt=""></button>';
     document.body.appendChild(root);
 
     bubble = root.querySelector('#bs-bubble');
@@ -72,10 +77,8 @@
       e.stopPropagation();
       setMinimised(!minimised);
     });
-    model.addEventListener('click', function () {
-      if (minimised) { setMinimised(false); return; }
-      setOpen(!opened);
-    });
+    model.addEventListener('click', function () { setOpen(!opened); });
+    root.querySelector('#bs-icon').addEventListener('click', function () { setMinimised(false); });
 
     applyMinimised();
   }
@@ -118,9 +121,6 @@
 
   function applyMinimised() {
     root.classList.toggle('min', minimised);
-    var btn = root.querySelector('#bs-min');
-    btn.textContent = minimised ? '+' : '–';
-    btn.setAttribute('aria-label', minimised ? 'Expand' : 'Minimise');
   }
 
   function setMinimised(v) {
