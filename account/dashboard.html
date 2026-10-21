@@ -20,10 +20,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="../favicon.png" type="image/png">
 <meta name="theme-color" content="#F7F2EC">
-<link rel="manifest" href="/account/manifest.webmanifest">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="BrightSite">
 <link rel="stylesheet" href="../styles.css">
 
 <style>
@@ -151,7 +147,7 @@
     transition:background .15s,color .15s;
   }
   .mobile-view-tabs button[aria-selected="true"]{background:var(--accent);color:#fff;box-shadow:0 1px 6px rgba(47,125,237,.25)}
-  .msgs-notification{position:absolute;top:7px;right:11px;width:7px;height:7px;border-radius:50%;background:#dc2626;}
+  .msgs-notification{position:absolute;top:7px;right:11px;width:7px;height:7px;border-radius:50%;background:#dc2626;box-shadow:0 0 0 2px var(--bg);}
   @media(max-width:799px){
     .mobile-view-tabs{border-bottom:1px solid var(--line);}
   }
@@ -582,9 +578,7 @@
   #builderList:not(.preview-sent) .sec-btn{background:#fff4f2 !important;border-color:#f1dcd7 !important}
   #builderList:not(.preview-sent) .sec-btn.is-complete{background:#f0faf4 !important;border-color:#d2e9dc !important}
   #builderList .section-tick{display:grid !important}
-  #builderList.preview-sent .section-tick{display:none !important}
   /* before the details are sent: amber B, and Send to designer waits for every card to be green */
-  #fakeBrowserViewBtn{display:none!important}
   .preview-placeholder[data-state="loading"]::before{filter:drop-shadow(0 0 7px rgba(255,255,255,.45)) drop-shadow(0 0 18px rgba(255,255,255,.18)) !important}
   .preview-placeholder[data-state="todo"]::before{filter:drop-shadow(0 0 7px #FFD27F) drop-shadow(0 0 22px #F59E0B) !important}
   .wah-make-live:disabled{opacity:.45;cursor:not-allowed}
@@ -601,36 +595,10 @@
     background:url(../img/brightsite-b-white.png) center/contain no-repeat !important;
     filter:drop-shadow(0 0 7px #7FB2FF) drop-shadow(0 0 22px #3B82F6);animation:bsBPulse 2.8s ease-in-out infinite !important}
   @keyframes bsBPulse{0%,100%{opacity:.35;transform:scale(.92)}50%{opacity:1;transform:scale(1)}}
-  .preview-placeholder::before{z-index:1;transition:filter .9s ease}
-  .preview-placeholder > *{position:relative;z-index:3}
-  .preview-placeholder > canvas.bs-fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
-  .preview-placeholder > canvas.bs-fx.front{z-index:2}
-  .preview-placeholder.bs-sending::before{filter:drop-shadow(0 0 3px rgba(255,255,255,.35)) !important;animation:none !important;opacity:.9}
   .preview-placeholder-biz{display:none !important}
   .preview-placeholder .preview-placeholder-title{background:none !important;-webkit-text-fill-color:#fff !important;color:#fff;animation:none !important;filter:none !important;font-size:18px !important;margin-bottom:6px !important}
   .preview-placeholder .preview-placeholder-sub{color:rgba(255,255,255,.6) !important;font-weight:400 !important;font-size:14px;max-width:240px}
   @media(max-width:799px){#mobilePreviewWrap .preview-control-row .mobile-pvw-toggle{display:none}}
-  .path-choice[hidden]{display:none}
-
-    .path-choice:not([hidden]){display:block;max-width:560px;margin:8px auto 20px}
-    .path-choice-step[hidden]{display:none}
-    .path-choice h2{margin:0 0 6px;font-family:var(--display);font-size:20px;letter-spacing:-.02em;color:var(--ink)}
-    .path-intro{margin:0 0 14px;font-size:13.5px;color:var(--muted);line-height:1.5}
-    .path-card{display:flex;flex-direction:column;gap:4px;width:100%;margin:0 0 10px;padding:16px;border:1px solid var(--line);border-radius:16px;background:#fff;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
-    .path-card strong{font-size:16px}
-    .path-card span:last-child{font-size:13px;color:var(--muted);line-height:1.45}
-    .path-card.main{background:var(--accent);border-color:var(--accent);color:#fff}
-    .path-card.main span:last-child{color:rgba(255,255,255,.88)}
-    .path-tag{font-size:10.5px;font-weight:800;letter-spacing:.06em;color:rgba(255,255,255,.8)}
-    .path-card .path-tag.muted{color:var(--muted)}
-    .path-back{border:0;background:none;padding:0;margin:0 0 10px;font:inherit;font-size:13px;font-weight:700;color:var(--accent);cursor:pointer}
-    .path-label{display:block;margin:0 0 6px;font-size:13px;font-weight:700;color:var(--ink)}
-    #pathLinks{display:block;width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--ink);font:inherit;font-size:14px;resize:vertical;outline:none}
-    .path-send{display:block;width:100%;margin-top:12px;min-height:46px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
-    .path-send:disabled{opacity:.45;cursor:not-allowed}
-    .path-hint{margin:8px 0 0;font-size:12px;color:var(--muted);text-align:center}
-  
-  .website-panel.choosing #builderList,.website-panel.choosing #websiteEditorHeader,.website-panel.choosing #websiteAppHeader{display:none!important}
   .website-panel.in-section #websiteEditorHeader{display:none !important}
   .builder-section h3{font-family:var(--display);font-size:22px !important;font-weight:800 !important;letter-spacing:-.4px;color:#1C2832;margin:6px 0 10px !important}
   .builder-section .acct-field label{font-size:13px;font-weight:700;color:rgba(28,40,50,.72);margin-bottom:7px}
@@ -771,32 +739,6 @@
       <div class="draft-banner" id="draftBanner" hidden>
         <div><strong>Finish your details</strong><span>Everything is saved. Send it to your designer when you’re ready.</span></div>
         <button type="button" id="draftSendBtn">Send to designer</button>
-      </div>
-
-      <div class="path-choice" id="pathChoice" hidden>
-        <div class="path-choice-step" data-step="pick">
-          <h2>How would you like to build your website?</h2>
-          <p class="path-intro">You can change anything later.</p>
-          <button type="button" class="path-card main" id="pathAuto">
-            <span class="path-tag">INSTANT</span>
-            <strong>Automatic</strong>
-            <span>Just add your existing website and/or social media links and our designer will do the rest. You can add more information afterwards if you want.</span>
-          </button>
-          <button type="button" class="path-card" id="pathManual">
-            <span class="path-tag muted">ABOUT 10 MINUTES</span>
-            <strong>Manual</strong>
-            <span>Enter all the information for our designer to build your website.</span>
-          </button>
-        </div>
-        <div class="path-choice-step" data-step="links" hidden>
-          <button type="button" class="path-back" id="pathBack">‹ Back</button>
-          <h2>Share your links</h2>
-          <p class="path-intro">Add your existing website, Google or social media links. Our designer will take it from there.</p>
-          <label class="path-label" for="pathLinks">Existing website, Google or social media links</label>
-          <textarea id="pathLinks" rows="3" placeholder="e.g. yoursite.com, g.page/yourbusiness, facebook.com/yourbusiness"></textarea>
-          <button type="button" class="path-send" id="pathSend" disabled>Send to designer</button>
-          <p class="path-hint">Add at least one link</p>
-        </div>
       </div>
 
       <!-- mobile-only app-style header (hidden on desktop) -->
@@ -1061,12 +1003,7 @@
   var adminSession = null;
   try { adminSession = JSON.parse(localStorage.getItem('bs_admin') || 'null'); } catch(e) {}
   var isAdminView = !!(params.get('bs_admin_slug') && adminSession && adminSession.admin);
-  if (isAdminView && params.get('embed') === '1') {
-    var embedStyle = document.createElement('style');
-    embedStyle.textContent = '.app-header,#mobileViewTabs,#msgsPanel,#accountPanel{display:none!important}#websitePanel[hidden]{display:block!important}';
-    document.head.appendChild(embedStyle);
-  }
-  if (isAdminView && params.get('embed') !== '1') {
+  if (isAdminView) {
     document.addEventListener('DOMContentLoaded', function() {
       var right = document.querySelector('.app-header-right');
       if (right) {
@@ -1315,9 +1252,8 @@
         }
         btn.textContent = 'Send to designer';
         btn.className = 'wah-make-live go';
-        var choosing = document.body.classList.contains('choosing');
-        btn.disabled = choosing || !allSectionsDone();
-        if (btn.disabled) btn.title = choosing ? 'Choose how to build your website first' : 'Finish every info card first';
+        btn.disabled = !allSectionsDone();
+        if (btn.disabled) btn.title = 'Finish every info card first';
         btn.onclick = function() { sendToDesigner(btn); };
         return;
       }
@@ -1344,7 +1280,7 @@
         btn.disabled = true;
         goLive().then(function() { renderWebsiteStatus(); updateWebsiteAppHeader(); }).catch(function(err) {
           isLive = false; updateWebsiteAppHeader();
-          alert(/No website uploaded/.test(err.message) ? 'Your website is still being built. It will go live as soon as it’s ready.' : err.message);
+          alert(/No website uploaded/.test(err.message) ? 'Your website is still being built. It will go live as soon as it\'s ready.' : err.message);
         });
       };
     });
@@ -1384,7 +1320,6 @@
 
   function showMessagesTab() {
     setActiveTab('mobileMessagesTab');
-    msgsMarkRead();
     msgsInit();
   }
 
@@ -1421,31 +1356,8 @@
     });
   }
 
-  var domainFinishTimer = null;
-  function finishDomainSetup() {
-    var data = (business && business.data) || {};
-    var domain = data.customDomain || data.domain;
-    if (isAdminView || !isPaying || !domain || data.domainConnected !== false) {
-      if (domainFinishTimer) { clearInterval(domainFinishTimer); domainFinishTimer = null; }
-      return;
-    }
-    fetch('https://api.brightsite.app/api/check-domain', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
-      body: JSON.stringify({ slug: slug })
-    }).then(function(r) { return r.json(); }).then(function(res) {
-      if (!res.connected) return;
-      business.data = Object.assign({}, business.data || {}, { domainConnected: true }, res.liveUrl ? { liveUrl: res.liveUrl } : {});
-      if (domainFinishTimer) { clearInterval(domainFinishTimer); domainFinishTimer = null; }
-      renderWebsiteStatus();
-      renderAccountCards();
-    }).catch(function() {});
-    if (!domainFinishTimer) domainFinishTimer = setInterval(finishDomainSetup, 60000);
-  }
-
   function checkSiteLive() {
     if (!slug) return;
-    finishDomainSetup();
     fetch(UPLOAD_WORKER + '/status/' + encodeURIComponent(slug)).then(function(r) { return r.json(); }).then(function(st) {
       var data = (business && business.data) || {};
       // Sites published before the site worker (hosted elsewhere) keep their saved status.
@@ -1519,7 +1431,7 @@
     if (urlNote) {
       urlNote.textContent = liveUrl
         ? 'Your live website address.'
-        : 'Your website is not live yet. We’ll let you know when it’s ready.';
+        : 'Your website is not live yet. We\'ll let you know when it\'s ready.';
     }
 
     if (viewBtn) {
@@ -1650,7 +1562,7 @@
     updateWebsiteAppHeader();
     checkSiteLive();
     renderWelcomeMessage();
-    if (renderDraftBanner() || renderPathChoice()) showWebsiteTab();
+    if (renderDraftBanner()) showWebsiteTab();
     else showMessagesTab();
   }
 
@@ -1675,140 +1587,65 @@
 
   document.getElementById('draftSendBtn').addEventListener('click', function() { sendToDesigner(this); });
 
-  // Send to designer: the amber glow breaks into particles that swirl round the B and settle in blue
-  function playSendParticles(done) {
-    var els = ['deskPreviewPlaceholder', 'deskPreviewPlaceholderMob', 'mobilePreviewCard', 'mobilePreviewCardMob']
-      .map(function(id) { return document.getElementById(id); })
-      .filter(function(el) { return el && el.offsetWidth && getComputedStyle(el).display !== 'none'; });
-    if (!els.length || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) { done(); return; }
-    var RINGS = [0, Math.PI / 4, Math.PI / 2, 3 * Math.PI / 4];
-    var DUR = 2600, dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var AMBER = [[255, 210, 127], [245, 158, 11]], BLUE = [[127, 178, 255], [59, 130, 246]];
-    function mix(a, b, t) { return [0, 1, 2].map(function(i) { return Math.round(a[i] + (b[i] - a[i]) * t); }); }
-    function ease(t) { return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
-    var scenes = els.map(function(el) {
-      el.classList.add('bs-sending');
-      var back = document.createElement('canvas'), front = document.createElement('canvas');
-      back.className = 'bs-fx'; front.className = 'bs-fx front';
-      el.insertBefore(back, el.firstChild); el.appendChild(front);
-      var w = el.clientWidth, h = el.clientHeight;
-      [back, front].forEach(function(c) { c.width = w * dpr; c.height = h * dpr; });
-      var title = el.querySelector('.preview-placeholder-title');
-      var r = el.getBoundingClientRect(), tr = title ? title.getBoundingClientRect() : null;
-      var cy = tr && tr.height ? tr.top - r.top - 28 - 35 : h / 2, cx = w / 2;
-      var ps = [];
-      for (var i = 0; i < 520; i++) {
-        var a0 = Math.random() * Math.PI * 2;
-        ps.push({
-          a0: a0,
-          spin: (2.2 + Math.random() * 2.2) * Math.PI,        // total turns over the whole run
-          r0: 40 + Math.random() * 5,                           // starts on the glow round the B
-          rMax: 50 + Math.random() * 6,                         // thin rings just outside the B
-          ring: i % 4,                                          // four tilted rings, like orbits round an atom
-          tilt: .24 + Math.random() * .03,
-          lift: (Math.random() - .5) * 6,
-          size: .3 + Math.pow(Math.random(), 4) * 1.05,
-          tw: Math.random() * 40,
-          delay: Math.random() * .14,
-          shade: Math.random()
-        });
-      }
-      return { el: el, back: back.getContext('2d'), front: front.getContext('2d'), canvases: [back, front], ps: ps, cx: cx, cy: cy, w: w, h: h };
-    });
-    var start = performance.now();
-    function frame(now) {
-      var t = Math.min(1, (now - start) / DUR);
-      scenes.forEach(function(sc) {
-        [sc.back, sc.front].forEach(function(ctx) {
-          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-          ctx.clearRect(0, 0, sc.w, sc.h);
-          ctx.globalCompositeOperation = 'lighter';
-        });
-        sc.ps.forEach(function(p) {
-          var lt = Math.max(0, Math.min(1, (t - p.delay) / (1 - p.delay)));
-          var e = ease(lt);
-          var ang = p.a0 + p.spin * e;
-          var swell = Math.sin(Math.PI * e);
-          var rad = p.r0 + (p.rMax - p.r0) * swell - 6 * e * e;
-          var rot = RINGS[p.ring];
-          var depth = Math.sin(ang);                            // >0 = in front of the B
-          var lx = Math.cos(ang) * rad, ly = depth * rad * p.tilt + p.lift * swell;
-          var x = sc.cx + lx * Math.cos(rot) - ly * Math.sin(rot);
-          var y = sc.cy + lx * Math.sin(rot) + ly * Math.cos(rot);
-          var fadeIn = Math.min(1, lt / .12), fadeOut = 1 - Math.max(0, (lt - .82) / .18);
-          var alpha = fadeIn * fadeOut * (.45 + .55 * (depth + 1) / 2) * (.65 + .35 * Math.sin(now * .018 + p.tw));
-          var colT = Math.max(0, Math.min(1, (e - .25) / .5));
-          var c = mix(mix(AMBER[0], AMBER[1], p.shade), mix(BLUE[0], BLUE[1], p.shade), colT);
-          var size = p.size * (.75 + .5 * (depth + 1) / 2);
-          var ctx = depth > -.35 ? sc.front : sc.back;
-          var rgb = c[0] + ',' + c[1] + ',' + c[2];
-          // short motion trail behind each spark
-          var pa = ang - .09 * (1 - Math.abs(2 * e - 1)) - .02;
-          var plx = Math.cos(pa) * rad, ply = Math.sin(pa) * rad * p.tilt + p.lift * swell;
-          ctx.strokeStyle = 'rgba(' + rgb + ',' + (alpha * .35).toFixed(3) + ')';
-          ctx.lineWidth = size * .9;
-          ctx.beginPath(); ctx.moveTo(sc.cx + plx * Math.cos(rot) - ply * Math.sin(rot), sc.cy + plx * Math.sin(rot) + ply * Math.cos(rot)); ctx.lineTo(x, y); ctx.stroke();
-          ctx.fillStyle = 'rgba(' + rgb + ',' + (alpha * .12).toFixed(3) + ')';
-          ctx.beginPath(); ctx.arc(x, y, size * 2.2, 0, 6.2832); ctx.fill();
-          ctx.fillStyle = 'rgba(' + rgb + ',' + alpha.toFixed(3) + ')';
-          ctx.beginPath(); ctx.arc(x, y, size, 0, 6.2832); ctx.fill();
-        });
-        // B takes on the blue glow as the particles settle
-        if (t > .72 && sc.el.classList.contains('bs-sending')) { sc.el.dataset.state = 'building'; sc.el.classList.remove('bs-sending'); }
-      });
-      if (t < 1) { requestAnimationFrame(frame); return; }
-      scenes.forEach(function(sc) { sc.canvases.forEach(function(c) { c.remove(); }); sc.el.classList.remove('bs-sending'); });
-      done();
-    }
-    requestAnimationFrame(frame);
-  }
-
-  function notifyDesignerSignup(raw) {
-    var notify = new FormData();
-    notify.append('Stage', 'new_signup');
-    notify.append('Business', raw.name || 'Unnamed business');
-    notify.append('Email', raw.email || session.email || '');
-    notify.append('Slug', slug);
-    if (raw.autoLinks) notify.append('Links', raw.autoLinks);
-    fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/', { method: 'POST', body: notify }).catch(function() {});
-    fetch('https://api.brightsite.app/api/send-welcome', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
-      body: JSON.stringify({ slug: slug, fullName: raw.fullName || '', buildChoice: raw.buildChoice })
-    }).catch(function() {});
-  }
-
   function sendToDesigner(btn) {
     var raw = business.data.raw = business.data.raw || {};
     btn.disabled = true;
     btn.textContent = 'Sending…';
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = null;
     raw.draft = false;
     raw.sentToDesigner = true;
-    delete raw.draftIndex;
     raw.buildChoice = raw.buildChoice || 'designer';
-    saveBusiness().then(function() {
-      notifyDesignerSignup(raw);
-      renderDraftBanner();
+    delete raw.draftIndex;
+    // Use the same direct upsert path as autosave — proven to work
+    var record = Object.assign({}, (business.data || {}), {
+      raw: raw,
+      slug: slug,
+      name: raw.name || business.name || '',
+      updatedAt: new Date().toISOString()
+    });
+    authenticatedFetch(SUPABASE_URL + '/rest/v1/rpc/upsert_business', {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ p_id: slug, p_name: record.name, p_user_id: session.user_id, p_data: record, p_updated_at: record.updatedAt })
+    }).then(function(res) {
+      if (!res.ok) return res.text().then(function(t) { throw new Error('Save failed (' + res.status + '): ' + t); });
+      // Fire-and-forget notifications
+      var notify = new FormData();
+      notify.append('Stage', 'new_signup');
+      notify.append('Business', raw.name || 'Unnamed business');
+      notify.append('Email', raw.email || session.email || '');
+      notify.append('Slug', slug);
+      fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/', { method: 'POST', body: notify }).catch(function() {});
+      fetch('https://api.brightsite.app/api/send-welcome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+        body: JSON.stringify({ slug: slug, fullName: raw.fullName || '', buildChoice: raw.buildChoice })
+      }).catch(function() {});
+      // Reset section ticks — design is now in progress
+      sectionDoneClicked = {};
       updateSectionChecks();
-      document.getElementById('websitePanel').classList.remove('editing');
-      playSendParticles(function() {
+      try {
+        renderDraftBanner();
+        document.getElementById('websitePanel').classList.remove('editing');
         updatePreviewCard();
         updateWebsiteAppHeader();
-        setTimeout(function() { showMessagesTab(); sendAllDetailsReceivedMessage(); }, 500);
-      });
-    }).catch(function() {
+        showMessagesTab();
+      } catch (uiErr) { console.error('[sendToDesigner] UI error', uiErr); }
+    }).catch(function(err) {
+      console.error('[sendToDesigner] failed', err);
       raw.draft = true;
       raw.sentToDesigner = false;
       btn.disabled = false;
       btn.textContent = 'Send to designer';
-      alert('We couldn’t send your details. Please check your connection and try again.');
+      alert('Couldn\'t send — ' + (err && err.message ? err.message : 'check your connection and try again.'));
     });
   }
 
   function renderWelcomeMessage() {
     var raw = (business && business.data && business.data.raw) || {};
     var firstName = (raw.fullName || raw.name || '').trim().split(' ')[0] || 'there';
-    var body = 'Hey ' + firstName + ', welcome to BrightSite! I’m Tom, your designer.\n\n• Head to the Website tab and fill in each info card with as much as you can\n• The more you add, the better your website will be\n• Got ideas or requests? Send them here as notes anytime';
+    var body = 'Hey ' + firstName + ', welcome to BrightSite! I\'m Tom, your designer.\n\n• Head to the Website tab and fill in each info card with as much as you can\n• The more you add, the better your website will be\n• Got ideas or requests? Send them here as notes anytime';
     var wrap = document.getElementById('msgsWelcome');
     var bubble = document.getElementById('msgsWelcomeBubble');
     if (wrap && bubble) { bubble.textContent = body; wrap.hidden = false; }
@@ -1879,7 +1716,7 @@
     document.getElementById('billingBtn').hidden = !isPaying;
     var domain = data.customDomain || data.domain || pendingDomain || '';
     set('acctDomainTitle', domain || 'No domain yet');
-    set('acctDomainSub', domain && isPaying && data.domainConnected === false ? 'Connecting to your website… this usually takes a few minutes' : isLive ? 'Connected to your website' : domain ? 'Connects when your website goes live' : 'You can choose one when you go live');
+    set('acctDomainSub', isLive ? 'Connected to your website' : domain ? 'Connects when your website goes live' : 'You can choose one when you go live');
     renderWebsiteStatus();
   }
 
@@ -1997,8 +1834,8 @@
     if (hasUnread) badge.hidden = false;
   }
   function msgsMarkRead() {
-    var ts = msgsLastTs && msgsLastTs > new Date().toISOString() ? msgsLastTs : new Date().toISOString();
-    try { localStorage.setItem(msgsReadKey(), ts); } catch (e) {}
+    if (!msgsLastTs) return;
+    localStorage.setItem(msgsReadKey(), msgsLastTs);
     var badge = document.getElementById('msgsNotification');
     if (badge) badge.hidden = true;
   }
@@ -2196,92 +2033,9 @@
     var name = businessFirstName();
     return sendSystemMessageOnce(
       'allDetailsMessageSent',
-      'Thanks, ' + name + ' — I’ve got everything I need now. I’m getting started on your first preview and should have it ready in the next day or two. I’ll message you here as soon as it’s ready.'
+      'Thanks, ' + name + ' — I\'ve got everything I need now. I\'m getting started on your first preview and should have it ready in the next day or two. I\'ll message you here as soon as it\'s ready.'
     );
   }
-
-  function sendManualStartMessage() {
-    var name = businessFirstName();
-    return sendSystemMessageOnce(
-      'manualStartMessageSent',
-      'Thanks, ' + name + '! Fill in each info card in the Website tab with as much as you can. The more you add, the better your website will be. When you’re done, press Send to designer.'
-    );
-  }
-
-  function sendAutoLinksMessage() {
-    var name = businessFirstName();
-    return sendSystemMessageOnce(
-      'autoLinksMessageSent',
-      'Thanks, ' + name + ' — we have your links, and a designer is working on it! Feel free to change or add any info.'
-    );
-  }
-
-  function renderPathChoice() {
-    var raw = (business && business.data && business.data.raw) || {};
-    var show = !!business && needsSending() && !raw.signupPath && !raw.draft;
-    var box = document.getElementById('pathChoice');
-    if (box) box.hidden = !show;
-    var panel = document.getElementById('websitePanel');
-    if (panel) panel.classList.toggle('choosing', show);
-    document.body.classList.toggle('choosing', show);
-    updateWebsiteAppHeader();
-    return show;
-  }
-
-  function showPathStep(step) {
-    document.querySelectorAll('#pathChoice .path-choice-step').forEach(function(el) { el.hidden = el.dataset.step !== step; });
-  }
-
-  document.getElementById('pathAuto').addEventListener('click', function() {
-    showPathStep('links');
-    document.getElementById('pathLinks').focus();
-  });
-  document.getElementById('pathBack').addEventListener('click', function() { showPathStep('pick'); });
-  document.getElementById('pathManual').addEventListener('click', function() {
-    var raw = business.data.raw = business.data.raw || {};
-    raw.signupPath = 'manual';
-    raw.buildChoice = raw.buildChoice || 'designer';
-    saveBusiness().then(function() {
-      renderPathChoice();
-      document.getElementById('websitePanel').classList.add('editing');
-      sendManualStartMessage();
-    }).catch(function() {
-      delete raw.signupPath;
-      alert('We couldn’t save your choice. Please check your connection and try again.');
-    });
-  });
-  document.getElementById('pathLinks').addEventListener('input', function() {
-    document.getElementById('pathSend').disabled = this.value.trim().length < 4;
-  });
-  document.getElementById('pathSend').addEventListener('click', function() {
-    var btn = this;
-    var links = document.getElementById('pathLinks').value.trim();
-    if (!links) return;
-    btn.disabled = true;
-    btn.textContent = 'Sending…';
-    var raw = business.data.raw = business.data.raw || {};
-    raw.signupPath = 'auto';
-    raw.autoLinks = links;
-    raw.draft = false;
-    raw.sentToDesigner = true;
-    raw.buildChoice = raw.buildChoice || 'designer';
-    saveBusiness().then(function() {
-      notifyDesignerSignup(raw);
-      renderPathChoice();
-      updateSectionChecks();
-      updatePreviewCard();
-      updateWebsiteAppHeader();
-      showMessagesTab();
-      sendAutoLinksMessage();
-    }).catch(function() {
-      delete raw.signupPath;
-      delete raw.autoLinks;
-      raw.sentToDesigner = false;
-      btn.disabled = false;
-      btn.textContent = 'Send to designer';
-      alert('We couldn’t send your links. Please check your connection and try again.');
-    });
-  });
 
   function msgsSend() {
     var input = document.getElementById('msgsInput');
@@ -2416,15 +2170,15 @@
     ['business', 'details', 'hours', 'prices', 'media', 'extras', 'reviews'].forEach(function(k) { complete[k] = !!sectionDoneClicked[k]; });
     var previewReady = !!getPreviewUrl();
     var builderList = document.getElementById('builderList');
-    var detailsSent = previewReady || !needsSending();
-    if (builderList) builderList.classList.toggle('preview-sent', detailsSent);
+    if (builderList) builderList.classList.toggle('preview-sent', previewReady);
     Object.keys(complete).forEach(function(s) {
       var btn = document.querySelector('[data-section="' + s + '"]');
-      if (btn) { btn.classList.toggle('is-complete', complete[s] && !detailsSent); btn.setAttribute('aria-label', btn.querySelector('.sec-title').textContent + (complete[s] ? ', complete' : ', to do')); }
+      if (btn) { btn.classList.toggle('is-complete', complete[s] && !previewReady); btn.setAttribute('aria-label', btn.querySelector('.sec-title').textContent + (complete[s] ? ', complete' : ', to do')); }
     });
     var allDone = Object.values(complete).filter(Boolean).length >= Object.keys(complete).length;
     if (allDone && !_prevAllDone) {
       sendStageEmail('all_details_complete');
+      sendAllDetailsReceivedMessage();
     }
     _prevAllDone = allDone;
     updatePreviewCard();
@@ -2457,8 +2211,8 @@
         // same wording as the app's loader; unsent drafts are asked to finish instead
         var todo = needsSending();
         el.dataset.state = todo ? 'todo' : 'building';
-        if (title) title.textContent = todo ? 'Let’s build your website' : 'Building your preview';
-        if (sub) sub.textContent = todo ? 'Fill in your info cards. The more you add, the better your site. Then send it to your designer.' : 'We’ll send you a notification as soon as it’s ready to review.';
+        if (title) title.textContent = todo ? 'Let\'s build your website' : 'Building your preview';
+        if (sub) sub.textContent = todo ? 'Fill in your info cards. The more you add, the better your site. Then send it to your designer.' : 'We\'ll send you a notification as soon as it\'s ready to review.';
       }
     });
   }
@@ -2550,7 +2304,7 @@
             showAvailable();
           } else { reset(); msg.className = 'bs-domain-msg err'; msg.textContent = 'That domain is taken. Try another name or ending.'; }
         })
-        .catch(function() { reset(); msg.className = 'bs-domain-msg err'; msg.textContent = 'Couldn’t check that domain right now.'; })
+        .catch(function() { reset(); msg.className = 'bs-domain-msg err'; msg.textContent = 'Couldn\'t check that domain right now.'; })
         .then(function() { checking = false; refreshSheet(); });
     }
     openSheet({
@@ -2591,8 +2345,8 @@
         toggle.appendChild(b);
       });
       body.appendChild(toggle);
-      [{ id: 'essential', name: 'Free', note: 'Website built free · 1–5 pages', build: '£0', buildLabel: 'build' },
-       { id: 'pro', name: 'Pro', note: 'For websites over 5 pages', build: '£199', buildLabel: 'one-off build', tag: '5+ PAGES' }].forEach(function(o) {
+      [{ id: 'essential', name: 'Free', note: 'Website built free · 1–3 pages', build: '£0', buildLabel: 'build' },
+       { id: 'pro', name: 'Pro', note: 'For websites over 3 pages', build: '£199', buildLabel: 'one-off build', tag: '3+ PAGES' }].forEach(function(o) {
         var card = el('button', { type: 'button', 'class': 'bs-plan' + (plan === o.id ? ' on' : '') });
         var left = el('span', { 'class': 'l' });
         if (o.tag) left.appendChild(el('em', {}, o.tag));
@@ -2892,7 +2646,6 @@
   var autoSaveTimer = null;
   var autoSaveInFlight = false;
   var autoSaveQueued = false;
-  var autoSaveWarned = false;
   var hasPendingEdit = false;
 
   function scheduleAutoSave() {
@@ -2966,12 +2719,10 @@
         body: JSON.stringify({ p_id: slug, p_name: record.name, p_user_id: session.user_id, p_data: record, p_updated_at: record.updatedAt })
       });
     }).then(function(res) {
-      if (!res.ok) return res.text().then(function(t) { throw new Error('Save failed (' + res.status + '): ' + t); });
       autoSaveInFlight = false;
       if (autoSaveQueued) { autoSaveQueued = false; runAutoSave(); }
     }).catch(function(err) {
       console.warn('[autoSave] error', err);
-      if (!autoSaveWarned) { autoSaveWarned = true; alert('Your changes couldn\u2019t be saved. Please refresh the page and try again.'); }
       autoSaveInFlight = false;
       hasPendingEdit = true;
     });
@@ -3032,13 +2783,8 @@
           return authenticatedFetch(SUPABASE_URL + '/rest/v1/businesses?select=*&id=eq.' + encodeURIComponent(pendingSlug), { headers: authHeaders() })
             .then(function(r) { return r.json(); })
             .then(function(r2) {
-              var row = r2 && r2[0];
-              if (row && (!row.user_id || row.user_id === session.user_id)) { business = row; slug = business.id; renderDashboard(); }
-              else {
-                // leftover slug from another account's signup in this browser: never load it, it can't be saved
-                if (row) { localStorage.removeItem('bs_pending_slug'); params.delete('slug'); }
-                showSetup();
-              }
+              if (r2 && r2.length) { business = r2[0]; slug = business.id; renderDashboard(); }
+              else { showSetup(); }
             });
         }
       })
@@ -3057,7 +2803,7 @@
     return (s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
   }
 
-  function createSetupBusiness(pendingName, pendingSlug, retried) {
+  function createSetupBusiness(pendingName, pendingSlug) {
     var name = (pendingName || '').trim();
     var chosenSlug = slugify(pendingSlug || name);
     var pendingType = params.get('type') || localStorage.getItem('bs_pending_business_type') || 'Professional Services';
@@ -3088,10 +2834,6 @@
       })
       .catch(function(err) {
         console.error('[createSetupBusiness] error:', err);
-        if (/another account/i.test(err.message) && !retried) {
-          localStorage.removeItem('bs_pending_slug');
-          return createSetupBusiness(name, chosenSlug + '-' + String(session.user_id || Date.now()).slice(0, 6), true);
-        }
         var provisional = { slug: chosenSlug, name: name, raw: { name: name, email: session.email || '', tagline: pendingType, services: [], gallery: [] }, updatedAt: new Date().toISOString() };
         business = { id: chosenSlug, name: name, user_id: session.user_id, data: provisional };
         slug = chosenSlug;
@@ -3102,8 +2844,6 @@
   }
 
   loadBusiness();
-
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/account/sw.js', { scope: '/account/' }).catch(function() {});
 
   // Fallback: hide loading screen after 5s if renderDashboard hasn't fired
   setTimeout(function() {
