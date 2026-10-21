@@ -30,7 +30,7 @@
       '#bs-bubble{position:relative;z-index:1;margin-right:14px;max-width:220px;background:#3B82F6;color:#fff;border-radius:16px 16px 4px 16px;padding:10px 14px;font-size:13.5px;font-weight:700;line-height:1.35;box-shadow:0 6px 20px rgba(59,130,246,.35);opacity:0;transform:translateY(6px) scale(.95);transform-origin:100% 100%;transition:opacity .3s,transform .3s;pointer-events:none}',
       '#bs-bubble:after{content:"";position:absolute;right:26px;bottom:-7px;width:14px;height:14px;background:#3B82F6;transform:rotate(45deg);border-radius:0 0 3px 0}',
       '#bs-bubble.show{opacity:1;transform:none}',
-      '#bs-actions{position:relative;z-index:3;display:none;flex-direction:column;gap:7px;align-items:flex-end}',
+      '#bs-actions{position:relative;z-index:1;display:none;flex-direction:column;gap:7px;align-items:flex-end}',
       '#bs-bot.open #bs-actions{display:flex;animation:bsIn .25s ease}',
       '#bs-bot.open #bs-bubble{display:none}',
       '@keyframes bsIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}',
@@ -38,7 +38,8 @@
       '#bs-actions .bs-signup{background:#3B82F6}',
       '#bs-actions .bs-wa{background:#25D366}',
       '#bs-figure{position:relative;z-index:2;margin-top:-80px;pointer-events:none}',
-      '#bs-bot-model{display:block;width:130px;height:230px;pointer-events:auto;background:transparent;cursor:pointer;--poster-color:transparent;--progress-bar-height:0}',
+      '#bs-bot-model{display:block;width:130px;height:230px;pointer-events:none;background:transparent;cursor:pointer;--poster-color:transparent;--progress-bar-height:0}',
+      '#bs-hit{position:absolute;left:10px;right:10px;bottom:0;height:150px;cursor:pointer;pointer-events:auto}',
       '#bs-min{position:absolute;top:84px;pointer-events:auto;right:0;width:22px;height:22px;border-radius:50%;border:0;background:#fff;color:#3B82F6;font:800 15px/1 inherit;box-shadow:0 2px 8px rgba(0,0,0,.18);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:2}',
       '#bs-bot.min #bs-bubble,#bs-bot.min #bs-actions,#bs-bot.min #bs-figure{display:none}',
       '#bs-icon{display:none;width:54px;height:54px;border-radius:50%;border:0;background:#3B82F6;box-shadow:0 6px 18px rgba(59,130,246,.4);cursor:pointer;align-items:center;justify-content:center;padding:0;transition:transform .15s}',
@@ -46,7 +47,7 @@
       '#bs-icon img{width:24px;height:auto}',
       '#bs-bot.min #bs-icon{display:flex}',
       '#bs-bot.min{bottom:20px;right:20px}',
-      '@media(max-width:640px){#bs-bot{bottom:80px;right:20px}#bs-bot.min{bottom:80px}#bs-bot-model{width:104px;height:184px}#bs-figure{margin-top:-64px}#bs-bubble{max-width:180px;font-size:12.5px}}'
+      '@media(max-width:640px){#bs-bot{bottom:80px;right:20px}#bs-bot.min{bottom:80px}#bs-bot-model{width:104px;height:184px}#bs-figure{margin-top:-64px}#bs-hit{height:120px}#bs-bubble{max-width:180px;font-size:12.5px}}'
     ].join('');
     document.head.appendChild(s);
   }
@@ -61,6 +62,7 @@
         '<a class="bs-wa" href="https://wa.me/447535928879" target="_blank" rel="noopener">' + WA_ICON + 'WhatsApp us</a>' +
       '</div>' +
       '<div id="bs-figure">' +
+        '<div id="bs-hit" aria-hidden="true"></div>' +
         '<button id="bs-min" type="button" aria-label="Minimise">–</button>' +
         '<model-viewer id="bs-bot-model" src="/img/bot/avatar.glb?v=20261021-2" animation-name="Idle" autoplay' +
         ' camera-orbit="0deg 82deg auto" camera-target="auto 1.25m auto" field-of-view="30deg" disable-zoom disable-pan disable-tap' +
@@ -77,7 +79,7 @@
       e.stopPropagation();
       setMinimised(!minimised);
     });
-    model.addEventListener('click', function () { playJump(); setOpen(!opened); });
+    root.querySelector('#bs-hit').addEventListener('click', function () { playJump(); setOpen(!opened); });
     root.querySelector('#bs-icon').addEventListener('click', function () { setMinimised(false); });
 
     applyMinimised();
