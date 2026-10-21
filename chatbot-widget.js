@@ -1,5 +1,4 @@
 (function () {
-  // Messages to cycle through
   var messages = [
     { text: 'Welcome to BrightSite! 👋', delay: 3500 },
     { text: 'Websites for free! 🎉', delay: 3000 },
@@ -13,131 +12,143 @@
     { text: '⚡ Only 5 slots left this month!', delay: 4000 }
   ];
 
+  var WA_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>';
+
   var idx = 0;
   var timer = null;
+  var jumpTimer = null;
   var opened = false;
+  var minimised = false;
+  var root, bubble, model, actions;
+
+  try { minimised = localStorage.getItem('bsBotMin') === '1'; } catch (e) {}
 
   function injectStyles() {
     var s = document.createElement('style');
     s.textContent = [
-      '#bs-bot{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:8px;cursor:pointer}',
-      '#bs-bot-model{width:90px;height:120px;background:transparent;border:0;outline:none;transform-origin:50% 100%;animation:bsIdle 3.2s ease-in-out infinite}',
-      '#bs-bot-model.jump{animation:bsJump .6s cubic-bezier(.3,.7,.4,1)}',
-      '#bs-bot-model.stopped{animation:none}',
-      '@keyframes bsIdle{0%,100%{transform:translateY(0) rotate(0) scaleY(1)}25%{transform:rotate(-1.5deg)}50%{transform:translateY(-2px) scaleY(1.015)}75%{transform:rotate(1.5deg)}}',
-      '@keyframes bsJump{0%{transform:scaleY(1)}15%{transform:scaleY(.9) scaleX(1.06)}45%{transform:translateY(-18px) scaleY(1.05)}75%{transform:translateY(0) scaleY(.94) scaleX(1.04)}100%{transform:scaleY(1)}}',
-      '#bs-bubble{max-width:200px;background:#fff;border:1.5px solid var(--accent,#3b7cf4);border-radius:14px 14px 4px 14px;padding:9px 13px;font-size:13px;font-weight:600;line-height:1.4;color:#111;box-shadow:0 3px 14px rgba(0,0,0,.12);opacity:0;transform:translateY(6px) scale(.96);transition:opacity .3s,transform .3s;pointer-events:none;text-align:right}',
-      '#bs-bubble.show{opacity:1;transform:translateY(0) scale(1)}',
-      '#bs-actions{display:flex;flex-direction:column;gap:7px;align-items:flex-end;animation:bsFadeIn .3s ease}',
-      '@keyframes bsFadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}',
-      '#bs-actions a{display:block;padding:10px 18px;border-radius:999px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,.13)}',
-      '#bs-actions .bs-signup{background:var(--accent,#3b7cf4);color:#fff}',
-      '#bs-actions .bs-wa{background:#25D366;color:#fff;display:flex;align-items:center;gap:7px}',
-      '#bs-close{font-size:11px;color:#999;text-align:right;margin-top:-2px;padding-right:4px}'
+      '#bs-bot{position:fixed;bottom:16px;right:16px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:6px;font-family:inherit}',
+      '#bs-bubble{position:relative;max-width:220px;background:#3B82F6;color:#fff;border-radius:16px 16px 4px 16px;padding:10px 14px;font-size:13.5px;font-weight:700;line-height:1.35;box-shadow:0 6px 20px rgba(59,130,246,.35);opacity:0;transform:translateY(6px) scale(.95);transform-origin:100% 100%;transition:opacity .3s,transform .3s;pointer-events:none}',
+      '#bs-bubble:after{content:"";position:absolute;right:26px;bottom:-7px;width:14px;height:14px;background:#3B82F6;transform:rotate(45deg);border-radius:0 0 3px 0}',
+      '#bs-bubble.show{opacity:1;transform:none}',
+      '#bs-actions{display:none;flex-direction:column;gap:7px;align-items:flex-end}',
+      '#bs-bot.open #bs-actions{display:flex;animation:bsIn .25s ease}',
+      '#bs-bot.open #bs-bubble{display:none}',
+      '@keyframes bsIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}',
+      '#bs-actions a{display:flex;align-items:center;gap:7px;padding:10px 18px;border-radius:999px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.15)}',
+      '#bs-actions .bs-signup{background:#3B82F6}',
+      '#bs-actions .bs-wa{background:#25D366}',
+      '#bs-figure{position:relative}',
+      '#bs-bot-model{display:block;width:120px;height:150px;background:transparent;cursor:pointer;--poster-color:transparent;--progress-bar-height:0}',
+      '#bs-min{position:absolute;top:2px;right:0;width:22px;height:22px;border-radius:50%;border:0;background:#fff;color:#3B82F6;font:800 15px/1 inherit;box-shadow:0 2px 8px rgba(0,0,0,.18);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:2}',
+      '#bs-bot.min #bs-bubble,#bs-bot.min #bs-actions{display:none}',
+      '#bs-bot.min #bs-bot-model{width:64px;height:80px}',
+      '@media(max-width:640px){#bs-bot{bottom:76px}#bs-bot-model{width:96px;height:120px}#bs-bubble{max-width:180px;font-size:12.5px}}'
     ].join('');
     document.head.appendChild(s);
   }
 
-  function buildWidget() {
-    var wrap = document.createElement('div');
-    wrap.id = 'bs-bot';
-    wrap.innerHTML = [
-      '<div id="bs-bubble"></div>',
-      '<model-viewer id="bs-bot-model"',
-      '  src="/img/bot/avatar.glb"',
-      '  interaction-prompt="none"',
-      '  disable-zoom',
-      '  camera-orbit="0deg 80deg 2.2m"',
-      '  shadow-intensity="0"',
-      '  exposure="1"',
-      '  style="--poster-color:transparent;background:transparent">',
-      '</model-viewer>'
-    ].join('');
-    document.body.appendChild(wrap);
+  function build() {
+    root = document.createElement('div');
+    root.id = 'bs-bot';
+    root.innerHTML =
+      '<div id="bs-bubble" aria-live="polite"></div>' +
+      '<div id="bs-actions">' +
+        '<a class="bs-signup" href="/account/login.html?signup=1">Sign up free →</a>' +
+        '<a class="bs-wa" href="https://wa.me/447535928879" target="_blank" rel="noopener">' + WA_ICON + 'WhatsApp us</a>' +
+      '</div>' +
+      '<div id="bs-figure">' +
+        '<button id="bs-min" type="button" aria-label="Minimise">–</button>' +
+        '<model-viewer id="bs-bot-model" src="/img/bot/avatar.glb" animation-name="Idle" autoplay' +
+        ' camera-orbit="0deg 80deg auto" field-of-view="26deg" disable-zoom disable-pan disable-tap' +
+        ' interaction-prompt="none" shadow-intensity="0" exposure="1.05" alt="BrightSite assistant"></model-viewer>' +
+      '</div>';
+    document.body.appendChild(root);
 
-    wrap.addEventListener('click', function (e) {
-      if (opened) return;
-      open();
+    bubble = root.querySelector('#bs-bubble');
+    model = root.querySelector('#bs-bot-model');
+    actions = root.querySelector('#bs-actions');
+
+    root.querySelector('#bs-min').addEventListener('click', function (e) {
+      e.stopPropagation();
+      setMinimised(!minimised);
     });
+    model.addEventListener('click', function () {
+      if (minimised) { setMinimised(false); return; }
+      setOpen(!opened);
+    });
+
+    applyMinimised();
   }
 
   function showBubble(text) {
-    var el = document.getElementById('bs-bubble');
-    if (!el) return;
-    el.classList.remove('show');
+    bubble.classList.remove('show');
     setTimeout(function () {
-      el.textContent = text;
-      el.classList.add('show');
+      bubble.textContent = text;
+      bubble.classList.add('show');
     }, 220);
   }
 
-  function nextMessage() {
-    if (opened) return;
+  function cycle() {
+    clearTimeout(timer);
+    if (opened || minimised) return;
     showBubble(messages[idx].text);
     timer = setTimeout(function () {
       idx = (idx + 1) % messages.length;
-      nextMessage();
+      cycle();
     }, messages[idx].delay);
-    // advance after reading
   }
 
-  function open() {
-    opened = true;
-    clearTimeout(timer);
-
-    var bubble = document.getElementById('bs-bubble');
-    var model = document.getElementById('bs-bot-model');
-    if (bubble) { bubble.classList.remove('show'); }
-    if (model) { model.classList.add('stopped'); }
-
-    var actions = document.createElement('div');
-    actions.id = 'bs-actions';
-    actions.innerHTML = [
-      '<a class="bs-signup" href="/account/login.html?signup=1">Sign up free →</a>',
-      '<a class="bs-wa" href="https://wa.me/447535928879" target="_blank" rel="noopener">',
-        '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>',
-        'WhatsApp us',
-      '</a>',
-      '<div id="bs-close" onclick="(function(){document.getElementById(\'bs-bot\').remove()})()" style="cursor:pointer">✕ close</div>'
-    ].join('');
-
-    var wrap = document.getElementById('bs-bot');
-    if (wrap) wrap.insertBefore(actions, wrap.firstChild);
+  function jump() {
+    if (!model || opened || minimised) return;
+    model.animationName = 'Jump';
+    model.play({ repetitions: 1 });
   }
 
   function scheduleJump() {
-    setTimeout(function () {
-      var m = document.getElementById('bs-bot-model');
-      if (!m) return;
-      if (!opened) {
-        m.classList.add('jump');
-        setTimeout(function () { m.classList.remove('jump'); }, 650);
-      }
-      scheduleJump();
-    }, 5000 + Math.random() * 6000);
+    clearTimeout(jumpTimer);
+    jumpTimer = setTimeout(function () { jump(); scheduleJump(); }, 6000 + Math.random() * 7000);
+  }
+
+  function setOpen(v) {
+    opened = v;
+    root.classList.toggle('open', v);
+    if (v) { clearTimeout(timer); bubble.classList.remove('show'); }
+    else cycle();
+  }
+
+  function applyMinimised() {
+    root.classList.toggle('min', minimised);
+    var btn = root.querySelector('#bs-min');
+    btn.textContent = minimised ? '+' : '–';
+    btn.setAttribute('aria-label', minimised ? 'Expand' : 'Minimise');
+  }
+
+  function setMinimised(v) {
+    minimised = v;
+    try { localStorage.setItem('bsBotMin', v ? '1' : '0'); } catch (e) {}
+    if (v) { opened = false; root.classList.remove('open'); clearTimeout(timer); bubble.classList.remove('show'); }
+    applyMinimised();
+    if (!v) cycle();
   }
 
   function init() {
     injectStyles();
-
-    // Load model-viewer if not already present
     if (!customElements.get('model-viewer')) {
       var mv = document.createElement('script');
       mv.type = 'module';
       mv.src = 'https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js';
       document.head.appendChild(mv);
     }
-
-    buildWidget();
+    build();
+    // after a one-shot Jump, return to the Idle loop
+    model.addEventListener('finished', function () {
+      model.animationName = 'Idle';
+      model.play();
+    });
+    setTimeout(cycle, 1200);
     scheduleJump();
-
-    // Start speech bubbles after a short delay
-    setTimeout(nextMessage, 1200);
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
