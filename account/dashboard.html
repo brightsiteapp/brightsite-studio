@@ -589,8 +589,10 @@
   @media(max-width:799px){.website-panel:not(.editing) #websiteEditorHeader{display:none !important}}
   .preview-placeholder{background:#141A1E !important;padding:32px 24px !important}
   .preview-placeholder::before{content:'' !important;position:relative !important;inset:auto !important;width:64px;height:70px;margin-bottom:28px;flex:none;
-    background:url(../img/brightsite-b-white.png) center/contain no-repeat !important;
-    filter:drop-shadow(0 0 7px #7FB2FF) drop-shadow(0 0 22px #3B82F6);animation:bsBPulse 2.8s ease-in-out infinite !important}
+    background:#DC2626 !important;
+    -webkit-mask:url(../img/brightsite-b-white.png) center/contain no-repeat;mask:url(../img/brightsite-b-white.png) center/contain no-repeat;
+    filter:drop-shadow(0 0 7px #FF8A80) drop-shadow(0 0 22px #DC2626);animation:bsBPulse 2.8s ease-in-out infinite !important;transition:background .5s}
+  .preview-placeholder[data-state="all-done"]::before{background:#22c55e !important;filter:drop-shadow(0 0 7px #7FD9A8) drop-shadow(0 0 22px #22c55e) !important}
   @keyframes bsBPulse{0%,100%{opacity:.35;transform:scale(.92)}50%{opacity:1;transform:scale(1)}}
   .preview-placeholder-biz{display:none !important}
   .preview-placeholder .preview-placeholder-title{background:none !important;-webkit-text-fill-color:#fff !important;color:#fff;animation:none !important;filter:none !important;font-size:18px !important;margin-bottom:6px !important}
