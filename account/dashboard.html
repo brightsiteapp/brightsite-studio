@@ -296,25 +296,20 @@
   .website-editor-header h2{margin:0;font-family:var(--display);font-size:16px;font-weight:800;color:var(--ink)}
   .website-editor-header .builder-done{min-height:34px;margin:0;padding:0 16px}
   @keyframes pvwPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
-  .sec-btn{width:100%;border:1px solid var(--line);border-radius:14px;background:#fff4f2;margin-bottom:0;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;font:inherit;font-size:13.5px;font-weight:700;color:var(--ink);text-align:left;box-sizing:border-box}
-  .sec-btn:hover{border-color:#cfb8b3;box-shadow:0 3px 10px rgba(65,45,40,.04)}
-  .sec-btn{border-color:#f1dcd7;transition:background-color .25s ease,border-color .25s ease,box-shadow .18s ease}
-  .sec-btn.is-complete{background:#f0faf4;border-color:#d2e9dc}
-  .preview-sent .sec-btn{background:var(--card);border-color:var(--line)}
+  .sec-btn{width:100%;border:1.5px solid #f1dcd7;border-radius:14px;background:#fff4f2;margin-bottom:0;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;font:inherit;font-size:13.5px;font-weight:700;color:var(--ink);text-align:left;box-sizing:border-box;box-shadow:0 0 0 3px rgba(213,91,91,.07),0 0 10px rgba(213,91,91,.12);transition:background-color .25s ease,border-color .25s ease,box-shadow .22s ease}
+  .sec-btn:hover{box-shadow:0 0 0 3px rgba(213,91,91,.1),0 0 14px rgba(213,91,91,.18)}
+  .sec-btn.is-complete{background:#f0faf4;border-color:#b6ddc6;box-shadow:0 0 0 3px rgba(36,155,88,.08),0 0 10px rgba(36,155,88,.15)}
+  .sec-btn.is-complete:hover{box-shadow:0 0 0 3px rgba(36,155,88,.12),0 0 14px rgba(36,155,88,.22)}
+  .preview-sent .sec-btn{background:var(--card);border-color:var(--line);box-shadow:none}
   .section-icon{width:32px;height:32px;display:grid;place-items:center;border-radius:11px;background:rgba(255,255,255,.8);color:#b75e52;flex:none}
   .section-icon svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .is-complete .section-icon{color:#298559}
   .preview-sent .section-icon{color:#5275a5}
   .sec-title{flex:1;min-width:0}
-  .section-tick{margin-left:auto}
+  .section-tick{display:none}
   .sec-btn .chev{width:6px;height:6px;border-right:1.6px solid currentColor;border-top:1.6px solid currentColor;transform:rotate(45deg);font-size:0!important;margin-left:3px}
   .sec-btn .chev{font-size:13px;color:var(--muted);flex:none}
   .sec-title{display:flex;align-items:center;gap:9px}
-  .section-tick{width:18px;height:18px;border:2px solid #d55b5b;border-radius:50%;display:grid;place-items:center;color:#d55b5b;font-size:11px;line-height:1;flex:none}
-  .section-tick::before{content:'✕'}
-  .sec-btn.is-complete .section-tick{border-color:#249b58;background:#249b58;color:#fff}
-  .sec-btn.is-complete .section-tick::before{content:'✓'}
-  .preview-sent .section-tick{display:none}
   .builder-guidance{margin:14px 0 0;padding:12px 14px;border:1px solid #f0d5d5;border-radius:12px;background:#fff8f8;color:#8d4444;font-size:12.5px;line-height:1.45}
   .builder-section{animation:sectionIn .16s ease}
   @keyframes sectionIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
@@ -570,17 +565,19 @@
 
   /* ---- app-matched section list + preview loader (overrides older styles above) ---- */
   #builderList{grid-template-columns:1fr !important;gap:8px !important}
-  #builderList .sec-btn{height:auto !important;min-height:58px;padding:10px 14px !important;gap:10px !important;background:#fff !important;border:1px solid rgba(28,40,50,.14) !important;border-radius:14px;font-size:15px !important;font-weight:600;color:#1C2832;box-shadow:none}
+  #builderList .sec-btn{height:auto !important;min-height:58px;padding:10px 14px !important;gap:10px !important;border-radius:14px;font-size:15px !important;font-weight:600;color:#1C2832}
   #builderList .sec-btn .chev{display:block !important}
-  #builderList .section-tick{display:none}
-  #builderList .sec-btn.is-complete .section-tick{display:grid}
-  /* red until the customer clicks Done on a card, then green; neutral once the preview is sent */
-  #builderList:not(.preview-sent) .sec-btn{background:#fff4f2 !important;border-color:#f1dcd7 !important}
-  #builderList:not(.preview-sent) .sec-btn.is-complete{background:#f0faf4 !important;border-color:#d2e9dc !important}
-  #builderList .section-tick{display:grid !important}
-  /* before the details are sent: amber B, and Send to designer waits for every card to be green */
+  #builderList .section-tick{display:none !important}
+  /* soft red glow until done, soft green glow when done, neutral once preview is sent */
+  #builderList:not(.preview-sent) .sec-btn{background:#fff4f2 !important;border-color:#f1dcd7 !important;box-shadow:0 0 0 3px rgba(213,91,91,.07),0 0 10px rgba(213,91,91,.12) !important}
+  #builderList:not(.preview-sent) .sec-btn:hover{box-shadow:0 0 0 3px rgba(213,91,91,.1),0 0 14px rgba(213,91,91,.18) !important}
+  #builderList:not(.preview-sent) .sec-btn.is-complete{background:#f0faf4 !important;border-color:#b6ddc6 !important;box-shadow:0 0 0 3px rgba(36,155,88,.08),0 0 10px rgba(36,155,88,.15) !important}
+  #builderList:not(.preview-sent) .sec-btn.is-complete:hover{box-shadow:0 0 0 3px rgba(36,155,88,.12),0 0 14px rgba(36,155,88,.22) !important}
+  #builderList.preview-sent .sec-btn{background:#fff !important;border:1px solid rgba(28,40,50,.14) !important;box-shadow:none !important}
+  /* before the details are sent: amber B while filling in; green B once all done */
   .preview-placeholder[data-state="loading"]::before{filter:drop-shadow(0 0 7px rgba(255,255,255,.45)) drop-shadow(0 0 18px rgba(255,255,255,.18)) !important}
   .preview-placeholder[data-state="todo"]::before{filter:drop-shadow(0 0 7px #FFD27F) drop-shadow(0 0 22px #F59E0B) !important}
+  .preview-placeholder[data-state="all-done"]::before{filter:drop-shadow(0 0 7px #7FD9A8) drop-shadow(0 0 22px #22c55e) !important}
   .wah-make-live:disabled{opacity:.45;cursor:not-allowed}
   @media(max-width:430px){
     #websiteAppHeader{gap:6px}
@@ -612,10 +609,9 @@
 
   .acct-logout{display:block;width:calc(100% - 32px);max-width:788px;margin:4px auto 32px;min-height:50px;border-radius:14px;border:1px solid rgba(28,40,50,.14);background:#fff;font-size:15px;font-weight:700;font-family:inherit;color:#B42318;cursor:pointer}
   /* Automatic/Manual choice modal */
-  .path-veil{position:fixed;inset:0;z-index:500;display:flex;align-items:flex-end;justify-content:center;background:rgba(3,10,16,.6)}
+  .path-veil{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;background:rgba(3,10,16,.6);padding:16px;box-sizing:border-box}
   .path-veil[hidden]{display:none}
-  .path-sheet{width:min(560px,100%);max-height:90vh;overflow:auto;box-sizing:border-box;padding:28px 22px calc(32px + env(safe-area-inset-bottom));border-radius:24px 24px 0 0;background:#F4EDE6;animation:bsSheetIn .22s ease-out}
-  @media(min-width:800px){.path-veil{align-items:center}.path-sheet{border-radius:24px}}
+  .path-sheet{width:min(480px,100%);max-height:90vh;overflow:auto;box-sizing:border-box;padding:28px 22px 30px;border-radius:24px;background:#F4EDE6;animation:bsSheetIn .22s ease-out}
   .path-title{margin:0 0 6px;font-family:var(--display);font-size:22px;font-weight:800;color:#1C2832;text-align:center}
   .path-sub{margin:0 0 22px;font-size:15px;color:rgba(28,40,50,.64);text-align:center}
   .path-stack{display:flex;flex-direction:column;gap:10px}
@@ -661,6 +657,7 @@
   .wah-make-live.live{background:#fff;color:rgba(28,40,50,.52);border:1px solid rgba(28,40,50,.14)}
   #headerStatusPill[data-state="live"]{background:rgba(31,138,84,.12);color:#1F8A54}
   #headerStatusPill[data-state="todo"]{background:rgba(245,158,11,.14);color:#B26A00}
+  #headerStatusPill[data-state="all-done"]{background:rgba(34,197,94,.13);color:#16a34a}
   #headerStatusPill[data-state="building"]{background:rgba(178,106,0,.12);color:#B26A00}
   #headerStatusPill[data-state="offline"]{background:rgba(180,35,24,.10);color:#B42318}
   #headerStatusPill[data-state="ready"]{background:rgba(59,130,246,.10);color:#3B82F6}
@@ -1481,9 +1478,10 @@
     if (headerPill && headerLabel) {
       headerPill.hidden = false;
       // same states as the app's status pill
-      var st = isLive ? 'live' : !getPreviewUrl() ? (needsSending() ? 'todo' : 'building') : isPaying ? 'offline' : 'ready';
+      var _todo = needsSending();
+      var st = isLive ? 'live' : !getPreviewUrl() ? (_todo ? (allSectionsDone() ? 'all-done' : 'todo') : 'building') : isPaying ? 'offline' : 'ready';
       headerPill.dataset.state = st;
-      headerLabel.textContent = { live: 'Live', todo: 'Add your info', building: 'Being built', offline: 'Offline', ready: 'Ready to publish' }[st];
+      headerLabel.textContent = { live: 'Live', todo: 'Add your info', 'all-done': 'Ready to send', building: 'Being built', offline: 'Offline', ready: 'Ready to publish' }[st];
     }
 
     if (urlLink) {
@@ -2380,11 +2378,11 @@
         if (title) title.innerHTML = isLive ? 'Website<br>Live' : 'Preview<br>Ready';
         if (sub) sub.textContent = 'Tap to view your website preview ↗';
       } else {
-        // same wording as the app's loader; unsent drafts are asked to finish instead
         var todo = needsSending();
-        el.dataset.state = todo ? 'todo' : 'building';
-        if (title) title.textContent = todo ? 'Let\'s build your website' : 'Building your preview';
-        if (sub) sub.textContent = todo ? 'Fill in your info cards. The more you add, the better your site. Then send it to your designer.' : 'We\'ll send you a notification as soon as it\'s ready to review.';
+        var allDone = todo && allSectionsDone();
+        el.dataset.state = allDone ? 'all-done' : todo ? 'todo' : 'building';
+        if (title) title.textContent = allDone ? 'Looking great!' : todo ? 'Let\'s build your website' : 'Building your preview';
+        if (sub) sub.textContent = allDone ? 'When you\'re ready, submit to your designer.' : todo ? 'Fill in your info cards. The more you add, the better your site.' : 'We\'ll send you a notification as soon as it\'s ready to review.';
       }
     });
   }
