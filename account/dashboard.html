@@ -611,6 +611,31 @@
   #accountPanel .info-card h2{font-size:12px;font-weight:700;color:rgba(28,40,50,.52);margin:0 0 8px;letter-spacing:0}
 
   .acct-logout{display:block;width:calc(100% - 32px);max-width:788px;margin:4px auto 32px;min-height:50px;border-radius:14px;border:1px solid rgba(28,40,50,.14);background:#fff;font-size:15px;font-weight:700;font-family:inherit;color:#B42318;cursor:pointer}
+  /* Automatic/Manual choice modal */
+  .path-veil{position:fixed;inset:0;z-index:500;display:flex;align-items:flex-end;justify-content:center;background:rgba(3,10,16,.6)}
+  .path-veil[hidden]{display:none}
+  .path-sheet{width:min(560px,100%);max-height:90vh;overflow:auto;box-sizing:border-box;padding:28px 22px calc(32px + env(safe-area-inset-bottom));border-radius:24px 24px 0 0;background:#F4EDE6;animation:bsSheetIn .22s ease-out}
+  @media(min-width:800px){.path-veil{align-items:center}.path-sheet{border-radius:24px}}
+  .path-title{margin:0 0 6px;font-family:var(--display);font-size:22px;font-weight:800;color:#1C2832;text-align:center}
+  .path-sub{margin:0 0 22px;font-size:15px;color:rgba(28,40,50,.64);text-align:center}
+  .path-stack{display:flex;flex-direction:column;gap:10px}
+  .path-card{border:0;border-radius:18px;padding:20px;text-align:left;cursor:pointer;font:inherit;width:100%}
+  .path-card-main{background:#3B82F6;color:#fff}
+  .path-card-plain{background:#fff;border:1.5px solid rgba(28,40,50,.14);color:#1C2832}
+  .path-tag{display:block;font-size:11px;font-weight:800;letter-spacing:.06em;margin-bottom:5px;opacity:.8}
+  .path-card-main .path-tag{color:rgba(255,255,255,.8)}
+  .path-card-plain .path-tag{color:rgba(28,40,50,.52)}
+  .path-card-name{display:block;font-size:19px;font-weight:800;margin-bottom:5px;line-height:1.2}
+  .path-card-desc{display:block;font-size:14px;line-height:1.5;opacity:.85}
+  /* Automatic links screen */
+  .path-back{border:0;background:none;font:700 15px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;color:#3B82F6;cursor:pointer;margin-bottom:18px;padding:0;display:flex;align-items:center;gap:4px}
+  .path-field-label{display:block;font-size:13px;font-weight:700;color:rgba(28,40,50,.52);margin-bottom:5px;letter-spacing:.03em}
+  .path-field-wrap{margin-bottom:10px}
+  .path-field-wrap input{width:100%;box-sizing:border-box;min-height:50px;padding:12px 15px;border:1px solid rgba(28,40,50,.14);border-radius:14px;background:#fff;font:inherit;font-size:15px;color:#1C2832;outline:none}
+  .path-field-wrap input:focus{border-color:#3B82F6}
+  .path-hint{font-size:14px;font-weight:600;color:rgba(28,40,50,.52);text-align:center;margin:8px 0}
+  .path-send-btn{width:100%;min-height:54px;border:0;border-radius:14px;background:#3B82F6;color:#fff;font:800 16px/1.2 'Avenir Next','Avenir','Nunito Sans',sans-serif;cursor:pointer;margin-top:8px}
+  .path-send-btn:disabled{opacity:.4;cursor:default}
   /* Make Live sheet, status pill, account cards and send button: matched to the app */
   .bs-sheet-delete.neutral{color:#1C2832}
   .bs-sheet-sub{margin:-4px 0 6px;font-size:14px;color:rgba(28,40,50,.72)}
@@ -906,6 +931,51 @@
   </section>
 
   <!-- shared pop-up sheet; outside the tab panels so it shows over any tab -->
+  <!-- Automatic/Manual choice shown to new web signups -->
+  <div class="path-veil" id="pathChoiceVeil" hidden>
+    <div class="path-sheet" role="dialog" aria-modal="true" aria-label="How would you like to build your website?">
+      <div id="pathPickScreen">
+        <p class="path-title">How would you like to build your website?</p>
+        <p class="path-sub">You can change anything later.</p>
+        <div class="path-stack">
+          <button type="button" class="path-card path-card-main" id="pathChooseAuto">
+            <span class="path-tag">RECOMMENDED · 2 MINUTES</span>
+            <span class="path-card-name">Automatic</span>
+            <span class="path-card-desc">Share your Google, Facebook or website link and our designer builds it for you.</span>
+          </button>
+          <button type="button" class="path-card path-card-plain" id="pathChooseManual">
+            <span class="path-tag">ABOUT 10 MINUTES</span>
+            <span class="path-card-name">Manual</span>
+            <span class="path-card-desc">Enter your details, hours, services and photos yourself.</span>
+          </button>
+        </div>
+      </div>
+      <div id="pathAutoScreen" hidden>
+        <button type="button" class="path-back" id="pathAutoBack">‹ Back</button>
+        <p class="path-title">Share your links</p>
+        <p class="path-sub">Add your name and at least one link. Our designer will take it from there.</p>
+        <div class="path-field-wrap">
+          <label class="path-field-label" for="pathFullName">Full name</label>
+          <input type="text" id="pathFullName" placeholder="e.g. Jane Smith" autocomplete="name" autocapitalize="words">
+        </div>
+        <div class="path-field-wrap">
+          <label class="path-field-label" for="pathGoogleLink">Google Business link <span style="font-weight:400;opacity:.7">(optional)</span></label>
+          <input type="url" id="pathGoogleLink" placeholder="https://g.page/your-business" autocapitalize="none" autocorrect="off">
+        </div>
+        <div class="path-field-wrap">
+          <label class="path-field-label" for="pathFacebook">Facebook link <span style="font-weight:400;opacity:.7">(optional)</span></label>
+          <input type="url" id="pathFacebook" placeholder="facebook.com/yourbusiness" autocapitalize="none" autocorrect="off">
+        </div>
+        <div class="path-field-wrap">
+          <label class="path-field-label" for="pathWebsite">Existing website <span style="font-weight:400;opacity:.7">(optional)</span></label>
+          <input type="url" id="pathWebsite" placeholder="yoursite.com" autocapitalize="none" autocorrect="off">
+        </div>
+        <p class="path-hint" id="pathAutoHint">Add your name and at least one link</p>
+        <button type="button" class="path-send-btn" id="pathSendBtn" disabled>Send to designer</button>
+      </div>
+    </div>
+  </div>
+
   <div class="bs-sheet-veil" id="bsSheet" hidden>
         <div class="bs-sheet" role="dialog" aria-modal="true" aria-labelledby="bsSheetTitle">
           <div class="bs-sheet-head"><h3 id="bsSheetTitle"></h3><button type="button" class="bs-sheet-close" id="bsSheetClose" aria-label="Close">×</button></div>
@@ -1564,7 +1634,101 @@
     renderWelcomeMessage();
     if (renderDraftBanner()) showWebsiteTab();
     else showMessagesTab();
+    if (openEditorAfterSetup) { openEditorAfterSetup = false; showPathChoice(); }
   }
+
+  // ---------------- Automatic/Manual choice for new web signups ----------------
+  function showPathChoice() {
+    var raw = (business && business.data && business.data.raw) || {};
+    // Already chose (e.g. signed up via app) — skip
+    if (raw.buildChoice || raw.sentToDesigner || raw.draft === false) return;
+    document.getElementById('pathPickScreen').hidden = false;
+    document.getElementById('pathAutoScreen').hidden = true;
+    document.getElementById('pathChoiceVeil').hidden = false;
+    // Pre-fill full name if we have it
+    var nameEl = document.getElementById('pathFullName');
+    if (nameEl && !nameEl.value) nameEl.value = raw.fullName || '';
+  }
+
+  (function setupPathChoice() {
+    var veil = document.getElementById('pathChoiceVeil');
+    var pickScreen = document.getElementById('pathPickScreen');
+    var autoScreen = document.getElementById('pathAutoScreen');
+    var fullNameEl = document.getElementById('pathFullName');
+    var googleEl = document.getElementById('pathGoogleLink');
+    var fbEl = document.getElementById('pathFacebook');
+    var siteEl = document.getElementById('pathWebsite');
+    var hintEl = document.getElementById('pathAutoHint');
+    var sendBtn = document.getElementById('pathSendBtn');
+
+    function canSend() {
+      return !!(fullNameEl.value.trim() && (googleEl.value.trim() || fbEl.value.trim() || siteEl.value.trim()));
+    }
+    function updateSend() {
+      sendBtn.disabled = !canSend();
+      hintEl.textContent = canSend() ? 'Ready to go!' : 'Add your name and at least one link';
+    }
+    [fullNameEl, googleEl, fbEl, siteEl].forEach(function(el) { el.addEventListener('input', updateSend); });
+
+    document.getElementById('pathChooseAuto').addEventListener('click', function() {
+      pickScreen.hidden = true;
+      autoScreen.hidden = false;
+      fullNameEl.focus();
+    });
+
+    document.getElementById('pathAutoBack').addEventListener('click', function() {
+      autoScreen.hidden = true;
+      pickScreen.hidden = false;
+    });
+
+    document.getElementById('pathChooseManual').addEventListener('click', function() {
+      var raw = business.data.raw = business.data.raw || {};
+      raw.buildChoice = 'manual';
+      veil.hidden = true;
+      showWebsiteTab();
+      document.getElementById('websitePanel').classList.add('editing');
+      // Save choice quietly then send the manual welcome message
+      var record = Object.assign({}, (business.data || {}), { raw: raw, slug: slug, name: raw.name || business.name || '', updatedAt: new Date().toISOString() });
+      authenticatedFetch(SUPABASE_URL + '/rest/v1/rpc/upsert_business', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ p_id: slug, p_name: record.name, p_user_id: session.user_id, p_data: record, p_updated_at: record.updatedAt }) })
+        .then(function() { sendManualStartMessage(); }).catch(function(){});
+    });
+
+    sendBtn.addEventListener('click', function() {
+      if (!canSend()) return;
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Sending…';
+      var raw = business.data.raw = business.data.raw || {};
+      raw.fullName = fullNameEl.value.trim();
+      raw.googleLink = googleEl.value.trim();
+      raw.facebook = fbEl.value.trim();
+      raw.website = siteEl.value.trim();
+      if (raw.googleLink) { raw.reviewLink = raw.googleLink; raw.reviewSource = 'Google'; }
+      raw.draft = false;
+      raw.sentToDesigner = true;
+      raw.buildChoice = 'designer';
+      var record = Object.assign({}, (business.data || {}), { raw: raw, slug: slug, name: raw.name || business.name || '', updatedAt: new Date().toISOString() });
+      authenticatedFetch(SUPABASE_URL + '/rest/v1/rpc/upsert_business', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ p_id: slug, p_name: record.name, p_user_id: session.user_id, p_data: record, p_updated_at: record.updatedAt }) })
+        .then(function(res) { if (!res.ok) return res.text().then(function(t) { throw new Error('Save failed: ' + t); }); })
+        .then(function() {
+          var notify = new FormData(); notify.append('Stage', 'new_signup'); notify.append('Business', raw.name || 'Unnamed'); notify.append('Email', raw.email || session.email || ''); notify.append('Slug', slug);
+          fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/', { method: 'POST', body: notify }).catch(function() {});
+          fetch('https://api.brightsite.app/api/send-welcome', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token }, body: JSON.stringify({ slug: slug, fullName: raw.fullName, buildChoice: 'designer' }) }).catch(function() {});
+          veil.hidden = true;
+          sectionDoneClicked = {};
+          updateSectionChecks();
+          renderDraftBanner();
+          document.getElementById('websitePanel').classList.remove('editing');
+          updateWebsiteAppHeader();
+          renderWelcomeMessage();
+          showMessagesTab();
+        })
+        .catch(function(err) {
+          sendBtn.disabled = false;
+          sendBtn.textContent = 'Send to designer';
+          alert('Couldn\'t send — ' + (err && err.message ? err.message : 'check your connection and try again.'));
+        });
+    });
+  })();
 
   // Signups started in the app are saved as drafts until sent; let them finish and send from here too.
   function renderDraftBanner() {
@@ -2034,6 +2198,14 @@
     return sendSystemMessageOnce(
       'allDetailsMessageSent',
       'Thanks, ' + name + ' — I\'ve got everything I need now. I\'m getting started on your first preview and should have it ready in the next day or two. I\'ll message you here as soon as it\'s ready.'
+    );
+  }
+
+  function sendManualStartMessage() {
+    var name = businessFirstName();
+    return sendSystemMessageOnce(
+      'manualStartMessageSent',
+      'Thanks, ' + name + '! Fill in each info card in the Website tab with as much as you can. The more you add, the better your website will be. When you\'re done, press Send to designer.'
     );
   }
 
