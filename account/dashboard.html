@@ -2491,12 +2491,30 @@
         input.addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('bsSheetSave').click(); });
         body.appendChild(input);
         var chips = el('div', { 'class': 'bs-chips bs-tld' });
+        var otherInput = el('input', { type: 'text', placeholder: 'e.g. .vip', autocapitalize: 'none', autocorrect: 'off', style: 'display:none;margin-top:6px;width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--line);border-radius:11px;font:inherit;font-size:14px;outline:none' });
+        var isOtherTld = !DOMAIN_TLDS.includes(tld);
         DOMAIN_TLDS.forEach(function(t) {
           var c = el('button', { type: 'button', 'class': 'bs-chip' + (t === tld ? ' on' : '') }, t);
-          c.addEventListener('click', function() { tld = t; reset(); chips.querySelectorAll('.bs-chip').forEach(function(x) { x.classList.toggle('on', x === c); }); });
+          c.addEventListener('click', function() { tld = t; isOtherTld = false; otherInput.style.display = 'none'; reset(); chips.querySelectorAll('.bs-chip').forEach(function(x) { x.classList.toggle('on', x === c); }); });
           chips.appendChild(c);
         });
+        var otherChip = el('button', { type: 'button', 'class': 'bs-chip' + (isOtherTld ? ' on' : '') }, 'Other');
+        otherChip.addEventListener('click', function() {
+          isOtherTld = true;
+          otherInput.style.display = 'block';
+          otherInput.focus();
+          chips.querySelectorAll('.bs-chip').forEach(function(x) { x.classList.toggle('on', x === otherChip); });
+          if (otherInput.value) { tld = otherInput.value.startsWith('.') ? otherInput.value : '.' + otherInput.value; reset(); }
+        });
+        chips.appendChild(otherChip);
+        if (isOtherTld) { otherInput.value = tld; otherInput.style.display = 'block'; }
+        otherInput.addEventListener('input', function() {
+          var v = otherInput.value.trim();
+          tld = v ? (v.startsWith('.') ? v : '.' + v) : '.com';
+          reset();
+        });
         body.appendChild(chips);
+        body.appendChild(otherInput);
         msg = el('div', { 'class': 'bs-domain-msg' });
         body.appendChild(msg);
         if (available) showAvailable();
