@@ -172,6 +172,18 @@ body { background: var(--bg); min-height: 100vh; }
 .action-btn.live:hover { background: var(--green-bg); }
 .draft-tag { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 999px; font-size: 10px; font-weight: 800; background: rgba(28,40,50,.08); color: #6b7280; margin-left: 6px; }
 .approved-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 999px; font-size: 10px; font-weight: 800; background: #e6f6ec; color: #1f9d55; margin-left: 4px; }
+/* ---- seminar sign-ups ---- */
+.seminar-pane { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.seminar-pane[hidden] { display: none; }
+.seminar-list { overflow: auto; padding: 14px 18px 24px; display: grid; gap: 12px; align-content: start; }
+.seminar-card { border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: grid; gap: 3px; background: var(--card); }
+.seminar-card strong { font-size: 15px; }
+.seminar-card a { color: var(--accent); font-size: 13.5px; text-decoration: none; overflow-wrap: anywhere; }
+#seminarCount:not(:empty) { margin-left: 6px; background: var(--accent); color: #fff; border-radius: 999px; padding: 1px 7px; font-size: 11px; font-weight: 700; }
+.seminar-biz { font-size: 13px; font-weight: 700; color: var(--muted); }
+.seminar-desc { margin: 6px 0 0; font-size: 13.5px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.seminar-time { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+
 /* ---- settings btn ---- */
 .settings-btn { border: 1px solid var(--line); border-radius: 999px; background: none; padding: 7px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); font-size: 17px; line-height: 1; }
 .settings-btn:hover { border-color: var(--muted); color: var(--ink); }
@@ -382,6 +394,7 @@ body { background: var(--bg); color: var(--ink); }
     <div class="app-header-divider"></div>
     <span class="admin-badge">Admin</span>
     <div class="app-header-right">
+      <button type="button" class="logout-btn" id="seminarBtn" title="Seminar sign-ups">Seminar<span id="seminarCount"></span></button>
       <button type="button" class="settings-btn" id="settingsBtn" title="Settings">⚙</button>
       <button type="button" class="logout-btn" id="logoutBtn">Sign out</button>
     </div>
@@ -407,6 +420,15 @@ body { background: var(--bg); color: var(--ink); }
     </aside>
     <section class="work-col">
       <div class="work-empty" id="wsEmpty">Choose a client on the left.</div>
+      <div class="seminar-pane" id="seminarPane" hidden>
+        <div class="work-head">
+          <button type="button" class="ws-back" id="seminarBack" aria-label="Back to clients">‹ Clients</button>
+          <strong>Seminar sign-ups</strong>
+          <span class="status-pill" id="seminarPlaces"></span>
+          <button type="button" class="logout-btn" id="seminarRefresh" style="margin-left:auto">Refresh</button>
+        </div>
+        <div class="seminar-list" id="seminarList"></div>
+      </div>
       <div id="wsPane" hidden>
         <div class="work-head">
           <button type="button" class="ws-back" id="wsBack" aria-label="Back to clients">‹ Clients</button>
@@ -568,6 +590,7 @@ function showApp() {
   document.getElementById('loginWrap').style.display = 'none';
   document.getElementById('app').classList.add('visible');
   loadBusinesses();
+  loadSeminar();
   startAdminMessaging();
 }
 
@@ -1248,6 +1271,84 @@ function recheckDomain(slug, btn) {
 }
 
 
+// ---- seminar sign-ups ----
+var SEMINAR_PLACES = 25;
+
+function seminarEl(tag, className, text) {
+  var el = document.createElement(tag);
+  if (className) el.className = className;
+  if (text) el.textContent = text;
+  return el;
+}
+
+function renderSeminar(rows) {
+  var list = document.getElementById('seminarList');
+  list.textContent = '';
+  document.getElementById('seminarPlaces').textContent = rows.length + ' / ' + SEMINAR_PLACES + ' places';
+  document.getElementById('seminarCount').textContent = rows.length ? String(rows.length) : '';
+  if (!rows.length) {
+    list.appendChild(seminarEl('div', 'loading-row', 'No sign-ups yet.'));
+    return;
+  }
+  rows.forEach(function(row) {
+    var card = seminarEl('div', 'seminar-card');
+    card.appendChild(seminarEl('strong', '', row.name));
+    if (row.business_name) card.appendChild(seminarEl('div', 'seminar-biz', row.business_name));
+    var mail = seminarEl('a', '', row.email);
+    mail.href = 'mailto:' + row.email;
+    card.appendChild(mail);
+    if (row.website_or_social) {
+      if (/^https?:\/\//i.test(row.website_or_social)) {
+        var link = seminarEl('a', '', row.website_or_social);
+        link.href = row.website_or_social;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        card.appendChild(link);
+      } else {
+        card.appendChild(seminarEl('div', '', row.website_or_social));
+      }
+    }
+    if (row.business_description) card.appendChild(seminarEl('p', 'seminar-desc', row.business_description));
+    card.appendChild(seminarEl('div', 'seminar-time', 'Signed up ' + new Date(row.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })));
+    list.appendChild(card);
+  });
+}
+
+function loadSeminar() {
+  var list = document.getElementById('seminarList');
+  list.textContent = '';
+  list.appendChild(seminarEl('div', 'loading-row', 'Loading sign-ups…'));
+  return fetch(API_BASE_URL + '/api/admin-seminar', {
+    headers: { 'Authorization': 'Bearer ' + (adminSession && adminSession.access_token || '') }
+  })
+  .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
+  .then(function(rows) { renderSeminar(Array.isArray(rows) ? rows : []); })
+  .catch(function() {
+    list.textContent = '';
+    list.appendChild(seminarEl('div', 'loading-row', 'Could not load sign-ups.'));
+  });
+}
+
+function openSeminar() {
+  activeThreadId = null;
+  document.getElementById('wsEmpty').hidden = true;
+  document.getElementById('wsPane').hidden = true;
+  document.getElementById('seminarPane').hidden = false;
+  document.querySelector('.workspace').classList.add('detail');
+  renderClientList();
+  loadSeminar();
+}
+
+function closeSeminar() {
+  document.getElementById('seminarPane').hidden = true;
+  document.getElementById('wsEmpty').hidden = false;
+  document.querySelector('.workspace').classList.remove('detail');
+}
+
+document.getElementById('seminarBtn').addEventListener('click', openSeminar);
+document.getElementById('seminarBack').addEventListener('click', closeSeminar);
+document.getElementById('seminarRefresh').addEventListener('click', loadSeminar);
+
 // ---- settings modal ----
 document.getElementById('settingsBtn').addEventListener('click', function() {
   try {
@@ -1451,6 +1552,7 @@ function selectClient(id) {
   var d = (b && b.data) || {};
   var s = statusOf(b);
   document.getElementById('wsEmpty').hidden = true;
+  document.getElementById('seminarPane').hidden = true;
   document.getElementById('wsPane').hidden = false;
   document.querySelector('.workspace').classList.add('detail');
   document.getElementById('wsTitle').textContent = bizLabel(id);
