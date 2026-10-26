@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Free Seminar — BrightSite</title>
+<meta name="description" content="Join our free seminar on getting a professional website for your local business. Sign up in seconds.">
+<meta property="og:title" content="Free Seminar | BrightSite">
+<meta property="og:description" content="Join our free seminar on getting a professional website for your local business. Sign up in seconds.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://brightsite.app/seminar">
+<meta property="og:image" content="https://brightsite.app/img/brightsite-og-v4.png">
+<meta property="og:site_name" content="BrightSite">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Free Seminar | BrightSite">
+<meta name="twitter:description" content="Join our free seminar on getting a professional website for your local business. Sign up in seconds.">
+<meta name="twitter:image" content="https://brightsite.app/img/brightsite-og-v4.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#F7F2EC">
+<link rel="canonical" href="https://brightsite.app/seminar">
+<link rel="stylesheet" href="styles.css?v=20261016-1">
+<style>
+  .seminar-form{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:32px 28px;max-width:480px;margin:0 auto;display:grid;gap:16px}
+  .seminar-form label{display:grid;gap:6px;font-size:14px;font-weight:600;color:var(--ink)}
+  .seminar-form input{font:inherit;font-size:15px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)}
+  .seminar-form input:focus{outline:2px solid var(--accent);outline-offset:1px}
+  .seminar-form button{font:inherit;font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;background:var(--accent);color:#fff;border:0;border-radius:999px;padding:14px 22px;cursor:pointer}
+  .seminar-form button:disabled{opacity:.6;cursor:default}
+  .seminar-status{font-size:14.5px;color:var(--muted);text-align:center;min-height:1.4em}
+  .seminar-status.error{color:#B42318}
+  .seminar-status.ok{color:var(--accent);font-weight:600}
+</style>
+<script src="reveal.js?v=20260902-3" defer></script>
+<script src="nav.js?v=20260902-3" defer></script>
+<script src="account-nav.js?v=20260916-1" defer></script>
+<script src="img-skeleton.js?v=20260907-1" defer></script>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script><script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+<div class="bar" id="bar"></div>
+<div class="top">
+  <a href="/" class="brand"><img src="img/brightsite-logo.png" alt="BrightSite" width="515" height="72"></a>
+  <nav class="tabs" id="navTabs">
+    <a href="/#how">What we do</a>
+    <a href="ourwork.html">Our work</a>
+    <a href="pricing.html">Pricing</a>
+  </nav>
+  <div class="top-right">
+    <a href="/" class="cta">Create Preview</a>
+    <a href="/account/dashboard.html?signup=1" class="account-link" id="accountLink" aria-label="My account" title="My account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg></a>
+    <button type="button" class="burger" id="burgerBtn" aria-label="Open menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</div>
+
+<div class="after page">
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="page-hero">
+        <div class="eyebrow">Free seminar</div>
+        <h1>Get a website that brings you customers</h1>
+        <p>A free, no-obligation seminar on what a professional website should do for your local business, and how to get one. Sign up below and we'll send you the details.</p>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top:0">
+    <div class="wrap">
+      <form class="seminar-form" id="seminarForm" novalidate>
+        <label>Name
+          <input type="text" name="name" autocomplete="name" required maxlength="120">
+        </label>
+        <label>Email
+          <input type="email" name="email" autocomplete="email" required maxlength="254">
+        </label>
+        <button type="submit" id="seminarSubmit">Save my place</button>
+        <div class="seminar-status" id="seminarStatus" role="status" aria-live="polite"></div>
+      </form>
+    </div>
+  </section>
+
+  <footer>
+    <a href="/" class="brand"><img src="img/brightsite-logo.png" alt="BrightSite" width="515" height="72"></a>
+    <p style="margin-top:10px">Websites, SEO &amp; social for brands.</p>
+    <p style="margin-top:8px"><a href="mailto:brightsiteapp@gmail.com">brightsiteapp@gmail.com</a></p>
+    <p style="margin-top:14px;font-size:11px;opacity:.6">&copy; 2026 BrightSite &middot; <a href="terms.html">Terms &amp; Privacy</a></p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var SUPABASE_URL = 'https://vlisyfshmxdsjuybirxe.supabase.co';
+  var PUBLISHABLE_KEY = 'sb_publishable_gYdn5HCo63B0qZj3tG-7ow_myAMHeEB';
+  var form = document.getElementById('seminarForm');
+  var status = document.getElementById('seminarStatus');
+  var submit = document.getElementById('seminarSubmit');
+
+  form.addEventListener('submit', async function(event){
+    event.preventDefault();
+    var name = form.elements.name.value.trim();
+    var email = form.elements.email.value.trim();
+    if (!name || !email || !form.elements.email.checkValidity()) {
+      status.textContent = 'Please enter your name and a valid email address.';
+      status.className = 'seminar-status error';
+      return;
+    }
+
+    submit.disabled = true;
+    status.textContent = 'Saving your place…';
+    status.className = 'seminar-status';
+    try {
+      var response = await fetch(SUPABASE_URL + '/rest/v1/seminar_signups', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': PUBLISHABLE_KEY,
+          'Authorization': 'Bearer ' + PUBLISHABLE_KEY,
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ name: name, email: email })
+      });
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      form.reset();
+      status.textContent = "You're signed up. We'll be in touch with the details.";
+      status.className = 'seminar-status ok';
+    } catch (err) {
+      console.error('Seminar sign-up failed', err);
+      status.textContent = 'Something went wrong. Please try again, or email brightsiteapp@gmail.com.';
+      status.className = 'seminar-status error';
+    } finally {
+      submit.disabled = false;
+    }
+  });
+})();
+</script>
+</body>
+</html>
