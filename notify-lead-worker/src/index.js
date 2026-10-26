@@ -54,6 +54,35 @@ async function handleNewSignup(body, env, cors) {
   return Response.json({ ok: true }, { headers: cors });
 }
 
+async function handleSeminarSignup(body, env, cors) {
+  const { name, email, business_name, website_or_social, business_description } = body || {};
+  if (!name || !email) return Response.json({ error: 'name and email required' }, { status: 400, headers: cors });
+
+  if (!env.RESEND_API_KEY) return Response.json({ ok: true }, { headers: cors });
+
+  const lines = [
+    `Name: ${name}`,
+    `Email: ${email}`,
+    business_name ? `Business: ${business_name}` : '',
+    website_or_social ? `Website / social: ${website_or_social}` : '',
+    business_description ? `About the business:\n${business_description}` : '',
+    `Time: ${new Date().toLocaleString('en-GB', { timeZone: 'Europe/London' })}`,
+  ].filter(Boolean).join('\n');
+
+  await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.RESEND_API_KEY}` },
+    body: JSON.stringify({
+      from: 'BrightSite <leads@brightsite.app>',
+      to: ['brightsiteapp@gmail.com'],
+      subject: `Seminar sign up: ${name}`,
+      text: lines,
+    }),
+  });
+
+  return Response.json({ ok: true }, { headers: cors });
+}
+
 // account/dashboard.html's "Manage billing" button — Studio itself runs on
 // the admin's Mac, not the public internet, so the one call that needs a
 // live Stripe secret key from a page the *customer's* browser can reach has
@@ -275,6 +304,17 @@ export default {
       } catch (error) {
         console.error('new-signup failed:', error);
         return Response.json({ error: 'Could not send signup notification.' }, { status: 502, headers: cors });
+      }
+    }
+
+    if (url.pathname === '/seminar-signup') {
+      try {
+        let body;
+        try { body = await req.json(); } catch { body = {}; }
+        return await handleSeminarSignup(body, env, cors);
+      } catch (error) {
+        console.error('seminar-signup failed:', error);
+        return Response.json({ error: 'Could not send seminar notification.' }, { status: 502, headers: cors });
       }
     }
 

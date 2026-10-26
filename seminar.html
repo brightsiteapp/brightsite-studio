@@ -24,21 +24,43 @@
 <link rel="canonical" href="https://brightsite.app/seminar">
 <link rel="stylesheet" href="styles.css?v=20261016-1">
 <style>
-  .seminar-perks{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:640px;margin:0 auto 48px}
-  .seminar-perks div{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px;font-size:15px;color:var(--ink)}
-  .seminar-perks strong{display:block;font-family:var(--display);font-size:18px;font-weight:600;margin-bottom:4px}
-  .seminar-form{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:32px 28px;max-width:480px;margin:0 auto;display:grid;gap:16px}
-  .seminar-form label{display:grid;gap:6px;font-size:14px;font-weight:600;color:var(--ink)}
-  .seminar-form .hint{font-weight:400;color:var(--muted);font-size:13px}
-  .seminar-form input,.seminar-form textarea{font:inherit;font-size:15px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)}
-  .seminar-form textarea{min-height:110px;resize:vertical}
-  .seminar-form input:focus,.seminar-form textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
-  .seminar-form button{font:inherit;font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;background:var(--accent);color:#fff;border:0;border-radius:999px;padding:14px 22px;cursor:pointer}
-  .seminar-form button:disabled{opacity:.6;cursor:default}
-  .seminar-status{font-size:14.5px;color:var(--muted);text-align:center;min-height:1.4em}
+  .sem{min-height:100vh;min-height:100dvh;box-sizing:border-box;display:flex;align-items:center;padding:96px 24px 24px}
+  .sem-grid{display:grid;grid-template-columns:1fr 440px;gap:56px;align-items:center;max-width:1040px;width:100%;margin:0 auto}
+  .sem-pitch .eyebrow{font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:12px}
+  .sem-pitch h1{font-family:var(--display);font-size:clamp(32px,4.2vw,50px);font-weight:600;line-height:1.1;margin:0 0 16px}
+  .sem-pitch p{color:var(--muted);font-size:16.5px;line-height:1.55;margin:0 0 12px}
+  .sem-pitch p.sem-places{color:var(--ink);font-weight:700}
+  .sem-short{display:none}
+  .sem-perks{list-style:none;padding:0;margin:18px 0 0;display:grid;gap:9px;font-size:15px;color:var(--ink)}
+  .sem-perks li:before{content:"✓";color:var(--accent);font-weight:800;margin-right:10px}
+  .sem-form{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:24px;display:grid;gap:10px;box-shadow:0 20px 46px rgba(23,32,31,.08)}
+  .sem-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .sem-form input,.sem-form textarea{font:inherit;font-size:16px;width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)}
+  .sem-form textarea{min-height:84px;resize:none}
+  .sem-form input:focus,.sem-form textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+  .sem-form button{font:inherit;font-size:14px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;background:var(--accent);color:#fff;border:0;border-radius:999px;padding:15px 22px;cursor:pointer}
+  .sem-form button:disabled{opacity:.6;cursor:default}
+  .seminar-status{font-size:14px;color:var(--muted);text-align:center;min-height:1.3em}
+  .seminar-status:empty{min-height:0}
   .seminar-status.error{color:#B42318}
   .seminar-status.ok{color:var(--accent);font-weight:600}
-  @media(max-width:540px){.seminar-perks{grid-template-columns:1fr}}
+  .sem-note{font-size:12px;color:var(--muted);text-align:center;margin:0}
+  .sem-note a{color:var(--accent);text-decoration:none}
+  @media(max-width:820px){
+    .sem{align-items:flex-start;padding:72px 16px 12px}
+    .sem-grid{grid-template-columns:1fr;gap:10px}
+    .sem-pitch .eyebrow{font-size:11px;margin-bottom:6px}
+    .sem-pitch h1{font-size:23px;margin-bottom:4px;letter-spacing:-.01em}
+    .sem-long,.sem-perks{display:none}
+    .sem-short{display:block;font-size:14px;line-height:1.4;margin:0}
+    .sem-form{padding:14px;gap:8px;border-radius:16px}
+    .sem-row{gap:8px}
+    .sem-form input{padding:11px 12px}
+    .sem-form textarea{min-height:58px;padding:11px 12px}
+    .sem-form button{padding:13px 20px}
+    .seminar-status{font-size:13px}
+    .sem-note{font-size:11px}
+  }
 </style>
 <script src="reveal.js?v=20260902-3" defer></script>
 <script src="nav.js?v=20260902-3" defer></script>
@@ -64,59 +86,38 @@
   </div>
 </div>
 
-<div class="after page">
-  <section style="padding-top:0">
-    <div class="wrap">
-      <div class="page-hero">
+<div class="after">
+  <main class="sem">
+    <div class="sem-grid">
+      <div class="sem-pitch">
         <div class="eyebrow">Free seminar · Hull · November</div>
         <h1>Free brand &amp; marketing seminar</h1>
-        <p>Just starting out, or ready to sharpen how your business looks and sells? Join us in Hull this November for a free seminar on websites, adverts, logos, slogans and getting found online, so you can win more customers.</p>
-        <p style="margin-top:12px;font-weight:600;color:var(--ink)">Only 25 places.</p>
+        <p class="sem-short">Only 25 free places. Get a free demo of your brand and ideas to win more customers.</p>
+        <p class="sem-long">Just starting out, or ready to sharpen how your business looks and sells? Join us for a free seminar on websites, adverts, logos, slogans and getting found online, so you can win more customers.</p>
+        <p class="sem-long">We will show you how to do all of this yourself, for free or with AI. The one thing nobody can sell you is creativity and imagination, and that is what this seminar is about.</p>
+        <p class="sem-long sem-places">Only 25 places.</p>
+        <ul class="sem-perks">
+          <li>A free demo of what your brand could look like</li>
+          <li>Creative marketing ideas, whatever your budget</li>
+          <li>Websites, adverts and logos: what works and what to fix first</li>
+          <li>Slogans and style that make your business memorable</li>
+        </ul>
       </div>
-    </div>
-  </section>
 
-  <section style="padding-top:0">
-    <div class="wrap">
-      <div class="seminar-perks">
-        <div><strong>A free demo of your brand</strong>See what your brand could look like before you spend a penny.</div>
-        <div><strong>Creative marketing ideas</strong>Practical ways to market your business, whatever your budget.</div>
-        <div><strong>Websites, adverts &amp; logos</strong>What works, what doesn't, and what to fix first.</div>
-        <div><strong>Slogans &amp; style</strong>Make your business memorable and easy to choose.</div>
-      </div>
-    </div>
-  </section>
-
-  <section style="padding-top:0">
-    <div class="wrap">
-      <form class="seminar-form" id="seminarForm" novalidate>
-        <label>Your name
-          <input type="text" name="name" autocomplete="name" required maxlength="120">
-        </label>
-        <label>Email
-          <input type="email" name="email" autocomplete="email" required maxlength="254">
-        </label>
-        <label>Business name
-          <input type="text" name="business_name" autocomplete="organization" required maxlength="160">
-        </label>
-        <label>Website or social media link <span class="hint">(if you have one)</span>
-          <input type="url" name="website_or_social" inputmode="url" placeholder="https://" maxlength="300">
-        </label>
-        <label>Tell us about your business <span class="hint">(if you don't have a website or social media, a short paragraph is fine)</span>
-          <textarea name="business_description" maxlength="1000"></textarea>
-        </label>
+      <form class="sem-form" id="seminarForm" novalidate>
+        <div class="sem-row">
+          <input type="text" name="name" aria-label="Your name" placeholder="Your name" autocomplete="name" required maxlength="120">
+          <input type="email" name="email" aria-label="Email" placeholder="Email" autocomplete="email" required maxlength="254">
+        </div>
+        <input type="text" name="business_name" aria-label="Business name" placeholder="Business name" autocomplete="organization" required maxlength="160">
+        <input type="url" name="website_or_social" aria-label="Website or social media link" placeholder="Website or social link (if you have one)" inputmode="url" maxlength="300">
+        <textarea name="business_description" aria-label="About your business" placeholder="No website or social? Tell us about your business in a few lines" maxlength="1000"></textarea>
         <button type="submit" id="seminarSubmit">Save my place</button>
         <div class="seminar-status" id="seminarStatus" role="status" aria-live="polite"></div>
+        <p class="sem-note">By signing up you agree to our <a href="terms.html#privacy">Terms &amp; Privacy</a>.</p>
       </form>
     </div>
-  </section>
-
-  <footer>
-    <a href="/" class="brand"><img src="img/brightsite-logo.png" alt="BrightSite" width="515" height="72"></a>
-    <p style="margin-top:10px">Websites, SEO &amp; social for brands.</p>
-    <p style="margin-top:8px"><a href="mailto:brightsiteapp@gmail.com">brightsiteapp@gmail.com</a></p>
-    <p style="margin-top:14px;font-size:11px;opacity:.6">&copy; 2026 BrightSite &middot; <a href="terms.html">Terms &amp; Privacy</a></p>
-  </footer>
+  </main>
 </div>
 
 <script>
@@ -142,7 +143,7 @@
     var description = fields.business_description.value.trim();
 
     if (!name || !businessName || !fields.email.checkValidity()) {
-      show('Please enter your name, a valid email address and your business name.', 'error');
+      show('Please fill in your name, email and business name.', 'error');
       return;
     }
     if (link && !fields.website_or_social.checkValidity()) {
@@ -150,7 +151,7 @@
       return;
     }
     if (!link && !description) {
-      show("Please add a website or social media link, or tell us a bit about your business.", 'error');
+      show('Add a website or social link, or a few lines about your business.', 'error');
       return;
     }
 
@@ -182,6 +183,12 @@
         }
         throw new Error('HTTP ' + response.status + ' ' + body);
       }
+      fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/seminar-signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name, email: email, business_name: businessName, website_or_social: link || null, business_description: description || null }),
+        keepalive: true
+      }).catch(function(err){ console.error('Seminar notification failed', err); });
       form.reset();
       show("You're on the list. We'll be in touch with the details, and you'll get a free demo of what your brand could look like.", 'ok');
     } catch (err) {
