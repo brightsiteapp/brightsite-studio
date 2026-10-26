@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Free Seminar — BrightSite</title>
-<meta name="description" content="Join our free seminar on getting a professional website for your local business. Sign up in seconds.">
-<meta property="og:title" content="Free Seminar | BrightSite">
-<meta property="og:description" content="Join our free seminar on getting a professional website for your local business. Sign up in seconds.">
+<title>Free Brand &amp; Marketing Seminar — Hull — BrightSite</title>
+<meta name="description" content="A free brand and marketing seminar in Hull this November, for local businesses just starting out or looking to improve. Only 25 places.">
+<meta property="og:title" content="Free Brand &amp; Marketing Seminar in Hull | BrightSite">
+<meta property="og:description" content="Websites, adverts, logos and slogans, plus a free demo of what your brand could look like. Only 25 places, November in Hull.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://brightsite.app/seminar">
 <meta property="og:image" content="https://brightsite.app/img/brightsite-og-v4.png">
 <meta property="og:site_name" content="BrightSite">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Free Seminar | BrightSite">
-<meta name="twitter:description" content="Join our free seminar on getting a professional website for your local business. Sign up in seconds.">
+<meta name="twitter:title" content="Free Brand &amp; Marketing Seminar in Hull | BrightSite">
+<meta name="twitter:description" content="Websites, adverts, logos and slogans, plus a free demo of what your brand could look like. Only 25 places, November in Hull.">
 <meta name="twitter:image" content="https://brightsite.app/img/brightsite-og-v4.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,15 +24,21 @@
 <link rel="canonical" href="https://brightsite.app/seminar">
 <link rel="stylesheet" href="styles.css?v=20261016-1">
 <style>
+  .seminar-perks{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:640px;margin:0 auto 48px}
+  .seminar-perks div{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px;font-size:15px;color:var(--ink)}
+  .seminar-perks strong{display:block;font-family:var(--display);font-size:18px;font-weight:600;margin-bottom:4px}
   .seminar-form{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:32px 28px;max-width:480px;margin:0 auto;display:grid;gap:16px}
   .seminar-form label{display:grid;gap:6px;font-size:14px;font-weight:600;color:var(--ink)}
-  .seminar-form input{font:inherit;font-size:15px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)}
-  .seminar-form input:focus{outline:2px solid var(--accent);outline-offset:1px}
+  .seminar-form .hint{font-weight:400;color:var(--muted);font-size:13px}
+  .seminar-form input,.seminar-form textarea{font:inherit;font-size:15px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)}
+  .seminar-form textarea{min-height:110px;resize:vertical}
+  .seminar-form input:focus,.seminar-form textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
   .seminar-form button{font:inherit;font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;background:var(--accent);color:#fff;border:0;border-radius:999px;padding:14px 22px;cursor:pointer}
   .seminar-form button:disabled{opacity:.6;cursor:default}
   .seminar-status{font-size:14.5px;color:var(--muted);text-align:center;min-height:1.4em}
   .seminar-status.error{color:#B42318}
   .seminar-status.ok{color:var(--accent);font-weight:600}
+  @media(max-width:540px){.seminar-perks{grid-template-columns:1fr}}
 </style>
 <script src="reveal.js?v=20260902-3" defer></script>
 <script src="nav.js?v=20260902-3" defer></script>
@@ -62,9 +68,21 @@
   <section style="padding-top:0">
     <div class="wrap">
       <div class="page-hero">
-        <div class="eyebrow">Free seminar</div>
-        <h1>Get a website that brings you customers</h1>
-        <p>A free, no-obligation seminar on what a professional website should do for your local business, and how to get one. Sign up below and we'll send you the details.</p>
+        <div class="eyebrow">Free seminar · Hull · November</div>
+        <h1>Free brand &amp; marketing seminar</h1>
+        <p>Just starting out, or ready to sharpen how your business looks and sells? Join us in Hull this November for a free seminar on websites, adverts, logos, slogans and getting found online, so you can win more customers.</p>
+        <p style="margin-top:12px;font-weight:600;color:var(--ink)">Only 25 places.</p>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="seminar-perks">
+        <div><strong>A free demo of your brand</strong>See what your brand could look like before you spend a penny.</div>
+        <div><strong>Creative marketing ideas</strong>Practical ways to market your business, whatever your budget.</div>
+        <div><strong>Websites, adverts &amp; logos</strong>What works, what doesn't, and what to fix first.</div>
+        <div><strong>Slogans &amp; style</strong>Make your business memorable and easy to choose.</div>
       </div>
     </div>
   </section>
@@ -72,11 +90,20 @@
   <section style="padding-top:0">
     <div class="wrap">
       <form class="seminar-form" id="seminarForm" novalidate>
-        <label>Name
+        <label>Your name
           <input type="text" name="name" autocomplete="name" required maxlength="120">
         </label>
         <label>Email
           <input type="email" name="email" autocomplete="email" required maxlength="254">
+        </label>
+        <label>Business name
+          <input type="text" name="business_name" autocomplete="organization" required maxlength="160">
+        </label>
+        <label>Website or social media link <span class="hint">(if you have one)</span>
+          <input type="url" name="website_or_social" inputmode="url" placeholder="https://" maxlength="300">
+        </label>
+        <label>Tell us about your business <span class="hint">(if you don't have a website or social media, a short paragraph is fine)</span>
+          <textarea name="business_description" maxlength="1000"></textarea>
         </label>
         <button type="submit" id="seminarSubmit">Save my place</button>
         <div class="seminar-status" id="seminarStatus" role="status" aria-live="polite"></div>
@@ -100,19 +127,35 @@
   var status = document.getElementById('seminarStatus');
   var submit = document.getElementById('seminarSubmit');
 
+  function show(message, kind) {
+    status.textContent = message;
+    status.className = 'seminar-status' + (kind ? ' ' + kind : '');
+  }
+
   form.addEventListener('submit', async function(event){
     event.preventDefault();
-    var name = form.elements.name.value.trim();
-    var email = form.elements.email.value.trim();
-    if (!name || !email || !form.elements.email.checkValidity()) {
-      status.textContent = 'Please enter your name and a valid email address.';
-      status.className = 'seminar-status error';
+    var fields = form.elements;
+    var name = fields.name.value.trim();
+    var email = fields.email.value.trim();
+    var businessName = fields.business_name.value.trim();
+    var link = fields.website_or_social.value.trim();
+    var description = fields.business_description.value.trim();
+
+    if (!name || !businessName || !fields.email.checkValidity()) {
+      show('Please enter your name, a valid email address and your business name.', 'error');
+      return;
+    }
+    if (link && !fields.website_or_social.checkValidity()) {
+      show('Please enter a full link, starting with https://', 'error');
+      return;
+    }
+    if (!link && !description) {
+      show("Please add a website or social media link, or tell us a bit about your business.", 'error');
       return;
     }
 
     submit.disabled = true;
-    status.textContent = 'Saving your place…';
-    status.className = 'seminar-status';
+    show('Saving your place…');
     try {
       var response = await fetch(SUPABASE_URL + '/rest/v1/seminar_signups', {
         method: 'POST',
@@ -122,18 +165,30 @@
           'Authorization': 'Bearer ' + PUBLISHABLE_KEY,
           'Prefer': 'return=minimal'
         },
-        body: JSON.stringify({ name: name, email: email })
+        body: JSON.stringify({
+          name: name,
+          email: email,
+          business_name: businessName,
+          website_or_social: link || null,
+          business_description: description || null
+        })
       });
-      if (!response.ok) throw new Error('HTTP ' + response.status);
+      if (!response.ok) {
+        var body = await response.text();
+        if (body.indexOf('seminar_full') !== -1) {
+          show('Sorry, all 25 places have been taken. Email brightsiteapp@gmail.com and we will add you to the waiting list.', 'error');
+          submit.disabled = true;
+          return;
+        }
+        throw new Error('HTTP ' + response.status + ' ' + body);
+      }
       form.reset();
-      status.textContent = "You're signed up. We'll be in touch with the details.";
-      status.className = 'seminar-status ok';
+      show("You're on the list. We'll be in touch with the details, and you'll get a free demo of what your brand could look like.", 'ok');
     } catch (err) {
       console.error('Seminar sign-up failed', err);
-      status.textContent = 'Something went wrong. Please try again, or email brightsiteapp@gmail.com.';
-      status.className = 'seminar-status error';
+      show('Something went wrong. Please try again, or email brightsiteapp@gmail.com.', 'error');
     } finally {
-      submit.disabled = false;
+      if (!status.textContent.startsWith('Sorry')) submit.disabled = false;
     }
   });
 })();
