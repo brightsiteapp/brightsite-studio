@@ -70,7 +70,7 @@
       <div class="page-hero">
         <div class="eyebrow">Free seminar · Hull · November</div>
         <h1>Free brand &amp; marketing seminar</h1>
-        <p>Just starting out, or ready to sharpen how your business looks and sells? Join us in Hull this November for a free seminar on websites, adverts, logos, slogans and getting found online, so you can win more customers.</p>
+        <p>Just starting out, or ready to sharpen how your business looks and sells? Join us in Hull this November for a free seminar on websites, adverts, logos, slogans and getting found online, so you can win more customers. We will show you how to do all of this yourself, for free or with AI. The one thing nobody can sell you is creativity and imagination, and that is what this seminar is about.</p>
         <p style="margin-top:12px;font-weight:600;color:var(--ink)">Only 25 places.</p>
       </div>
     </div>
@@ -182,6 +182,12 @@
         }
         throw new Error('HTTP ' + response.status + ' ' + body);
       }
+      fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/seminar-signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name, email: email, business_name: businessName, website_or_social: link || null, business_description: description || null }),
+        keepalive: true
+      }).catch(function(err){ console.error('Seminar notification failed', err); });
       form.reset();
       show("You're on the list. We'll be in touch with the details, and you'll get a free demo of what your brand could look like.", 'ok');
     } catch (err) {
