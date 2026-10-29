@@ -3,25 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Woolpack, Beverley — Pub, Sunday Roasts & Heated Garden</title>
+<title>The Woolpack, Beverley | Traditional Pub on the Westwood</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<meta name="description" content="The Woolpack, Beverley — a traditional pub on the edge of Beverley Westwood. Dog friendly, heated garden, Sunday roasts and Pie & Ale night. 37 Westwood Road. Call 01482 867095.">
+<meta name="description" content="The Woolpack, Beverley: a traditional pub on the edge of the Westwood. Sunday roasts, Pie & Ale Night, real ales, heated garden, dog friendly. 37 Westwood Road. Call 01482 867095.">
 <meta name="robots" content="noindex,nofollow">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/site.css">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="flower" viewBox="0 0 64 64">
-    <g fill="currentColor">
-      <circle cx="32" cy="16" r="11"/><circle cx="47" cy="26" r="11"/><circle cx="41" cy="44" r="11"/><circle cx="23" cy="44" r="11"/><circle cx="17" cy="26" r="11"/>
-    </g>
+    <g fill="currentColor"><circle cx="32" cy="16" r="11"/><circle cx="47" cy="26" r="11"/><circle cx="41" cy="44" r="11"/><circle cx="23" cy="44" r="11"/><circle cx="17" cy="26" r="11"/></g>
     <circle cx="32" cy="32" r="8" fill="#c9a24a"/>
   </symbol>
   <symbol id="sprig" viewBox="0 0 64 64">
-    <g fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-      <path d="M32 62V8"/><path d="M32 40c-8 0-14-6-14-14 8 0 14 6 14 14Z"/><path d="M32 30c8 0 14-6 14-14-8 0-14 6-14 14Z"/><path d="M32 20c-6 0-10-4-10-10 6 0 10 4 10 10Z"/>
-    </g>
+    <g fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M32 62V8"/><path d="M32 40c-8 0-14-6-14-14 8 0 14 6 14 14Z"/><path d="M32 30c8 0 14-6 14-14-8 0-14 6-14 14Z"/><path d="M32 20c-6 0-10-4-10-10 6 0 10 4 10 10Z"/></g>
   </symbol>
 </svg>
 
@@ -34,119 +30,122 @@
     <button class="nav-toggle" aria-label="Menu" aria-expanded="false"><i></i><i></i><i></i></button>
     <nav class="nav">
       <a href="index.html" aria-current="page">Home</a>
-      <a href="#food">Food</a>
-      <a href="#visit">Visit</a>
+      <span class="has-drop">
+        <a href="food-and-drink.html">Food &amp; Drink</a>
+        <span class="drop">
+          <a href="food-and-drink.html">All Food &amp; Drink</a>
+          <a href="food-and-drink.html#sunday-roasts">Sunday Roasts</a>
+          <a href="food-and-drink.html#pie-and-ale">Pie &amp; Ale Night</a>
+          <a href="food-and-drink.html#menu">Lunch &amp; Evening Menu</a>
+          <a href="food-and-drink.html#ales">Real Ales</a>
+          <a href="food-and-drink.html#garden">Heated Garden &amp; Dogs</a>
+        </span>
+      </span>
       <a href="contact.html">Contact</a>
-      <a class="btn btn-solid" href="tel:01482867095">Call 01482 867095</a>
+      <a class="btn btn-dark" href="tel:01482867095">Book a Table</a>
     </nav>
   </div>
 </header>
-
 <div class="nav-scrim" id="navScrim"></div>
 
 <section class="hero">
   <img class="hero-photo" src="hero.webp" alt="The Woolpack pub front in Beverley, with white painted brick, sash windows and a sheep sign" fetchpriority="high">
   <div class="hero-copy">
-    <span class="eyebrow">Beverley &middot; East Yorkshire</span>
-    <h1>A proper pub on the <span>edge of the Westwood</span></h1>
-    <div class="btn-row" style="justify-content:center">
-      <a class="btn btn-solid" href="#visit">Find Us</a>
-      <a class="btn btn-line-light" href="tel:01482867095">Call 01482 867095</a>
+    <div class="container">
+      <h1>A proper pub on the <em>edge of the Westwood</em></h1>
+      <div class="btn-row">
+        <a class="btn btn-light" href="tel:01482867095">Call 01482 867095</a>
+        <a class="btn btn-line-light" href="food-and-drink.html">View Food &amp; Drink</a>
+      </div>
+      <div class="hero-keys"><span>Sunday Roasts</span><span>Pie &amp; Ale Night</span><span>Real Ales</span><span>Heated Garden</span><span>Dog Friendly</span></div>
     </div>
   </div>
 </section>
 
-<section class="trust-strip">
-  <div class="wrap">
-    <div><span>Dog</span><small>Friendly</small></div>
-    <div><span>Heated</span><small>Garden</small></div>
-    <div><span>Pie &amp; Ale</span><small>Night</small></div>
-    <div><span>Westwood</span><small>Walkers Welcome</small></div>
-  </div>
-</section>
-
-<section class="section" id="food">
+<section class="section">
   <div class="container split">
     <div>
       <span class="eyebrow">Welcome to The Woolpack</span>
-      <h2>Good food, good ale, and room to breathe</h2>
-      <p class="lede">Set on the edge of the Beverley Westwood pastures, The Woolpack is a traditional pub for a slow lunch, a Sunday roast or a quiet pint after a walk.</p>
-      <p>Dine in or grab a seat outside, and bring the dog along. Reservations are available, so give us a call if you want to be sure of a table.</p>
+      <h2>Good food, real ale and the <em>Westwood</em> on the doorstep</h2>
+      <p class="lede">Set on the edge of the Beverley Westwood pastures, The Woolpack is a traditional pub that's as popular with drinkers as it is with diners, and welcomes walkers and locals alike.</p>
+      <p>Pull up a chair inside or out in the heated garden, bring the dog, and settle in. Food is freshly prepared at lunchtime and in the evening, and tables can be reserved.</p>
       <div class="btn-row">
-        <a class="btn btn-line" href="contact.html">Make a Booking</a>
-        <a class="btn btn-line" href="https://www.facebook.com/thewoolpackbeverley/" target="_blank" rel="noopener">See us on Facebook</a>
+        <a class="btn btn-line" href="food-and-drink.html">Food &amp; Drink</a>
+        <a class="btn btn-line" href="contact.html">Book a Table</a>
       </div>
     </div>
     <div class="cards">
-      <a class="card" href="contact.html">
-        <svg class="flower" viewBox="0 0 64 64"><use href="#flower"/></svg>
-        <span class="num">Every Sunday</span>
+      <a class="card" href="food-and-drink.html#sunday-roasts"><svg class="flower" viewBox="0 0 64 64" aria-hidden="true"><use href="#flower"/></svg>
+        <span class="tag">Most Popular &middot; Sundays</span>
         <h3>Sunday Roasts</h3>
-        <p>Proper roast dinners with all the trimmings, served through the afternoon. Book ahead for the best table.</p>
-        <span class="card-cta">Book a table</span>
+        <p>Proper roast dinners with all the trimmings, served from midday. Booking ahead is a good idea.</p>
+        <span class="text-link">See food &amp; drink</span>
       </a>
-      <a class="card" href="contact.html">
-        <svg class="flower" viewBox="0 0 64 64"><use href="#flower"/></svg>
-        <span class="num">Most Popular</span>
+      <a class="card" href="food-and-drink.html#pie-and-ale"><svg class="flower" viewBox="0 0 64 64" aria-hidden="true"><use href="#flower"/></svg>
+        <span class="tag">Most Popular &middot; Pie &amp; Ale</span>
         <h3>Pie &amp; Ale Night</h3>
-        <p>Our regular pie and ale night, a local favourite. Get in touch for the dates and to reserve.</p>
-        <span class="card-cta">Ask about dates</span>
+        <p>A local favourite: a hearty pie paired with a pint from the bar. Ask us for the next date.</p>
+        <span class="text-link">See food &amp; drink</span>
       </a>
-      <a class="card" href="#visit">
-        <svg class="flower" viewBox="0 0 64 64"><use href="#flower"/></svg>
-        <span class="num">Outside</span>
+      <a class="card" href="food-and-drink.html#garden"><svg class="flower" viewBox="0 0 64 64" aria-hidden="true"><use href="#flower"/></svg>
+        <span class="tag">Outside &middot; All Year</span>
         <h3>Heated Garden</h3>
-        <p>Outdoor seating with a heated garden, so you can sit out for longer. Dogs welcome.</p>
-        <span class="card-cta">Find us</span>
+        <p>Outdoor seating with heaters so you can sit out for longer, and dogs are always welcome.</p>
+        <span class="text-link">See food &amp; drink</span>
       </a>
     </div>
   </div>
 </section>
 
-<section class="section alt">
-  <div class="wrap">
-    <div class="center">
+<section class="section">
+  <div class="container">
+    <div class="section-head">
       <span class="eyebrow">Why visit</span>
-      <h2>Everything a local pub should be</h2>
+      <h2>Everything a <em>local</em> should be</h2>
+      <p>Whether you've come off the Westwood with muddy boots or you're booking in for Sunday lunch, there's a seat for you.</p>
     </div>
     <div class="feature-grid">
-      <div class="feature"><svg class="flower" viewBox="0 0 64 64"><use href="#sprig"/></svg><h3>Dog Friendly</h3><p>Bring your four-legged friend in for a drink and a treat.</p></div>
-      <div class="feature"><svg class="flower" viewBox="0 0 64 64"><use href="#flower"/></svg><h3>Heated Garden</h3><p>Sit outside all year round, with heaters to keep the chill away.</p></div>
-      <div class="feature"><svg class="flower" viewBox="0 0 64 64"><use href="#sprig"/></svg><h3>Walkers Welcome</h3><p>On the doorstep of the Westwood, perfect after a long walk.</p></div>
-      <div class="feature"><svg class="flower" viewBox="0 0 64 64"><use href="#flower"/></svg><h3>Dine In or Out</h3><p>Relaxed dining inside or outside, with reservations available.</p></div>
+      <div class="feature"><svg class="flower" viewBox="0 0 64 64" aria-hidden="true"><use href="#sprig"/></svg><h3>Dog Friendly</h3><p>Four-legged friends are welcome inside and out.</p></div>
+      <div class="feature"><svg class="flower" viewBox="0 0 64 64" aria-hidden="true"><use href="#flower"/></svg><h3>Heated Garden</h3><p>Sit outside all year with heaters to keep the chill off.</p></div>
+      <div class="feature"><svg class="flower" viewBox="0 0 64 64" aria-hidden="true"><use href="#sprig"/></svg><h3>Walkers Welcome</h3><p>Right on the Westwood, the perfect stop after a walk.</p></div>
+      <div class="feature"><svg class="flower" viewBox="0 0 64 64" aria-hidden="true"><use href="#flower"/></svg><h3>Real Ales</h3><p>Three real ales on the bar, kept the way they should be.</p></div>
     </div>
   </div>
 </section>
 
-<section class="section" id="visit">
+<section class="section beige" id="visit">
   <div class="container split">
     <div>
       <span class="eyebrow">Find us</span>
-      <h2>Come and see us</h2>
+      <h2>37 Westwood Road</h2>
       <ul class="visit-list">
-        <li><svg class="flower" viewBox="0 0 64 64"><use href="#flower"/></svg><div><strong>Address</strong>37 Westwood Road, Beverley, East Yorkshire</div></li>
-        <li><svg class="flower" viewBox="0 0 64 64"><use href="#flower"/></svg><div><strong>Phone</strong><a href="tel:01482867095">01482 867095</a></div></li>
-        <li><svg class="flower" viewBox="0 0 64 64"><use href="#flower"/></svg><div><strong>Email</strong><a href="mailto:woolpack.bookings@outlook.com">woolpack.bookings@outlook.com</a></div></li>
-        <li><svg class="flower" viewBox="0 0 64 64"><use href="#flower"/></svg><div><strong>Opening times</strong>Tue &amp; Wed 5pm–10pm &middot; Thu 5pm–11pm &middot; Fri 4pm–11pm &middot; Sat 12pm–11pm &middot; Sun 12pm–8pm &middot; Closed Mon<br><small>Hours may change, so please check by phone before visiting.</small></div></li>
+        <li><svg class="flower" viewBox="0 0 64 64" aria-hidden="true"><use href="#flower"/></svg><div><strong>Address</strong>37 Westwood Road, Beverley, East Riding of Yorkshire. On the edge of the Westwood pastures.</div></li>
+        <li><svg class="flower" viewBox="0 0 64 64" aria-hidden="true"><use href="#flower"/></svg><div><strong>Opening times</strong><div class="hours">
+  <span>Monday</span><span>Closed</span>
+  <span>Tue &amp; Wed</span><span>5pm – 10pm</span>
+  <span>Thursday</span><span>5pm – 11pm</span>
+  <span>Friday</span><span>4pm – 11pm</span>
+  <span>Saturday</span><span>12pm – 11pm</span>
+  <span>Sunday</span><span>12pm – 8pm</span>
+</div><small style="color:var(--muted)">Hours can change, so give us a ring if you're travelling.</small></div></li>
       </ul>
       <div class="btn-row">
-        <a class="btn btn-solid" href="https://www.google.com/maps/search/?api=1&amp;query=The+Woolpack+37+Westwood+Road+Beverley" target="_blank" rel="noopener">Get Directions</a>
-        <a class="btn btn-line" href="tel:01482867095">Call Us</a>
+        <a class="btn btn-dark" href="https://www.google.com/maps/search/?api=1&amp;query=The+Woolpack+37+Westwood+Road+Beverley" target="_blank" rel="noopener">Get Directions</a>
+        <a class="btn btn-line" href="tel:01482867095">Call 01482 867095</a>
       </div>
     </div>
     <iframe class="map-frame" title="Map of The Woolpack, Beverley" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=The+Woolpack+37+Westwood+Road+Beverley&amp;output=embed"></iframe>
   </div>
 </section>
 
-<section class="quote" id="contact">
-  <svg class="flower f-l" viewBox="0 0 64 64" aria-hidden="true"><use href="#flower"/></svg>
-  <svg class="flower f-r" viewBox="0 0 64 64" aria-hidden="true"><use href="#flower"/></svg>
-  <div class="wrap">
-    <span class="eyebrow" style="color:var(--gold)">Book your visit</span>
-    <h2>Fancy a <span>Sunday roast</span>?</h2>
-    <p>Give us a ring or drop us an email and we'll sort your table, your dog and your pint.</p>
+<section class="cta">
+  <svg class="flower f-l" viewBox="0 0 64 64" aria-hidden="true"><use href="#flower"/></svg><svg class="flower f-r" viewBox="0 0 64 64" aria-hidden="true"><use href="#flower"/></svg>
+  <div class="container">
+    <span class="eyebrow">Ready when you are</span>
+    <h2>Book your <em>table</em></h2>
+    <p>Sunday roasts and Pie &amp; Ale Night get busy, so ring ahead or drop us an email and we'll save you a seat.</p>
     <div class="btn-row">
-      <a class="btn btn-solid" href="tel:01482867095">Call 01482 867095</a>
+      <a class="btn btn-light" href="tel:01482867095">Call 01482 867095</a>
       <a class="btn btn-line-light" href="contact.html">Get in Touch</a>
     </div>
   </div>
@@ -160,31 +159,29 @@
           <span class="brand-mark"><svg viewBox="0 0 64 64"><use href="#flower"/></svg></span>
           <span class="brand-name">The Woolpack<small>Beverley</small></span>
         </span>
-        <p style="margin-top:1.2rem;max-width:36ch">A traditional pub on the edge of Beverley Westwood. Dog friendly, heated garden, Sunday roasts and Pie &amp; Ale Night.</p>
+        <p style="margin-top:1.2rem;max-width:36ch">A traditional pub on the edge of the Beverley Westwood. Real ales, Sunday roasts, Pie &amp; Ale Night, a heated garden and dogs welcome.</p>
       </div>
       <div>
         <h4>Pages</h4>
         <ul>
           <li><a href="index.html">Home</a></li>
-          <li><a href="index.html#food">Food</a></li>
-          <li><a href="index.html#visit">Visit</a></li>
+          <li><a href="food-and-drink.html">Food &amp; Drink</a></li>
           <li><a href="contact.html">Contact</a></li>
         </ul>
       </div>
       <div>
-        <h4>Contact</h4>
+        <h4>Visit</h4>
         <ul>
           <li><a href="tel:01482867095">01482 867095</a></li>
           <li><a href="mailto:woolpack.bookings@outlook.com">woolpack.bookings@outlook.com</a></li>
           <li>37 Westwood Road, Beverley</li>
-          <li><a href="https://www.facebook.com/thewoolpackbeverley/" target="_blank" rel="noopener">Facebook</a></li>
-          <li><a href="https://instagram.com/woolpackbeverley" target="_blank" rel="noopener">Instagram</a></li>
+          <li><a href="https://www.facebook.com/thewoolpackbeverley/" target="_blank" rel="noopener">Facebook</a> &middot; <a href="https://instagram.com/woolpackbeverley" target="_blank" rel="noopener">Instagram</a></li>
         </ul>
       </div>
     </div>
     <div class="legal">
-      <span>© <span id="yr">2026</span> The Woolpack, Beverley</span>
-      <span>Beverley, East Yorkshire</span>
+      <span>&copy; <span id="yr">2026</span> The Woolpack, Beverley</span>
+      <span>Beverley &middot; East Yorkshire</span>
     </div>
   </div>
 </footer>
