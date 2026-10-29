@@ -68,7 +68,8 @@ export default async function handler(request, response) {
 
     const { data, error } = await supabaseAdmin()
       .from('seminar_signups')
-      .select('id, name, email, business_name, website_or_social, business_description, created_at')
+      // '*' so preferred_time comes through once that column exists, without breaking before it does.
+      .select('*')
       .order('created_at', { ascending: false });
     if (error) return json(response, 500, { error: 'Could not load sign-ups' });
 
