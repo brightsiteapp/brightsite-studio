@@ -185,3 +185,23 @@ p { margin: 0 0 1.1em; }
   .brand-name { font-size: 1.1rem; }
   .btn-row .btn { flex: 1 1 auto; }
 }
+
+/* menu */
+.menu-intro { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; margin-bottom: 72px; }
+.menu-photo { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; object-position: center 60%; box-shadow: 0 18px 44px rgba(31,61,43,.14); }
+.menu-board { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+.menu-cat { background: #fff; padding: 36px 36px 22px; box-shadow: 0 14px 40px rgba(31,61,43,.08); position: relative; overflow: hidden; }
+.menu-cat > .flower { position: absolute; right: -10px; top: -6px; width: 70px; height: 70px; color: var(--sage); opacity: .45; }
+.menu-cat h3 { font-family: 'Montserrat', sans-serif; font-size: .78rem; letter-spacing: .2em; text-transform: uppercase; color: var(--rose); padding-bottom: 14px; margin-bottom: 8px; border-bottom: 1px solid var(--line); }
+.dish { display: flex; justify-content: space-between; align-items: baseline; gap: 18px; padding: 12px 0; border-bottom: 1px dashed var(--line); }
+.dish:last-child { border-bottom: 0; }
+.dish h4 { font-size: 1.08rem; font-weight: 600; margin: 0; }
+.dish p { margin: 2px 0 0; font-size: .86rem; color: var(--muted); line-height: 1.55; }
+.price { font-family: 'Playfair Display', serif; font-weight: 600; color: var(--green); font-size: 1.05rem; white-space: nowrap; }
+.veg { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--sage); color: #fff; font: 600 .6rem/1 'Montserrat', sans-serif; vertical-align: middle; margin-left: 4px; }
+.allergy { text-align: center; font-size: .8rem; color: var(--muted); max-width: 70ch; margin: 36px auto 0; font-style: italic; }
+@media (max-width: 900px) {
+  .menu-intro, .menu-board { grid-template-columns: 1fr; gap: 28px; }
+  .menu-intro { margin-bottom: 44px; }
+  .menu-cat { padding: 28px 22px 14px; }
+}
