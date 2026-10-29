@@ -10,6 +10,7 @@ create table if not exists seminar_signups (
   business_name text,
   website_or_social text,
   business_description text,
+  preferred_time text check (preferred_time in ('morning','afternoon','evening')),
   created_at timestamptz not null default now()
 );
 
@@ -17,6 +18,7 @@ create table if not exists seminar_signups (
 alter table seminar_signups add column if not exists business_name text;
 alter table seminar_signups add column if not exists website_or_social text;
 alter table seminar_signups add column if not exists business_description text;
+alter table seminar_signups add column if not exists preferred_time text check (preferred_time in ('morning','afternoon','evening'));
 
 alter table seminar_signups enable row level security;
 

@@ -55,7 +55,7 @@ async function handleNewSignup(body, env, cors) {
 }
 
 async function handleSeminarSignup(body, env, cors) {
-  const { name, email, business_name, website_or_social, business_description } = body || {};
+  const { name, email, business_name, website_or_social, business_description, preferred_time } = body || {};
   if (!name || !email) return Response.json({ error: 'name and email required' }, { status: 400, headers: cors });
 
   if (!env.RESEND_API_KEY) return Response.json({ ok: true }, { headers: cors });
@@ -64,6 +64,7 @@ async function handleSeminarSignup(body, env, cors) {
     `Name: ${name}`,
     `Email: ${email}`,
     business_name ? `Business: ${business_name}` : '',
+    preferred_time ? `Preferred seminar time: ${preferred_time}` : '',
     website_or_social ? `Website / social: ${website_or_social}` : '',
     business_description ? `About the business:\n${business_description}` : '',
     `Time: ${new Date().toLocaleString('en-GB', { timeZone: 'Europe/London' })}`,

@@ -41,6 +41,14 @@
   .sem-form textarea{min-height:84px;resize:none}
   .sem-form input:focus,.sem-form textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
   .sem-form button{font:inherit;font-size:14px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;background:var(--accent);color:#fff;border:0;border-radius:999px;padding:15px 22px;cursor:pointer}
+  .sem-times{border:0;margin:0;padding:0;display:grid;gap:6px}
+  .sem-times legend{font-size:13px;font-weight:600;color:#fff;padding:0;margin-bottom:6px;text-shadow:0 1px 8px rgba(0,0,0,.4)}
+  .sem-times-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .sem-time{position:relative;cursor:pointer}
+  .sem-time input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+  .sem-time span{display:block;text-align:center;padding:11px 6px;border:1.5px solid #B9AFA0;border-radius:12px;background:rgba(255,255,255,.95);color:#111827;font-size:14px;font-weight:600;transition:background .15s,border-color .15s,color .15s}
+  .sem-time input:checked+span{background:var(--accent);border-color:var(--accent);color:#fff}
+  .sem-time input:focus-visible+span{outline:2px solid #fff;outline-offset:2px}
   .sem-form button:disabled{opacity:.6;cursor:default}
   .seminar-status{font-size:14px;color:rgba(255,255,255,.92);text-align:center;min-height:1.3em;text-shadow:0 1px 8px rgba(0,0,0,.4)}
   .seminar-status:empty{min-height:0}
@@ -60,6 +68,8 @@
     .sem-form input{padding:11px 12px}
     .sem-form textarea{min-height:58px;padding:11px 12px}
     .sem-form button{padding:13px 20px}
+    .sem-time span{padding:10px 4px;font-size:13px}
+    .sem-times legend{font-size:12px;margin-bottom:4px}
     .seminar-status{font-size:13px}
     .sem-note{font-size:11px}
   }
@@ -114,6 +124,14 @@
         <input type="text" name="business_name" aria-label="Business name" placeholder="Business name" autocomplete="organization" required maxlength="160">
         <input type="url" name="website_or_social" aria-label="Website or social media link" placeholder="Website or social link (if you have one)" inputmode="url" maxlength="300">
         <textarea name="business_description" aria-label="About your business" placeholder="No website or social? Tell us about your business in a few lines" maxlength="1000"></textarea>
+        <fieldset class="sem-times">
+          <legend>Would you prefer a morning, afternoon or evening seminar?</legend>
+          <div class="sem-times-row">
+            <label class="sem-time"><input type="radio" name="preferred_time" value="morning" required><span>Morning</span></label>
+            <label class="sem-time"><input type="radio" name="preferred_time" value="afternoon"><span>Afternoon</span></label>
+            <label class="sem-time"><input type="radio" name="preferred_time" value="evening"><span>Evening</span></label>
+          </div>
+        </fieldset>
         <button type="submit" id="seminarSubmit">Save my place</button>
         <div class="seminar-status" id="seminarStatus" role="status" aria-live="polite"></div>
         <p class="sem-note">By signing up you agree to our <a href="terms.html#privacy">Terms &amp; Privacy</a>.</p>
@@ -143,6 +161,7 @@
     var businessName = fields.business_name.value.trim();
     var link = fields.website_or_social.value.trim();
     var description = fields.business_description.value.trim();
+    var preferredTime = fields.preferred_time.value;
 
     if (!name || !businessName || !fields.email.checkValidity()) {
       show('Please fill in your name, email and business name.', 'error');
@@ -157,25 +176,42 @@
       return;
     }
 
+    if (!preferredTime) {
+      show('Please choose a morning, afternoon or evening seminar.', 'error');
+      return;
+    }
+
     submit.disabled = true;
     show('Saving your place…');
     try {
-      var response = await fetch(SUPABASE_URL + '/rest/v1/seminar_signups', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': PUBLISHABLE_KEY,
-          'Authorization': 'Bearer ' + PUBLISHABLE_KEY,
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify({
-          name: name,
-          email: email,
-          business_name: businessName,
-          website_or_social: link || null,
-          business_description: description || null
-        })
-      });
+      var signup = {
+        name: name,
+        email: email,
+        business_name: businessName,
+        website_or_social: link || null,
+        business_description: description || null,
+        preferred_time: preferredTime
+      };
+      var insert = function(row){
+        return fetch(SUPABASE_URL + '/rest/v1/seminar_signups', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': PUBLISHABLE_KEY,
+            'Authorization': 'Bearer ' + PUBLISHABLE_KEY,
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify(row)
+        });
+      };
+      var response = await insert(signup);
+      // Until the preferred_time column exists, keep sign-ups working by noting the choice in the description.
+      if (!response.ok && (await response.clone().text()).indexOf('preferred_time') !== -1) {
+        var fallback = Object.assign({}, signup);
+        delete fallback.preferred_time;
+        fallback.business_description = ('Preferred time: ' + preferredTime + (description ? '\n\n' + description : ''));
+        response = await insert(fallback);
+      }
       if (!response.ok) {
         var body = await response.text();
         if (body.indexOf('seminar_full') !== -1) {
@@ -188,7 +224,7 @@
       fetch('https://brightsite-notify-lead.notify-lead-worker.workers.dev/seminar-signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name, email: email, business_name: businessName, website_or_social: link || null, business_description: description || null }),
+        body: JSON.stringify(signup),
         keepalive: true
       }).catch(function(err){ console.error('Seminar notification failed', err); });
       form.reset();
