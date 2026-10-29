@@ -31,7 +31,26 @@ async function currentUser(token) {
 
 // Lists every seminar sign-up for the admin app. Admin-only: the caller's
 // Supabase token must belong to an address in ADMIN_EMAILS.
+const ALLOWED_ORIGINS = ['https://brightsite.app', 'https://www.brightsite.app'];
+
+function applyCors(request, response) {
+  const origin = request.headers.origin;
+  if (!ALLOWED_ORIGINS.includes(origin)) return;
+  response.setHeader('Access-Control-Allow-Origin', origin);
+  response.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+  response.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  response.setHeader('Access-Control-Max-Age', '86400');
+  response.setHeader('Vary', 'Origin');
+}
+
+// Lists every seminar sign-up for the admin app. Admin-only: the caller's
+// Supabase token must belong to an address in ADMIN_EMAILS.
 export default async function handler(request, response) {
+  applyCors(request, response);
+
+  // Answer the browser's preflight before any auth check.
+  if (request.method === 'OPTIONS') return response.status(204).end();
+
   if (request.method !== 'GET') {
     response.setHeader('Allow', 'GET');
     return json(response, 405, { error: 'Method not allowed' });
