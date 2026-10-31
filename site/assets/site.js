@@ -31,6 +31,35 @@
   };
   addEventListener('scroll', onScroll, { passive: true }); onScroll();
 
+
+  // Hero postcode box: carry the postcode into the valuation form
+  const heroForm = $('#heroForm');
+  if (heroForm) heroForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const pc = $('#heroPc').value.trim(), field = $('#a');
+    if (field) { field.value = pc; }
+    $('#valuation').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' });
+    setTimeout(() => { const n = $('#n'); n && n.focus({ preventScroll: true }); }, 600);
+  });
+
+  // Cookie consent: analytics only load after "Allow"
+  const cookie = $('#cookie');
+  const getConsent = () => { try { return localStorage.getItem('ps-consent'); } catch { return null; } };
+  const loadAnalytics = () => {
+    // Add the Google Analytics tag here (gtag.js with the site's measurement ID).
+  };
+  if (cookie) {
+    if (getConsent() === 'accepted') loadAnalytics();
+    if (!getConsent()) setTimeout(() => cookie.classList.add('show'), 1200);
+    cookie.querySelectorAll('[data-consent]').forEach(b => b.addEventListener('click', () => {
+      try { localStorage.setItem('ps-consent', b.dataset.consent); } catch {}
+      if (b.dataset.consent === 'accepted') loadAnalytics();
+      cookie.classList.remove('show');
+    }));
+    const settings = $('#cookieSettings');
+    settings && settings.addEventListener('click', () => cookie.classList.add('show'));
+  }
+
   // Reviews carousel: seamless loop, arrows, dots, gentle auto-advance (paused on hover/focus).
   // Copies of the cards follow the originals, so moving past the last review glides onto a copy of the
   // first and then resets to the real first card without any visible backwards slide.
@@ -90,41 +119,17 @@
     start();
   }
 
-  // Hero postcode box: carry the postcode into the valuation form
-  const heroForm = $('#heroForm');
-  if (heroForm) heroForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const pc = $('#heroPc').value.trim(), field = $('#a');
-    if (field) { field.value = pc; }
-    $('#valuation').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' });
-    setTimeout(() => { const n = $('#n'); n && n.focus({ preventScroll: true }); }, 600);
-  });
-
-  // Cookie consent: analytics only load after "Allow"
-  const cookie = $('#cookie');
-  const getConsent = () => { try { return localStorage.getItem('ps-consent'); } catch { return null; } };
-  const loadAnalytics = () => {
-    // Add the Google Analytics tag here (gtag.js with the site's measurement ID).
-  };
-  if (cookie) {
-    if (getConsent() === 'accepted') loadAnalytics();
-    if (!getConsent()) setTimeout(() => cookie.classList.add('show'), 1200);
-    cookie.querySelectorAll('[data-consent]').forEach(b => b.addEventListener('click', () => {
-      try { localStorage.setItem('ps-consent', b.dataset.consent); } catch {}
-      if (b.dataset.consent === 'accepted') loadAnalytics();
-      cookie.classList.remove('show');
-    }));
-    const settings = $('#cookieSettings');
-    settings && settings.addEventListener('click', () => cookie.classList.add('show'));
-  }
-
   // Valuation form: opens the visitor's email app addressed to the agency
   const form = $('#valForm');
   if (form) form.addEventListener('submit', e => {
     e.preventDefault();
     const v = id => ($('#' + id, form) || {}).value || '';
     const body = `Hello Patrick Stokes + Co,%0D%0A%0D%0AI'd like a free valuation.%0D%0A%0D%0AName: ${encodeURIComponent(v('n'))}%0D%0APhone: ${encodeURIComponent(v('p'))}%0D%0APostcode: ${encodeURIComponent(v('a'))}`;
-    location.href = `mailto:team@patrickstokes.co.uk?subject=${encodeURIComponent('Valuation request')}&body=${body}`;
+    const mailto = `mailto:team@patrickstokes.co.uk?subject=${encodeURIComponent('Valuation request')}&body=${body}`;
+    location.href = mailto;
+    // Fallback for phones where the automatic open is blocked: a tappable link to the same email
+    const link = $('#sentMail', form);
+    if (link) link.href = mailto;
     form.querySelectorAll('.fields').forEach(el => el.style.display = 'none');
     $('.sent', form).style.display = 'block';
   });
