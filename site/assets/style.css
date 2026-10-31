@@ -41,7 +41,7 @@
   .btn-ghost:hover { background: var(--button-gold-hover); border-color: var(--button-gold-hover); color: var(--ink); }
 
   /* Header */
-  header { position: -webkit-sticky; position: sticky; top: 0; z-index: 1000; transform: translateZ(0); background: var(--gold-soft); backdrop-filter: blur(12px); border-bottom: 1px solid transparent; transition: border-color .3s, box-shadow .3s; }
+  header { position: -webkit-sticky; position: sticky; top: 0; z-index: 1000; background: var(--gold-soft); border-bottom: 1px solid transparent; transition: border-color .3s, box-shadow .3s; }
   header.scrolled { border-color: var(--line); box-shadow: 0 4px 20px rgba(31,29,25,.05); }
   .nav { display: flex; align-items: center; justify-content: space-between; height: 72px; gap: 24px; }
   .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
@@ -99,6 +99,7 @@
 
   /* Entrance */
   .in { opacity: 0; transform: translateY(18px); animation: rise .8s var(--ease) forwards; animation-delay: calc(var(--d, 0) * 110ms + 100ms); }
+  .hero .in { opacity: 1; transform: none; animation: none; }
   @keyframes rise { to { opacity: 1; transform: none; } }
 
   /* Areas marquee */
