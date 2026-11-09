@@ -40,6 +40,45 @@
       ],
       "port": 8935,
       "cwd": "/private/tmp/claude-501/-Users-tomconroy-Documents-Websites-brightsiteapp/adc99c8d-488d-472e-872f-5e9be712abfb/scratchpad/bayar/bayar-beauty"
+    },
+    {
+      "name": "lucy-swaine",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "-y",
+        "serve",
+        "-l",
+        "8936",
+        "/Users/tomconroy/Documents/Websites/lucy-swaine-hairdressing"
+      ],
+      "port": 8936
+    },
+    {
+      "name": "an-automotive",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "-y",
+        "serve",
+        "-l",
+        "8937",
+        "/Users/tomconroy/Documents/Websites/an-automotive"
+      ],
+      "port": 8937
+    },
+    {
+      "name": "club-cloud",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "serve", "-l", "8938", "/Users/tomconroy/Documents/club-cloud/cloud-club"],
+      "port": 8938
+    },
+    {
+      "name": "lovetriangle",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "-e",
+        "const h=require('http'),f=require('fs'),p=require('path');const R='/Users/tomconroy/Documents/Prize Poll/gfsitter';const T={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.jpg':'image/jpeg','.glb':'model/gltf-binary','.json':'application/json'};h.createServer((q,r)=>{let u=decodeURIComponent(q.url.split('?')[0]);if(u.endsWith('/'))u+='index.html';f.readFile(p.join(R,u),(e,b)=>{if(e){r.writeHead(404);return r.end()}r.writeHead(200,{'Content-Type':T[p.extname(u)]||'application/octet-stream'});r.end(b)})}).listen(4173)"
+      ],
+      "port": 4173
     }
   ]
 }
