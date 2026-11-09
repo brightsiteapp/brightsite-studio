@@ -9,6 +9,7 @@
 //   POST /publish           — { slug, live, domain? } turn a site on/off (Bearer PUBLISH_KEY, admin JWT,
 //                             or the owner's JWT when their plan is active)
 //   GET  /status/:slug      — { live, url } — whether the site is really being served
+//   GET  /stats/:slug?days= — page views + visitors per day for the analytics tab (owner or admin JWT)
 //   GET  /site/:slug/*      — serve a live site (sites.brightsite.app/<slug> rewrites here)
 //   any GET on a customer's own domain — serve the site mapped to that host
 //
@@ -134,9 +135,53 @@ async function siteUrlFor(env, slug) {
 
 const NOT_LIVE_PAGE = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Coming soon</title><body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#F4EDE6;font-family:Avenir Next,-apple-system,sans-serif;color:#1C2832;text-align:center"><div><h1 style="font-size:24px;margin:0 0 8px">Coming soon</h1><p style="color:#69747B;margin:0">This website isn’t live yet.</p></div>';
 
+
+// ---- Analytics: one small JSON object per site per day at stats/<slug>/<YYYY-MM-DD> ----
+const BOT_RE = /bot|crawl|spider|slurp|preview|fetch|monitor|curl|wget|python|headless|lighthouse|facebookexternalhit|whatsapp|telegram|discord/i;
+
+function dayKey(d) { return d.toISOString().slice(0, 10); }
+
+async function sha1Short(text) {
+  const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).slice(0, 6).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Counts one page view (HTML only, no bots). Visitors are anonymous: a daily hash of IP + browser,
+// never stored beyond that day's list. Approximate by design (concurrent hits can occasionally merge).
+async function recordHit(env, slug, request) {
+  try {
+    const ua = request.headers.get('User-Agent') || '';
+    if (!ua || BOT_RE.test(ua)) return;
+    const day = dayKey(new Date());
+    const key = `stats/${slug}/${day}`;
+    const ip = request.headers.get('CF-Connecting-IP') || '';
+    const visitor = await sha1Short(`${day}|${ip}|${ua}`);
+    const existing = await env.MEDIA.get(key);
+    const rec = existing ? await existing.json().catch(() => null) : null;
+    const stats = rec && typeof rec === 'object' ? rec : { views: 0, visitors: [] };
+    stats.views = (stats.views || 0) + 1;
+    stats.visitors = stats.visitors || [];
+    if (stats.visitors.length < 20000 && !stats.visitors.includes(visitor)) stats.visitors.push(visitor);
+    await env.MEDIA.put(key, JSON.stringify(stats), { httpMetadata: { contentType: 'application/json' } });
+  } catch (e) { console.error('recordHit failed', e && e.message); }
+}
+
+async function readStats(env, slug, days) {
+  const out = [];
+  const today = new Date();
+  const dates = [];
+  for (let i = days - 1; i >= 0; i--) dates.push(dayKey(new Date(today.getTime() - i * 86400000)));
+  const recs = await Promise.all(dates.map(async d => {
+    const o = await env.MEDIA.get(`stats/${slug}/${d}`);
+    return o ? o.json().catch(() => null) : null;
+  }));
+  dates.forEach((d, i) => out.push({ date: d, views: recs[i] ? recs[i].views || 0 : 0, visitors: recs[i] && recs[i].visitors ? recs[i].visitors.length : 0 }));
+  return out;
+}
+
 // Serves <slug>/site/<path>, trying path, path/index.html and path.html. basePath is set when
 // served under sites.brightsite.app/<slug>/ so the site's relative links resolve there.
-async function serveSite(env, slug, path, basePath) {
+async function serveSite(env, slug, path, basePath, ctx, request) {
   if (!slug || !(await isLive(env, slug))) {
     return new Response(NOT_LIVE_PAGE, { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
   }
@@ -148,6 +193,7 @@ async function serveSite(env, slug, path, basePath) {
     const obj = await env.MEDIA.get(`${slug}/site/${c}`);
     if (!obj) continue;
     const type = contentTypeFor(c);
+    if (ctx && request && type.startsWith('text/html')) ctx.waitUntil(recordHit(env, slug, request));
     const headers = { 'Content-Type': type, 'Cache-Control': type.startsWith('text/html') ? 'public, max-age=60' : 'public, max-age=3600' };
     if (basePath && type.startsWith('text/html')) {
       let html = await obj.text();
@@ -177,7 +223,7 @@ async function authorisePublish(request, env, slug, live) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const origin = request.headers.get('Origin') || '';
     const url = new URL(request.url);
     const path = url.pathname; // e.g. /upload/my-slug/img/logo.png
@@ -192,12 +238,20 @@ export default {
       const host = url.hostname.toLowerCase();
       if (request.method === 'GET' && host !== WORKER_HOST && !host.endsWith('.workers.dev') && host !== 'localhost' && host !== '127.0.0.1') {
         const mapped = await env.MEDIA.get(`domains/${cleanHost(host)}`);
-        return serveSite(env, mapped ? (await mapped.text()).trim() : '', path, '');
+        return serveSite(env, mapped ? (await mapped.text()).trim() : '', path, '', ctx, request);
       }
 
       const siteMatch = path.match(/^\/site\/([a-z0-9-]+)(\/.*)?$/);
       if (request.method === 'GET' && siteMatch) {
-        return serveSite(env, siteMatch[1], siteMatch[2] || '/', `/${siteMatch[1]}/`);
+        return serveSite(env, siteMatch[1], siteMatch[2] || '/', `/${siteMatch[1]}/`, ctx, request);
+      }
+
+      const statsMatch = path.match(/^\/stats\/([a-z0-9-]+)$/);
+      if (request.method === 'GET' && statsMatch) {
+        const slug = statsMatch[1];
+        try { await verifyAdminAuth(request); } catch { await verifyAuth(request, slug); }
+        const days = Math.min(90, Math.max(1, parseInt(url.searchParams.get('days'), 10) || 30));
+        return json({ days: await readStats(env, slug, days) }, 200, origin);
       }
 
       const statusMatch = path.match(/^\/status\/([a-z0-9-]+)$/);

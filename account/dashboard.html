@@ -178,6 +178,16 @@
     padding:18px 16px calc(24px + env(safe-area-inset-bottom,0px));
   }
   .website-panel .panel-inner{width:min(820px,100%)}
+  .an-range{display:flex;gap:6px;margin:0 0 14px}
+  .an-range button{flex:1;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 10px;font:inherit;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer}
+  .an-range button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+  .an-totals{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  .an-total{padding:14px 16px;border:1px solid var(--line);border-radius:20px;background:var(--card);box-shadow:var(--soft-shadow)}
+  .an-total b{display:block;font-family:var(--display);font-size:30px;line-height:1.1;color:var(--ink)}
+  .an-total span{font-size:12px;font-weight:600;color:var(--muted)}
+  .an-chart{width:100%;height:auto;display:block;overflow:visible}
+  .an-empty{font-size:13px;color:var(--muted);line-height:1.5;margin:10px 0 0}
+  .an-tip{font-size:12px;color:var(--muted);height:16px;margin:6px 0 0;text-align:center}
   .messages-panel{display:flex;flex-direction:column;overflow:hidden!important;flex:1;min-height:0;}
   .messages-panel .panel-inner{width:100%;padding:0;display:flex;flex-direction:column;flex:1;min-height:0}
 
@@ -700,6 +710,7 @@
   <div class="tabs-inner">
     <button type="button" id="mobileWebsiteTab" aria-selected="false">Website</button>
     <button type="button" id="mobileMessagesTab" aria-selected="false">Messages<span class="msgs-notification" id="msgsNotification" hidden aria-label="New message"></span></button>
+    <button type="button" id="mobileAnalyticsTab" aria-selected="false">Analytics</button>
     <button type="button" id="mobileAccountTab" aria-selected="false">Account</button>
   </div>
 </nav>
@@ -983,6 +994,27 @@
           <button type="button" class="bs-sheet-delete" id="bsSheetDelete" hidden>Remove</button>
         </div>
       </div>
+
+  <section id="analyticsPanel" class="tab-content" hidden aria-labelledby="mobileAnalyticsTab">
+    <div class="panel-inner">
+      <div class="an-range" id="anRange">
+        <button type="button" data-days="7" aria-pressed="false">7 days</button>
+        <button type="button" data-days="30" aria-pressed="true">30 days</button>
+        <button type="button" data-days="90" aria-pressed="false">90 days</button>
+      </div>
+      <div class="an-totals">
+        <div class="an-total"><b id="anViews">–</b><span>Site visits</span></div>
+        <div class="an-total"><b id="anVisitors">–</b><span>Unique visitors</span></div>
+      </div>
+      <div class="info-card">
+        <h2>Visits per day</h2>
+        <div id="anChart"></div>
+        <div class="an-tip" id="anTip"></div>
+        <p class="an-empty" id="anNote" hidden></p>
+      </div>
+      <p class="info-hint">Counts real people viewing your pages, not search-engine bots. Figures start from when your site went live and can take a moment to update.</p>
+    </div>
+  </section>
 
   <section id="msgsPanel" class="tab-content messages-panel" hidden aria-labelledby="mobileMessagesTab">
     <div class="msgs-heading-wrap"><h2>Messages</h2></div>
@@ -1275,9 +1307,10 @@
     var panels = {
       mobileAccountTab: 'accountPanel',
       mobileWebsiteTab: 'websitePanel',
-      mobileMessagesTab: 'msgsPanel'
+      mobileMessagesTab: 'msgsPanel',
+      mobileAnalyticsTab: 'analyticsPanel'
     };
-    ['mobileAccountTab','mobileWebsiteTab','mobileMessagesTab'].forEach(function(id) {
+    ['mobileAccountTab','mobileWebsiteTab','mobileMessagesTab','mobileAnalyticsTab'].forEach(function(id) {
       var button = document.getElementById(id);
       var panel = document.getElementById(panels[id]);
       var active = id === tabId;
@@ -1387,6 +1420,92 @@
     document.getElementById('wahDesktop').classList.remove('active');
     document.getElementById('mobilePvwMobile') && document.getElementById('mobilePvwMobile').click();
   });
+
+  // ---------------- analytics ----------------
+  var anDays = 30;
+  function showAnalyticsTab() {
+    setActiveTab('mobileAnalyticsTab');
+    hideMessagesPanel();
+    loadAnalytics();
+  }
+
+  function anFmt(n) { return Number(n || 0).toLocaleString('en-GB'); }
+
+  function loadAnalytics() {
+    var note = document.getElementById('anNote');
+    if (!slug || !session) return;
+    fetch(UPLOAD_WORKER + '/stats/' + encodeURIComponent(slug) + '?days=' + anDays, {
+      headers: { 'Authorization': 'Bearer ' + session.access_token }
+    }).then(function(r) { return r.json().then(function(j) { if (!r.ok) throw new Error(j.error || 'failed'); return j; }); })
+      .then(function(res) {
+        var days = res.days || [];
+        var views = 0, visitors = 0;
+        days.forEach(function(d) { views += d.views; visitors += d.visitors; });
+        document.getElementById('anViews').textContent = anFmt(views);
+        document.getElementById('anVisitors').textContent = anFmt(visitors);
+        note.hidden = views > 0;
+        note.textContent = 'No visits recorded yet. Share your website link and they will appear here.';
+        drawAnalyticsChart(days);
+      }).catch(function() {
+        document.getElementById('anChart').innerHTML = '';
+        note.hidden = false;
+        note.textContent = 'Could not load your analytics. Please try again in a moment.';
+      });
+  }
+
+  function drawAnalyticsChart(days) {
+    var W = 600, H = 220, L = 34, R = 8, T = 10, B = 24;
+    var max = 1;
+    days.forEach(function(d) { if (d.views > max) max = d.views; });
+    var step = max <= 4 ? 1 : Math.ceil(max / 4);
+    max = Math.ceil(max / step) * step;
+    var iw = W - L - R, ih = H - T - B, n = days.length;
+    var gap = n > 45 ? 1 : 3;
+    var bw = Math.max(1, iw / n - gap);
+    var svg = '<svg class="an-chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Site visits per day">';
+    for (var g = 0; g <= max; g += step) {
+      var y = T + ih - (g / max) * ih;
+      svg += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '" stroke="rgba(28,40,50,.1)"/>'
+        + '<text x="' + (L - 6) + '" y="' + (y + 4) + '" text-anchor="end" font-size="11" fill="#757b80">' + g + '</text>';
+    }
+    days.forEach(function(d, i) {
+      var h = (d.views / max) * ih;
+      var x = L + i * (iw / n) + gap / 2;
+      svg += '<rect x="' + x + '" y="' + (T + ih - h) + '" width="' + bw + '" height="' + Math.max(h, d.views ? 2 : 0) + '" rx="' + Math.min(3, bw / 2) + '" fill="var(--accent)" opacity=".85"'
+        + ' data-i="' + i + '"/>'
+        + '<rect x="' + (L + i * (iw / n)) + '" y="' + T + '" width="' + (iw / n) + '" height="' + ih + '" fill="transparent" data-i="' + i + '"/>';
+    });
+    var labelEvery = n <= 7 ? 1 : n <= 30 ? 5 : 15;
+    days.forEach(function(d, i) {
+      if ((n - 1 - i) % labelEvery) return;
+      var dt = new Date(d.date + 'T00:00:00');
+      svg += '<text x="' + (L + i * (iw / n) + iw / n / 2) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="11" fill="#757b80">'
+        + dt.getDate() + ' ' + dt.toLocaleString('en-GB', { month: 'short' }) + '</text>';
+    });
+    svg += '</svg>';
+    var box = document.getElementById('anChart');
+    box.innerHTML = svg;
+    var tip = document.getElementById('anTip');
+    tip.textContent = '';
+    box.querySelectorAll('rect[data-i]').forEach(function(r) {
+      function show() {
+        var d = days[+r.getAttribute('data-i')];
+        var dt = new Date(d.date + 'T00:00:00');
+        tip.textContent = dt.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) + ': ' + d.views + (d.views === 1 ? ' visit' : ' visits') + ', ' + d.visitors + (d.visitors === 1 ? ' visitor' : ' visitors');
+      }
+      r.addEventListener('mouseenter', show);
+      r.addEventListener('click', show);
+    });
+  }
+
+  document.getElementById('anRange').addEventListener('click', function(e) {
+    var b = e.target.closest('button[data-days]');
+    if (!b) return;
+    anDays = +b.getAttribute('data-days');
+    this.querySelectorAll('button').forEach(function(x) { x.setAttribute('aria-pressed', String(x === b)); });
+    loadAnalytics();
+  });
+  document.getElementById('mobileAnalyticsTab').addEventListener('click', showAnalyticsTab);
 
   function showMessagesTab() {
     setActiveTab('mobileMessagesTab');
