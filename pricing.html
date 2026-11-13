@@ -35,6 +35,7 @@
 
   #pricing .plans{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;align-items:stretch}
   #pricing .plan{border-color:var(--accent);position:relative;box-sizing:border-box;width:100%;display:flex;flex-direction:column}
+  #pricing .plan.featured{border:2px solid var(--accent);box-shadow:0 14px 34px rgba(37,99,235,.18);transform:translateY(-6px)}
   #pricing .plan ul{flex:1}
 
   .plan-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:3px 14px;border-radius:999px;white-space:nowrap}
@@ -131,37 +132,19 @@
           </div>
           <div class="price-note b-monthly">£12/mo — cancel any time</div>
           <div class="price-note b-annual">Billed £120/yr — <span class="annual-saving">save £24 a year</span></div>
-          <div class="annual-bonus b-annual">
-            <div class="annual-bonus-item">
-              <div class="bonus-icon">🌐</div>
-              <div class="bonus-text">
-                <strong>Free domain included</strong>
-                <span>Worth up to £12/yr — yours for free</span>
-              </div>
-            </div>
-            <div class="annual-bonus-item">
-              <div class="bonus-icon">✨</div>
-              <div class="bonus-text">
-                <strong>Free logo creation</strong>
-                <span>Professional logo designed for your brand</span>
-              </div>
-            </div>
-          </div>
           <ul>
             <li>Website built for you at no cost</li>
             <li>Hosting, security &amp; maintenance</li>
             <li>SEO &amp; SEO-focused content</li>
             <li>Mobile optimisation</li>
             <li>Up to 3 pages with contact &amp; enquiry forms</li>
-            <li>Custom hero/header image</li>
-            <li>Changes &amp; support</li>
           </ul>
           <a href="/account/login.html?signup=1" class="go">Sign up</a>
         </div>
 
         <!-- Free Pro card -->
-        <div class="plan feature" style="position:relative">
-          <span class="plan-badge">3+ PAGES</span>
+        <div class="plan feature featured" style="position:relative">
+          <span class="plan-badge">MOST POPULAR</span>
           <h4>Free Pro</h4>
           <div class="desc">Built for free, with room for more pages.</div>
           <div class="price-row">
