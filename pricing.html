@@ -41,7 +41,7 @@
   .plan-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:3px 14px;border-radius:999px;white-space:nowrap}
 
   #pricing .plan{padding:28px 24px}
-  #pricing .plan h4{font-size:26px;margin-bottom:0}
+  #pricing .plan h4{font-size:26px;margin-bottom:0;min-height:86px;display:flex;align-items:flex-end}
   #pricing .plan .desc{margin-bottom:14px}
   #pricing .plan .price{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;font-size:46px;font-weight:600;color:var(--ink)}
   #pricing .plan .price small{font-size:13px;margin-left:4px;color:var(--accent);font-weight:600;letter-spacing:0}
@@ -195,6 +195,7 @@
         <div class="plan feature" style="position:relative">
           <span class="plan-badge">ADD-ON</span>
           <h4>Booking or E-commerce Add On</h4>
+          <div aria-hidden="true" style="visibility:hidden;font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;margin:4px 0 6px">Free Build</div>
           <div class="desc">Add to either plan.</div>
           <div class="price-row">
             <span class="price">£19<small>/mo</small></span>
