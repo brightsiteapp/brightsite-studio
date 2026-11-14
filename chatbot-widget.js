@@ -59,7 +59,7 @@
       '<div id="bs-bubble" aria-live="polite"></div>' +
       '<div id="bs-actions">' +
         '<a class="bs-signup" href="/account/login.html?signup=1">Sign up free →</a>' +
-        '<a class="bs-wa" href="https://wa.me/447535928879" target="_blank" rel="noopener">' + WA_ICON + 'WhatsApp us</a>' +
+        '<a class="bs-wa" href="https://wa.me/447588404181" target="_blank" rel="noopener">' + WA_ICON + 'WhatsApp us</a>' +
       '</div>' +
       '<div id="bs-figure">' +
         '<div id="bs-hit" aria-hidden="true"></div>' +
