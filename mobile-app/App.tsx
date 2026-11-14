@@ -2797,11 +2797,13 @@ function SplashGlow({ onDone }: { onDone: () => void }) {
   return <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { zIndex: 10000, elevation: 10000, backgroundColor: '#3B82F6', alignItems: 'center', justifyContent: 'center', opacity: fade }]}>
     <View style={{ width: SPLASH_LOGO_W, height: 72 * SPLASH_K }}>
       <Image source={require('./assets/brightsite-logo-white.png')} style={{ width: SPLASH_LOGO_W, height: 72 * SPLASH_K }} />
-      {light('#BFD6FF', 34)}
-      {light('#DCE9FF', 22)}
-      {light('#DCE9FF', 22)}
-      {light('#FFFFFF', 10)}
-      {light('#FFFFFF', 5)}
+      {light('#BFD6FF', 40)}
+      {light('#DCE9FF', 28)}
+      {light('#DCE9FF', 28)}
+      {light('#FFFFFF', 18)}
+      {light('#FFFFFF', 12)}
+      {light('#FFFFFF', 8)}
+      {light('#FFFFFF', 4)}
     </View>
   </Animated.View>;
 }
