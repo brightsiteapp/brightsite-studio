@@ -6,7 +6,7 @@ const HOSTING = {
 };
 // Legacy £204/yr annual price, kept so existing annual subscribers are not changed.
 const LEGACY_ANNUAL = 'price_1UGpjvGqCP7G2YAptYGCKsFl';
-const BOOKING_OR_ECOMMERCE_ADDON = 'price_1UGhhAGqCP7G2YApFCPg4MHw'; // £19/mo add-on
+export const BOOKING_OR_ECOMMERCE_ADDON = 'price_1UGhhAGqCP7G2YApFCPg4MHw'; // £19/mo add-on
 const PRO_BUILD_FEE = 'price_1UGplTGqCP7G2YApGrrTagi9'; // £199 one-off
 
 const FREE_DOMAIN_ALLOWANCE_PENCE = 1200; // "Free domain included — worth up to £12/yr"

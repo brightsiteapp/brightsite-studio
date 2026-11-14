@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
 import { quoteDomainInGbp } from './_lib/domain-pricing.js';
-import { planPrices, domainChargePence } from './_lib/plans.js';
+import { planPrices, domainChargePence, BOOKING_OR_ECOMMERCE_ADDON } from './_lib/plans.js';
 
 const ALLOWED_ORIGINS = ['https://brightsite.app'];
 
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { plan, billing, email, slug, domain, addon_domain: addonDomain, publish_on_payment: publishOnPayment, ui_mode: uiMode } = req.body || {};
+  const { plan, billing, email, slug, domain, addon_domain: addonDomain, publish_on_payment: publishOnPayment, ui_mode: uiMode, addon_booking: addonBooking, addon_store: addonStore } = req.body || {};
   const selectedDomain = domain || addonDomain || '';
 
   if (!plan || !billing) return res.status(400).json({ error: 'Missing plan or billing' });
@@ -31,6 +31,8 @@ export default async function handler(req, res) {
 
     const lineItems = [{ price: prices.recurring, quantity: 1 }];
     if (prices.setup) lineItems.push({ price: prices.setup, quantity: 1 });
+    // Booking form or online store add-on (one £19/mo price covers either).
+    if (addonBooking || addonStore) lineItems.push({ price: BOOKING_OR_ECOMMERCE_ADDON, quantity: 1 });
 
     // Domain (one-off): listed at its real price; the part the plan covers comes off as a one-time
     // discount, so the customer sees the domain inside their total rather than as a £0 line.
