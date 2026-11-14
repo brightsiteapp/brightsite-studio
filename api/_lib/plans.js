@@ -6,13 +6,13 @@ const HOSTING = {
 };
 // Legacy £204/yr annual price, kept so existing annual subscribers are not changed.
 const LEGACY_ANNUAL = 'price_1UGpjvGqCP7G2YAptYGCKsFl';
-// Stripe needs the add-on to match the plan's billing period: £19/mo monthly, £228/yr annual.
+// The add-on is always £19/mo. Stripe can't mix billing periods in one subscription, so on
+// annual plans it is charged as its own monthly subscription after checkout (see register-domain.js).
 const ADDON = {
   monthly: 'price_1UGhhAGqCP7G2YApFCPg4MHw', // £19/mo
-  annual: 'price_1UbkeBGqCP7G2YApqKEOCCM0',  // £228/yr
 };
-export function addonPrice(billing) {
-  return ADDON[billing] || null;
+export function addonPrice() {
+  return ADDON.monthly;
 }
 const PRO_BUILD_FEE = 'price_1UGplTGqCP7G2YApGrrTagi9'; // £199 one-off
 

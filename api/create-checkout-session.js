@@ -31,8 +31,11 @@ export default async function handler(req, res) {
 
     const lineItems = [{ price: prices.recurring, quantity: 1 }];
     if (prices.setup) lineItems.push({ price: prices.setup, quantity: 1 });
-    // Booking form or online store add-on (one £19/mo price covers either).
-    if (addonBooking || addonStore) lineItems.push({ price: addonPrice(billing), quantity: 1 });
+    // Booking form or online store add-on: £19/mo. On monthly plans it joins the same subscription;
+    // on annual plans Stripe can't mix intervals, so it is started as its own monthly subscription after payment.
+    const hasAddon = !!(addonBooking || addonStore);
+    const addonSeparate = hasAddon && billing === 'annual';
+    if (hasAddon && !addonSeparate) lineItems.push({ price: addonPrice(), quantity: 1 });
 
     // Domain (one-off): listed at its real price; the part the plan covers comes off as a one-time
     // discount, so the customer sees the domain inside their total rather than as a £0 line.
@@ -58,6 +61,7 @@ export default async function handler(req, res) {
     }
 
     const metadata = { plan, billing, slug: slug || '', domain: selectedDomain, publish_on_payment: publishOnPayment ? 'true' : 'false' };
+    if (addonSeparate) metadata.addon_separate = 'true';
 
     // The mobile app opens Stripe's hosted Checkout page in the device browser
     // (there's no embeddable web view in Expo for ui_mode: 'embedded') — same

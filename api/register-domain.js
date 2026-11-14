@@ -2,6 +2,7 @@ import Stripe from 'stripe';
 import { supabaseAdmin } from './_lib/supabase-admin.js';
 import { registerWithCloudflare, markBusinessLive } from './_lib/activate.js';
 import { runDomainRenewals } from './_lib/domain-renewals.js';
+import { addonPrice } from './_lib/plans.js';
 
 export default async function handler(req, res) {
   // GET is the nightly domain-renewals cron; POST is Stripe's checkout webhook
@@ -41,6 +42,18 @@ export default async function handler(req, res) {
     if (domain) await registerWithCloudflare(domain);
 
     await markBusinessLive(slug, domain || null, session.metadata?.publish_on_payment === 'true');
+
+    // Annual plans: the £19/mo booking/store add-on is a separate monthly subscription.
+    // The idempotency key stops a Stripe webhook retry from starting it twice.
+    if (session.metadata?.addon_separate === 'true' && session.subscription) {
+      const mainSub = await stripe.subscriptions.retrieve(session.subscription);
+      await stripe.subscriptions.create({
+        customer: session.customer,
+        items: [{ price: addonPrice(), quantity: 1 }],
+        default_payment_method: mainSub.default_payment_method || undefined,
+        metadata: { slug, addon: 'monthly', parent_subscription: session.subscription },
+      }, { idempotencyKey: `addon-${session.id}` });
+    }
     // the nightly domain-renewals job needs to know which subscription (and plan) pays for this domain
     if (session.subscription && slug) {
       const supabase = supabaseAdmin();
