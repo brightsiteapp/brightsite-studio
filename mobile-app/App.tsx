@@ -1599,6 +1599,13 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminViewingBusiness, setAdminViewingBusiness] = useState<any>(null);
   const [editingInfo, setEditingInfo] = useState(false);
+  // BRIGHTBUILDER intro: shown once, the first time someone opens the card builder
+  const [builderIntro, setBuilderIntro] = useState(false);
+  useEffect(() => {
+    if (appScreen !== 'onboarding' || editingInfo) return;
+    AsyncStorage.getItem('bb_intro_seen').then(v => { if (!v) setBuilderIntro(true); }).catch(() => {});
+  }, [appScreen, editingInfo]);
+  const closeBuilderIntro = () => { setBuilderIntro(false); AsyncStorage.setItem('bb_intro_seen', '1').catch(() => {}); };
   const [savingInfo, setSavingInfo] = useState(false);
   const [buildChoice, setBuildChoice] = useState<'designer' | 'template' | null>(null);
   const [websiteStatus, setWebsiteStatus] = useState<'loading' | 'todo' | 'building' | 'ready' | 'publishing' | 'live'>('loading');
@@ -2706,6 +2713,15 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         onDelete={index === null ? undefined : () => { save(list.filter((_, n) => n !== index)); setSheet(null); }}
         onClose={() => setSheet(null)} />;
     })()}
+    <Modal visible={builderIntro} animationType="fade" onRequestClose={closeBuilderIntro}>
+      <View style={s.bbIntro}>
+        <Image source={require('./assets/brightbuilder.png')} resizeMode="contain" style={s.bbIntroLogo} />
+        <Text style={s.bbIntroTitle}>Build your website, card by card.</Text>
+        <Text style={s.bbIntroText}>Fill in each card and swipe left to save and move on. Skip anything you like and change it later.</Text>
+        <View style={s.bbIntroHint}><Ionicons name="arrow-back" size={16} color={C.primary} /><Text style={s.bbIntroHintText}>Swipe left to go to the next card</Text></View>
+        <Pressable onPress={closeBuilderIntro} style={({ pressed }) => [s.authSubmit, { alignSelf: 'stretch' }, pressed && s.pressed]}><Text style={s.authSubmitText}>Let’s start</Text></Pressable>
+      </View>
+    </Modal>
   </FlowBackdrop>;
 }
 
@@ -2954,7 +2970,13 @@ const s = StyleSheet.create({
   billingTextOn: { color: '#fff' },
   billingSave: { fontFamily: FONT, fontSize: 11, fontWeight: '800', color: C.success },
   planModalTotal: { fontFamily: FONT, fontSize: 13, fontWeight: '600', color: C.inkSoft, marginTop: 6, textAlign: 'center' },
-  savedPill: { position: 'absolute', top: SAFE_TOP + 86, alignSelf: 'center', zIndex: 200, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(28,40,50,.82)' },
+  bbIntro: { flex: 1, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 30, gap: 18 },
+bbIntroLogo: { width: SCREEN_WIDTH - 90, height: (SCREEN_WIDTH - 90) * 134 / 1449, marginBottom: 18 },
+bbIntroTitle: { fontFamily: FONT, fontSize: 26, fontWeight: '900', color: C.ink, textAlign: 'center' },
+bbIntroText: { fontFamily: FONT, fontSize: 16, lineHeight: 23, color: C.inkSoft, textAlign: 'center' },
+bbIntroHint: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999, backgroundColor: C.primarySoft, marginBottom: 14 },
+bbIntroHintText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.primary },
+savedPill: { position: 'absolute', top: SAFE_TOP + 86, alignSelf: 'center', zIndex: 200, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(28,40,50,.82)' },
   savedPillText: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: '#fff' },
   listRowSub: { fontFamily: FONT, fontSize: 13, color: C.inkMuted, marginTop: 2 },
   sheetDelete: { alignItems: 'center', paddingTop: 14 },

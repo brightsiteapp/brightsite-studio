@@ -79,6 +79,13 @@
   .dvt-btn.active{background:var(--accent);color:#fff}
   /* toggle sits in the middle of the bar; Analytics on the right */
   .desk-preview-bar .desk-preview-toggle{position:absolute;left:50%;transform:translateX(-50%);margin-left:0}
+  .bb-intro{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(244,237,230,.96);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  .bb-intro[hidden]{display:none}
+  .bb-intro-card{max-width:440px;text-align:center;font-family:'Avenir Next','Avenir','Nunito Sans',sans-serif;color:#1C2832}
+  .bb-intro-logo{width:min(340px,80vw);height:auto;margin-bottom:28px}
+  .bb-intro-card h2{font-size:26px;font-weight:900;margin:0 0 12px}
+  .bb-intro-card p{font-size:16px;line-height:1.45;color:rgba(28,40,50,.72);margin:0 0 26px}
+  .bb-intro-card button{width:100%;border:0;border-radius:14px;padding:16px;background:#3B82F6;color:#fff;font-family:inherit;font-size:16px;font-weight:800;cursor:pointer}
   .desk-analytics{margin-left:auto;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:9px;background:var(--glass);color:var(--accent);font:700 12px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;padding:8px 12px;cursor:pointer}
   .desk-analytics:disabled{opacity:.45;cursor:default;pointer-events:none}
   #deskPreview.mobile-view .desk-preview-bar{align-self:stretch;}
@@ -786,6 +793,14 @@
 
   <section id="websitePanel" class="tab-content website-panel" aria-labelledby="mobileWebsiteTab">
     <div class="panel-inner">
+      <div class="bb-intro" id="bbIntro" hidden role="dialog" aria-modal="true" aria-label="Welcome to BrightBuilder">
+        <div class="bb-intro-card">
+          <img src="/img/brightbuilder.png" alt="BrightBuilder" class="bb-intro-logo">
+          <h2>Build your website, card by card.</h2>
+          <p>Fill in each info card and save as you go. Skip anything you like and change it later. When you’re done, send it to your designer.</p>
+          <button type="button" id="bbIntroStart">Let’s start</button>
+        </div>
+      </div>
       <div class="draft-banner" id="draftBanner" hidden>
         <div><strong>Finish your details</strong><span>Everything is saved. Send it to your designer when you’re ready.</span></div>
         <button type="button" id="draftSendBtn">Send to designer</button>
@@ -1884,6 +1899,18 @@
     });
   })();
 
+  // BRIGHTBUILDER intro: shown once, the first time someone fills in their info cards.
+  function showBuilderIntro() {
+    try { if (localStorage.getItem('bb_intro_seen')) return; } catch (e) { return; }
+    var el = document.getElementById('bbIntro');
+    if (!el || !el.hidden) return;
+    el.hidden = false;
+    document.getElementById('bbIntroStart').onclick = function() {
+      el.hidden = true;
+      try { localStorage.setItem('bb_intro_seen', '1'); } catch (e) {}
+    };
+  }
+
   // Signups started in the app are saved as drafts until sent; let them finish and send from here too.
   function renderDraftBanner() {
     var raw = (business && business.data && business.data.raw) || {};
@@ -1891,6 +1918,7 @@
     if (!banner) return false;
     banner.hidden = !raw.draft;
     if (raw.draft) document.getElementById('websitePanel').classList.add('editing');
+    if (raw.draft || needsSending()) showBuilderIntro();
     return !!raw.draft;
   }
 
