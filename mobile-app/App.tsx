@@ -2716,7 +2716,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     <Modal visible={builderIntro} animationType="fade" onRequestClose={closeBuilderIntro}>
       <View style={s.bbIntro}>
         <Image source={require('./assets/brightbuilder.png')} resizeMode="contain" style={s.bbIntroLogo} />
-        <Text style={s.bbIntroTitle}>Seven. Simple. Steps.</Text>
+        <View style={{ alignItems: 'center' }}><Text style={s.bbIntroLead}>Build your website in</Text><Text style={s.bbIntroTitle}>Seven. Simple. Steps.</Text></View>
         <Text style={s.bbIntroText}>Fill in each card as you go. Skip anything you like and change it later.</Text>
         <Pressable onPress={closeBuilderIntro} style={({ pressed }) => [s.authSubmit, { alignSelf: 'stretch' }, pressed && s.pressed]}><Text style={s.authSubmitText}>Let’s start</Text></Pressable>
         <View style={s.bbIntroTime}><Ionicons name="time-outline" size={15} color={C.primary} /><Text style={s.bbIntroHintText}>Under 10 minutes</Text></View>
@@ -2974,6 +2974,7 @@ const s = StyleSheet.create({
 bbIntroLogo: { width: SCREEN_WIDTH - 90, height: (SCREEN_WIDTH - 90) * 134 / 1603, marginBottom: 18 },
 bbIntroTitle: { fontFamily: FONT, fontSize: 26, fontWeight: '900', color: C.ink, textAlign: 'center' },
 bbIntroTime: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999, backgroundColor: C.primarySoft },
+bbIntroLead: { fontFamily: FONT, fontSize: 18, fontWeight: '600', color: C.inkSoft, textAlign: 'center', marginBottom: 4 },
 bbIntroText: { fontFamily: FONT, fontSize: 16, lineHeight: 23, color: C.inkSoft, textAlign: 'center', marginBottom: 14 },
 bbIntroHintText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.primary },
 savedPill: { position: 'absolute', top: SAFE_TOP + 86, alignSelf: 'center', zIndex: 200, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(28,40,50,.82)' },
