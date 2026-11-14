@@ -477,6 +477,11 @@
     .wah-make-live.go{background:var(--accent);color:#fff;}
     .wah-edit{display:flex;align-items:center;gap:5px;border:0;border-radius:8px;padding:7px 13px;font:700 12px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;background:rgba(28,40,50,.06);color:var(--ink);cursor:pointer;}
     .wah-toggle{margin:0;}
+    /* toggle centred like the app; analytics and Edit sit together on the right */
+    #websiteAppHeader{position:relative}
+    #websiteAppHeader .wah-toggle{position:absolute;left:50%;transform:translateX(-50%)}
+    #websiteAppHeader #wahAnalytics{margin-left:auto;color:#3B82F6}
+    .wah-toggle.is-disabled{opacity:.45;pointer-events:none}
     /* hide the old editor header + section list by default in mobile */
     #websiteEditorHeader{display:none;}
     #builderList{display:none;}
@@ -1346,6 +1351,9 @@
   }
 
   function updateWebsiteAppHeader() {
+    // the preview toggle stays greyed out until there's a website preview to switch
+    var wahToggle = document.querySelector('#websiteAppHeader .wah-toggle');
+    if (wahToggle) wahToggle.classList.toggle('is-disabled', !getPreviewUrl());
     ['wahMakeLive', 'deskMakeLive'].forEach(function(id) {
       var btn = document.getElementById(id);
       if (!btn) return;
