@@ -2718,8 +2718,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         <Image source={require('./assets/brightbuilder.png')} resizeMode="contain" style={s.bbIntroLogo} />
         <Text style={s.bbIntroTitle}>Build your website in seven simple steps</Text>
         <View style={s.bbIntroTime}><Ionicons name="time-outline" size={15} color={C.primary} /><Text style={s.bbIntroHintText}>Under 10 minutes</Text></View>
-        <Text style={s.bbIntroText}>Fill in each card and swipe left to save and move on. Skip anything you like and change it later.</Text>
-        <View style={s.bbIntroHint}><Ionicons name="arrow-back" size={16} color={C.primary} /><Text style={s.bbIntroHintText}>Swipe left to go to the next card</Text></View>
+        <Text style={s.bbIntroText}>Fill in each card as you go. Skip anything you like and change it later.</Text>
         <Pressable onPress={closeBuilderIntro} style={({ pressed }) => [s.authSubmit, { alignSelf: 'stretch' }, pressed && s.pressed]}><Text style={s.authSubmitText}>Let’s start</Text></Pressable>
       </View>
     </Modal>
@@ -2972,11 +2971,10 @@ const s = StyleSheet.create({
   billingSave: { fontFamily: FONT, fontSize: 11, fontWeight: '800', color: C.success },
   planModalTotal: { fontFamily: FONT, fontSize: 13, fontWeight: '600', color: C.inkSoft, marginTop: 6, textAlign: 'center' },
   bbIntro: { flex: 1, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 30, gap: 18 },
-bbIntroLogo: { width: SCREEN_WIDTH - 90, height: (SCREEN_WIDTH - 90) * 137 / 1598, marginBottom: 18 },
+bbIntroLogo: { width: SCREEN_WIDTH - 90, height: (SCREEN_WIDTH - 90) * 137 / 1619, marginBottom: 18 },
 bbIntroTitle: { fontFamily: FONT, fontSize: 26, fontWeight: '900', color: C.ink, textAlign: 'center' },
 bbIntroTime: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999, backgroundColor: C.primarySoft },
-bbIntroText: { fontFamily: FONT, fontSize: 16, lineHeight: 23, color: C.inkSoft, textAlign: 'center' },
-bbIntroHint: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999, backgroundColor: C.primarySoft, marginBottom: 14 },
+bbIntroText: { fontFamily: FONT, fontSize: 16, lineHeight: 23, color: C.inkSoft, textAlign: 'center', marginBottom: 14 },
 bbIntroHintText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.primary },
 savedPill: { position: 'absolute', top: SAFE_TOP + 86, alignSelf: 'center', zIndex: 200, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(28,40,50,.82)' },
   savedPillText: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: '#fff' },
