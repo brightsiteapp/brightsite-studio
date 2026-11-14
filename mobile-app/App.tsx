@@ -1197,6 +1197,33 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
     }), 60);
     return () => clearTimeout(t);
   }, [playReveal]);
+  // Red dot on Messages when there's a message from Tom the customer hasn't seen yet.
+  const [hasUnread, setHasUnread] = useState(false);
+  const seenKey = `bs_msgs_seen_${slug || ''}`;
+  useEffect(() => {
+    if (!session?.access_token || !slug) return;
+    let alive = true;
+    const check = async () => {
+      if (tab === 'Messages') return;
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/messages?select=sender,created_at&business_id=eq.${encodeURIComponent(slug)}&order=created_at.desc&limit=20`, { headers: authHeaders(session.access_token) });
+        const rows = res.ok ? await res.json() : [];
+        const seen = (await AsyncStorage.getItem(seenKey)) || '';
+        if (alive) setHasUnread(Array.isArray(rows) && rows.some((m: any) => m.sender !== 'customer' && m.created_at > seen));
+      } catch { /* offline: leave the dot as it is */ }
+    };
+    void check();
+    const timer = setInterval(check, 30000);
+    const sub = AppState.addEventListener('change', st => { if (st === 'active') void check(); });
+    return () => { alive = false; clearInterval(timer); sub.remove(); };
+  }, [session?.access_token, slug, tab]);
+  useEffect(() => {
+    if (tab !== 'Messages' || !slug) return;
+    const markSeen = () => { void AsyncStorage.setItem(seenKey, new Date().toISOString()).catch(() => {}); };
+    setHasUnread(false);
+    markSeen();
+    return markSeen; // also on leaving, so messages read while on the tab don't show a dot afterwards
+  }, [tab, slug]);
   const [previewMode, setPreviewMode] = useState<'mobile' | 'desktop'>('mobile');
   const [showPassword, setShowPassword] = useState(false);
   const [showEditMenu, setShowEditMenu] = useState(false);
@@ -1367,7 +1394,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
         {onAdminBack && <Pressable hitSlop={10} onPress={onAdminBack} style={s.adminBackBtn}><Ionicons name="chevron-back" size={15} color={C.primary} /><Text style={s.adminBackText}>Admin</Text></Pressable>}
         {!isLoadingSite && <View style={[s.statusPill, { backgroundColor: status.bg }]}><Animated.View style={[s.statusDot, { backgroundColor: status.color, opacity: isPublishing ? pulseAnim : 1 }]} /><Text style={[s.statusPillText, { color: status.color }]}>{status.label}</Text></View>}
       </View>
-      <View style={s.dashboardTabsTop}>{['Website', 'Messages', 'Account'].map(name => <Pressable key={name} onPress={() => setTab(name)} style={[s.dashboardTab, tab === name && s.dashboardTabOn]}><Text style={[s.dashboardTabText, tab === name && s.dashboardTabTextOn]}>{name}</Text></Pressable>)}</View>
+      <View style={s.dashboardTabsTop}>{['Website', 'Messages', 'Account'].map(name => <Pressable key={name} onPress={() => setTab(name)} style={[s.dashboardTab, tab === name && s.dashboardTabOn]}><Text style={[s.dashboardTabText, tab === name && s.dashboardTabTextOn]}>{name}</Text>{name === 'Messages' && hasUnread && tab !== 'Messages' && <View style={s.unreadDot} accessibilityLabel="New message" />}</Pressable>)}</View>
       {!!saveError && <View style={s.saveBanner}><Ionicons name="alert-circle" size={16} color={C.danger} /><Text style={s.saveBannerText}>{saveError}</Text></View>}
       {tab === 'Messages' ? <MessageThread session={session} slug={slug} viewer="customer" otherName="Tom" placeholder="Message Tom…" intro={<>
           <View style={[s.messageBubble, s.messageBubbleReceived]}><Text style={s.messageText}>{welcomeText(data.fullName, buildChoice)}</Text></View>
@@ -2943,7 +2970,8 @@ const s = StyleSheet.create({
   dashboardScreen: { flex: 1, paddingTop: Platform.OS === 'ios' ? 58 : 32 },
   dashboardBrandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 16 },
   dashboardTabsTop: { flexDirection: 'row', marginHorizontal: 20, padding: 4, borderRadius: 14, backgroundColor: 'rgba(28,40,50,.07)', marginBottom: 18 },
-  dashboardTab: { flex: 1, minHeight: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  unreadDot: { position: 'absolute', top: 7, right: 14, width: 9, height: 9, borderRadius: 5, backgroundColor: '#DC2626', borderWidth: 2, borderColor: C.canvas },
+dashboardTab: { flex: 1, minHeight: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   dashboardTabOn: { backgroundColor: C.primary },
   dashboardTabText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.inkMuted },
   dashboardTabTextOn: { color: '#fff' },

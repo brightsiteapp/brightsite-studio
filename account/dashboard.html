@@ -1758,6 +1758,7 @@
   };
 
   function renderDashboard() {
+    msgsStartUnreadCheck();
     console.log('[renderDashboard] called, business:', business);
     document.getElementById('mobileViewTabs').hidden = false;
     appBody().hidden = false;
@@ -2182,6 +2183,20 @@
     var lastRead = localStorage.getItem(msgsReadKey()) || '';
     var hasUnread = rows.some(function(msg) { return msg.sender !== 'customer' && msg.created_at > lastRead; });
     if (hasUnread) badge.hidden = false;
+  }
+  // Check for unseen messages in the background, so the red dot shows before the Messages tab is opened.
+  var msgsUnreadTimer = null;
+  function msgsCheckUnread() {
+    if (!business || !slug || msgsLoaded) return;
+    fetch(SUPABASE_URL + '/rest/v1/messages?select=sender,created_at&business_id=eq.' + encodeURIComponent(slug) + '&order=created_at.desc&limit=20', { headers: authHeaders() })
+      .then(function(r) { return r.ok ? r.json() : []; })
+      .then(function(rows) { if (Array.isArray(rows)) msgsUpdateNotification(rows); })
+      .catch(function() {});
+  }
+  function msgsStartUnreadCheck() {
+    if (msgsUnreadTimer) return;
+    msgsCheckUnread();
+    msgsUnreadTimer = setInterval(msgsCheckUnread, 30000);
   }
   function msgsMarkRead() {
     if (!msgsLastTs) return;
