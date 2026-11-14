@@ -2716,7 +2716,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     <Modal visible={builderIntro} animationType="fade" onRequestClose={closeBuilderIntro}>
       <View style={s.bbIntro}>
         <Image source={require('./assets/brightbuilder.png')} resizeMode="contain" style={s.bbIntroLogo} />
-        <Text style={s.bbIntroTitle}>Build your website in{'\n'}Seven. Simple. Steps.</Text>
+        <Text style={s.bbIntroTitle}>Build your website in…{'\n'}Seven. Simple. Steps.</Text>
         <Text style={s.bbIntroText}>Fill in each card as you go. Skip anything you like and change it later.</Text>
         <Pressable onPress={closeBuilderIntro} style={({ pressed }) => [s.authSubmit, { alignSelf: 'stretch' }, pressed && s.pressed]}><Text style={s.authSubmitText}>Let’s start</Text></Pressable>
         <View style={s.bbIntroTime}><Ionicons name="time-outline" size={15} color={C.primary} /><Text style={s.bbIntroHintText}>Under 10 minutes</Text></View>
