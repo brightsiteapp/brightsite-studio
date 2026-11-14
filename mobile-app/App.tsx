@@ -1163,7 +1163,34 @@ function MessageThread({ session, slug, viewer, otherName, placeholder, intro }:
   </>;
 }
 
-function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, onPaid, saveError, planAnnual, planPro, media, isPaying, buildChoice, session, slug, onAdminBack, onDomainChosen, infoComplete, onSendToDesigner }: any) {
+function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, onPaid, saveError, planAnnual, planPro, media, isPaying, buildChoice, session, slug, onAdminBack, onDomainChosen, infoComplete, onSendToDesigner, playReveal, onRevealDone }: any) {
+  // After sending to the designer: a full-screen preview card, the B fades in, then the text,
+  // then the card shrinks into its place on the dashboard.
+  const buildCardRef = useRef<View>(null);
+  const revealB = useRef(new Animated.Value(0)).current;
+  const revealText = useRef(new Animated.Value(0)).current;
+  const revealShrink = useRef(new Animated.Value(0)).current;
+  const revealFade = useRef(new Animated.Value(1)).current;
+  const [revealRect, setRevealRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [revealing, setRevealing] = useState(!!playReveal);
+  useEffect(() => {
+    if (!playReveal) return;
+    [revealB, revealText, revealShrink].forEach(v => v.setValue(0)); revealFade.setValue(1);
+    setRevealing(true);
+    const t = setTimeout(() => buildCardRef.current?.measureInWindow((x, y, w, h) => {
+      setRevealRect({ x, y, w, h });
+      Animated.sequence([
+        Animated.delay(250),
+        Animated.timing(revealB, { toValue: 1, duration: 700, useNativeDriver: false }),
+        Animated.delay(150),
+        Animated.timing(revealText, { toValue: 1, duration: 600, useNativeDriver: false }),
+        Animated.delay(900),
+        Animated.timing(revealShrink, { toValue: 1, duration: 750, easing: Easing.inOut(Easing.cubic), useNativeDriver: false }),
+        Animated.timing(revealFade, { toValue: 0, duration: 250, useNativeDriver: false }),
+      ]).start(() => { setRevealing(false); onRevealDone?.(); });
+    }), 60);
+    return () => clearTimeout(t);
+  }, [playReveal]);
   const [previewMode, setPreviewMode] = useState<'mobile' | 'desktop'>('mobile');
   const [showPassword, setShowPassword] = useState(false);
   const [showEditMenu, setShowEditMenu] = useState(false);
@@ -1410,7 +1437,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           </View>
           {isBuilding
             ? <View style={s.buildingWrap}>
-              <View style={[s.phoneFrame, s.buildingPhone]}>
+              <View ref={buildCardRef} collapsable={false} style={[s.phoneFrame, s.buildingPhone]}>
                 <Animated.View style={[s.buildingGlow, isTodo && s.todoGlow, { opacity: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.35, 1] }), transform: [{ scale: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.92, 1] }) }] }]}><View style={[s.buildingGlowInner, isTodo && s.todoGlowInner]}><Image source={require('./assets/brightsite-b-white.png')} resizeMode="contain" style={s.buildingLogo} /></View></Animated.View>
                 {!isLoadingSite && <Text style={[s.buildingText, { color: '#fff', marginTop: 28 }]}>{isTodo ? 'Let’s build your website' : 'Building your preview'}</Text>}
                 {!isLoadingSite && <Text style={[s.buildingSub, { color: 'rgba(255,255,255,.6)' }]}>{isTodo ? 'Fill in your info cards. The more you add, the better your site. Then send it to your designer.' : 'We’ll send you a notification as soon as it’s ready to review.'}</Text>}
@@ -1495,6 +1522,19 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
         </View>
       </View>
     </Modal>
+    {revealing && <Animated.View pointerEvents="none" style={[s.revealCard, revealRect ? {
+      left: revealShrink.interpolate({ inputRange: [0, 1], outputRange: [0, revealRect.x] }),
+      top: revealShrink.interpolate({ inputRange: [0, 1], outputRange: [0, revealRect.y] }),
+      width: revealShrink.interpolate({ inputRange: [0, 1], outputRange: [SCREEN_WIDTH, revealRect.w] }),
+      height: revealShrink.interpolate({ inputRange: [0, 1], outputRange: [SCREEN_HEIGHT, revealRect.h] }),
+      borderRadius: revealShrink.interpolate({ inputRange: [0, 1], outputRange: [0, 28] }),
+      borderWidth: revealShrink.interpolate({ inputRange: [0, 1], outputRange: [0, 7] }),
+      opacity: revealFade,
+    } : { left: 0, top: 0, width: SCREEN_WIDTH, height: SCREEN_HEIGHT }]}>
+      <Animated.View style={[s.buildingGlow, { opacity: revealB, transform: [{ scale: revealB.interpolate({ inputRange: [0, 1], outputRange: [.85, 1] }) }] }]}><View style={s.buildingGlowInner}><Image source={require('./assets/brightsite-b-white.png')} resizeMode="contain" style={s.buildingLogo} /></View></Animated.View>
+      <Animated.Text style={[s.buildingText, { color: '#fff', marginTop: 28, opacity: revealText }]}>Building your preview</Animated.Text>
+      <Animated.Text style={[s.buildingSub, { color: 'rgba(255,255,255,.6)', opacity: revealText }]}>We’ll send you a notification as soon as it’s ready to review.</Animated.Text>
+    </Animated.View>}
   </KeyboardAvoidingView>;
 }
 
@@ -2169,7 +2209,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     return () => clearTimeout(t);
   }, [editingInfo, data, hours, services, reviewsList, offers, contactForm]);
 
-  const sendToDesigner = () => { void syncOnboardingToBackend('designer'); setBuildChoice('designer'); setWebsiteStatus('building'); setAppScreen('loading'); };
+  const sendToDesigner = () => { void syncOnboardingToBackend('designer'); setBuildChoice('designer'); setWebsiteStatus('building'); setTab('Website'); setPlayReveal(true); setAppScreen('dashboard'); };
+  const [playReveal, setPlayReveal] = useState(false);
 
   // Details filled in on the website: send them from the dashboard without re-running the cards.
   const sendFromDashboard = async () => {
@@ -2583,7 +2624,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   }
 
   if (appScreen === 'dashboard') return <FadeIn>
-    <DashboardHome onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean, isPro: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true }; setPlanAnnual(isAnnual); setPlanPro(isPro); setWebsiteStatus('publishing'); }} infoComplete={infoComplete} onSendToDesigner={sendFromDashboard} onEditInfo={() => { if (adminViewingBusiness) return; setEditingInfo(websiteStatus !== 'todo'); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} saveError={saveError} planAnnual={planAnnual} planPro={planPro} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onDomainChosen={(d: string, sfx: string) => { setDomain(d); setSuffix(sfx); setDomainReady(true); }} />
+    <DashboardHome playReveal={playReveal} onRevealDone={() => setPlayReveal(false)} onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean, isPro: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true }; setPlanAnnual(isAnnual); setPlanPro(isPro); setWebsiteStatus('publishing'); }} infoComplete={infoComplete} onSendToDesigner={sendFromDashboard} onEditInfo={() => { if (adminViewingBusiness) return; setEditingInfo(websiteStatus !== 'todo'); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} saveError={saveError} planAnnual={planAnnual} planPro={planPro} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onDomainChosen={(d: string, sfx: string) => { setDomain(d); setSuffix(sfx); setDomainReady(true); }} />
   </FadeIn>;
 
   if (appScreen === 'design-editor') return <FadeIn><DesignEditorFullscreen palette={palette} setPalette={setPalette} font={font} setFont={setFont} siteTexts={siteTexts} setSiteTexts={setSiteTexts} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} data={data} services={services} hours={hours} contactForm={contactForm} onBack={() => {
@@ -2882,7 +2923,8 @@ const s = StyleSheet.create({
   messageInputFixed: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingTop: 10, paddingHorizontal: 14, paddingBottom: Platform.OS === 'ios' ? 30 : 14, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.lineStrong, backgroundColor: C.surface },
   messageBubbleSent: { backgroundColor: C.primary, alignSelf: 'flex-end', borderBottomRightRadius: 6 },
   messageInputField: { flex: 1, minHeight: 40, maxHeight: 110, paddingHorizontal: 14, paddingTop: 10, paddingBottom: 10, borderRadius: 20, backgroundColor: 'rgba(28,40,50,.06)', fontFamily: FONT, fontSize: 15, color: C.ink },
-  buildingWrap: { alignItems: 'center', paddingBottom: 24 },
+  revealCard: { position: 'absolute', zIndex: 999, elevation: 999, backgroundColor: '#141A1E', borderColor: '#141A1E', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+buildingWrap: { alignItems: 'center', paddingBottom: 24 },
   buildingPhone: { backgroundColor: '#141A1E', alignItems: 'center', justifyContent: 'center' },
   // with no background, iOS traces the B's own shape, so the shadow reads as a blue glowing outline
   buildingLogo: { width: 64, height: 70 },
