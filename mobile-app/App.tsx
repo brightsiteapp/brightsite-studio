@@ -1171,21 +1171,27 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
   const revealText = useRef(new Animated.Value(0)).current;
   const revealShrink = useRef(new Animated.Value(0)).current;
   const revealFade = useRef(new Animated.Value(1)).current;
+  const revealIn = useRef(new Animated.Value(0)).current; // dark card fading in over the cream page
+  const revealBackdrop = useRef(new Animated.Value(1)).current; // cream cover hiding the dashboard until the card shrinks
   const [revealRect, setRevealRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [revealing, setRevealing] = useState(!!playReveal);
   useEffect(() => {
     if (!playReveal) return;
-    [revealB, revealText, revealShrink].forEach(v => v.setValue(0)); revealFade.setValue(1);
+    [revealB, revealText, revealShrink, revealIn].forEach(v => v.setValue(0)); revealFade.setValue(1); revealBackdrop.setValue(1);
     setRevealing(true);
     const t = setTimeout(() => buildCardRef.current?.measureInWindow((x, y, w, h) => {
       setRevealRect({ x, y, w, h });
       Animated.sequence([
-        Animated.delay(250),
+        Animated.timing(revealIn, { toValue: 1, duration: 650, easing: Easing.out(Easing.quad), useNativeDriver: false }),
+        Animated.delay(200),
         Animated.timing(revealB, { toValue: 1, duration: 700, useNativeDriver: false }),
         Animated.delay(150),
         Animated.timing(revealText, { toValue: 1, duration: 600, useNativeDriver: false }),
         Animated.delay(900),
-        Animated.timing(revealShrink, { toValue: 1, duration: 750, easing: Easing.inOut(Easing.cubic), useNativeDriver: false }),
+        Animated.parallel([
+          Animated.timing(revealShrink, { toValue: 1, duration: 750, easing: Easing.inOut(Easing.cubic), useNativeDriver: false }),
+          Animated.timing(revealBackdrop, { toValue: 0, duration: 750, easing: Easing.inOut(Easing.cubic), useNativeDriver: false }),
+        ]),
         Animated.timing(revealFade, { toValue: 0, duration: 250, useNativeDriver: false }),
       ]).start(() => { setRevealing(false); onRevealDone?.(); });
     }), 60);
@@ -1522,6 +1528,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
         </View>
       </View>
     </Modal>
+    {revealing && <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { zIndex: 998, elevation: 998, backgroundColor: C.card, opacity: revealBackdrop }]} />}
     {revealing && <Animated.View pointerEvents="none" style={[s.revealCard, revealRect ? {
       left: revealShrink.interpolate({ inputRange: [0, 1], outputRange: [0, revealRect.x] }),
       top: revealShrink.interpolate({ inputRange: [0, 1], outputRange: [0, revealRect.y] }),
@@ -1529,8 +1536,8 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
       height: revealShrink.interpolate({ inputRange: [0, 1], outputRange: [SCREEN_HEIGHT, revealRect.h] }),
       borderRadius: revealShrink.interpolate({ inputRange: [0, 1], outputRange: [0, 28] }),
       borderWidth: revealShrink.interpolate({ inputRange: [0, 1], outputRange: [0, 7] }),
-      opacity: revealFade,
-    } : { left: 0, top: 0, width: SCREEN_WIDTH, height: SCREEN_HEIGHT }]}>
+      opacity: Animated.multiply(revealIn, revealFade),
+    } : { left: 0, top: 0, width: SCREEN_WIDTH, height: SCREEN_HEIGHT, opacity: 0 }]}>
       <Animated.View style={[s.buildingGlow, { opacity: revealB, transform: [{ scale: revealB.interpolate({ inputRange: [0, 1], outputRange: [.85, 1] }) }] }]}><View style={s.buildingGlowInner}><Image source={require('./assets/brightsite-b-white.png')} resizeMode="contain" style={s.buildingLogo} /></View></Animated.View>
       <Animated.Text style={[s.buildingText, { color: '#fff', marginTop: 28, opacity: revealText }]}>Building your preview</Animated.Text>
       <Animated.Text style={[s.buildingSub, { color: 'rgba(255,255,255,.6)', opacity: revealText }]}>We’ll send you a notification as soon as it’s ready to review.</Animated.Text>
