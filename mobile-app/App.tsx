@@ -2971,7 +2971,7 @@ const s = StyleSheet.create({
   billingSave: { fontFamily: FONT, fontSize: 11, fontWeight: '800', color: C.success },
   planModalTotal: { fontFamily: FONT, fontSize: 13, fontWeight: '600', color: C.inkSoft, marginTop: 6, textAlign: 'center' },
   bbIntro: { flex: 1, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 30, gap: 18 },
-bbIntroLogo: { width: SCREEN_WIDTH - 90, height: (SCREEN_WIDTH - 90) * 137 / 1619, marginBottom: 18 },
+bbIntroLogo: { width: SCREEN_WIDTH - 90, height: (SCREEN_WIDTH - 90) * 134 / 1603, marginBottom: 18 },
 bbIntroTitle: { fontFamily: FONT, fontSize: 26, fontWeight: '900', color: C.ink, textAlign: 'center' },
 bbIntroTime: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999, backgroundColor: C.primarySoft },
 bbIntroText: { fontFamily: FONT, fontSize: 16, lineHeight: 23, color: C.inkSoft, textAlign: 'center', marginBottom: 14 },
