@@ -251,7 +251,9 @@ body { background: var(--bg); min-height: 100vh; }
 .work-tab .tab-dot { top: 4px; right: 3px; }
 .work-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .work-panel[hidden] { display: none; }
-#dashFrame { flex: 1; width: 100%; border: 0; min-height: 0; }
+.view-dash-btn { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line, rgba(28,40,50,.14)); border-radius: 999px; background: #fff; color: var(--accent); font: inherit; font-size: 13px; font-weight: 700; padding: 7px 13px; cursor: pointer; white-space: nowrap; flex: none; }
+.view-dash-btn .vd-short { display: none; }
+@media (max-width: 600px) { .view-dash-btn .vd-long { display: none; } .view-dash-btn .vd-short { display: inline; } }
 #ws-msgs .thread-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; background: #fbf9f6; }
 #ws-msgs .composer { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--line); }
 #ws-msgs .composer textarea { flex: 1; resize: none; min-height: 44px; max-height: 140px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; font: inherit; outline: none; }
@@ -284,7 +286,6 @@ body { background: var(--bg); min-height: 100vh; }
   .work-col { min-height: calc(100vh - 100px); }
   .ws-back { display: inline-block; }
   .work-head > div:nth-child(2) { min-width: 0; flex: 1; }
-  #dashFrame { min-height: calc(100vh - 170px); }
   .work-head { padding: 10px 14px; gap: 10px; }
   .work-head > div:nth-child(2) { min-width: 0; flex: 1; display: flex; flex-direction: column; }
   #wsTitle { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 16px; }
@@ -435,14 +436,13 @@ body { background: var(--bg); color: var(--ink); }
           <button type="button" class="ws-back" id="wsBack" aria-label="Back to clients">‹ Clients</button>
           <strong id="wsTitle"></strong>
           <span class="status-pill" id="wsStatus"></span>
+          <button type="button" class="view-dash-btn" id="wsViewDash"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg><span class="vd-long">View client's dashboard</span><span class="vd-short">Dashboard</span></button>
         </div>
         <nav class="work-tabs"><div class="tabs-inner">
-          <button type="button" class="work-tab active" id="tab-dash">Dashboard</button>
-          <button type="button" class="work-tab" id="tab-msgs">Messages<span class="tab-dot" id="msgsTabDot" hidden></span></button>
+          <button type="button" class="work-tab active" id="tab-msgs">Messages<span class="tab-dot" id="msgsTabDot" hidden></span></button>
           <button type="button" class="work-tab" id="tab-admin">Admin</button>
         </div></nav>
-        <div class="work-panel" id="ws-dash"><iframe id="dashFrame" title="Client dashboard"></iframe></div>
-        <div class="work-panel" id="ws-msgs" hidden>
+        <div class="work-panel" id="ws-msgs">
           <div class="thread-body" id="threadBody"></div>
           <div class="composer">
             <textarea id="composerInput" rows="1" placeholder="Reply as Tom…"></textarea>
@@ -1447,7 +1447,7 @@ document.getElementById('deleteConfirm').addEventListener('click', function() {
 var adminThreads = {};
 var adminThreadsLoaded = false;
 var activeThreadId = null;
-var activeTab = 'dash';
+var activeTab = 'msgs';
 var adminPollTimer = null;
 var lastRenderedCount = -1;
 
@@ -1576,23 +1576,16 @@ function selectClient(id) {
   pill.className = 'status-pill ' + s;
   renderClientList();
   updateAdminDot();
-  showWorkTab('dash');
+  showWorkTab('msgs');
 }
 
 function showWorkTab(name) {
   activeTab = name;
-  ['dash', 'msgs', 'admin'].forEach(function(t) {
+  ['msgs', 'admin'].forEach(function(t) {
     document.getElementById('ws-' + t).hidden = t !== name;
     document.getElementById('tab-' + t).classList.toggle('active', t === name);
   });
   if (!activeThreadId) return;
-  if (name === 'dash') {
-    var frame = document.getElementById('dashFrame');
-    if (frame.getAttribute('data-slug') !== activeThreadId) {
-      frame.setAttribute('data-slug', activeThreadId);
-      frame.src = '/account/dashboard.html?embed=1&bs_admin_slug=' + encodeURIComponent(activeThreadId);
-    }
-  }
   if (name === 'msgs') {
     markThreadSeen(activeThreadId);
     renderThread(true);
@@ -1781,7 +1774,8 @@ document.getElementById('wsBack').addEventListener('click', function() {
   document.querySelector('.workspace').classList.remove('detail');
   window.scrollTo(0, 0);
 });
-document.getElementById('tab-dash').addEventListener('click', function() { showWorkTab('dash'); });
+// The client's own dashboard (with its own tabs) opens full page instead of nested inside these tabs.
+document.getElementById('wsViewDash').addEventListener('click', function() { if (activeThreadId) openAccountDashboard(activeThreadId); });
 document.getElementById('tab-msgs').addEventListener('click', function() { showWorkTab('msgs'); });
 document.getElementById('tab-admin').addEventListener('click', function() { showWorkTab('admin'); });
 
