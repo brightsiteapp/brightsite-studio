@@ -30,8 +30,8 @@ const DASHBOARD_PREVIEW_MAX_HEIGHT = SCREEN_HEIGHT - 258 - DASHBOARD_PREVIEW_INS
 const DASHBOARD_PREVIEW_MAX_WIDTH = SCREEN_WIDTH - DASHBOARD_PREVIEW_INSET * 2;
 const DASHBOARD_PREVIEW_HEIGHT = Math.min(DASHBOARD_PREVIEW_MAX_HEIGHT, DASHBOARD_PREVIEW_MAX_WIDTH / PHONE_FRAME_ASPECT_RATIO);
 const DASHBOARD_PREVIEW_WIDTH = DASHBOARD_PREVIEW_HEIGHT * PHONE_FRAME_ASPECT_RATIO;
-const CARD_TOP = Platform.OS === 'ios' ? 54 : 28;
-const CARD_BOTTOM = 72;
+// Full-screen cards sit under the status bar / Dynamic Island; keep the dots and title below it.
+const SAFE_TOP = Platform.OS === 'ios' ? 60 : 28;
 const CARD_TRAVEL = SCREEN_WIDTH;
 const FONT = Platform.select({ ios: 'Avenir Next', android: 'sans-serif', default: 'sans-serif' });
 const C = {
@@ -350,7 +350,7 @@ function Field({ label, optional = false, value, onChangeText, placeholder, keyb
   return <View style={s.fieldWrap}>
     <Text style={s.fieldLabel}>{label}{optional && <Text style={s.fieldOptional}>  optional</Text>}</Text>
     <TextInput ref={inputRef} value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={C.placeholder}
-      keyboardType={keyboardType} multiline={multiline} style={[s.input, multiline && s.inputMultiline]} {...inputProps} />
+      keyboardType={keyboardType} multiline={multiline} rejectResponderTermination={false} style={[s.input, multiline && s.inputMultiline]} {...inputProps} />
   </View>;
 }
 
@@ -2252,12 +2252,11 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const pan = useMemo(() => PanResponder.create({
     onMoveShouldSetPanResponder: (_, g) => {
       if (keyboardVisible || stepEditMode) return false;
-      const inHeader = g.y0 < CARD_TOP + 80;
-      // cards with scrolling content only change from the header, so a scroll can't also drag the card
-      const scrollsContent = !['hours', 'business', 'contact'].includes(step.id);
-      const inFooter = !scrollsContent && g.y0 > SCREEN_HEIGHT - CARD_BOTTOM - 48;
-      return (inHeader || inFooter) && Math.abs(g.dx) > 12;
+      // cards move sideways, so a mostly-horizontal drag anywhere changes card without fighting vertical scrolling
+      return Math.abs(g.dx) > 12 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5;
     },
+    // capture phase too, so a sideways drag that starts on a text box or scroll view still moves the card
+    onMoveShouldSetPanResponderCapture: (_, g) => !keyboardVisible && !stepEditMode && Math.abs(g.dx) > 12 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
     onPanResponderTerminationRequest: () => false,
     onPanResponderGrant: revealRail,
     onPanResponderMove: (_, g) => {
@@ -2659,7 +2658,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             </ScrollView>
             <View pointerEvents="none" style={s.fixedPrompt}>
               {!!validationMessage && isActive && <Text style={s.validationText}>{validationMessage}</Text>}
-              {deckStep.id !== 'reviews' && !editingInfo && <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-forward" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : ['hours', 'business', 'contact'].includes(deckStep.id) ? 'Swipe up to save' : 'Swipe the title up to continue'}</Text></View>}
+              {deckStep.id !== 'reviews' && !editingInfo && <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-back" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe left to create account' : 'Swipe left to log in' : ['hours', 'business', 'contact'].includes(deckStep.id) ? 'Swipe left to save' : 'Swipe left to continue'}</Text></View>}
             </View>
           </Animated.View>;
         })}
@@ -2711,7 +2710,7 @@ const s = StyleSheet.create({
   loginStage: { flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28, paddingBottom: 20, paddingHorizontal: 18 }, loginCard: { flex: 1 },
   loginHeader: { minHeight: 78, paddingLeft: 26, paddingRight: 18, paddingTop: 15, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, loginAppIcon: { width: 48, height: 48, borderRadius: 15, shadowColor: '#1C69E8', shadowOpacity: .28, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } },
   card: { flex: 1, zIndex: 2, borderRadius: 30, backgroundColor: CARD, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.20)', shadowColor: '#000', shadowOpacity: .62, shadowRadius: 31, shadowOffset: { width: 0, height: 18 }, elevation: 18 },
-  deckCard: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, borderRadius: 0, borderWidth: 0 },
+  deckCard: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, borderRadius: 0, borderWidth: 0, paddingTop: SAFE_TOP + 22 },
   deckCardActive: { shadowOpacity: 0, elevation: 0 }, deckCardBehind: { shadowOpacity: 0, elevation: 0 },
   cardHeader: { minHeight: 72, paddingHorizontal: 26, paddingTop: 22, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', zIndex: 100, elevation: 100 },
   cardScroll: { flex: 1, zIndex: 1, elevation: 1, overflow: 'hidden' },
@@ -2816,7 +2815,7 @@ const s = StyleSheet.create({
   sectionEye: { padding: 7 }, sectionDragHandle: { padding: 7 },
   domainError: { marginTop: 10, fontFamily: FONT, fontSize: 13, lineHeight: 18, color: C.danger }, domainResult: { marginTop: 14, padding: 15, borderRadius: 14, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: C.successSoft, borderWidth: 1, borderColor: 'rgba(31,138,84,.3)' }, domainName: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#1C2832' }, domainPrice: { fontFamily: FONT, fontSize: 13, color: C.success, fontWeight: '600', marginTop: 2 },
   formChoice: { marginTop: 22, padding: 17, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: 'rgba(255,255,255,.45)', borderWidth: 1, borderColor: 'rgba(28,40,50,.16)' }, formChoiceIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(59,130,246,.12)' }, formChoiceTitle: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#1C2832' }, formChoiceText: { fontFamily: FONT, fontSize: 13, color: C.inkSoft, marginTop: 3, lineHeight: 18 },
-  rail: { position: 'absolute', top: CARD_TOP - 26, left: '25%', right: '25%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', zIndex: 140, elevation: 140 }, railButton: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }, railActive: { position: 'absolute', width: 27, height: 27, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: C.primary, borderWidth: 0, shadowColor: C.primary, shadowOpacity: .45, shadowRadius: 8, elevation: 8 }, railDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#1A1E22', borderWidth: 1, borderColor: 'rgba(0,0,0,.32)', shadowColor: '#000', shadowOpacity: .2, shadowRadius: 2 }, railDotOn: { backgroundColor: C.primary, borderColor: '#A9C8FF', shadowColor: C.primary, shadowOpacity: .45, shadowRadius: 5 },
+  rail: { position: 'absolute', top: SAFE_TOP + 2, left: '25%', right: '25%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', zIndex: 140, elevation: 140 }, railButton: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }, railActive: { position: 'absolute', width: 27, height: 27, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: C.primary, borderWidth: 0, shadowColor: C.primary, shadowOpacity: .45, shadowRadius: 8, elevation: 8 }, railDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#1A1E22', borderWidth: 1, borderColor: 'rgba(0,0,0,.32)', shadowColor: '#000', shadowOpacity: .2, shadowRadius: 2 }, railDotOn: { backgroundColor: C.primary, borderColor: '#A9C8FF', shadowColor: C.primary, shadowOpacity: .45, shadowRadius: 5 },
   reviewRowText: { fontFamily: FONT, fontSize: 15, lineHeight: 21, fontWeight: '600', color: '#1C2832' },
   addReviewBtn: { height: 46, borderRadius: 12, borderWidth: 1, borderColor: C.primaryBorder, backgroundColor: C.primarySoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 18 },
   addReviewText: { fontFamily: FONT, fontWeight: '700', fontSize: 14, color: C.ink },
@@ -2943,7 +2942,7 @@ const s = StyleSheet.create({
   billingTextOn: { color: '#fff' },
   billingSave: { fontFamily: FONT, fontSize: 11, fontWeight: '800', color: C.success },
   planModalTotal: { fontFamily: FONT, fontSize: 13, fontWeight: '600', color: C.inkSoft, marginTop: 6, textAlign: 'center' },
-  savedPill: { position: 'absolute', top: Platform.OS === 'ios' ? 58 : 24, alignSelf: 'center', zIndex: 200, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(28,40,50,.82)' },
+  savedPill: { position: 'absolute', top: SAFE_TOP + 86, alignSelf: 'center', zIndex: 200, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(28,40,50,.82)' },
   savedPillText: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: '#fff' },
   listRowSub: { fontFamily: FONT, fontSize: 13, color: C.inkMuted, marginTop: 2 },
   sheetDelete: { alignItems: 'center', paddingTop: 14 },
