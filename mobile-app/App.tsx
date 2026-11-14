@@ -32,7 +32,7 @@ const DASHBOARD_PREVIEW_HEIGHT = Math.min(DASHBOARD_PREVIEW_MAX_HEIGHT, DASHBOAR
 const DASHBOARD_PREVIEW_WIDTH = DASHBOARD_PREVIEW_HEIGHT * PHONE_FRAME_ASPECT_RATIO;
 const CARD_TOP = Platform.OS === 'ios' ? 54 : 28;
 const CARD_BOTTOM = 72;
-const CARD_TRAVEL = SCREEN_HEIGHT - 190;
+const CARD_TRAVEL = SCREEN_WIDTH;
 const FONT = Platform.select({ ios: 'Avenir Next', android: 'sans-serif', default: 'sans-serif' });
 const C = {
   primary: '#3B82F6', primaryPressed: '#2563EB', primarySoft: 'rgba(59,130,246,.10)', primaryBorder: 'rgba(59,130,246,.38)',
@@ -2257,21 +2257,21 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       // cards with scrolling content only change from the header, so a scroll can't also drag the card
       const scrollsContent = !['hours', 'business', 'contact'].includes(step.id);
       const inFooter = !scrollsContent && g.y0 > SCREEN_HEIGHT - CARD_BOTTOM - 48;
-      return (inHeader || inFooter) && Math.abs(g.dy) > 12;
+      return (inHeader || inFooter) && Math.abs(g.dx) > 12;
     },
     onPanResponderTerminationRequest: () => false,
     onPanResponderGrant: revealRail,
     onPanResponderMove: (_, g) => {
-      if (Math.abs(g.dy) > Math.abs(g.dx)) {
-        const pastEdge = (g.dy > 0 && index <= (authSession ? 1 : 0)) || (g.dy < 0 && index >= steps.length - 1);
-        if (Math.abs(g.dy) > 12 && !pastEdge) setDeckDirection(g.dy < 0 ? 1 : -1);
+      if (Math.abs(g.dx) > Math.abs(g.dy)) {
+        const pastEdge = (g.dx > 0 && index <= (authSession ? 1 : 0)) || (g.dx < 0 && index >= steps.length - 1);
+        if (Math.abs(g.dx) > 12 && !pastEdge) setDeckDirection(g.dx < 0 ? 1 : -1);
         // rubber-band past the first and last card instead of stopping dead
-        motion.setValue(index * CARD_TRAVEL - (pastEdge ? g.dy * .22 : g.dy));
+        motion.setValue(index * CARD_TRAVEL - (pastEdge ? g.dx * .22 : g.dx));
       }
     },
     onPanResponderRelease: (_, g) => {
       const atStart = index <= (authSession ? 1 : 0), atEnd = index >= steps.length - 1;
-      if (!atEnd && (g.dy < -48 || g.vy < -.55)) go(index + 1); else if (!atStart && (g.dy > 48 || g.vy > .55)) go(index - 1); else Animated.spring(motion, { toValue: index * CARD_TRAVEL, damping: 20, stiffness: 210, useNativeDriver: true }).start(() => setDeckDirection(0));
+      if (!atEnd && (g.dx < -48 || g.vx < -.55)) go(index + 1); else if (!atStart && (g.dx > 48 || g.vx > .55)) go(index - 1); else Animated.spring(motion, { toValue: index * CARD_TRAVEL, damping: 20, stiffness: 210, useNativeDriver: true }).start(() => setDeckDirection(0));
       hideRailSoon();
     },
     onPanResponderTerminate: () => {
@@ -2285,8 +2285,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     onPanResponderGrant: revealRail,
     onPanResponderMove: () => {},
     onPanResponderRelease: (_, g) => {
-      if (g.dy < -42) go(index + 1);
-      else if (g.dy > 42) go(index - 1);
+      if (g.dx < -42) go(index + 1);
+      else if (g.dx > 42) go(index - 1);
       hideRailSoon();
     },
   }), [index, data, hours, services, domainReady, designReady]);
@@ -2644,7 +2644,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           // edge before the next card reaches it, rather than blending through it.
           const travelPosition = isActive && deckDirection !== 0 ? Animated.multiply(cardPosition, 1.06) : cardPosition;
           const cardScale = cardPosition.interpolate({ inputRange: [-CARD_TRAVEL, 0, CARD_TRAVEL], outputRange: [.93, 1, .93], extrapolate: 'clamp' });
-          return <Animated.View key={deckStep.id} pointerEvents={isActive ? 'auto' : 'none'} {...(isActive ? pan.panHandlers : {})} style={[s.card, s.deckCard, isActive ? s.deckCardActive : s.deckCardBehind, { zIndex: isActive ? 22 : 20 - Math.abs(distance), transform: [{ translateY: travelPosition }, { scale: cardScale }] }]}>
+          return <Animated.View key={deckStep.id} pointerEvents={isActive ? 'auto' : 'none'} {...(isActive ? pan.panHandlers : {})} style={[s.card, s.deckCard, isActive ? s.deckCardActive : s.deckCardBehind, { zIndex: isActive ? 22 : 20 - Math.abs(distance), transform: [{ translateX: travelPosition }, { scale: cardScale }] }]}>
 
             <View style={s.cardHeader}><Text style={s.cardTitle}>{deckStep.title}</Text><View style={s.cardHeaderActions}>
               {deckIndex > 0 && <Text style={s.count}>{deckIndex}/{setupStepIndexes.length}</Text>}
@@ -2660,7 +2660,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             </ScrollView>
             <View pointerEvents="none" style={s.fixedPrompt}>
               {!!validationMessage && isActive && <Text style={s.validationText}>{validationMessage}</Text>}
-              {deckStep.id !== 'reviews' && !editingInfo && <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-up" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : ['hours', 'business', 'contact'].includes(deckStep.id) ? 'Swipe up to save' : 'Swipe the title up to continue'}</Text></View>}
+              {deckStep.id !== 'reviews' && !editingInfo && <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-forward" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe up to create account' : 'Swipe up to log in' : ['hours', 'business', 'contact'].includes(deckStep.id) ? 'Swipe up to save' : 'Swipe the title up to continue'}</Text></View>}
             </View>
           </Animated.View>;
         })}
@@ -2712,8 +2712,8 @@ const s = StyleSheet.create({
   loginStage: { flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28, paddingBottom: 20, paddingHorizontal: 18 }, loginCard: { flex: 1 },
   loginHeader: { minHeight: 78, paddingLeft: 26, paddingRight: 18, paddingTop: 15, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, loginAppIcon: { width: 48, height: 48, borderRadius: 15, shadowColor: '#1C69E8', shadowOpacity: .28, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } },
   card: { flex: 1, zIndex: 2, borderRadius: 30, backgroundColor: CARD, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.20)', shadowColor: '#000', shadowOpacity: .62, shadowRadius: 31, shadowOffset: { width: 0, height: 18 }, elevation: 18 },
-  deckCard: { position: 'absolute', top: CARD_TOP, bottom: CARD_BOTTOM, left: 6, right: 6 },
-  deckCardActive: { shadowColor: '#13306B', shadowOpacity: .3, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 12 }, deckCardBehind: { shadowOpacity: .12, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
+  deckCard: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, borderRadius: 0, borderWidth: 0 },
+  deckCardActive: { shadowOpacity: 0, elevation: 0 }, deckCardBehind: { shadowOpacity: 0, elevation: 0 },
   cardHeader: { minHeight: 72, paddingHorizontal: 26, paddingTop: 22, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', zIndex: 100, elevation: 100 },
   cardScroll: { flex: 1, zIndex: 1, elevation: 1, overflow: 'hidden' },
   cardTitle: { fontFamily: FONT, fontSize: 22, fontWeight: '800', letterSpacing: -.5, color: C.ink }, count: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.inkMuted },
@@ -2817,7 +2817,7 @@ const s = StyleSheet.create({
   sectionEye: { padding: 7 }, sectionDragHandle: { padding: 7 },
   domainError: { marginTop: 10, fontFamily: FONT, fontSize: 13, lineHeight: 18, color: C.danger }, domainResult: { marginTop: 14, padding: 15, borderRadius: 14, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: C.successSoft, borderWidth: 1, borderColor: 'rgba(31,138,84,.3)' }, domainName: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#1C2832' }, domainPrice: { fontFamily: FONT, fontSize: 13, color: C.success, fontWeight: '600', marginTop: 2 },
   formChoice: { marginTop: 22, padding: 17, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: 'rgba(255,255,255,.45)', borderWidth: 1, borderColor: 'rgba(28,40,50,.16)' }, formChoiceIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(59,130,246,.12)' }, formChoiceTitle: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#1C2832' }, formChoiceText: { fontFamily: FONT, fontSize: 13, color: C.inkSoft, marginTop: 3, lineHeight: 18 },
-  rail: { position: 'absolute', left: 12, top: '25%', bottom: '25%', justifyContent: 'space-between', alignItems: 'center', zIndex: 140, elevation: 140 }, railButton: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }, railActive: { position: 'absolute', width: 27, height: 27, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: C.primary, borderWidth: 0, shadowColor: C.primary, shadowOpacity: .45, shadowRadius: 8, elevation: 8 }, railDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#1A1E22', borderWidth: 1, borderColor: 'rgba(0,0,0,.32)', shadowColor: '#000', shadowOpacity: .2, shadowRadius: 2 }, railDotOn: { backgroundColor: C.primary, borderColor: '#A9C8FF', shadowColor: C.primary, shadowOpacity: .45, shadowRadius: 5 },
+  rail: { position: 'absolute', top: CARD_TOP - 26, left: '25%', right: '25%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', zIndex: 140, elevation: 140 }, railButton: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }, railActive: { position: 'absolute', width: 27, height: 27, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: C.primary, borderWidth: 0, shadowColor: C.primary, shadowOpacity: .45, shadowRadius: 8, elevation: 8 }, railDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#1A1E22', borderWidth: 1, borderColor: 'rgba(0,0,0,.32)', shadowColor: '#000', shadowOpacity: .2, shadowRadius: 2 }, railDotOn: { backgroundColor: C.primary, borderColor: '#A9C8FF', shadowColor: C.primary, shadowOpacity: .45, shadowRadius: 5 },
   reviewRowText: { fontFamily: FONT, fontSize: 15, lineHeight: 21, fontWeight: '600', color: '#1C2832' },
   addReviewBtn: { height: 46, borderRadius: 12, borderWidth: 1, borderColor: C.primaryBorder, backgroundColor: C.primarySoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 18 },
   addReviewText: { fontFamily: FONT, fontWeight: '700', fontSize: 14, color: C.ink },
