@@ -1,9 +1,12 @@
 // Plans as shown on pricing.html. "essential" is the Free plan (website built free, pay hosting);
 // Pro adds a one-off £199 build fee for sites over 5 pages. Both use the same hosting prices.
 const HOSTING = {
-  monthly: 'price_1UGhbEGqCP7G2YApAOKm8Goo', // £19/mo
-  annual: 'price_1UGpjvGqCP7G2YAptYGCKsFl',  // £204/yr (£17/mo)
+  monthly: 'price_1UGhbEGqCP7G2YApAOKm8Goo', // £19/mo (matches pricing page)
+  annual: 'price_1UbjtgGqCP7G2YAp7pkrd1fY',  // £192/yr (£16/mo, matches pricing page)
 };
+// Legacy £204/yr annual price, kept so existing annual subscribers are not changed.
+const LEGACY_ANNUAL = 'price_1UGpjvGqCP7G2YAptYGCKsFl';
+const BOOKING_OR_ECOMMERCE_ADDON = 'price_1UGhhAGqCP7G2YApFCPg4MHw'; // £19/mo add-on
 const PRO_BUILD_FEE = 'price_1UGplTGqCP7G2YApGrrTagi9'; // £199 one-off
 
 const FREE_DOMAIN_ALLOWANCE_PENCE = 1200; // "Free domain included — worth up to £12/yr"
@@ -16,6 +19,6 @@ export function planPrices(plan, billing) {
 
 // Annual plans and Pro include a domain worth up to £12; anything above that is charged.
 export function domainChargePence(plan, billing, quotePence) {
-  const included = plan === 'pro' || billing === 'annual';
-  return included ? Math.max(0, quotePence - FREE_DOMAIN_ALLOWANCE_PENCE) : quotePence;
+  // No free domain on the pricing page any more (partner referral codes will add it later).
+  return quotePence;
 }
