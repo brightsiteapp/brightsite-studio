@@ -2773,11 +2773,48 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   </FlowBackdrop>;
 }
 
+// A copy of the native splash (same blue, same 240-wide logo, centred) shown as the app opens,
+// so the dot on the i can glow twice before it fades into the app.
+const SPLASH_LOGO_W = 240;
+const SPLASH_K = SPLASH_LOGO_W / 515; // the white logo is 515x72; its i-dot is centred at (400, 8), ~18 wide
+function SplashGlow({ onDone }: { onDone: () => void }) {
+  const glow = useRef(new Animated.Value(0)).current;
+  const fade = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    // one flash: the dot brightens with a soft light bleeding off it, then settles and the splash fades
+    Animated.sequence([
+      Animated.delay(200),
+      Animated.timing(glow, { toValue: 1, duration: 260, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      Animated.timing(glow, { toValue: 0, duration: 700, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      Animated.timing(fade, { toValue: 0, duration: 380, useNativeDriver: true }),
+    ]).start(onDone);
+  }, []);
+  const dot = 18 * SPLASH_K;
+  // light sources the exact size of the dot, so only their soft shadows show beyond it
+  const light = (color: string, radius: number) => <Animated.View style={{ position: 'absolute', left: 400 * SPLASH_K - dot / 2, top: 8 * SPLASH_K - dot / 2, width: dot, height: dot, borderRadius: dot / 2,
+    backgroundColor: '#fff', shadowColor: color, shadowOpacity: 1, shadowRadius: radius, shadowOffset: { width: 0, height: 0 },
+    opacity: glow, transform: [{ scale: glow.interpolate({ inputRange: [0, 1], outputRange: [1, 1.08] }) }] }} />;
+  return <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { zIndex: 10000, elevation: 10000, backgroundColor: '#3B82F6', alignItems: 'center', justifyContent: 'center', opacity: fade }]}>
+    <View style={{ width: SPLASH_LOGO_W, height: 72 * SPLASH_K }}>
+      <Image source={require('./assets/brightsite-logo-white.png')} style={{ width: SPLASH_LOGO_W, height: 72 * SPLASH_K }} />
+      {light('#BFD6FF', 34)}
+      {light('#DCE9FF', 22)}
+      {light('#DCE9FF', 22)}
+      {light('#FFFFFF', 10)}
+      {light('#FFFFFF', 5)}
+    </View>
+  </Animated.View>;
+}
+
 export default function App() {
   const [generation, setGeneration] = useState(0);
+  const [splash, setSplash] = useState(true);
   useEffect(() => { void ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {}); }, []);
   return <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY} merchantIdentifier="merchant.app.brightsite.mobile" urlScheme="app.brightsite.mobile">
-    <AppInner key={generation} onSignedOut={() => setGeneration(g => g + 1)} />
+    <View style={{ flex: 1 }}>
+      <AppInner key={generation} onSignedOut={() => setGeneration(g => g + 1)} />
+      {splash && <SplashGlow onDone={() => setSplash(false)} />}
+    </View>
   </StripeProvider>;
 }
 
