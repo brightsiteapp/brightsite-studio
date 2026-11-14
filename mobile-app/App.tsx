@@ -974,9 +974,9 @@ function ScaledView({ virtualWidth, width, children }: { virtualWidth: number; w
   </View>;
 }
 
-function DeviceToggle({ mode, setMode, dark = false }: { mode: 'mobile' | 'desktop'; setMode: (m: 'mobile' | 'desktop') => void; dark?: boolean }) {
-  return <View style={[s.deviceToggle, dark && s.deviceToggleDark]}>
-    {(['mobile', 'desktop'] as const).map(m => <Pressable key={m} onPress={() => setMode(m)} style={[s.deviceToggleBtn, mode === m && (dark ? s.deviceToggleBtnOnDark : s.deviceToggleBtnOn)]} accessibilityLabel={`${m} preview`}>
+function DeviceToggle({ mode, setMode, dark = false, disabled = false }: { mode: 'mobile' | 'desktop'; setMode: (m: 'mobile' | 'desktop') => void; dark?: boolean; disabled?: boolean }) {
+  return <View style={[s.deviceToggle, dark && s.deviceToggleDark, disabled && { opacity: .45 }]} pointerEvents={disabled ? 'none' : 'auto'}>
+    {(['mobile', 'desktop'] as const).map(m => <Pressable key={m} disabled={disabled} onPress={() => setMode(m)} style={[s.deviceToggleBtn, mode === m && (dark ? s.deviceToggleBtnOnDark : s.deviceToggleBtnOn)]} accessibilityLabel={`${m} preview`}>
       <Ionicons name={m === 'mobile' ? 'phone-portrait-outline' : 'desktop-outline'} size={16} color={mode === m ? C.ink : dark ? 'rgba(255,255,255,.55)' : C.inkMuted} />
     </Pressable>)}
   </View>;
@@ -1389,7 +1389,12 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
                       <Text style={s.makeLiveBtnText}>Make Live</Text>
                     </View>
                   : <View />}
-            {!isBuilding && <View style={{ position: 'absolute', left: 0, right: 0, alignItems: 'center', pointerEvents: 'box-none' as any }}><DeviceToggle mode={previewMode} setMode={setPreviewMode} /></View>}
+            <View style={{ position: 'absolute', left: 0, right: 0, alignItems: 'center', pointerEvents: 'box-none' as any }}><DeviceToggle mode={previewMode} setMode={setPreviewMode} disabled={isBuilding} /></View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              {/* analytics unlock once the site is live; they open the analytics view on the web dashboard */}
+              <Pressable disabled={!isLive} onPress={() => void Linking.openURL(`https://brightsite.app/account/dashboard?slug=${encodeURIComponent(slug || '')}#analytics`)} accessibilityLabel="Analytics" style={({ pressed }) => [s.dashboardEdit, { paddingHorizontal: 11 }, !isLive && { opacity: .45 }, pressed && s.pressed]}>
+                <Ionicons name="stats-chart" size={15} color={C.primary} />
+              </Pressable>
             <View>
               <Pressable onPress={() => isBuilding ? onEditInfo?.() : setShowEditMenu(v => !v)} style={({ pressed }) => [s.dashboardEdit, pressed && s.pressed]}>
                 <Ionicons name="create-outline" size={15} color={C.ink} /><Text style={s.dashboardEditText}>Edit</Text>
@@ -1400,6 +1405,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
                   <Ionicons name="storefront-outline" size={17} color={C.primary} /><View><Text style={s.editMenuTitle}>Business info</Text><Text style={s.editMenuSub}>Details, hours, services and photos</Text></View>
                 </Pressable>
               </View>}
+            </View>
             </View>
           </View>
           {isBuilding

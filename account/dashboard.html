@@ -207,7 +207,7 @@
   .info-hint{font-size:12px;color:var(--muted);line-height:1.5;margin-top:2px}
   .upgrade-btn{display:block;width:100%;margin-top:10px;border:0;border-radius:999px;padding:11px 16px;font:inherit;font-size:12.5px;font-weight:700;color:#fff;background:var(--accent);cursor:pointer;text-align:center;text-decoration:none}
   .status-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;font-size:11.5px;font-weight:700;white-space:nowrap}
-  #wahAnalytics[hidden], #openAnalytics[hidden]{display:none !important}
+  #wahAnalytics:disabled, #openAnalytics:disabled{opacity:.45;cursor:default;pointer-events:none}
   .pvw-ico{display:none;flex:none}
   @media(max-width:799px){
     .mobile-pvw-toggle .mobile-pvw-btn{display:inline-flex;align-items:center;justify-content:center;padding:7px 10px}
@@ -789,7 +789,7 @@
           <button type="button" class="mobile-pvw-btn active" id="wahMobile" aria-label="Mobile view"><svg class="pvw-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg><span class="pvw-lbl">Mobile</span></button>
           <button type="button" class="mobile-pvw-btn" id="wahDesktop" aria-label="Desktop view"><svg class="pvw-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg><span class="pvw-lbl">Desktop</span></button>
         </div>
-        <button type="button" class="wah-edit" id="wahAnalytics" aria-label="Analytics"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8M14 7h7v7"/></svg></button>
+        <button type="button" class="wah-edit" id="wahAnalytics" aria-label="Analytics"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V12M10 20V4M16 20v-6M22 20H2"/></svg></button>
         <button type="button" class="wah-edit" id="wahEdit">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5Z"/></svg>
           Edit
@@ -810,7 +810,7 @@
         <button type="button" class="sec-btn" data-section="media"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8" cy="8" r="2"/><path d="m3 17 6-5 4 4 3-3 5 5"/></svg></span><span class="sec-title">Photos &amp; logo</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
         <button type="button" class="sec-btn" data-section="extras"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8S10 3 7.5 4.5 9 8 12 8Zm0 0s2-5 4.5-3.5S15 8 12 8Z"/></svg></span><span class="sec-title">Offers &amp; extras</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
         <button type="button" class="sec-btn" data-section="reviews"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z"/></svg></span><span class="sec-title">Reviews</span><span class="section-tick" aria-hidden="true"></span><span class="chev">›</span></button>
-        <button type="button" class="sec-btn" id="openAnalytics"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M14 7h7v7"/></svg></span><span class="sec-title">Analytics</span><span class="chev">›</span></button>
+        <button type="button" class="sec-btn" id="openAnalytics"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20V12M10 20V4M16 20v-6M22 20H2"/></svg></span><span class="sec-title">Analytics</span><span class="chev">›</span></button>
         <p class="builder-guidance" id="builderGuidance" hidden></p>
       </div>
 
@@ -1602,11 +1602,13 @@
 
     if (nameEl) nameEl.textContent = raw.name || business.name || 'Your website';
 
-    // Analytics only appear once the website is live.
+    // Analytics show greyed out until the website is live.
     ['wahAnalytics', 'openAnalytics'].forEach(function(id) {
       var el = document.getElementById(id);
-      if (el) el.hidden = !isLive;
+      if (el) { el.disabled = !isLive; el.title = isLive ? '' : 'Available once your website is live'; }
     });
+    // The mobile app links here with #analytics to open the analytics view directly.
+    if (isLive && location.hash === '#analytics') { history.replaceState(null, '', location.pathname + location.search); showAnalyticsTab(); }
 
     if (status) {
       status.classList.toggle('live', isLive);
