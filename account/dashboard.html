@@ -1408,6 +1408,7 @@
           workerPublish(false).then(function() {
             business.data = Object.assign({}, business.data || {}, { manuallyOffline: true, published: false });
             isLive = false;
+            pushToOwnPhone('Your website is offline', 'You took it offline. Tap Make Live whenever you want it back.');
             return saveBusiness();
           }).then(function() { renderWebsiteStatus(); updateWebsiteAppHeader(); }).catch(function(err) { alert(err.message); });
         };
@@ -1580,10 +1581,19 @@
     }).then(function(r) { return r.json().then(function(j) { if (!r.ok) throw new Error(j.error || 'Could not update your website'); return j; }); });
   }
 
+  // Lets the customer's phone know when they switch their site on or off here (if they use the app).
+  function pushToOwnPhone(title, body) {
+    var token = business && business.data && business.data.pushToken;
+    if (!token) return;
+    fetch('https://exp.host/--/api/v2/push/send', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify({ to: token, title: title, body: body, sound: 'default' }) }).catch(function() {});
+  }
+
   function goLive() {
     return workerPublish(true).then(function(res) {
+      var wasOffline = !!(business.data && business.data.manuallyOffline);
       business.data = Object.assign({}, business.data || {}, { liveUrl: res.url });
       isLive = true;
+      pushToOwnPhone(wasOffline ? 'Your website is back online' : 'Your website is live! 🎉', res.url ? 'It\u2019s live at ' + String(res.url).replace(/^https?:\/\//, '') : 'It\u2019s live.');
       return saveBusiness({ publish: true });
     });
   }

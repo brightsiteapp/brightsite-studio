@@ -621,6 +621,14 @@ function sendPushNotification(pushToken, title, body) {
   }).catch(function(err) { console.warn('[push] notification failed', err); });
 }
 
+// Looks up the customer's phone and pushes to it (no-op if they've never used the app).
+function pushToBusiness(slug, title, body) {
+  return fetch(SUPABASE_URL + '/rest/v1/businesses?select=data&id=eq.' + encodeURIComponent(slug), { headers: authHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(rows) { var d = rows && rows[0] && rows[0].data; sendPushNotification(d && d.pushToken, title, body); })
+    .catch(function(err) { console.warn('[push] lookup failed', err); });
+}
+
 function loadBusinesses() {
   document.getElementById('clientList').innerHTML = '<div class="loading-row"><span class="spinner"></span> Loading accounts…</div>';
 
@@ -989,6 +997,12 @@ function patchBusinessAfterUpload(demoUrl, failed, btn, status, progressWrap) {
     btn.textContent = 'Upload files'; progressWrap.style.display = 'none';
     if (r.ok) {
       sendBusinessMessage(uploadTargetSlug, result.notification);
+      // "website is live" already has its own push; otherwise tell them the preview is ready or updated
+      if (!/website is live/.test(result.notification)) {
+        pushToBusiness(uploadTargetSlug, /updated your preview/.test(result.notification) ? 'Preview updated' : 'Your website preview is ready 🎉', /updated your preview/.test(result.notification) ? 'Take another look at your updated website.' : 'Open BrightSite to see your new website.');
+      } else {
+        pushToBusiness(uploadTargetSlug, 'Your website is live! 🎉', result.notification.replace('🎉 ', ''));
+      }
       var msg = failed.length ? 'Uploaded — ' + failed.length + ' file(s) failed: ' + failed.join(', ') : 'Uploaded successfully!';
       status.textContent = msg; status.className = failed.length ? 'modal-status err' : 'modal-status ok';
       setTimeout(function() { document.getElementById('uploadModal').classList.add('hidden'); loadBusinesses(); }, 1800);
@@ -1751,6 +1765,7 @@ function sendAdminReply() {
       if (!r.ok) return r.text().then(function(t) { throw new Error('HTTP ' + r.status + ': ' + t); });
       input.value = '';
       input.style.height = '';
+      pushToBusiness(threadId, 'New message from Tom', body.length > 140 ? body.slice(0, 137) + '…' : body);
       return loadAdminMessages().then(function() { markThreadSeen(threadId); renderThread(true); renderClientList(); updateAdminDot(); });
     })
     .catch(function(e) { alert('Message not sent: ' + e.message); })

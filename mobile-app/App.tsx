@@ -111,6 +111,12 @@ function authHeaders(accessToken: string, extra: Record<string, string> = {}) {
 
 Notifications.setNotificationHandler({ handleNotification: async () => ({ shouldShowAlert: true, shouldPlaySound: true, shouldSetBadge: false, shouldShowBanner: true, shouldShowList: true }) });
 
+// Push to this customer's own phone(s) after they switch their site on or off, so every device they use knows.
+function pushToSelf(pushToken: string | undefined, title: string, body: string) {
+  if (!pushToken) return;
+  void fetch('https://exp.host/--/api/v2/push/send', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ to: pushToken, title, body, sound: 'default' }) }).catch(() => {});
+}
+
 async function registerPushToken(): Promise<string | null> {
   if (!Device.isDevice) return null;
   const { status: existing } = await Notifications.getPermissionsAsync();
@@ -2288,9 +2294,11 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     try {
       if (live) {
         try {
+          const wasOffline = !!businessRecord.current.manuallyOffline;
           const res = await workerPublish(slug, true);
           await saveBusiness(slug, { published: true, manuallyOffline: false, needsPublish: false, liveUrl: res.url });
           setWebsiteStatus('live');
+          pushToSelf(businessRecord.current.pushToken, wasOffline ? 'Your website is back online' : 'Your website is live! 🎉', res.url ? `It’s live again at ${String(res.url).replace(/^https?:\/\//, '')}` : 'It’s live again.');
         } catch (err: any) {
           await saveBusiness(slug, { published: false, manuallyOffline: false, needsPublish: true });
           setWebsiteStatus('publishing');
@@ -2300,6 +2308,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         await workerPublish(slug, false);
         await saveBusiness(slug, { published: false, manuallyOffline: true });
         setWebsiteStatus('ready');
+        pushToSelf(businessRecord.current.pushToken, 'Your website is offline', 'You took it offline. Tap Make Live whenever you want it back.');
       }
       return true;
     } catch { Alert.alert('Something went wrong', 'We couldn\'t update your website. Please try again.'); return false; }
