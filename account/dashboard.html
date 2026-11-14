@@ -77,6 +77,8 @@
   .desk-preview-toggle{display:flex;align-items:center;gap:2px;padding:3px;border:1px solid var(--line);border-radius:9px;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:inset 0 1px 0 #fff;margin-left:auto}
   .dvt-btn{border:0;border-radius:6px;background:transparent;color:var(--muted);font:700 12px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;padding:5px 11px;cursor:pointer;transition:background .12s,color .12s}
   .dvt-btn.active{background:var(--accent);color:#fff}
+  .desk-analytics{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:9px;background:var(--glass);color:var(--accent);font:700 12px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;padding:8px 12px;cursor:pointer}
+  .desk-analytics:disabled{opacity:.45;cursor:default;pointer-events:none}
   #deskPreview.mobile-view .desk-preview-bar{align-self:stretch;}
   @media(min-width:800px){
     #dashWrap{flex-direction:row;}
@@ -1063,6 +1065,7 @@
       <button type="button" class="dvt-btn active" id="dvtDesktop" aria-pressed="true" onclick="var p=document.getElementById('deskPreview'),b=p.querySelector('.fake-browser'),m=p.querySelector('.fake-phone');p.classList.remove('mobile-view');b.hidden=false;m.hidden=true;b.style.display='flex';m.style.display='none';this.classList.add('active');this.setAttribute('aria-pressed','true');document.getElementById('dvtMobile').classList.remove('active');document.getElementById('dvtMobile').setAttribute('aria-pressed','false');">Desktop</button>
       <button type="button" class="dvt-btn" id="dvtMobile" aria-pressed="false" onclick="var p=document.getElementById('deskPreview'),b=p.querySelector('.fake-browser'),m=p.querySelector('.fake-phone');p.classList.add('mobile-view');b.hidden=true;m.hidden=false;b.style.display='none';m.style.display='flex';this.classList.add('active');this.setAttribute('aria-pressed','true');document.getElementById('dvtDesktop').classList.remove('active');document.getElementById('dvtDesktop').setAttribute('aria-pressed','false');">Mobile</button>
     </div>
+    <button type="button" class="desk-analytics" id="deskAnalytics"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="2" y="13" width="4" height="9" rx="1.2"/><rect x="7.33" y="8" width="4" height="14" rx="1.2"/><rect x="12.67" y="2" width="4" height="20" rx="1.2"/><rect x="18" y="10" width="4" height="12" rx="1.2"/></svg>Analytics</button>
   </div>
   <div class="preview-frame-wrap" id="previewFrameWrap">
     <!-- desktop: fake browser chrome -->
@@ -1522,7 +1525,7 @@
     this.querySelectorAll('button').forEach(function(x) { x.setAttribute('aria-pressed', String(x === b)); });
     loadAnalytics();
   });
-  ['openAnalytics', 'wahAnalytics'].forEach(function(id) {
+  ['openAnalytics', 'wahAnalytics', 'deskAnalytics'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.addEventListener('click', showAnalyticsTab);
   });
@@ -1611,7 +1614,7 @@
     if (nameEl) nameEl.textContent = raw.name || business.name || 'Your website';
 
     // Analytics show greyed out until the website is live.
-    ['wahAnalytics', 'openAnalytics'].forEach(function(id) {
+    ['wahAnalytics', 'openAnalytics', 'deskAnalytics'].forEach(function(id) {
       var el = document.getElementById(id);
       if (el) { el.disabled = !isLive; el.title = isLive ? '' : 'Available once your website is live'; }
     });
