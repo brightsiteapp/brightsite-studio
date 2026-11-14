@@ -1345,7 +1345,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           <View style={s.dashboardInfoCard}>
             <Text style={s.dashboardCardLabel}>Plan</Text>
             <Text style={s.dashboardCardTitle}>{isPaying ? `${planPro ? 'Pro' : 'Free'} plan · ${planAnnual ? 'Annual' : 'Monthly'}` : 'No plan yet'}</Text>
-            <Text style={s.dashboardCardText}>{isPaying ? (planAnnual ? '£17/month hosting, billed £204 yearly' : '£19/month hosting') : 'Choose a plan when you tap Make Live.'}</Text>
+            <Text style={s.dashboardCardText}>{isPaying ? (planAnnual ? '£16/month hosting, billed £192 yearly' : '£19/month hosting') : 'Choose a plan when you tap Make Live.'}</Text>
           </View>
           <View style={s.dashboardInfoCard}>
             <Text style={s.dashboardCardLabel}>Domain</Text>
@@ -1382,7 +1382,13 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
                     <Ionicons name="paper-plane-outline" size={13} color="#fff" />
                     <Text style={s.makeLiveBtnText}>Send to designer</Text>
                   </Pressable>
-                : <View />}
+                : isBuilding
+                  // shown while the designer builds the site so customers know what's next; unlocks once it's ready
+                  ? <View style={[s.makeLiveBtn, { opacity: .45 }]} accessibilityState={{ disabled: true }}>
+                      <Ionicons name="rocket-outline" size={13} color="#fff" />
+                      <Text style={s.makeLiveBtnText}>Make Live</Text>
+                    </View>
+                  : <View />}
             {!isBuilding && <View style={{ position: 'absolute', left: 0, right: 0, alignItems: 'center', pointerEvents: 'box-none' as any }}><DeviceToggle mode={previewMode} setMode={setPreviewMode} /></View>}
             <View>
               <Pressable onPress={() => isBuilding ? onEditInfo?.() : setShowEditMenu(v => !v)} style={({ pressed }) => [s.dashboardEdit, pressed && s.pressed]}>
@@ -1454,7 +1460,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           <View style={s.billingToggle}>
             {([false, true] as const).map(isAnnual => <Pressable key={String(isAnnual)} onPress={() => setAnnual(isAnnual)} style={[s.billingOption, annual === isAnnual && s.billingOptionOn]}>
               <Text style={[s.billingText, annual === isAnnual && s.billingTextOn]}>{isAnnual ? 'Annual' : 'Monthly'}</Text>
-              {isAnnual && <Text style={[s.billingSave, annual && { color: '#fff' }]}>save £24</Text>}
+              {isAnnual && <Text style={[s.billingSave, annual && { color: '#fff' }]}>save £36</Text>}
             </Pressable>)}
           </View>
           {PLAN_OPTIONS.map(opt => <Pressable key={opt.id} onPress={() => setPlanChoice(opt.id)} style={[s.planModalOption, planChoice === opt.id && s.planModalOptionOn]}>
@@ -1468,7 +1474,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
               <Text style={s.planModalOptionNote}>{opt.buildLabel}</Text>
             </View>
           </Pressable>)}
-          <Text style={s.planModalTotal}>{planChoice === 'pro' ? '£199 build fee today, then ' : ''}{annual ? '£204/yr hosting (£17/mo)' : '£19/mo hosting'} · cancel any time</Text>
+          <Text style={s.planModalTotal}>{planChoice === 'pro' ? '£199 build fee today, then ' : ''}{annual ? '£192/yr hosting (£16/mo)' : '£19/mo hosting'} · cancel any time</Text>
           <View style={s.planModalFeeNote}>
             <Ionicons name="globe-outline" size={14} color={C.primary} />
             <Text style={s.planModalFeeText}>
