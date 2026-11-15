@@ -423,6 +423,10 @@ body { background: var(--bg); color: var(--ink); }
 .sb-btn.sb-blue { color: var(--accent); }
 @media (max-width: 520px) { .sb-label { display: none; } .sb-btn { padding: 0 11px; } }
 .work-head .status-pill { margin-left: auto; }
+.site-preview .pv-b { width: 96px; height: 96px; margin: 0 auto 22px; display: flex; align-items: center; justify-content: center; border-radius: 50%; box-shadow: 0 0 60px 14px rgba(59,130,246,.35); animation: pvPulse 2.2s ease-in-out infinite; }
+.site-preview .pv-b img { width: 56px; height: 56px; object-fit: contain; opacity: .85; }
+@keyframes pvPulse { 0%,100% { opacity: .55; transform: scale(.94); } 50% { opacity: 1; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .site-preview .pv-b { animation: none; } }
 </style>
 </head>
 <body>
@@ -1680,7 +1684,7 @@ function renderSitePreview() {
     if (pv.getAttribute('data-url') !== url) { pv.setAttribute('data-url', url); pv.innerHTML = '<iframe src="' + esc(url) + '" title="Client website"></iframe>'; }
   } else {
     pv.removeAttribute('data-url');
-    pv.innerHTML = '<div class="pv-empty"><b>No website uploaded yet</b>Upload their files below and the preview shows here.</div>';
+    pv.innerHTML = '<div class="pv-empty"><div class="pv-b"><img src="/img/brightsite-b-white.png" alt=""></div><b>Building the preview</b>Upload their website and it shows here.</div>';
   }
 }
 
