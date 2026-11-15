@@ -1701,13 +1701,6 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminViewingBusiness, setAdminViewingBusiness] = useState<any>(null);
   const [editingInfo, setEditingInfo] = useState(false);
-  // BRIGHTBUILDER intro: shown once, the first time someone opens the card builder
-  const [builderIntro, setBuilderIntro] = useState(false);
-  useEffect(() => {
-    if (appScreen !== 'onboarding' || editingInfo) return;
-    AsyncStorage.getItem('bb_intro_seen').then(v => { if (!v) setBuilderIntro(true); }).catch(() => {});
-  }, [appScreen, editingInfo]);
-  const closeBuilderIntro = () => { setBuilderIntro(false); AsyncStorage.setItem('bb_intro_seen', '1').catch(() => {}); };
   const [savingInfo, setSavingInfo] = useState(false);
   const [buildChoice, setBuildChoice] = useState<'designer' | 'template' | null>(null);
   const [websiteStatus, setWebsiteStatus] = useState<'loading' | 'todo' | 'building' | 'ready' | 'publishing' | 'live'>('loading');
@@ -2551,16 +2544,13 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     </View>
   </FlowBackdrop>;
 
-  if (index === 0 && appScreen === 'onboarding') return <FlowBackdrop>
+  if (index === 0 && appScreen === 'onboarding') return <FlowBackdrop plain>
     <StatusBar style="dark" />
-    <View style={s.loginStage}>
-      <View style={[s.card, s.loginCard]}>
-        
-        <View style={s.loginHeader}><Logo height={20} /><Image source={require('./assets/brightsite-icon.png')} style={s.loginAppIcon} /></View>
-        <ScrollView contentContainerStyle={[s.content, s.loginContent]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
-          {content(steps[0])}
-        </ScrollView>
-      </View>
+    <View style={{ flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28 }}>
+      <View style={s.loginHeader}><Logo height={20} /><Image source={require('./assets/brightsite-icon.png')} style={s.loginAppIcon} /></View>
+      <ScrollView contentContainerStyle={[s.content, s.loginContent]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
+        {content(steps[0])}
+      </ScrollView>
     </View>
   </FlowBackdrop>;
 
@@ -2709,24 +2699,22 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       <StatusBar style="dark" />
       <View style={{ flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28 }}>
         <View style={s.loginHeader}><Logo height={20} /><Image source={require('./assets/brightsite-icon.png')} style={s.loginAppIcon} /></View>
-        <ScrollView contentContainerStyle={[s.content, s.loginContent]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
-            {chooseMode === 'pick' ? <View style={{ position: 'absolute', left: 0, right: 0, top: 121, paddingHorizontal: 18 }}>
-              <Text style={[s.heroTitle, { textAlign: 'center' }]}>How would you like to build your website?</Text>
-              <Text style={{ fontFamily: FONT, fontSize: 16, color: C.inkMuted, textAlign: 'center', marginTop: 10, marginBottom: 40 }}>You can change anything later.</Text>
-              <View style={[s.pathStack, { alignSelf: 'stretch', gap: 18 }]}>
-                <Pressable onPress={() => setChooseMode('auto')} style={({ pressed }) => [s.pathCard, s.pathCardPlain, pressed && s.pressed]}>
-                  <Text style={[s.pathTag, { color: C.inkMuted, textAlign: 'center' }]}>2 MINUTES</Text>
-                  <Text style={[s.pathTitle, { textAlign: 'center' }]}>Automatic</Text>
-                  <Text style={[s.pathText, { textAlign: 'center' }]}>Share your Google, Facebook or website link and our designer builds it for you.</Text>
-                </Pressable>
-                <Pressable onPress={() => { setIndex(1); motion.setValue(CARD_TRAVEL); setAppScreen('onboarding'); }} style={({ pressed }) => [s.pathCard, s.pathCardPlain, pressed && s.pressed]}>
-                  <Text style={[s.pathTag, { color: C.inkMuted, textAlign: 'center' }]}>ABOUT 10 MINUTES</Text>
-                  <Image source={require('./assets/brightbuilder.png')} resizeMode="contain" style={{ width: 170, height: 170 * 137 / 1543, marginTop: 12, marginBottom: 12, alignSelf: 'center' }} />
-                  <Text style={[s.pathTitle, { textAlign: 'center' }]}>Manual</Text>
-                  <Text style={[s.pathText, { textAlign: 'center' }]}>Enter your details, hours, services and photos yourself.</Text>
-                </Pressable>
-              </View>
-            </View> : <>
+        {chooseMode === 'pick' ? <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 18, paddingBottom: 24 }}>
+          <Text style={[s.heroTitle, { textAlign: 'center' }]}>How would you like to build your website?</Text>
+          <Text style={{ fontFamily: FONT, fontSize: 17, lineHeight: 24, color: C.inkSoft, textAlign: 'center', marginTop: 10, marginBottom: 34 }}>You can change anything later.</Text>
+          <View style={{ gap: 18 }}>
+            <Pressable onPress={() => setChooseMode('auto')} style={({ pressed }) => [s.pathCard, s.pathCardBlue, pressed && s.pressed]}>
+              <Text style={[s.pathTitle, { color: '#fff' }]}>Automatic</Text>
+              <Text style={[s.pathText, { color: '#fff' }]}>Share your Google, Facebook or website link and our designer builds it for you.</Text>
+            </Pressable>
+            <Pressable onPress={() => { setIndex(1); motion.setValue(CARD_TRAVEL); setAppScreen('onboarding'); }} style={({ pressed }) => [s.pathCard, s.pathCardWhite, pressed && s.pressed]}>
+              <Image source={require('./assets/brightbuilder.png')} resizeMode="contain" style={{ width: 22*1543/137, height: 22, tintColor: C.primaryPressed, marginBottom: 8 }} />
+              <Text style={[s.pathTitle, { color: C.primaryPressed }]}>Seven. Simple. Steps.</Text>
+              <Text style={[s.pathText, { color: C.primaryPressed }]}>Under 10 minutes. Enter your details, hours, services and photos yourself.</Text>
+            </Pressable>
+          </View>
+        </View> : <ScrollView contentContainerStyle={[s.content, s.loginContent]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
+          <>
               <Pressable onPress={() => setChooseMode('pick')} hitSlop={10} style={s.chooseBack}><Text style={s.chooseBackText}>‹ Back</Text></Pressable>
               <Text style={s.heroTitle}>Share your links</Text>
               <Intro>Add your name and at least one link. Our designer will take it from there.</Intro>
@@ -2738,8 +2726,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
               <Pressable disabled={!canSend} onPress={() => { Keyboard.dismiss(); setBuildChoice('designer'); setAutoPending(true); }} style={({ pressed }) => [s.primaryBtn, s.sendGlow, !canSend && s.sendGlowOff, pressed && s.pressed]}>
                 <Text style={s.primaryBtnText}>Send to designer</Text>
               </Pressable>
-            </>}
-          </ScrollView>
+          </>
+        </ScrollView>}
       </View>
     </View>;
   }
@@ -2823,15 +2811,6 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         onDelete={index === null ? undefined : () => { save(list.filter((_, n) => n !== index)); setSheet(null); }}
         onClose={() => setSheet(null)} />;
     })()}
-    <Modal visible={builderIntro} animationType="fade" onRequestClose={closeBuilderIntro}>
-      <View style={s.bbIntro}>
-        <Image source={require('./assets/brightbuilder.png')} resizeMode="contain" style={s.bbIntroLogo} />
-        <Text style={s.bbIntroTitle}>Build your website in…{'\n'}Seven. Simple. Steps.</Text>
-        <Text style={s.bbIntroText}>Fill in each card as you go. Skip anything you like and change it later.</Text>
-        <Pressable onPress={closeBuilderIntro} style={({ pressed }) => [s.authSubmit, { alignSelf: 'stretch' }, pressed && s.pressed]}><Text style={s.authSubmitText}>Let’s start</Text></Pressable>
-        <View style={s.bbIntroTime}><Ionicons name="time-outline" size={15} color={C.primary} /><Text style={s.bbIntroHintText}>Under 10 minutes</Text></View>
-      </View>
-    </Modal>
   </FlowBackdrop>;
 }
 
@@ -3097,13 +3076,11 @@ buildingWrap: { alignItems: 'center', paddingBottom: 24 },
   sendGlow: { marginTop: 6, borderWidth: 2, borderColor: 'rgba(147,197,253,.95)', shadowColor: '#3B82F6', shadowOpacity: .75, shadowRadius: 16, shadowOffset: { width: 0, height: 0 }, elevation: 10 },
   sendGlowOff: { opacity: .45, shadowOpacity: 0, borderColor: 'transparent', elevation: 0 },
   sendHint: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, textAlign: 'center', marginTop: 4, marginBottom: 8 },
-  pathStack: { flex: 1, justifyContent: 'center', gap: 16, paddingBottom: 24 },
-  pathCard: { height: 168, borderRadius: 22, padding: 22, justifyContent: 'flex-end' },
-  pathCardMain: { backgroundColor: C.primary, shadowColor: '#1D4ED8', shadowOpacity: .28, shadowRadius: 18, shadowOffset: { width: 0, height: 8 } },
-  pathCardPlain: { backgroundColor: 'transparent', borderWidth: 1, borderColor: C.lineStrong },
-  pathTag: { fontFamily: FONT, fontSize: 11, fontWeight: '800', letterSpacing: .8, color: 'rgba(255,255,255,.8)', marginBottom: 'auto' },
-  pathTitle: { fontFamily: FONT, fontSize: 24, fontWeight: '800', letterSpacing: -.5, color: C.ink, marginBottom: 6 },
-  pathText: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: C.inkSoft },
+  pathCard: { minHeight: 196, borderRadius: 22, paddingVertical: 26, paddingHorizontal: 24, justifyContent: 'center', alignItems: 'center' },
+pathCardBlue: { backgroundColor: C.primary, shadowColor: '#1D4ED8', shadowOpacity: .28, shadowRadius: 18, shadowOffset: { width: 0, height: 8 } },
+pathCardWhite: { backgroundColor: '#fff', shadowColor: '#1C2832', shadowOpacity: .1, shadowRadius: 16, shadowOffset: { width: 0, height: 6 } },
+  pathTitle: { fontFamily: FONT, fontSize: 26, fontWeight: '800', letterSpacing: -.5, color: C.ink, marginBottom: 8, textAlign: 'center' },
+  pathText: { fontFamily: FONT, fontSize: 17, lineHeight: 24, fontWeight: '500', color: C.ink, textAlign: 'center' },
   chooseBack: { flexDirection: 'row', alignItems: 'center', gap: 2, alignSelf: 'flex-start', marginBottom: 14 },
   chooseBackText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.primary },
   // the lowercase i from the BrightSite wordmark: round dot over a rounded stem
@@ -3121,12 +3098,6 @@ buildingWrap: { alignItems: 'center', paddingBottom: 24 },
   billingTextOn: { color: '#fff' },
   billingSave: { fontFamily: FONT, fontSize: 11, fontWeight: '800', color: C.success },
   planModalTotal: { fontFamily: FONT, fontSize: 13, fontWeight: '600', color: C.inkSoft, marginTop: 6, textAlign: 'center' },
-  bbIntro: { flex: 1, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 30, gap: 18 },
-bbIntroLogo: { width: SCREEN_WIDTH - 90, height: (SCREEN_WIDTH - 90) * 134 / 1543, marginBottom: 18 },
-bbIntroTitle: { fontFamily: FONT, fontSize: 26, fontWeight: '900', color: C.ink, textAlign: 'center' },
-bbIntroTime: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999, backgroundColor: C.primarySoft },
-bbIntroText: { fontFamily: FONT, fontSize: 16, lineHeight: 23, color: C.inkSoft, textAlign: 'center', marginBottom: 14 },
-bbIntroHintText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.primary },
 savedPill: { position: 'absolute', top: SAFE_TOP + 86, alignSelf: 'center', zIndex: 200, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(28,40,50,.82)' },
   savedPillText: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: '#fff' },
   listRowSub: { fontFamily: FONT, fontSize: 13, color: C.inkMuted, marginTop: 2 },
