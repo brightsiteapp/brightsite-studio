@@ -1118,11 +1118,22 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
   return <KeyboardAvoidingView style={{ flex: 1, backgroundColor: C.canvas }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
     <StatusBar style="dark" />
     <View style={s.dashboardScreen}>
-      <View style={s.dashboardBrandRow}>
-        <Logo height={17} />
-        {onAdminBack && <Pressable hitSlop={10} onPress={onAdminBack} style={s.adminBackBtn}><Ionicons name="chevron-back" size={15} color={C.primary} /><Text style={s.adminBackText}>Admin</Text></Pressable>}
-        {!isLoadingSite && <View style={[s.statusPill, { backgroundColor: status.bg }]}><Animated.View style={[s.statusDot, { backgroundColor: status.color, opacity: isPublishing ? pulseAnim : 1 }]} /><Text style={[s.statusPillText, { color: status.color }]}>{status.label}</Text></View>}
-      </View>
+      {adminBiz
+        ? <>
+          <View style={[s.dashboardBrandRow, { paddingBottom: 10 }]}>
+            <Logo height={17} />
+            <Pressable hitSlop={10} onPress={onAdminBack} style={[s.adminBackBtn, { marginRight: 0 }]}><Ionicons name="chevron-back" size={15} color={C.primary} /><Text style={s.adminBackText}>Admin</Text></Pressable>
+          </View>
+          <View style={[s.dashboardBrandRow, { paddingBottom: 14, gap: 10 }]}>
+            <Text style={{ flex: 1, fontFamily: FONT, fontSize: 20, fontWeight: '800', color: C.ink }} numberOfLines={1}>{adminBiz.data?.name || adminBiz.data?.businessName || adminBiz.id}</Text>
+            {!isLoadingSite && <View style={[s.statusPill, { backgroundColor: status.bg }]}><Animated.View style={[s.statusDot, { backgroundColor: status.color, opacity: isPublishing ? pulseAnim : 1 }]} /><Text style={[s.statusPillText, { color: status.color }]}>{status.label}</Text></View>}
+          </View>
+        </>
+        : <View style={s.dashboardBrandRow}>
+          <Logo height={17} />
+          {onAdminBack && <Pressable hitSlop={10} onPress={onAdminBack} style={s.adminBackBtn}><Ionicons name="chevron-back" size={15} color={C.primary} /><Text style={s.adminBackText}>Admin</Text></Pressable>}
+          {!isLoadingSite && <View style={[s.statusPill, { backgroundColor: status.bg }]}><Animated.View style={[s.statusDot, { backgroundColor: status.color, opacity: isPublishing ? pulseAnim : 1 }]} /><Text style={[s.statusPillText, { color: status.color }]}>{status.label}</Text></View>}
+        </View>}
       <View style={s.dashboardTabsTop}>{['Website', 'Messages', 'Account'].map(name => <Pressable key={name} onPress={() => setTab(name)} style={[s.dashboardTab, tab === name && s.dashboardTabOn]}><Text style={[s.dashboardTabText, tab === name && s.dashboardTabTextOn]}>{name}</Text>{name === 'Messages' && hasUnread && tab !== 'Messages' && <View style={s.unreadDot} accessibilityLabel="New message" />}</Pressable>)}</View>
       {!!saveError && <View style={s.saveBanner}><Ionicons name="alert-circle" size={16} color={C.danger} /><Text style={s.saveBannerText}>{saveError}</Text></View>}
       {tab === 'Messages' ? (adminBiz
