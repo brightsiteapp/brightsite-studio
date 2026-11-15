@@ -209,10 +209,13 @@ body { background: var(--bg); min-height: 100vh; }
 .thread-head strong { font-size: 15px; }
 .thread-head a { font-size: 12.5px; font-weight: 600; color: var(--accent); text-decoration: none; white-space: nowrap; }
 .thread-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; background: #fbf9f6; }
-.bubble { max-width: 72%; padding: 9px 13px; border-radius: 16px; font-size: 14px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+.msg { display: flex; flex-direction: column; max-width: 78%; }
+.msg.out { align-self: flex-end; align-items: flex-end; }
+.msg.in { align-self: flex-start; align-items: flex-start; }
+.bubble { max-width: 100%; padding: 11px 16px; border-radius: 22px; box-shadow: 0 2px 8px rgba(28,40,50,.07); border-radius: 22px; font-size: 14px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
 .bubble.in { align-self: flex-start; background: #fff; border: 1px solid var(--line); border-bottom-left-radius: 4px; }
-.bubble.out { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
-.bubble-meta { margin-top: 3px; font-size: 11px; opacity: .7; }
+.bubble.out { box-shadow: 0 2px 10px rgba(59,130,246,.28); align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+.bubble-meta { margin-top: 5px; font-size: 11px; font-weight: 600; color: var(--muted); }
 .composer { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--line); }
 .composer textarea { flex: 1; resize: none; min-height: 44px; max-height: 140px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; font: inherit; outline: none; }
 .composer button { border: 0; border-radius: 12px; padding: 0 18px; background: var(--accent); color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
@@ -282,7 +285,7 @@ body { background: var(--bg); min-height: 100vh; }
 #ws-msgs .thread-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; background: #fbf9f6; }
 #ws-msgs .composer { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--line); }
 #ws-msgs .composer textarea { flex: 1; resize: none; min-height: 44px; max-height: 140px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; font: inherit; outline: none; }
-#ws-msgs .composer button { border: 0; border-radius: 12px; padding: 0 18px; background: var(--accent); color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+#ws-msgs .composer button { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex: none; border-radius: 50% !important; border: 0; padding: 0;  background: var(--accent); color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
 #ws-msgs .composer button:disabled { opacity: .5; cursor: not-allowed; }
 .admin-panel { padding: 18px; overflow-y: auto; }
 .admin-facts { display: grid; grid-template-columns: 120px 1fr; gap: 8px 12px; font-size: 14px; margin-bottom: 18px; }
@@ -402,6 +405,21 @@ body { background: var(--bg); color: var(--ink); }
 #adminActions .adm-link{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;font-size:13px;font-weight:700;color:var(--accent);text-decoration:none}
 #adminActions button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;font-size:13px;font-weight:700;color:var(--ink);cursor:pointer}
 #ws-msgs .thread-body,#ws-msgs .composer{padding-left:16px !important;padding-right:16px !important}
+#anModal h3 { font-size: 12px; font-weight: 700; color: var(--muted); margin: 18px 0 6px; }
+.an-range { display: flex; gap: 6px; margin: 8px 0 14px; flex-wrap: wrap; }
+.an-range button { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.an-range button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.an-totals { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.an-totals div { background: var(--bg); border-radius: 14px; padding: 12px 14px; }
+.an-totals b { display: block; font-size: 26px; font-weight: 800; }
+.an-totals span { font-size: 12px; color: var(--muted); font-weight: 600; }
+.an-chart { display: flex; align-items: flex-end; gap: 2px; height: 120px; }
+.an-chart i { flex: 1; background: var(--accent); opacity: .85; border-radius: 3px; min-height: 2px; }
+.an-chart i.z { background: var(--line); opacity: 1; min-height: 1px; }
+.an-row { display: flex; gap: 10px; padding: 7px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.an-row:first-child { border-top: 0; }
+.an-row span:first-child { flex: 1; font-weight: 600; }
+.an-row span:last-child { color: var(--muted); }
 </style>
 </head>
 <body>
@@ -467,7 +485,7 @@ body { background: var(--bg); color: var(--ink); }
       </div>
       <div id="wsPane" hidden>
         <div class="work-head">
-          <button type="button" class="ws-back" id="wsBack" aria-label="Back to clients">‹ Clients</button>
+          <button type="button" class="ws-back" id="wsBack" aria-label="Back to clients">‹ Dashboard</button>
           <strong id="wsTitle"></strong>
           <span class="status-pill" id="wsStatus"></span>
         </div>
@@ -492,13 +510,39 @@ body { background: var(--bg); color: var(--ink); }
           <div class="thread-body" id="threadBody"></div>
           <div class="composer">
             <textarea id="composerInput" rows="1" placeholder="Reply as Tom…"></textarea>
-            <button type="button" id="composerSend">Send</button>
+            <button type="button" id="composerSend" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
           </div>
         </div>
         <div class="edit-overlay" id="editOverlay" hidden><div class="edit-head"><strong>Edit info</strong><button type="button" class="logout-btn" id="editClose">Close</button></div><iframe id="editFrame" title="Edit client info"></iframe></div>
         <div class="work-panel admin-panel" id="ws-account" hidden><div id="accountPane"></div></div>
       </div>
     </section>
+  </div>
+</div>
+
+<!-- PROMPT MODAL (change email / set password) -->
+<div class="modal-veil hidden" id="promptModal">
+  <div class="modal">
+    <h2 id="promptTitle"></h2>
+    <div class="modal-field"><input type="text" id="promptInput" autocomplete="off"></div>
+    <div class="modal-actions">
+      <button type="button" class="modal-cancel" id="promptCancel">Cancel</button>
+      <button type="button" class="modal-confirm" id="promptConfirm">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ANALYTICS MODAL -->
+<div class="modal-veil hidden" id="anModal">
+  <div class="modal wide" style="max-height:88vh;overflow:auto">
+    <h2>Analytics</h2>
+    <div class="an-range" id="anRange"><button data-days="7">7 days</button><button data-days="30" class="on">30 days</button><button data-days="90">90 days</button><button data-days="all">All time</button></div>
+    <div class="an-totals"><div><b id="anViews">–</b><span>Page views</span></div><div><b id="anVisitors">–</b><span>Visitors</span></div></div>
+    <div id="anChart" class="an-chart"></div>
+    <h3>Pages</h3><div id="anPages"></div>
+    <h3>Contact clicks</h3><div id="anClicks"></div>
+    <h3>Contact form</h3><div id="anForms"></div>
+    <div class="modal-actions"><button type="button" class="modal-cancel" id="anClose">Close</button></div>
   </div>
 </div>
 
@@ -1419,7 +1463,7 @@ document.getElementById('deleteConfirm').addEventListener('click', function() {
 });
 
 // Close modals on veil click
-['domainModal', 'deleteModal', 'uploadModal', 'settingsModal'].forEach(function(id) {
+['domainModal', 'deleteModal', 'uploadModal', 'settingsModal', 'promptModal', 'anModal'].forEach(function(id) {
   document.getElementById(id).addEventListener('click', function(e) {
     if (e.target === this) this.classList.add('hidden');
   });
@@ -1597,8 +1641,8 @@ function renderThread(forceScroll) {
   else body.innerHTML = msgs.map(function(m) {
     var out = m.sender === 'admin';
     var when = new Date(m.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-    return '<div class="bubble ' + (out ? 'out' : 'in') + '">' + esc(m.body) +
-      '<div class="bubble-meta">' + (out ? 'Tom' : esc(bizLabel(activeThreadId))) + ' · ' + esc(when) + '</div></div>';
+    return '<div class="msg ' + (out ? 'out' : 'in') + '"><div class="bubble ' + (out ? 'out' : 'in') + '">' + esc(m.body) + '</div>' +
+      '<div class="bubble-meta">' + (out ? 'You' : esc(bizLabel(activeThreadId))) + ' · ' + esc(when) + '</div></div>';
   }).join('');
   if (forceScroll || changed) body.scrollTop = body.scrollHeight;
   lastRenderedCount = msgs.length;
@@ -1613,7 +1657,7 @@ function renderAdminPanel() {
   var uploaded = !!(d.demoUrl || d.demoUploaded);
   document.getElementById('adminActions').innerHTML =
     '<button type="button" onclick="openEditInfo()">Edit info</button>' +
-    '<a class="adm-link" href="/account/dashboard.html?bs_admin_slug=' + encodeURIComponent(activeThreadId) + '#analytics" target="_blank" rel="noopener">Analytics ↗</a>' +
+    '<button type="button" onclick="openAnalytics()">Analytics</button>' +
     '<button type="button" onclick="openUploadModal(\'' + slug + '\',\'' + nameArg + '\')">' + (uploaded ? 'Replace website' : 'Upload website') + '</button>' +
     '<button type="button" onclick="openDomainModal(\'' + slug + '\',\'' + nameArg + '\')">' + (domain ? esc(domain) + (d.domainConnected ? ' ✓' : ' …') : 'Connect domain') + '</button>';
   renderSitePreview();
@@ -1638,6 +1682,43 @@ function renderSitePreview() {
   document.getElementById('siteOpenWrap').innerHTML = url ? '<a class="site-open" href="' + esc(url) + '" target="_blank" rel="noopener">Open ↗</a>' : '';
 }
 
+var anRangeSel = 30;
+function openAnalytics() {
+  document.getElementById('anModal').classList.remove('hidden');
+  loadAn();
+}
+function loadAn() {
+  var slug = activeThreadId;
+  document.querySelectorAll('#anRange button').forEach(function(b) { b.classList.toggle('on', b.getAttribute('data-days') === String(anRangeSel)); });
+  ['anPages', 'anClicks', 'anForms'].forEach(function(id) { document.getElementById(id).innerHTML = ''; });
+  document.getElementById('anChart').innerHTML = '';
+  fetch(UPLOAD_WORKER + '/stats/' + encodeURIComponent(slug) + '?days=' + encodeURIComponent(anRangeSel), { headers: { 'Authorization': 'Bearer ' + (adminSession && adminSession.access_token || '') } })
+    .then(function(r) { return r.json().then(function(j) { if (!r.ok) throw new Error(j.error || 'failed'); return j; }); })
+    .then(function(res) {
+      if (slug !== activeThreadId) return;
+      var days = res.days || [], views = 0, visitors = 0, max = 1, pages = {}, clicks = {}, forms = 0;
+      days.forEach(function(d) {
+        views += d.views; visitors += d.visitors; if (d.views > max) max = d.views;
+        Object.keys(d.pages || {}).forEach(function(p) { var t = pages[p] || (pages[p] = { v: 0, s: 0, n: 0 }), x = d.pages[p]; t.v += x.views || 0; t.s += x.seconds || 0; t.n += x.timed || 0; });
+        Object.keys(d.clicks || {}).forEach(function(k) { clicks[k] = (clicks[k] || 0) + d.clicks[k]; });
+        forms += d.forms || 0;
+      });
+      document.getElementById('anViews').textContent = views.toLocaleString('en-GB');
+      document.getElementById('anVisitors').textContent = visitors.toLocaleString('en-GB');
+      document.getElementById('anChart').innerHTML = days.map(function(d) { return '<i class="' + (d.views ? '' : 'z') + '" style="height:' + Math.max(d.views ? 3 : 1, d.views / max * 120) + 'px"></i>'; }).join('');
+      function fmt(sec) { return sec >= 60 ? Math.floor(sec / 60) + 'm ' + (sec % 60) + 's' : sec + 's'; }
+      function nm(p) { return p === '/' ? 'Home' : p.replace(/^\//, '').replace(/[-_\/]/g, ' ').replace(/^./, function(c) { return c.toUpperCase(); }); }
+      var list = Object.keys(pages).map(function(p) { var t = pages[p]; return { p: p, v: t.v, n: t.n, avg: t.n ? Math.round(t.s / t.n) : 0 }; }).sort(function(a, b) { return b.v - a.v; });
+      var best = list.filter(function(x) { return x.n > 0; }).sort(function(a, b) { return b.avg - a.avg; })[0];
+      document.getElementById('anPages').innerHTML = (best ? '<div style="font-weight:700;margin-bottom:6px">Most time on ' + esc(nm(best.p)) + ' · avg ' + fmt(best.avg) + '</div>' : '') +
+        (list.length ? list.slice(0, 8).map(function(x) { return '<div class="an-row"><span>' + esc(nm(x.p)) + '</span><span>' + x.v + ' view' + (x.v === 1 ? '' : 's') + (x.n ? ' · ' + fmt(x.avg) : '') + '</span></div>'; }).join('') : '<div class="adm-muted">Page data appears as people browse the site.</div>');
+      document.getElementById('anClicks').innerHTML = [['phone', 'Phone calls'], ['email', 'Emails'], ['whatsapp', 'WhatsApp'], ['directions', 'Directions'], ['social', 'Social links']].map(function(l) { return '<div class="an-row"><span>' + l[1] + '</span><span><b>' + (clicks[l[0]] || 0) + '</b></span></div>'; }).join('');
+      document.getElementById('anForms').innerHTML = '<div class="an-row"><span>Send button presses</span><span><b>' + forms + '</b></span></div>';
+    }).catch(function() { document.getElementById('anPages').innerHTML = '<div class="adm-muted">Could not load analytics.</div>'; });
+}
+document.getElementById('anRange').addEventListener('click', function(e) { var b = e.target.closest('button[data-days]'); if (!b) return; var v = b.getAttribute('data-days'); anRangeSel = v === 'all' ? 'all' : +v; loadAn(); });
+document.getElementById('anClose').addEventListener('click', function() { document.getElementById('anModal').classList.add('hidden'); });
+
 function adminApi(payload) {
   return fetch(API_BASE_URL + '/api/admin-businesses', {
     method: 'POST',
@@ -1656,9 +1737,7 @@ function renderAccountPane() {
     '<div class="acct-card"><h3>Login</h3><div class="acct-row"><span class="k">Email</span><span id="acctEmail">Loading…</span></div>' +
       '<div class="acct-row"><span class="k">Signed in with</span><span id="acctProv">…</span></div>' +
       '<div class="acct-row"><span class="k">Last signed in</span><span id="acctLast">…</span></div>' +
-      '<div class="acct-form"><input type="email" id="acctNewEmail" placeholder="New login email"><button type="button" class="acct-btn" onclick="acctUpdate(\'email\', this)">Change email</button></div>' +
-      '<div class="acct-form"><input type="text" id="acctNewPw" placeholder="New password (8+ characters)" autocomplete="off"><button type="button" class="acct-btn" onclick="acctUpdate(\'password\', this)">Set password</button></div>' +
-      '<div class="acct-form"><button type="button" class="acct-btn" onclick="acctReset(this)">Email them a reset link</button></div>' +
+      '<div class="acct-form"><button type="button" class="acct-btn" onclick="openPrompt(\'email\')">Change email</button><button type="button" class="acct-btn" onclick="openPrompt(\'password\')">Set password</button><button type="button" class="acct-btn" onclick="acctReset(this)">Email reset link</button></div>' +
       '<div class="acct-msg" id="acctMsg"></div></div>' +
     '<div class="acct-card"><h3>Plan</h3><div id="acctPlan">' + (d.planActive ? 'Paid' : 'Not paid') + '</div>' +
       '<div class="acct-form" id="acctPlanBtns"></div></div>' +
@@ -1683,14 +1762,33 @@ function renderAccountPane() {
   }).catch(function(err) { var m = document.getElementById('acctMsg'); if (m) { m.textContent = err.message; m.className = 'acct-msg err'; } });
 }
 function acctSay(text, ok) { var m = document.getElementById('acctMsg'); m.textContent = text; m.className = 'acct-msg ' + (ok ? 'ok' : 'err'); }
-function acctUpdate(kind, btn) {
-  var v = document.getElementById(kind === 'email' ? 'acctNewEmail' : 'acctNewPw').value.trim();
-  if (!v) return;
+function acctUpdate(kind, v, btn) {
+  v = (v || '').trim();
+  if (!v) return Promise.resolve();
   var payload = { action: 'update-login', slug: activeThreadId }; payload[kind] = v;
   btn.disabled = true;
-  adminApi(payload).then(function() { acctSay(kind === 'email' ? 'Login email changed.' : 'Password set. Let them know their new password.', true); renderAccountPane(); })
+  return adminApi(payload).then(function() { renderAccountPane(); acctSay(kind === 'email' ? 'Login email changed.' : 'Password set. Let them know their new password.', true); })
     .catch(function(err) { acctSay(err.message, false); }).then(function() { btn.disabled = false; });
 }
+var promptKind = '';
+function openPrompt(kind) {
+  promptKind = kind;
+  document.getElementById('promptTitle').textContent = kind === 'email' ? 'Change login email' : 'Set password';
+  var inp = document.getElementById('promptInput');
+  inp.type = kind === 'email' ? 'email' : 'text';
+  inp.placeholder = kind === 'email' ? 'New login email' : 'New password (8+ characters)';
+  inp.value = '';
+  document.getElementById('promptModal').classList.remove('hidden');
+  setTimeout(function() { inp.focus(); }, 50);
+}
+document.getElementById('promptCancel').addEventListener('click', function() { document.getElementById('promptModal').classList.add('hidden'); });
+document.getElementById('promptConfirm').addEventListener('click', function() {
+  var v = document.getElementById('promptInput').value;
+  document.getElementById('promptModal').classList.add('hidden');
+  if (promptKind === 'password' && v.trim().length < 8) { acctSay('Password must be at least 8 characters.', false); return; }
+  acctUpdate(promptKind, v, this);
+});
+document.getElementById('promptInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('promptConfirm').click(); });
 function acctReset(btn) {
   if (!confirm('Email this client a password reset link?')) return;
   btn.disabled = true;

@@ -195,6 +195,13 @@
   .an-total b{display:block;font-family:var(--display);font-size:30px;line-height:1.1;color:var(--ink)}
   .an-total span{font-size:12px;font-weight:600;color:var(--muted)}
   .an-chart{width:100%;height:auto;display:block;overflow:visible}
+  .an-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:14px}
+  .an-row:first-child{border-top:0}
+  .an-row span:first-child{flex:1;font-weight:600;color:var(--ink)}
+  .an-row span:last-child{color:var(--muted)}
+  .an-form b{font-family:var(--display);font-size:26px;margin-right:6px}
+  .an-form span{color:var(--muted);font-size:13px}
+  .an-best{font-weight:700;margin:0 0 6px;font-size:14px}
   .an-empty{font-size:13px;color:var(--muted);line-height:1.5;margin:10px 0 0}
   .an-tip{font-size:12px;color:var(--muted);height:16px;margin:6px 0 0;text-align:center}
   .messages-panel{display:flex;flex-direction:column;overflow:hidden!important;flex:1;min-height:0;}
@@ -247,14 +254,11 @@
   }
   .msgs-row{display:flex;flex-direction:column;align-items:flex-end;position:relative;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
   .msgs-row.them{align-items:flex-start}
-  .msgs-sender{font-size:11px;font-weight:600;color:var(--muted);margin-top:3px;padding:0 4px}
+  .msgs-sender{font-size:11px;font-weight:600;color:var(--muted);margin:5px 0 12px;padding:0 4px}
   .msgs-bubble-wrap{display:flex;align-items:center;gap:6px;max-width:100%;align-self:flex-end}
-  .msgs-bubble{max-width:85%;overflow-wrap:anywhere;min-width:0;padding:10px 14px;border-radius:20px;font-size:14px;line-height:1.5;position:relative;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
-  .msgs-bubble.me{background:#397ce7;color:#fff;border-bottom-right-radius:7px}
+  .msgs-bubble{max-width:85%;overflow-wrap:anywhere;min-width:0;padding:11px 16px;border-radius:22px;box-shadow:0 2px 8px rgba(28,40,50,.07);font-size:14px;line-height:1.5;position:relative;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+  .msgs-bubble.me{background:#397ce7;color:#fff;border-bottom-right-radius:7px;box-shadow:0 2px 10px rgba(59,130,246,.28)}
   .msgs-bubble.them{background:#fff;color:var(--ink);border:1px solid #e4ebf3;border-bottom-left-radius:7px;box-shadow:var(--soft-shadow)}
-  .msgs-time{font-size:10px;margin-top:3px;display:block}
-  .msgs-time.me{color:rgba(255,255,255,.65);text-align:right}
-  .msgs-time.them{color:#aaa}
   .msgs-error{padding:10px 16px;color:#b23b2c;font-size:12px;text-align:center}
   .msgs-input-bar{
     flex:none;
@@ -1024,6 +1028,7 @@
         <button type="button" data-days="7" aria-pressed="false">7 days</button>
         <button type="button" data-days="30" aria-pressed="true">30 days</button>
         <button type="button" data-days="90" aria-pressed="false">90 days</button>
+        <button type="button" data-days="all" aria-pressed="false">All time</button>
       </div>
       <div class="an-totals">
         <div class="an-total"><b id="anViews">–</b><span>Site visits</span></div>
@@ -1035,6 +1040,9 @@
         <div class="an-tip" id="anTip"></div>
         <p class="an-empty" id="anNote" hidden></p>
       </div>
+      <div class="info-card"><h2>Pages</h2><div id="anPages"></div></div>
+      <div class="info-card"><h2>Contact clicks</h2><div id="anClicks"></div></div>
+      <div class="info-card"><h2>Contact form</h2><div class="an-form"><b id="anForms">0</b><span id="anFormsLabel">sends</span></div><p class="an-empty">Counted each time the form's send button is pressed.</p></div>
       <p class="info-hint">Counts real people viewing your pages, not search-engine bots. Figures start from when your site went live and can take a moment to update.</p>
     </div>
   </section>
@@ -1057,7 +1065,7 @@
 
     <div class="msgs-input-bar">
       <textarea id="msgsInput" class="msgs-input" rows="1" placeholder="Message Tom…" aria-label="Message Tom" autocapitalize="sentences"></textarea>
-      <button type="button" class="msgs-send" id="msgsSend" disabled aria-label="Send message"><span class="send-i" aria-hidden="true"><span></span><span></span></span></button>
+      <button type="button" class="msgs-send" id="msgsSend" disabled aria-label="Send message"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
     </div>
   </section>
 
@@ -1460,7 +1468,7 @@
   function loadAnalytics() {
     var note = document.getElementById('anNote');
     if (!slug || !session) return;
-    fetch(UPLOAD_WORKER + '/stats/' + encodeURIComponent(slug) + '?days=' + anDays, {
+    fetch(UPLOAD_WORKER + '/stats/' + encodeURIComponent(slug) + '?days=' + encodeURIComponent(anDays), {
       headers: { 'Authorization': 'Bearer ' + session.access_token }
     }).then(function(r) { return r.json().then(function(j) { if (!r.ok) throw new Error(j.error || 'failed'); return j; }); })
       .then(function(res) {
@@ -1472,11 +1480,33 @@
         note.hidden = views > 0;
         note.textContent = 'No visits recorded yet. Share your website link and they will appear here.';
         drawAnalyticsChart(days);
+        renderAnalyticsDetail(days);
       }).catch(function() {
         document.getElementById('anChart').innerHTML = '';
         note.hidden = false;
         note.textContent = 'Could not load your analytics. Please try again in a moment.';
       });
+  }
+
+  function renderAnalyticsDetail(days) {
+    var pages = {}, clicks = {}, forms = 0;
+    days.forEach(function(d) {
+      Object.keys(d.pages || {}).forEach(function(p) { var t = pages[p] || (pages[p] = { views: 0, seconds: 0, timed: 0 }); var v = d.pages[p]; t.views += v.views || 0; t.seconds += v.seconds || 0; t.timed += v.timed || 0; });
+      Object.keys(d.clicks || {}).forEach(function(k) { clicks[k] = (clicks[k] || 0) + (d.clicks[k] || 0); });
+      forms += d.forms || 0;
+    });
+    function esc(t) { return String(t).replace(/[&<>"]/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+    function fmt(sec) { return sec >= 60 ? Math.floor(sec / 60) + 'm ' + (sec % 60) + 's' : sec + 's'; }
+    function name(p) { return p === '/' ? 'Home' : p.replace(/^\//, '').replace(/[-_\/]/g, ' ').replace(/^./, function(c) { return c.toUpperCase(); }); }
+    var list = Object.keys(pages).map(function(p) { var t = pages[p]; return { path: p, views: t.views, timed: t.timed, avg: t.timed ? Math.round(t.seconds / t.timed) : 0 }; }).sort(function(a, b) { return b.views - a.views; });
+    var best = list.filter(function(x) { return x.timed > 0; }).sort(function(a, b) { return b.avg - a.avg; })[0];
+    document.getElementById('anPages').innerHTML = (best ? '<p class="an-best">Most time on ' + esc(name(best.path)) + ' · avg ' + fmt(best.avg) + '</p>' : '')
+      + (list.length ? list.slice(0, 8).map(function(x) { return '<div class="an-row"><span>' + esc(name(x.path)) + '</span><span>' + x.views + ' view' + (x.views === 1 ? '' : 's') + (x.timed ? ' · ' + fmt(x.avg) : '') + '</span></div>'; }).join('')
+        : '<p class="an-empty">Page and time-on-page data appears as people browse the site.</p>');
+    var labels = [['phone', 'Phone calls'], ['email', 'Emails'], ['whatsapp', 'WhatsApp'], ['directions', 'Directions'], ['social', 'Social links']];
+    document.getElementById('anClicks').innerHTML = labels.map(function(l) { return '<div class="an-row"><span>' + l[1] + '</span><span><b>' + (clicks[l[0]] || 0) + '</b></span></div>'; }).join('');
+    document.getElementById('anForms').textContent = forms;
+    document.getElementById('anFormsLabel').textContent = forms === 1 ? 'send' : 'sends';
   }
 
   function drawAnalyticsChart(days) {
@@ -1527,7 +1557,7 @@
   document.getElementById('anRange').addEventListener('click', function(e) {
     var b = e.target.closest('button[data-days]');
     if (!b) return;
-    anDays = +b.getAttribute('data-days');
+    anDays = b.getAttribute('data-days') === 'all' ? 'all' : +b.getAttribute('data-days');
     this.querySelectorAll('button').forEach(function(x) { x.setAttribute('aria-pressed', String(x === b)); });
     loadAnalytics();
   });
@@ -2263,10 +2293,6 @@
             txt.textContent = msg.body;
             bubble.appendChild(txt);
           }
-          var time = document.createElement('span');
-          time.className = 'msgs-time ' + (isMe ? 'me' : 'them');
-          time.textContent = new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-          bubble.appendChild(time);
           if (isMe) {
             var wrap = document.createElement('div');
             wrap.className = 'msgs-bubble-wrap';
@@ -2285,6 +2311,7 @@
           } else {
             senderLabel.textContent = 'Tom';
           }
+          senderLabel.textContent += ' · ' + new Date(msg.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
           row.appendChild(senderLabel);
           if (isMe) {
             // ⋮ dots button
