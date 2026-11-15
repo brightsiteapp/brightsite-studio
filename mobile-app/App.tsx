@@ -565,7 +565,7 @@ const DESKTOP_VIEW_W = SCREEN_WIDTH - 52;
 const DESKTOP_VIEW_H = Math.round(DESKTOP_VIEW_W * 0.68);
 // In-app analytics: page views and visitors per day from the site worker (owner or admin login).
 function AnalyticsModal({ visible, slug, session, onClose }: { visible: boolean; slug: string; session: any; onClose: () => void }) {
-  const [rangeDays, setRangeDays] = useState(30);
+  const [rangeDays, setRangeDays] = useState<number | 'all'>(30);
   const [days, setDays] = useState<{ day?: string; views: number; visitors: number }[] | null>(null);
   const [error, setError] = useState('');
   useEffect(() => {
@@ -586,7 +586,7 @@ function AnalyticsModal({ visible, slug, session, onClose }: { visible: boolean;
         <Pressable onPress={onClose} hitSlop={10}><Ionicons name="close" size={24} color={C.ink} /></Pressable>
       </View>
       <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 20 }}>
-        {[7, 30, 90].map(n => <Pressable key={n} onPress={() => setRangeDays(n)} style={[s.chip, rangeDays === n && s.chipOn]}><Text style={[s.chipText, rangeDays === n && s.chipTextOn]}>{n} days</Text></Pressable>)}
+        {([7, 30, 90, 'all'] as const).map(n => <Pressable key={n} onPress={() => setRangeDays(n)} style={[s.chip, rangeDays === n && s.chipOn]}><Text style={[s.chipText, rangeDays === n && s.chipTextOn]}>{n === 'all' ? 'All time' : `${n} days`}</Text></Pressable>)}
       </View>
       <View style={{ flexDirection: 'row', gap: 12, padding: 20 }}>
         {[['Page views', views], ['Visitors', visitors]].map(([label, n]) => <View key={String(label)} style={[s.dashboardInfoCard, { flex: 1, marginBottom: 0 }]}><Text style={s.dashboardCardLabel}>{label}</Text><Text style={[s.dashboardCardTitle, { fontSize: 28 }]}>{Number(n).toLocaleString('en-GB')}</Text></View>)}

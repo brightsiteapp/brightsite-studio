@@ -179,6 +179,23 @@ async function readStats(env, slug, days) {
   return out;
 }
 
+// All-time stats: every recorded day for the site (capped at 2000 days), oldest first.
+async function readAllStats(env, slug) {
+  const keys = [];
+  let cursor;
+  do {
+    const page = await env.MEDIA.list({ prefix: `stats/${slug}/`, cursor, limit: 1000 });
+    page.objects.forEach(o => keys.push(o.key));
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor && keys.length < 2000);
+  keys.sort();
+  const recs = await Promise.all(keys.slice(-2000).map(async k => {
+    const o = await env.MEDIA.get(k);
+    return o ? o.json().catch(() => null) : null;
+  }));
+  return keys.slice(-2000).map((k, i) => ({ date: k.split('/').pop(), views: recs[i] ? recs[i].views || 0 : 0, visitors: recs[i] && recs[i].visitors ? recs[i].visitors.length : 0 }));
+}
+
 // Serves <slug>/site/<path>, trying path, path/index.html and path.html. basePath is set when
 // served under sites.brightsite.app/<slug>/ so the site's relative links resolve there.
 async function serveSite(env, slug, path, basePath, ctx, request) {
@@ -250,6 +267,7 @@ export default {
       if (request.method === 'GET' && statsMatch) {
         const slug = statsMatch[1];
         try { await verifyAdminAuth(request); } catch { await verifyAuth(request, slug); }
+        if (url.searchParams.get('days') === 'all') return json({ days: await readAllStats(env, slug) }, 200, origin);
         const days = Math.min(90, Math.max(1, parseInt(url.searchParams.get('days'), 10) || 30));
         return json({ days: await readStats(env, slug, days) }, 200, origin);
       }
