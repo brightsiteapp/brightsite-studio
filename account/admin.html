@@ -504,7 +504,7 @@ body { background: var(--bg); color: var(--ink); }
           <option value="red">To build</option>
           <option value="yellow">Preview sent</option>
           <option value="green">Live</option>
-          <option value="stub">Setup pending</option>
+          <option value="stub">Mew</option>
         </select>
         </div>
         <span class="client-count" id="clientCount" hidden></span>
@@ -761,7 +761,7 @@ function statusOf(b) {
 function statusLabel(s) {
   if (s === 'green') return 'Live';
   if (s === 'yellow') return 'Preview sent';
-  if (s === 'stub') return 'Setup pending';
+  if (s === 'stub') return 'Mew';
   return 'To build';
 }
 
@@ -1298,7 +1298,7 @@ function loadAdminMessages() {
 var homeTab = 'accounts';
 function activityText(b) {
   var s = statusOf(b);
-  return s === 'green' ? 'Live and paying' : s === 'yellow' ? 'Preview ready, awaiting payment' : s === 'stub' ? 'Setup pending' : 'Signed up';
+  return s === 'green' ? 'Live and paying' : s === 'yellow' ? 'Preview ready, awaiting payment' : s === 'stub' ? 'Mew' : 'Signed up';
 }
 function renderHomeTab(list) {
   var rows;
@@ -1732,7 +1732,7 @@ document.getElementById('homeTabs').addEventListener('click', function(e) {
   renderClientList();
 });
 (function buildFilterPills() {
-  var opts = [['all', 'All', null], ['unread', 'Unread', null], ['red', 'To build', '#B42318'], ['yellow', 'Preview sent', '#B26A00'], ['green', 'Live', '#1F8A54'], ['stub', 'Setup pending', '#6B7680']];
+  var opts = [['all', 'All', null], ['unread', 'Unread', null], ['red', 'To build', '#B42318'], ['yellow', 'Preview sent', '#B26A00'], ['green', 'Live', '#1F8A54'], ['stub', 'Mew', '#6B7680']];
   var wrap = document.getElementById('filterPills');
   var sel = document.getElementById('clientFilter');
   opts.forEach(function(o) {
