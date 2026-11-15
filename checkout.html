@@ -167,6 +167,14 @@
   </aside>
   <main class="pay">
   <div id="error-msg"></div>
+  <div class="referral-box" id="referral-box" style="display:none;margin:0 0 14px;padding:14px 16px;border:1px solid rgba(28,40,50,.12);border-radius:14px;background:#fff">
+    <label for="referral-input" style="display:block;font-size:13px;font-weight:700;margin-bottom:8px">Have a referral code?</label>
+    <div style="display:flex;gap:8px">
+      <input id="referral-input" type="text" autocomplete="off" autocapitalize="characters" placeholder="Enter code" style="flex:1;min-width:0;border:1px solid rgba(28,40,50,.14);border-radius:10px;padding:10px 12px;font:inherit;font-size:14px;text-transform:uppercase">
+      <button type="button" id="referral-apply" style="border:0;border-radius:10px;padding:0 16px;background:#3B82F6;color:#fff;font:inherit;font-weight:700;cursor:pointer">Apply</button>
+    </div>
+    <div id="referral-msg" style="font-size:13px;margin-top:8px;display:none"></div>
+  </div>
 
   <div id="loading">
     <div class="spinner"></div>
@@ -204,6 +212,7 @@
   var addonStore   = params.get('addon_store') === '1';
   var addonDomain  = params.get('addon_domain') || '';
   var publishOnPayment = params.get('publish_on_payment') === '1';
+  var referral = '';
 
   // billing state
   var selectedAnnual = (params.get('billing') || 'annual') !== 'monthly';
@@ -250,6 +259,38 @@
   }
   updatePriceLabel();
 
+  // Referral box: only when a domain is being bought. A valid code makes the domain free.
+  if (addonDomain) {
+    document.getElementById('referral-box').style.display = 'block';
+    var refInput = document.getElementById('referral-input');
+    var refMsg = document.getElementById('referral-msg');
+    function applyReferral() {
+      var code = refInput.value.trim().toUpperCase();
+      if (!code) return;
+      refMsg.style.display = 'block';
+      refMsg.style.color = '#64748b';
+      refMsg.textContent = 'Checking code…';
+      fetch('https://api.brightsite.app/api/create-checkout-session', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ check_referral: true, referral: code }) })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d.valid) {
+            referral = code;
+            refMsg.style.color = '#1F8A54';
+            refMsg.textContent = 'Code applied: your domain is free.';
+            loadCheckout();
+          } else {
+            referral = '';
+            refMsg.style.color = '#B42318';
+            refMsg.textContent = 'That code isn’t valid.';
+          }
+        })
+        .catch(function () { refMsg.style.color = '#B42318'; refMsg.textContent = 'Couldn’t check the code. Try again.'; });
+    }
+    document.getElementById('referral-apply').addEventListener('click', applyReferral);
+    refInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); applyReferral(); } });
+  }
+
   function setBilling(annual) {
     selectedAnnual = annual;
     document.getElementById('btn-annual').setAttribute('aria-pressed', annual ? 'true' : 'false');
@@ -281,7 +322,7 @@
     fetch('https://api.brightsite.app/api/create-checkout-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan: plan, billing: billing, email: email, slug: slug, return_url: returnUrl, addon_booking: addonBooking, addon_store: addonStore, addon_domain: addonDomain, publish_on_payment: publishOnPayment })
+      body: JSON.stringify({ plan: plan, billing: billing, email: email, slug: slug, return_url: returnUrl, addon_booking: addonBooking, addon_store: addonStore, addon_domain: addonDomain, publish_on_payment: publishOnPayment, referral: referral })
     })
       .then(function (r) { return r.json(); })
       .then(function (data) {

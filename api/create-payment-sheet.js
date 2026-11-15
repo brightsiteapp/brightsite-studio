@@ -1,13 +1,15 @@
 import Stripe from 'stripe';
 import { quoteDomainInGbp } from './_lib/domain-pricing.js';
 import { planPrices, domainChargePence } from './_lib/plans.js';
+import { referralIsValid } from './_lib/referrals.js';
 
 // Native in-app payment (Stripe PaymentSheet) for the mobile app. Same plans as
 // create-checkout-session.js; activation happens in confirm-app-payment.js once the
 // first invoice is paid, because the existing webhook only handles Checkout sessions.
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  const { plan = 'essential', billing, email, slug, domain } = req.body || {};
+  const { plan = 'essential', billing, email, slug, domain, referral } = req.body || {};
+  const freeDomain = !!referral && referralIsValid(referral);
   const prices = planPrices(plan, billing);
   if (!prices) return res.status(400).json({ error: 'Unknown plan' });
   if (!slug || !email) return res.status(400).json({ error: 'Missing account details' });
@@ -22,7 +24,7 @@ export default async function handler(req, res) {
     if (domain) {
       const quote = await quoteDomainInGbp(domain);
       // listed at its real price, with the part the plan covers taken off as its own line
-      const covered = quote.amountPence - domainChargePence(plan, billing, quote.amountPence);
+      const covered = freeDomain ? quote.amountPence : quote.amountPence - domainChargePence(plan, billing, quote.amountPence);
       await stripe.invoiceItems.create({ customer: customer.id, currency: 'gbp', amount: quote.amountPence, description: `Domain: ${domain} (1-year registration)` });
       if (covered > 0) await stripe.invoiceItems.create({ customer: customer.id, currency: 'gbp', amount: -covered, description: 'Domain included with your plan' });
     }
@@ -33,7 +35,7 @@ export default async function handler(req, res) {
       payment_behavior: 'default_incomplete',
       payment_settings: { save_default_payment_method: 'on_subscription' },
       expand: ['latest_invoice.payment_intent'],
-      metadata: { plan, billing, slug, domain: domain || '', source: 'mobile_app' },
+      metadata: { plan, billing, slug, domain: domain || '', source: 'mobile_app', ...(freeDomain ? { referral: String(referral).trim().toUpperCase() } : {}) },
     });
     const ephemeralKey = await stripe.ephemeralKeys.create({ customer: customer.id }, { apiVersion: '2024-06-20' });
 

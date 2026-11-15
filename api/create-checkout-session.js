@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { quoteDomainInGbp } from './_lib/domain-pricing.js';
 import { planPrices, domainChargePence, addonPrice } from './_lib/plans.js';
+import { referralIsValid } from './_lib/referrals.js';
 
 const ALLOWED_ORIGINS = ['https://brightsite.app'];
 
@@ -15,7 +16,10 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { plan, billing, email, slug, domain, addon_domain: addonDomain, publish_on_payment: publishOnPayment, ui_mode: uiMode, addon_booking: addonBooking, addon_store: addonStore } = req.body || {};
+  const { plan, billing, email, slug, domain, addon_domain: addonDomain, publish_on_payment: publishOnPayment, ui_mode: uiMode, addon_booking: addonBooking, addon_store: addonStore, referral } = req.body || {};
+  const freeDomain = !!referral && referralIsValid(referral);
+  // the website asks first whether a code is valid, before loading checkout
+  if (req.body?.check_referral) return res.status(200).json({ valid: referralIsValid(referral) });
   const selectedDomain = domain || addonDomain || '';
 
   if (!plan || !billing) return res.status(400).json({ error: 'Missing plan or billing' });
@@ -42,7 +46,8 @@ export default async function handler(req, res) {
     let discounts;
     if (selectedDomain) {
       const quote = await quoteDomainInGbp(selectedDomain);
-      const coveredPence = quote.amountPence - domainChargePence(plan, billing, quote.amountPence);
+      // a valid referral code makes the whole domain free; otherwise the plan covers what it normally does
+      const coveredPence = freeDomain ? quote.amountPence : quote.amountPence - domainChargePence(plan, billing, quote.amountPence);
       lineItems.push({
         price_data: {
           currency: 'gbp',
@@ -61,6 +66,7 @@ export default async function handler(req, res) {
     }
 
     const metadata = { plan, billing, slug: slug || '', domain: selectedDomain, publish_on_payment: publishOnPayment ? 'true' : 'false' };
+    if (freeDomain) metadata.referral = String(referral).trim().toUpperCase();
     if (addonSeparate) metadata.addon_separate = 'true';
 
     // The mobile app opens Stripe's hosted Checkout page in the device browser

@@ -1288,6 +1288,21 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
   const [payBusy, setPayBusy] = useState(false);
   const [payError, setPayError] = useState('');
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
+  // Referral code: a valid one makes the domain free. Checked on the server before paying.
+  const [referralCode, setReferralCode] = useState('');
+  const [referralApplied, setReferralApplied] = useState('');
+  const [referralNote, setReferralNote] = useState<{ ok: boolean; text: string } | null>(null);
+  const checkReferral = async () => {
+    const code = referralCode.trim().toUpperCase();
+    if (!code) return;
+    setReferralNote({ ok: false, text: 'Checking code…' });
+    try {
+      const r = await fetch('https://api.brightsite.app/api/create-checkout-session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ check_referral: true, referral: code }) });
+      const j = await r.json();
+      if (j.valid) { setReferralApplied(code); setReferralNote({ ok: true, text: 'Code applied: your domain is free.' }); }
+      else { setReferralApplied(''); setReferralNote({ ok: false, text: 'That code isn’t valid.' }); }
+    } catch { setReferralNote({ ok: false, text: 'Couldn’t check the code. Try again.' }); }
+  };
   const handlePay = async () => {
     setPayBusy(true); setPayError('');
     try {
@@ -1295,7 +1310,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
       const res = await fetch(PAYMENT_SHEET_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: planChoice, billing: annual ? 'annual' : 'monthly', email, slug, domain: liveDomain ? liveDomain + liveSuffix : '' }),
+        body: JSON.stringify({ plan: planChoice, billing: annual ? 'annual' : 'monthly', email, slug, domain: liveDomain ? liveDomain + liveSuffix : '', referral: referralApplied || undefined }),
       });
       const json = await res.json();
       if (!res.ok || !json.paymentIntentClientSecret) throw new Error(json.error || 'Could not set up payment.');
@@ -1321,7 +1336,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
         const fb = await fetch('https://api.brightsite.app/api/create-checkout-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ plan: planChoice, billing: annual ? 'annual' : 'monthly', email, slug, domain: liveDomain ? liveDomain + liveSuffix : '', ui_mode: 'hosted' }),
+          body: JSON.stringify({ plan: planChoice, billing: annual ? 'annual' : 'monthly', email, slug, domain: liveDomain ? liveDomain + liveSuffix : '', ui_mode: 'hosted', referral: referralApplied || undefined }),
         });
         const fbJson = await fb.json();
         if (fb.ok && fbJson.url) { await Linking.openURL(fbJson.url); setShowPlanModal(false); return; }
@@ -1563,6 +1578,16 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
               {liveDomain}{liveSuffix}: {domainPriceLoading ? 'checking price…' : domainNote(domainPence, annual || planChoice === 'pro')}
             </Text>
           </View>
+          {!!liveDomain && <View style={{ marginTop: 10 }}>
+            <Text style={{ fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.ink, marginBottom: 6 }}>Have a referral code?</Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <TextInput value={referralCode} onChangeText={v => { setReferralCode(v.toUpperCase()); setReferralApplied(''); setReferralNote(null); }} placeholder="Enter code" placeholderTextColor={C.placeholder} autoCapitalize="characters" autoCorrect={false} style={{ flex: 1, height: 44, borderRadius: 12, borderWidth: 1, borderColor: C.line, paddingHorizontal: 12, fontFamily: FONT, fontSize: 15, color: C.ink, backgroundColor: C.field }} />
+              <Pressable onPress={() => void checkReferral()} style={({ pressed }) => [{ height: 44, paddingHorizontal: 16, borderRadius: 12, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' }, pressed && s.pressed]}>
+                <Text style={{ fontFamily: FONT, fontSize: 14, fontWeight: '700', color: '#fff' }}>Apply</Text>
+              </Pressable>
+            </View>
+            {!!referralNote && <Text style={{ fontFamily: FONT, fontSize: 13, marginTop: 6, color: referralNote.ok ? C.success : C.danger }}>{referralNote.text}</Text>}
+          </View>}
           {!!payError && <Text style={{ fontFamily: FONT, fontSize: 12, color: C.danger, marginTop: 8 }}>{payError}</Text>}
           <Pressable onPress={() => void handlePay()} disabled={payBusy} style={[s.planModalPayBtn, payBusy && { opacity: .6 }]}>
             {payBusy ? <ActivityIndicator size="small" color="#fff" /> : <><Ionicons name="lock-closed" size={15} color="#fff" /><Text style={s.planModalPayBtnText}>Pay securely</Text></>}
