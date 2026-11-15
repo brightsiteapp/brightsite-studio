@@ -2710,9 +2710,10 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       <View style={{ flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28 }}>
         <View style={s.loginHeader}><Logo height={20} /><Image source={require('./assets/brightsite-icon.png')} style={s.loginAppIcon} /></View>
         <ScrollView contentContainerStyle={[s.content, s.loginContent]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
-            {chooseMode === 'pick' ? <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: 40 }}>
+            {chooseMode === 'pick' ? <>
               <Text style={[s.heroTitle, { textAlign: 'center' }]}>How would you like to build your website?</Text>
-              <Text style={{ fontFamily: FONT, fontSize: 16, color: C.inkMuted, textAlign: 'center', marginTop: 10, marginBottom: 28 }}>You can change anything later.</Text>
+              <Text style={{ fontFamily: FONT, fontSize: 16, color: C.inkMuted, textAlign: 'center', marginTop: 10 }}>You can change anything later.</Text>
+              <View style={{ flex: 1, justifyContent: 'center', paddingBottom: 40 }}>
               <View style={[s.pathStack, { alignSelf: 'stretch' }]}>
                 <Pressable onPress={() => setChooseMode('auto')} style={({ pressed }) => [s.pathCard, s.pathCardPlain, pressed && s.pressed]}>
                   <Text style={[s.pathTag, { color: C.inkMuted, textAlign: 'center' }]}>2 MINUTES</Text>
@@ -2726,7 +2727,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
                   <Text style={[s.pathText, { textAlign: 'center' }]}>Enter your details, hours, services and photos yourself.</Text>
                 </Pressable>
               </View>
-            </View> : <>
+              </View>
+            </> : <>
               <Pressable onPress={() => setChooseMode('pick')} hitSlop={10} style={s.chooseBack}><Text style={s.chooseBackText}>‹ Back</Text></Pressable>
               <Text style={s.heroTitle}>Share your links</Text>
               <Intro>Add your name and at least one link. Our designer will take it from there.</Intro>
