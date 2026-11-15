@@ -2720,7 +2720,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             </Pressable>
             <Pressable onPress={() => { setIndex(1); motion.setValue(CARD_TRAVEL); setAppScreen('onboarding'); }} style={({ pressed }) => [s.pathCard, s.pathCardWhite, pressed && s.pressed]}>
               <Image source={require('./assets/brightbuilder-blue.png')} resizeMode="contain" style={{ width: 19*1543/137, height: 19, marginBottom: 8 }} />
-              <Text style={[s.pathTitle, { color: C.ink, fontSize: 20 }]}>Seven. Simple. Steps.</Text>
+              <Text style={[s.pathTitle, { color: C.ink }]}>Seven. Simple. Steps.</Text>
               <Text style={[s.pathText, { color: C.ink }]}>Under 10 minutes. Enter your details, hours, services and photos yourself.</Text>
             </Pressable>
           </View>
@@ -3091,7 +3091,7 @@ primaryBtnText: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: '#ff
   pathCard: { height: 158, borderRadius: 20, paddingVertical: 20, paddingHorizontal: 22, justifyContent: 'center', alignItems: 'center' },
 pathCardBlue: { backgroundColor: C.primary, shadowColor: '#1D4ED8', shadowOpacity: .28, shadowRadius: 18, shadowOffset: { width: 0, height: 8 } },
 pathCardWhite: { backgroundColor: '#fff', shadowColor: '#1C2832', shadowOpacity: .1, shadowRadius: 16, shadowOffset: { width: 0, height: 6 } },
-  pathTitle: { fontFamily: FONT, fontSize: 23, fontWeight: '800', letterSpacing: -.5, color: C.ink, marginBottom: 8, textAlign: 'center' },
+  pathTitle: { fontFamily: FONT, fontSize: 21, fontWeight: '800', letterSpacing: -.5, color: C.ink, marginBottom: 8, textAlign: 'center' },
   pathText: { fontFamily: FONT, fontSize: 16, lineHeight: 22, fontWeight: '500', color: C.ink, textAlign: 'center' },
   chooseBack: { flexDirection: 'row', alignItems: 'center', gap: 2, alignSelf: 'flex-start', marginBottom: 14 },
   chooseBackText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.primary },
