@@ -290,7 +290,7 @@ export default {
         }
         const body = await request.arrayBuffer();
         const key = `${slug}/${relPath}`;
-        await env.MEDIA.put(key, body, { httpMetadata: { contentType: contentTypeFor(key) } });
+        await env.MEDIA.put(key, body, { httpMetadata: { contentType: contentTypeFor(key), cacheControl: contentTypeFor(key).startsWith('text/html') ? 'public, max-age=60' : 'public, max-age=86400' } });
         return json({ url: `${R2_PUBLIC_URL}/${key}`, path: relPath }, 200, origin);
       }
 
@@ -300,7 +300,7 @@ export default {
         const [slug, ...rest] = key.split('/');
         if (!slug || !rest.length || key.includes('..')) return json({ error: 'Bad file name' }, 400, origin);
         await verifyAuth(request, slug);
-        await env.MEDIA.put(key, await request.arrayBuffer(), { httpMetadata: { contentType: contentTypeFor(key) } });
+        await env.MEDIA.put(key, await request.arrayBuffer(), { httpMetadata: { contentType: contentTypeFor(key), cacheControl: 'public, max-age=86400' } });
         return json({ key, url: `${R2_PUBLIC_URL}/${key}` }, 200, origin);
       }
 

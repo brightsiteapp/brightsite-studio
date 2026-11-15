@@ -567,17 +567,21 @@ const DESKTOP_VIEW_H = Math.round(DESKTOP_VIEW_W * 0.68);
 function RealSitePreview({ url, label, desktop, onPress }: { url: string; label?: string; desktop: boolean; onPress: () => void }) {
   const scale = DESKTOP_VIEW_W / DESKTOP_WIDTH;
   const host = label || url.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
-  if (!desktop) return <Pressable onPress={onPress} style={s.phoneFrame}>
-    <View pointerEvents="none" style={{ overflow: 'hidden', flex: 1, backgroundColor: '#fff' }}><WebView source={{ uri: url }} style={{ flex: 1 }} scrollEnabled={false} startInLoadingState /></View>
-  </Pressable>;
-  return <Pressable onPress={onPress} style={s.desktopFrame}>
-    <View style={s.desktopBar}><View style={s.previewDots}><View style={s.previewDot} /><View style={s.previewDot} /><View style={s.previewDot} /></View><Text style={s.desktopBarUrl} numberOfLines={1}>{host}</Text></View>
-    <View pointerEvents="none" style={{ height: DESKTOP_VIEW_H, overflow: 'hidden', backgroundColor: '#fff' }}>
-      <View style={{ position: 'absolute', top: 0, left: 0, width: DESKTOP_WIDTH, height: DESKTOP_VIEW_H / scale, transform: [{ scale }], transformOrigin: 'top left' }}>
-        <WebView source={{ uri: url }} style={{ flex: 1 }} scrollEnabled={false} startInLoadingState />
+  // Both views stay mounted and load once, so switching phone/desktop is instant and the page is cached by the web view.
+  const web = { source: { uri: url }, scrollEnabled: false, startInLoadingState: true, cacheEnabled: true, cacheMode: 'LOAD_CACHE_ELSE_NETWORK' as const };
+  return <>
+    <Pressable onPress={onPress} style={[s.phoneFrame, !!desktop && { display: 'none' }]}>
+      <View pointerEvents="none" style={{ overflow: 'hidden', flex: 1, backgroundColor: '#fff' }}><WebView {...web} style={{ flex: 1 }} /></View>
+    </Pressable>
+    <Pressable onPress={onPress} style={[s.desktopFrame, !desktop && { display: 'none' }]}>
+      <View style={s.desktopBar}><View style={s.previewDots}><View style={[s.previewDot, { backgroundColor: '#FF5F57' }]} /><View style={[s.previewDot, { backgroundColor: '#FEBC2E' }]} /><View style={[s.previewDot, { backgroundColor: '#28C840' }]} /></View><View style={s.desktopAddress}><Ionicons name="lock-closed" size={9} color={C.inkMuted} /><Text style={s.desktopBarUrl} numberOfLines={1}>{host}</Text></View></View>
+      <View pointerEvents="none" style={{ height: DESKTOP_VIEW_H, overflow: 'hidden', backgroundColor: '#fff' }}>
+        <View style={{ position: 'absolute', top: 0, left: 0, width: DESKTOP_WIDTH, height: DESKTOP_VIEW_H / scale, transform: [{ scale }], transformOrigin: 'top left' }}>
+          <WebView {...web} style={{ flex: 1 }} />
+        </View>
       </View>
-    </View>
-  </Pressable>;
+    </Pressable>
+  </>;
 }
 
 function DeviceToggle({ mode, setMode, dark = false, disabled = false }: { mode: 'mobile' | 'desktop'; setMode: (m: 'mobile' | 'desktop') => void; dark?: boolean; disabled?: boolean }) {
@@ -1138,7 +1142,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
             : <>
             <View style={[s.buildingWrap, { height: DASHBOARD_PREVIEW_HEIGHT + DASHBOARD_PREVIEW_INSET * 2, justifyContent: 'center' }]}>
               {realUrl
-                ? <RealSitePreview url={realUrl} label={domain ? `${domain}${suffix}` : 'Website preview'} desktop={previewMode === 'desktop'} onPress={openPreview} />
+                ? <RealSitePreview url={realUrl} label={domain ? `${domain}${suffix}` : slug ? `${slug}.brightsite.app` : 'yourwebsite.co.uk'} desktop={previewMode === 'desktop'} onPress={openPreview} />
                 : <View style={[previewMode === 'desktop' ? s.desktopFrame : s.phoneFrame, { alignItems: 'center', justifyContent: 'center', padding: 24 }]}><Text style={[s.buildingSub, { color: 'rgba(255,255,255,.6)', textAlign: 'center' }]}>Your website preview appears here once it's ready.</Text></View>}
             </View>
             </>}
@@ -2596,8 +2600,9 @@ savedPill: { position: 'absolute', top: SAFE_TOP + 86, alignSelf: 'center', zInd
   deviceToggleBtnOn: { backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 } },
   deviceToggleBtnOnDark: { backgroundColor: '#fff' },
   desktopFrame: { alignSelf: 'stretch', marginHorizontal: 0, borderRadius: 12, overflow: 'hidden', marginBottom: 18, backgroundColor: '#fff', borderWidth: 6, borderColor: '#141A1E', shadowColor: '#000', shadowOpacity: .18, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } },
-  desktopBar: { height: 26, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#E9ECEF' },
-  desktopBarUrl: { fontFamily: FONT, fontSize: 11, color: C.inkMuted, maxWidth: '60%' },
+  desktopBar: { height: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#E9ECEF' },
+  desktopBarUrl: { fontFamily: FONT, fontSize: 11, color: C.inkSoft, flexShrink: 1 },
+  desktopAddress: { flexDirection: 'row', alignItems: 'center', gap: 5, height: 20, paddingHorizontal: 10, borderRadius: 10, backgroundColor: '#fff', maxWidth: '62%' },
   cardLink: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, alignSelf: 'flex-start' },
   cardLinkText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.primary },
   editMenu: { position: 'absolute', top: 46, right: 0, width: 250, padding: 6, borderRadius: 14, backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .14, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 12, zIndex: 50 },
