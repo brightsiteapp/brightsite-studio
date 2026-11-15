@@ -1483,8 +1483,8 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
             </View>
           </View>
           {isBuilding
-            ? <View style={s.buildingWrap}>
-              <View ref={buildCardRef} collapsable={false} style={previewMode === 'desktop' && !playReveal ? [s.desktopFrame, s.buildingPhone, { alignSelf: 'stretch', width: '100%', height: DASHBOARD_PREVIEW_HEIGHT, marginVertical: DASHBOARD_PREVIEW_INSET, borderWidth: 6, padding: 0 }] : [s.phoneFrame, s.buildingPhone]}>
+            ? <View style={[s.buildingWrap, { height: DASHBOARD_PREVIEW_HEIGHT + DASHBOARD_PREVIEW_INSET * 2, justifyContent: 'center' }]}>
+              <View ref={buildCardRef} collapsable={false} style={previewMode === 'desktop' && !playReveal ? [s.desktopFrame, s.buildingPhone, { alignSelf: 'stretch', width: '100%', height: (SCREEN_WIDTH - 32) * 0.68, borderWidth: 6, padding: 0, marginTop: 18 }] : [s.phoneFrame, s.buildingPhone]}>
                 <View style={{ flex: 1, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 }}>
                 <Animated.View style={[s.buildingGlow, isTodo && s.todoGlow, { opacity: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.35, 1] }), transform: [{ scale: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.92, 1] }) }] }]}><View style={[s.buildingGlowInner, isTodo && s.todoGlowInner]}><Image source={require('./assets/brightsite-b-white.png')} resizeMode="contain" style={s.buildingLogo} /></View></Animated.View>
                 {!isLoadingSite && <Text style={[s.buildingText, { color: '#fff', marginTop: 28 }]}>{isTodo ? 'Let’s build your website' : 'Building your preview'}</Text>}
@@ -2833,10 +2833,10 @@ function SplashGlow({ onDone }: { onDone: () => void }) {
   useEffect(() => {
     // one flash: the dot brightens with a soft light bleeding off it, then settles and the splash fades
     Animated.sequence([
-      Animated.delay(120),
-      Animated.timing(glow, { toValue: 1, duration: 150, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-      Animated.timing(glow, { toValue: 0, duration: 380, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-      Animated.timing(fade, { toValue: 0, duration: 300, useNativeDriver: true }),
+      Animated.delay(60),
+      Animated.timing(glow, { toValue: 1, duration: 100, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      Animated.timing(glow, { toValue: 0, duration: 240, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      Animated.timing(fade, { toValue: 0, duration: 220, useNativeDriver: true }),
     ]).start(onDone);
   }, []);
   const dot = 18 * SPLASH_K;
