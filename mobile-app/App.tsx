@@ -1484,10 +1484,12 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           </View>
           {isBuilding
             ? <View style={s.buildingWrap}>
-              <View ref={buildCardRef} collapsable={false} style={previewMode === 'desktop' && !playReveal ? [s.desktopFrame, s.buildingPhone, { alignSelf: 'stretch', height: (SCREEN_WIDTH - 32) * 0.68, marginTop: DASHBOARD_PREVIEW_INSET }] : [s.phoneFrame, s.buildingPhone]}>
+              <View ref={buildCardRef} collapsable={false} style={previewMode === 'desktop' && !playReveal ? [s.desktopFrame, s.buildingPhone, { alignSelf: 'stretch', height: (SCREEN_WIDTH - 32) * 0.68, marginTop: DASHBOARD_PREVIEW_INSET, justifyContent: 'center' }] : [s.phoneFrame, s.buildingPhone]}>
+                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', width: '100%' }}>
                 <Animated.View style={[s.buildingGlow, isTodo && s.todoGlow, { opacity: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.35, 1] }), transform: [{ scale: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.92, 1] }) }] }]}><View style={[s.buildingGlowInner, isTodo && s.todoGlowInner]}><Image source={require('./assets/brightsite-b-white.png')} resizeMode="contain" style={s.buildingLogo} /></View></Animated.View>
                 {!isLoadingSite && <Text style={[s.buildingText, { color: '#fff', marginTop: 28 }]}>{isTodo ? 'Let’s build your website' : 'Building your preview'}</Text>}
                 {!isLoadingSite && <Text style={[s.buildingSub, { color: 'rgba(255,255,255,.6)' }]}>{isTodo ? 'Fill in your info cards. The more you add, the better your site. Then send it to your designer.' : 'We’ll send you a notification as soon as it’s ready to review.'}</Text>}
+                </View>
               </View>
             </View>
             : <>
