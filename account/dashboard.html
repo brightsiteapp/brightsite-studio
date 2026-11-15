@@ -1089,7 +1089,6 @@
       <button type="button" class="dvt-btn active" id="dvtDesktop" aria-pressed="true" onclick="var p=document.getElementById('deskPreview'),b=p.querySelector('.fake-browser'),m=p.querySelector('.fake-phone');p.classList.remove('mobile-view');b.hidden=false;m.hidden=true;b.style.display='flex';m.style.display='none';this.classList.add('active');this.setAttribute('aria-pressed','true');document.getElementById('dvtMobile').classList.remove('active');document.getElementById('dvtMobile').setAttribute('aria-pressed','false');">Desktop</button>
       <button type="button" class="dvt-btn" id="dvtMobile" aria-pressed="false" onclick="var p=document.getElementById('deskPreview'),b=p.querySelector('.fake-browser'),m=p.querySelector('.fake-phone');p.classList.add('mobile-view');b.hidden=true;m.hidden=false;b.style.display='none';m.style.display='flex';this.classList.add('active');this.setAttribute('aria-pressed','true');document.getElementById('dvtDesktop').classList.remove('active');document.getElementById('dvtDesktop').setAttribute('aria-pressed','false');">Mobile</button>
     </div>
-    <button type="button" class="desk-analytics" id="deskAnalytics"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="2" y="13" width="4" height="9" rx="1.2"/><rect x="7.33" y="8" width="4" height="14" rx="1.2"/><rect x="12.67" y="2" width="4" height="20" rx="1.2"/><rect x="18" y="10" width="4" height="12" rx="1.2"/></svg>Analytics</button>
   </div>
   <div class="preview-frame-wrap" id="previewFrameWrap">
     <!-- desktop: fake browser chrome -->
@@ -1551,7 +1550,7 @@
     this.querySelectorAll('button').forEach(function(x) { x.setAttribute('aria-pressed', String(x === b)); });
     loadAnalytics();
   });
-  ['openAnalytics', 'wahAnalytics', 'deskAnalytics'].forEach(function(id) {
+  ['openAnalytics', 'wahAnalytics'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.addEventListener('click', showAnalyticsTab);
   });
@@ -1657,7 +1656,7 @@
     if (nameEl) nameEl.textContent = raw.name || business.name || 'Your website';
 
     // Analytics show greyed out until the website is live.
-    ['wahAnalytics', 'openAnalytics', 'deskAnalytics'].forEach(function(id) {
+    ['wahAnalytics', 'openAnalytics'].forEach(function(id) {
       var el = document.getElementById(id);
       if (el) { el.disabled = !isLive; el.title = isLive ? '' : 'Available once your website is live'; }
     });

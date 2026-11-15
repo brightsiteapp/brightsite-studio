@@ -1483,7 +1483,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
             </View>
           </View>
           {isBuilding
-            ? <View style={s.buildingWrap}>
+            ? <View style={previewMode === 'desktop' && !playReveal ? { flex: 1, minHeight: SCREEN_HEIGHT * 0.62, alignItems: 'center', justifyContent: 'center', paddingTop: 40, paddingBottom: 40 } : s.buildingWrap}>
               <View ref={buildCardRef} collapsable={false} style={previewMode === 'desktop' && !playReveal ? [s.desktopFrame, s.buildingPhone, { alignSelf: 'stretch', width: '100%', height: (SCREEN_WIDTH - 32) * 0.68, marginTop: DASHBOARD_PREVIEW_INSET, borderWidth: 6, padding: 0 }] : [s.phoneFrame, s.buildingPhone]}>
                 <View style={{ flex: 1, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 }}>
                 <Animated.View style={[s.buildingGlow, isTodo && s.todoGlow, { opacity: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.35, 1] }), transform: [{ scale: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.92, 1] }) }] }]}><View style={[s.buildingGlowInner, isTodo && s.todoGlowInner]}><Image source={require('./assets/brightsite-b-white.png')} resizeMode="contain" style={s.buildingLogo} /></View></Animated.View>
