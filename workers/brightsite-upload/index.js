@@ -146,24 +146,80 @@ async function sha1Short(text) {
   return Array.from(new Uint8Array(buf)).slice(0, 6).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+function normPath(p) {
+  let x = '/' + String(p || '').split(/[?#]/)[0].replace(/^\/+/, '');
+  x = x.replace(/\/index\.html$/i, '/').replace(/\.html$/i, '');
+  if (x.length > 1) x = x.replace(/\/+$/, '');
+  return (x || '/').slice(0, 120);
+}
+
+// Adds to today's record for a site: mutate(stats) edits the day's object in place.
+async function bumpStats(env, slug, mutate) {
+  const key = `stats/${slug}/${dayKey(new Date())}`;
+  const existing = await env.MEDIA.get(key);
+  const rec = existing ? await existing.json().catch(() => null) : null;
+  const stats = rec && typeof rec === 'object' ? rec : { views: 0, visitors: [] };
+  stats.pages = stats.pages || {}; stats.clicks = stats.clicks || {};
+  await mutate(stats);
+  await env.MEDIA.put(key, JSON.stringify(stats), { httpMetadata: { contentType: 'application/json' } });
+}
+
 // Counts one page view (HTML only, no bots). Visitors are anonymous: a daily hash of IP + browser,
 // never stored beyond that day's list. Approximate by design (concurrent hits can occasionally merge).
-async function recordHit(env, slug, request) {
+async function recordHit(env, slug, request, rel) {
   try {
     const ua = request.headers.get('User-Agent') || '';
     if (!ua || BOT_RE.test(ua)) return;
     const day = dayKey(new Date());
-    const key = `stats/${slug}/${day}`;
     const ip = request.headers.get('CF-Connecting-IP') || '';
     const visitor = await sha1Short(`${day}|${ip}|${ua}`);
-    const existing = await env.MEDIA.get(key);
-    const rec = existing ? await existing.json().catch(() => null) : null;
-    const stats = rec && typeof rec === 'object' ? rec : { views: 0, visitors: [] };
-    stats.views = (stats.views || 0) + 1;
-    stats.visitors = stats.visitors || [];
-    if (stats.visitors.length < 20000 && !stats.visitors.includes(visitor)) stats.visitors.push(visitor);
-    await env.MEDIA.put(key, JSON.stringify(stats), { httpMetadata: { contentType: 'application/json' } });
+    const page = normPath(rel);
+    await bumpStats(env, slug, stats => {
+      stats.views = (stats.views || 0) + 1;
+      stats.visitors = stats.visitors || [];
+      if (stats.visitors.length < 20000 && !stats.visitors.includes(visitor)) stats.visitors.push(visitor);
+      const pg = stats.pages[page] || (stats.pages[page] = { views: 0, seconds: 0, timed: 0 });
+      pg.views += 1;
+    });
   } catch (e) { console.error('recordHit failed', e && e.message); }
+}
+
+// Events sent by the tracking script (time on page, contact clicks, form sends).
+const CLICK_KINDS = ['phone', 'email', 'whatsapp', 'directions', 'social'];
+async function recordEvent(env, slug, request) {
+  const ua = request.headers.get('User-Agent') || '';
+  if (!ua || BOT_RE.test(ua)) return;
+  let e; try { e = JSON.parse(await request.text()); } catch { return; }
+  if (!e || typeof e !== 'object') return;
+  const page = normPath(e.p);
+  await bumpStats(env, slug, stats => {
+    if (e.t === 'time') {
+      const sec = Math.min(1800, Math.max(0, Math.round(Number(e.s) || 0)));
+      if (!sec) return;
+      const pg = stats.pages[page] || (stats.pages[page] = { views: 0, seconds: 0, timed: 0 });
+      pg.seconds = (pg.seconds || 0) + sec; pg.timed = (pg.timed || 0) + 1;
+    } else if (e.t === 'click' && CLICK_KINDS.includes(e.k)) {
+      stats.clicks[e.k] = (stats.clicks[e.k] || 0) + 1;
+    } else if (e.t === 'form') {
+      stats.forms = (stats.forms || 0) + 1;
+    }
+  });
+}
+
+// Small script added to every served page: time on page, contact clicks and form sends.
+function trackerScript(slug, basePath) {
+  return `<script>(function(){var u='https://${WORKER_HOST}/track/${slug}',b=${JSON.stringify(basePath || '')},act=0,last=Date.now(),vis=!document.hidden;`
+  + `function pth(){var p=location.pathname;if(b&&p.indexOf(b)===0)p=p.slice(b.length)||'/';return p}`
+  + `function tick(){if(vis)act+=Date.now()-last;last=Date.now()}`
+  + `function send(t,k){tick();var d=JSON.stringify({t:t,p:pth(),s:t==='time'?Math.round(act/1000):0,k:k});try{navigator.sendBeacon(u,new Blob([d],{type:'text/plain'}))}catch(e){}if(t==='time')act=0}`
+  + `document.addEventListener('visibilitychange',function(){tick();vis=!document.hidden;last=Date.now();if(document.hidden)send('time')});`
+  + `addEventListener('pagehide',function(){send('time')});`
+  + `document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(!a)return;var h=a.getAttribute('href')||'',k=/^tel:/i.test(h)?'phone':/^mailto:/i.test(h)?'email':/wa[.]me|whatsapp/i.test(h)?'whatsapp':/maps[.]|goo[.]gl[/]maps|google[.][a-z.]+[/]maps|maps[.]apple/i.test(h)?'directions':/instagram|facebook|tiktok|twitter|x[.]com|linkedin|youtube/i.test(h)?'social':'';if(k)send('click',k)},true);`
+  + `document.addEventListener('submit',function(){send('form')},true)})();</script>`;
+}
+
+function dayRow(date, rec) {
+  return { date, views: rec ? rec.views || 0 : 0, visitors: rec && rec.visitors ? rec.visitors.length : 0, pages: rec ? rec.pages || {} : {}, clicks: rec ? rec.clicks || {} : {}, forms: rec ? rec.forms || 0 : 0 };
 }
 
 async function readStats(env, slug, days) {
@@ -175,7 +231,7 @@ async function readStats(env, slug, days) {
     const o = await env.MEDIA.get(`stats/${slug}/${d}`);
     return o ? o.json().catch(() => null) : null;
   }));
-  dates.forEach((d, i) => out.push({ date: d, views: recs[i] ? recs[i].views || 0 : 0, visitors: recs[i] && recs[i].visitors ? recs[i].visitors.length : 0 }));
+  dates.forEach((d, i) => out.push(dayRow(d, recs[i])));
   return out;
 }
 
@@ -193,7 +249,7 @@ async function readAllStats(env, slug) {
     const o = await env.MEDIA.get(k);
     return o ? o.json().catch(() => null) : null;
   }));
-  return keys.slice(-2000).map((k, i) => ({ date: k.split('/').pop(), views: recs[i] ? recs[i].views || 0 : 0, visitors: recs[i] && recs[i].visitors ? recs[i].visitors.length : 0 }));
+  return keys.slice(-2000).map((k, i) => dayRow(k.split('/').pop(), recs[i]));
 }
 
 // Serves <slug>/site/<path>, trying path, path/index.html and path.html. basePath is set when
@@ -210,11 +266,13 @@ async function serveSite(env, slug, path, basePath, ctx, request) {
     const obj = await env.MEDIA.get(`${slug}/site/${c}`);
     if (!obj) continue;
     const type = contentTypeFor(c);
-    if (ctx && request && type.startsWith('text/html')) ctx.waitUntil(recordHit(env, slug, request));
+    if (ctx && request && type.startsWith('text/html')) ctx.waitUntil(recordHit(env, slug, request, c));
     const headers = { 'Content-Type': type, 'Cache-Control': type.startsWith('text/html') ? 'public, max-age=60' : 'public, max-age=3600' };
-    if (basePath && type.startsWith('text/html')) {
+    if (type.startsWith('text/html')) {
       let html = await obj.text();
-      if (!/<base\s/i.test(html)) html = html.replace(/<head([^>]*)>/i, `<head$1><base href="${basePath}">`);
+      if (basePath && !/<base\s/i.test(html)) html = html.replace(/<head([^>]*)>/i, `<head$1><base href="${basePath}">`);
+      const tracker = trackerScript(slug, basePath);
+      html = /<\/body>/i.test(html) ? html.replace(/<\/body>/i, tracker + '</body>') : html + tracker;
       return new Response(html, { headers });
     }
     return new Response(obj.body, { headers });
@@ -261,6 +319,12 @@ export default {
       const siteMatch = path.match(/^\/site\/([a-z0-9-]+)(\/.*)?$/);
       if (request.method === 'GET' && siteMatch) {
         return serveSite(env, siteMatch[1], siteMatch[2] || '/', `/${siteMatch[1]}/`, ctx, request);
+      }
+
+      const trackMatch = path.match(/^\/track\/([a-z0-9-]+)$/);
+      if (request.method === 'POST' && trackMatch) {
+        ctx.waitUntil(recordEvent(env, trackMatch[1], request).catch(() => {}));
+        return new Response(null, { status: 204, headers: { 'Access-Control-Allow-Origin': '*' } });
       }
 
       const statsMatch = path.match(/^\/stats\/([a-z0-9-]+)$/);

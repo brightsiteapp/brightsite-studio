@@ -566,7 +566,7 @@ const DESKTOP_VIEW_H = Math.round(DESKTOP_VIEW_W * 0.68);
 // In-app analytics: page views and visitors per day from the site worker (owner or admin login).
 function AnalyticsModal({ visible, slug, session, onClose }: { visible: boolean; slug: string; session: any; onClose: () => void }) {
   const [rangeDays, setRangeDays] = useState<number | 'all'>(30);
-  const [days, setDays] = useState<{ day?: string; views: number; visitors: number }[] | null>(null);
+  const [days, setDays] = useState<{ views: number; visitors: number; pages?: Record<string, { views: number; seconds: number; timed: number }>; clicks?: Record<string, number>; forms?: number }[] | null>(null);
   const [error, setError] = useState('');
   useEffect(() => {
     if (!visible || !slug || !session?.access_token) return;
@@ -579,6 +579,20 @@ function AnalyticsModal({ visible, slug, session, onClose }: { visible: boolean;
   const views = (days || []).reduce((t, d) => t + d.views, 0);
   const visitors = (days || []).reduce((t, d) => t + d.visitors, 0);
   const max = Math.max(1, ...(days || []).map(d => d.views));
+  // per-page totals, contact clicks and form sends across the chosen range
+  const pageMap: Record<string, { views: number; seconds: number; timed: number }> = {};
+  const clickMap: Record<string, number> = {};
+  let formSends = 0;
+  (days || []).forEach(d => {
+    Object.entries(d.pages || {}).forEach(([path, v]) => { const t = pageMap[path] || (pageMap[path] = { views: 0, seconds: 0, timed: 0 }); t.views += v.views || 0; t.seconds += v.seconds || 0; t.timed += v.timed || 0; });
+    Object.entries(d.clicks || {}).forEach(([k, n]) => { clickMap[k] = (clickMap[k] || 0) + (n || 0); });
+    formSends += d.forms || 0;
+  });
+  const pages = Object.entries(pageMap).map(([path, v]) => ({ path, ...v, avg: v.timed ? Math.round(v.seconds / v.timed) : 0 })).sort((a, b) => b.views - a.views);
+  const longest = pages.filter(p => p.timed > 0).sort((a, b) => b.avg - a.avg)[0];
+  const fmtTime = (sec: number) => sec >= 60 ? `${Math.floor(sec / 60)}m ${sec % 60}s` : `${sec}s`;
+  const pageName = (path: string) => path === '/' ? 'Home' : path.replace(/^\//, '').replace(/[-_/]/g, ' ').replace(/^./, c => c.toUpperCase());
+  const CLICK_LABELS: [string, string, any][] = [['phone', 'Phone calls', 'call-outline'], ['email', 'Emails', 'mail-outline'], ['whatsapp', 'WhatsApp', 'logo-whatsapp'], ['directions', 'Directions', 'navigate-outline'], ['social', 'Social links', 'share-social-outline']];
   return <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
     <View style={{ flex: 1, backgroundColor: C.canvas, paddingTop: Platform.OS === 'ios' ? 54 : 28 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 14 }}>
@@ -591,6 +605,7 @@ function AnalyticsModal({ visible, slug, session, onClose }: { visible: boolean;
       <View style={{ flexDirection: 'row', gap: 12, padding: 20 }}>
         {[['Page views', views], ['Visitors', visitors]].map(([label, n]) => <View key={String(label)} style={[s.dashboardInfoCard, { flex: 1, marginBottom: 0 }]}><Text style={s.dashboardCardLabel}>{label}</Text><Text style={[s.dashboardCardTitle, { fontSize: 28 }]}>{Number(n).toLocaleString('en-GB')}</Text></View>)}
       </View>
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
       <View style={[s.dashboardInfoCard, { marginHorizontal: 20 }]}>
         {days === null && !error && <ActivityIndicator color={C.primary} />}
         {!!error && <Text style={s.dashboardCardText}>{error}</Text>}
@@ -601,6 +616,31 @@ function AnalyticsModal({ visible, slug, session, onClose }: { visible: boolean;
           <Text style={[s.dashboardCardText, { marginTop: 10 }]}>{views ? `Peak day: ${max} view${max === 1 ? '' : 's'}` : 'No visits recorded yet. Once people visit the site they will appear here.'}</Text>
         </>}
       </View>
+      {days !== null && <>
+        <View style={[s.dashboardInfoCard, { marginHorizontal: 20 }]}>
+          <Text style={s.dashboardCardLabel}>Pages</Text>
+          {longest && <Text style={[s.dashboardCardTitle, { marginBottom: 6 }]}>Most time on {pageName(longest.path)} · avg {fmtTime(longest.avg)}</Text>}
+          {pages.length === 0 && <Text style={s.dashboardCardText}>Page and time-on-page data appears as people browse the site.</Text>}
+          {pages.slice(0, 8).map(pg => <View key={pg.path} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 7, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.line }}>
+            <Text style={[s.dashboardCardText, { flex: 1, color: C.ink, fontWeight: '600', marginTop: 0 }]} numberOfLines={1}>{pageName(pg.path)}</Text>
+            <Text style={[s.dashboardCardText, { marginTop: 0 }]}>{pg.views} view{pg.views === 1 ? '' : 's'}{pg.timed ? ` · ${fmtTime(pg.avg)}` : ''}</Text>
+          </View>)}
+        </View>
+        <View style={[s.dashboardInfoCard, { marginHorizontal: 20 }]}>
+          <Text style={s.dashboardCardLabel}>Contact clicks</Text>
+          {CLICK_LABELS.map(([k, label, icon]) => <View key={k} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 7, gap: 10 }}>
+            <Ionicons name={icon} size={18} color={C.primary} />
+            <Text style={[s.dashboardCardText, { flex: 1, color: C.ink, fontWeight: '600', marginTop: 0 }]}>{label}</Text>
+            <Text style={[s.dashboardCardTitle, { fontSize: 17 }]}>{clickMap[k] || 0}</Text>
+          </View>)}
+        </View>
+        <View style={[s.dashboardInfoCard, { marginHorizontal: 20 }]}>
+          <Text style={s.dashboardCardLabel}>Contact form</Text>
+          <Text style={[s.dashboardCardTitle, { fontSize: 22 }]}>{formSends} send{formSends === 1 ? '' : 's'}</Text>
+          <Text style={s.dashboardCardText}>Counted each time the form's send button is pressed.</Text>
+        </View>
+      </>}
+      </ScrollView>
     </View>
   </Modal>;
 }
