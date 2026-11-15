@@ -2235,10 +2235,10 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const draftPill = useRef(new Animated.Value(0)).current;
   const draftBusy = useRef(false);
   const lastDraftIndex = useRef(index);
-  useEffect(() => {
-    const moved = lastDraftIndex.current !== index;
-    lastDraftIndex.current = index;
-    if (!moved || !authSession || appScreen !== 'onboarding' || editingInfo || index < 1 || !data.businessName.trim() || draftBusy.current) return;
+  // Saves progress to the server and flashes the "All changes saved" pill. Runs on every card change
+  // and, a moment after they stop typing, on any edit, so nothing depends on swiping to save.
+  const syncDraftNow = () => {
+    if (!authSession || appScreen !== 'onboarding' || editingInfo || index < 1 || !data.businessName.trim() || draftBusy.current) return;
     draftBusy.current = true;
     void syncOnboardingToBackend(buildChoice || 'designer', { draft: true }).then(ok => {
       draftBusy.current = false;
@@ -2250,7 +2250,18 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         Animated.timing(draftPill, { toValue: 0, duration: 320, useNativeDriver: true }),
       ]).start();
     });
+  };
+  useEffect(() => {
+    const moved = lastDraftIndex.current !== index;
+    lastDraftIndex.current = index;
+    if (moved) syncDraftNow();
   }, [index]);
+  const draftEditSkip = useRef(true);
+  useEffect(() => {
+    if (draftEditSkip.current) { draftEditSkip.current = false; return; } // not on first render
+    const timer = setTimeout(syncDraftNow, 2500);
+    return () => clearTimeout(timer);
+  }, [data, hours, services, reviewsList, offers, contactForm, media]);
 
   const autoSaveBusy = useRef(false);
   const autoSaveSkip = useRef(true);
@@ -2775,7 +2786,6 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             </ScrollView>
             <View pointerEvents="none" style={s.fixedPrompt}>
               {!!validationMessage && isActive && <Text style={s.validationText}>{validationMessage}</Text>}
-              {deckStep.id !== 'reviews' && !editingInfo && <View style={s.swipeRow}>{deckStep.id === 'login' && (authBusy || authChecking) ? <ActivityIndicator size="small" color={C.ink} /> : <Ionicons name="arrow-back" size={14} color={C.ink} />}<Text style={s.swipeHint}>{deckStep.id === 'login' ? authChecking ? 'Checking your account…' : authBusy ? authMode === 'signup' ? 'Creating your account…' : 'Logging you in…' : authMode === 'signup' ? 'Swipe left to create account' : 'Swipe left to log in' : ['hours', 'business', 'contact'].includes(deckStep.id) ? 'Swipe left to save' : 'Swipe left to continue'}</Text></View>}
             </View>
           </Animated.View>;
         })}
