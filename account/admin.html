@@ -239,7 +239,8 @@ body { background: var(--bg); min-height: 100vh; }
 .work-tab .tab-dot { top: 4px; right: 3px; }
 .work-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .work-panel[hidden] { display: none; }
-.site-bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; margin-bottom: 14px; }
+.site-bar { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 14px; }
+.site-bar > * { min-width: 0; }
 .site-bar-right { justify-self: end; }
 .site-toggle { display: flex; gap: 2px; padding: 3px; border-radius: 12px; background: rgba(28,40,50,.07); }
 .site-toggle button { border: 0; background: none; border-radius: 9px; padding: 7px 12px; color: var(--muted); cursor: pointer; display: inline-flex; }
@@ -402,11 +403,11 @@ body { background: var(--bg); color: var(--ink); }
 .an-row:first-child { border-top: 0; }
 .an-row span:first-child { flex: 1; font-weight: 600; }
 .an-row span:last-child { color: var(--muted); }
-#siteBarLeft, #siteBarRight { display: flex; gap: 8px; align-items: center; }
-#siteBarRight { justify-content: flex-end; }
+#siteBarLeft, #siteBarRight { display: flex; gap: 6px; align-items: center; flex: none; }
+.site-bar .site-toggle { flex: none; }
 .sb-btn { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: #fff; color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
 .sb-btn.sb-blue { color: var(--accent); }
-@media (max-width: 520px) { .sb-label { display: none; } .sb-btn { padding: 0 11px; } }
+@media (max-width: 520px) { .sb-btn { height: 32px; padding: 0 9px; gap: 4px; font-size: 12px; } .sb-btn svg { width: 13px; height: 13px; } .site-toggle button { padding: 6px 8px; } .site-bar { gap: 4px; } }
 .work-head .status-pill { margin-left: auto; }
 .site-preview .pv-empty { background: #141A1E; }
 .site-preview .pv-b { width: 150px; height: 150px; margin: 0 auto 26px; display: flex; align-items: center; justify-content: center; animation: pvPulse 2.2s ease-in-out infinite; }
