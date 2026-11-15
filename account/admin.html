@@ -500,8 +500,7 @@ body { background: var(--bg); color: var(--ink); }
         <div class="filter-pills" id="filterPills"></div>
         <select id="clientFilter" aria-label="Filter clients" title="Filter" hidden>
           <option value="all">All</option>
-          <option value="unread">Unread</option>
-          <option value="red">To build</option>
+                    <option value="red">To build</option>
           <option value="yellow">Preview sent</option>
           <option value="green">Live</option>
           <option value="stub">Mew</option>
@@ -1332,8 +1331,7 @@ function renderClientList() {
   var q = (document.getElementById('searchInput').value || '').trim().toLowerCase();
   var f = document.getElementById('clientFilter').value;
   var ids = allBusinesses.filter(function(b) {
-    if (f === 'unread' && !isUnread(b.id)) return false;
-    if (f !== 'all' && f !== 'unread' && statusOf(b) !== f) return false;
+    if (f !== 'all' && statusOf(b) !== f) return false;
     if (!q) return true;
     return (bizName(b.id) + ' ' + (b.id || '')).toLowerCase().indexOf(q) > -1;
   }).map(function(b) { return b.id; });
@@ -1732,7 +1730,7 @@ document.getElementById('homeTabs').addEventListener('click', function(e) {
   renderClientList();
 });
 (function buildFilterPills() {
-  var opts = [['all', 'All', null], ['unread', 'Unread', null], ['red', 'To build', '#B42318'], ['yellow', 'Preview sent', '#B26A00'], ['green', 'Live', '#1F8A54'], ['stub', 'Mew', '#6B7680']];
+  var opts = [['all', 'All', null], ['red', 'To build', '#B42318'], ['yellow', 'Preview sent', '#B26A00'], ['green', 'Live', '#1F8A54'], ['stub', 'Mew', '#6B7680']];
   var wrap = document.getElementById('filterPills');
   var sel = document.getElementById('clientFilter');
   opts.forEach(function(o) {

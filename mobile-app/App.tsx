@@ -1204,7 +1204,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [chooseMode, setChooseMode] = useState<'pick' | 'auto'>('pick');
   const [autoPending, setAutoPending] = useState(false);
   const [adminBusinesses, setAdminBusinesses] = useState<any[]>([]);
-  const [adminFilter, setAdminFilter] = useState<'all' | 'unread' | 'red' | 'yellow' | 'green' | 'stub'>('all');
+  const [adminFilter, setAdminFilter] = useState<'all' | 'red' | 'yellow' | 'green' | 'stub'>('all');
   const [adminSearch, setAdminSearch] = useState('');
   const [adminTab, setAdminTab] = useState<'businesses' | 'messages' | 'notifications'>('businesses');
   const [adminActiveThread, setAdminActiveThread] = useState<any>(null);
@@ -2122,14 +2122,13 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     const STATUS_COLORS: Record<string, string> = { stub: '#6B7680', red: C.danger, yellow: C.warning, green: C.success };
     const STATUS_LABELS: Record<string, string> = { stub: 'Mew', red: 'To build', yellow: 'Preview sent', green: 'Live' };
     const filteredBiz = adminBusinesses.filter(b => {
-      if (adminFilter === 'unread' && !adminThreadUnread(b.id)) return false;
-      if (adminFilter !== 'all' && adminFilter !== 'unread' && adminStatusOf(b) !== adminFilter) return false;
+      if (adminFilter !== 'all' && adminStatusOf(b) !== adminFilter) return false;
       if (adminSearch) { const q = adminSearch.toLowerCase(); const d = b.data || {}; return (d.name || '').toLowerCase().includes(q) || (b.id || '').toLowerCase().includes(q); }
       return true;
     }).sort((a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime());
 
-    const tabCounts: Record<string, number> = { all: adminBusinesses.length, unread: 0, stub: 0, red: 0, yellow: 0, green: 0 };
-    adminBusinesses.forEach(b => { tabCounts[adminStatusOf(b)]++; if (adminThreadUnread(b.id)) tabCounts.unread++; });
+    const tabCounts: Record<string, number> = { all: adminBusinesses.length, stub: 0, red: 0, yellow: 0, green: 0 };
+    adminBusinesses.forEach(b => { tabCounts[adminStatusOf(b)]++; });
 
     const threadsWithMessages = adminBusinessesWithMessages();
     const totalUnread = threadsWithMessages.filter(t => adminThreadUnread(t.id)).length;
@@ -2160,10 +2159,10 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
 
         {adminTab === 'businesses' && <>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={aS.filterRow}>
-            {(['all', 'unread', 'red', 'yellow', 'green', 'stub'] as const).map(f => (
+            {(['all', 'red', 'yellow', 'green', 'stub'] as const).map(f => (
               <Pressable key={f} onPress={() => setAdminFilter(f)} style={[aS.filterTab, adminFilter === f && aS.filterTabOn]}>
-                {f !== 'all' && f !== 'unread' && <View style={[aS.filterDot, { backgroundColor: STATUS_COLORS[f] }]} />}
-                <Text style={[aS.filterTabText, adminFilter === f && aS.filterTabTextOn]}>{f === 'all' ? 'All' : f === 'unread' ? 'Unread' : STATUS_LABELS[f]} <Text style={[aS.filterCount, adminFilter === f && { color: 'rgba(255,255,255,.75)' }]}>{tabCounts[f]}</Text></Text>
+                {f !== 'all' && <View style={[aS.filterDot, { backgroundColor: STATUS_COLORS[f] }]} />}
+                <Text style={[aS.filterTabText, adminFilter === f && aS.filterTabTextOn]}>{f === 'all' ? 'All' : STATUS_LABELS[f]} <Text style={[aS.filterCount, adminFilter === f && { color: 'rgba(255,255,255,.75)' }]}>{tabCounts[f]}</Text></Text>
               </Pressable>
             ))}
           </ScrollView>
