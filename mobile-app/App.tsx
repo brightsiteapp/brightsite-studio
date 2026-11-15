@@ -2718,10 +2718,10 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
               <Text style={[s.pathTitle, { color: C.ink }]}>Automatic</Text>
               <Text style={[s.pathText, { color: C.ink }]}>Share your Google, Facebook or website link and our designer builds it for you.</Text>
             </Pressable>
-            <Pressable onPress={() => { setIndex(1); motion.setValue(CARD_TRAVEL); setAppScreen('onboarding'); }} style={({ pressed }) => [s.pathCard, s.pathCardBlue, pressed && s.pressed]}>
-              <Image source={require('./assets/brightbuilder.png')} resizeMode="contain" style={{ width: 19*1543/137, height: 19, tintColor: '#fff', marginBottom: 8 }} />
-              <Text style={[s.pathTitle, { color: '#fff' }]}>Seven. Simple. Steps.</Text>
-              <Text style={[s.pathText, { color: '#fff' }]}>Under 10 minutes. Enter your details, hours, services and photos yourself.</Text>
+            <Pressable onPress={() => { setIndex(1); motion.setValue(CARD_TRAVEL); setAppScreen('onboarding'); }} style={({ pressed }) => [s.pathCard, s.pathCardWhite, pressed && s.pressed]}>
+              <Image source={require('./assets/brightbuilder-blue.png')} resizeMode="contain" style={{ width: 19*1543/137, height: 19, marginBottom: 8 }} />
+              <Text style={[s.pathTitle, { color: C.ink }]}>Seven. Simple. Steps.</Text>
+              <Text style={[s.pathText, { color: C.ink }]}>Under 10 minutes. Enter your details, hours, services and photos yourself.</Text>
             </Pressable>
           </View>
         </View> : <ScrollView contentContainerStyle={[s.content, s.loginContent]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
