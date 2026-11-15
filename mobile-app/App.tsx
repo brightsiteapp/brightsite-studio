@@ -2772,6 +2772,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           const cardScale = cardPosition.interpolate({ inputRange: [-CARD_TRAVEL, 0, CARD_TRAVEL], outputRange: [.93, 1, .93], extrapolate: 'clamp' });
           return <Animated.View key={deckStep.id} pointerEvents={isActive ? 'auto' : 'none'} {...(isActive ? pan.panHandlers : {})} style={[s.card, s.deckCard, isActive ? s.deckCardActive : s.deckCardBehind, { zIndex: isActive ? 22 : 20 - Math.abs(distance), transform: [{ translateX: travelPosition }, { scale: cardScale }] }]}>
 
+            {deckStep.id === 'business' && isActive && !editingInfo && <Pressable onPress={() => { Keyboard.dismiss(); setChooseMode('pick'); setAppScreen('choose'); }} hitSlop={12} style={[s.chooseBack, { position: 'absolute', top: SAFE_TOP + 24, left: 26, zIndex: 120, marginBottom: 0 }]} accessibilityLabel="Back"><Text style={s.chooseBackText}>‹ Back</Text></Pressable>}
             <View style={s.cardHeader}><Text style={s.cardTitle}>{deckStep.title}</Text><View style={s.cardHeaderActions}>
               {deckIndex > 0 && <Text style={s.count}>{deckIndex}/{setupStepIndexes.length}</Text>}
               {!editingInfo && isActive && SWIPE_LOCK_STEPS.includes(deckStep.id) && <Pressable onPress={() => setStepEditMode(v => !v)} hitSlop={10} style={stepEditMode ? s.saveTickBtn : s.editStepBtn}>{stepEditMode ? <Ionicons name="checkmark" size={18} color="#fff" /> : <Text style={s.editStepText}>Edit</Text>}</Pressable>}
