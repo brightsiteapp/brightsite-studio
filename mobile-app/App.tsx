@@ -2710,9 +2710,9 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       <StatusBar style="dark" />
       <View style={{ flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28 }}>
         <View style={s.loginHeader}><Logo height={20} /><Image source={require('./assets/brightsite-icon.png')} style={s.loginAppIcon} /></View>
-        {chooseMode === 'pick' ? <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 18, paddingBottom: 24 }}>
-          <Text style={[s.heroTitle, { textAlign: 'center' }]}>How would you like to build your website?</Text>
-          <Text style={{ fontFamily: FONT, fontSize: 17, lineHeight: 24, color: C.inkSoft, textAlign: 'center', marginTop: 10, marginBottom: 34 }}>You can change anything later.</Text>
+        {chooseMode === 'pick' ? <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 18, paddingBottom: 110 }}>
+          <Text style={[s.heroTitle, { textAlign: 'center', marginBottom: 0 }]}>How would you like to build your website?</Text>
+          <Text style={{ fontFamily: FONT, fontSize: 17, lineHeight: 24, color: C.inkSoft, textAlign: 'center', marginTop: 2, marginBottom: 18 }}>You can change anything later.</Text>
           <View style={{ gap: 14 }}>
             <Pressable onPress={() => setChooseMode('auto')} style={({ pressed }) => [s.pathCard, s.pathCardWhite, pressed && s.pressed]}>
               <Text style={[s.pathTitle, { color: C.ink }]}>Automatic</Text>
