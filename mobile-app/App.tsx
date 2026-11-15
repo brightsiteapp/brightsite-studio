@@ -1510,7 +1510,6 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     contact: 'Add an email address or phone number first',
     hours: 'Keep at least one day open and add its times',
     prices: 'Add at least one service, and give each category a name',
-    domain: 'Check and select an available domain first',
     choice: 'Choose an option above to continue',
   } as Record<string, string>)[step.id] || 'Complete the required details first';
   const transitionTo = (to: number) => {
