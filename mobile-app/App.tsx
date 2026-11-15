@@ -1147,7 +1147,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
         </>} />) :
       <ScrollView key={tab} scrollEnabled={tab !== 'Website'} contentContainerStyle={s.dashboardContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
         {tab === 'Account' && adminBiz && <>
-          <AdminAccountPanel biz={adminBiz} session={session} isLive={isLive} />
+          <AdminAccountPanel biz={adminBiz} session={session} isLive={isLive} onDeleted={onAdminBack} />
         </>}
         {tab === 'Account' && !adminBiz && <>
           <View style={s.dashboardInfoCard}>
@@ -2719,7 +2719,7 @@ const adminApiCall = (session: any, slug: string, payload: Record<string, any>) 
   .then(async r => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`); return j; });
 
 // Admin-only account controls, laid out like the client's Account cards. Inputs pop up when an option is tapped.
-function AdminAccountPanel({ biz, session, isLive }: { biz: any; session: any; isLive: boolean }) {
+function AdminAccountPanel({ biz, session, isLive, onDeleted }: { biz: any; session: any; isLive: boolean; onDeleted?: () => void }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [info, setInfo] = useState<any>(null);
@@ -2780,6 +2780,7 @@ function AdminAccountPanel({ biz, session, isLive }: { biz: any; session: any; i
           : link('close-circle-outline', 'Cancel at end of period', () => Alert.alert('Cancel plan?', 'Their site goes offline when the billing period ends.', [{ text: 'No', style: 'cancel' }, { text: 'Cancel plan', style: 'destructive', onPress: () => void run(async () => { await api({ action: 'cancel-plan' }); await loadInfo(); }) }]), true))}
       </> : <Text style={s.dashboardCardTitle}>{info ? (d.planActive ? 'Paid' : 'No plan yet') : 'Loading…'}</Text>}
     </View>
+    <Pressable disabled={busy} onPress={() => Alert.alert('Delete account?', `This permanently removes ${biz?.data?.name || biz?.data?.raw?.name || 'this client'}: their login, messages and website record. It also cancels any subscription and takes their site offline. This can't be undone.`, [{ text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: () => void run(async () => { const r = await fetch(ADMIN_API, { method: 'POST', headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete-account', slug: biz.id }) }); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`); onDeleted?.(); }) }])} style={({ pressed }) => [s.dashboardInfoCard, { marginTop: 12, alignItems: 'center' }, pressed && s.pressed]}><Text style={[s.dashboardCardTitle, { color: C.danger }]}>Delete account</Text></Pressable>
     {!!msg && <Text style={[s.dashboardCardText, { paddingHorizontal: 4 }]}>{msg}</Text>}
     <Modal visible={!!prompt} transparent animationType="fade" onRequestClose={() => setPrompt(null)}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.planModalOverlay}>
