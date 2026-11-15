@@ -45,6 +45,7 @@ export default async function handler(request, response) {
     const body = typeof request.body === 'string' ? JSON.parse(request.body || '{}') : (request.body || {});
     if (body.action === 'delete-account') return deleteAccount(request, response, body);
     if (body.action === 'delete-my-account') return deleteMyAccount(request, response);
+    if (body.action === 'web-login-link') return webLoginLink(request, response);
     if (body.action === 'list-logins' || body.action === 'delete-logins') return manageLogins(request, response, body);
     if (body.action === 'notify-admin') return notifyAdminFromCustomer(request, response, body);
     if (body.action === 'my-subscription') return mySubscription(request, response, body);
@@ -187,6 +188,20 @@ async function deleteAccount(request, response, body) {
     }
   }
   return json(response, 200, { ok: true, done });
+}
+
+// One-tap sign-in to the web dashboard from the app: a single-use link that expires quickly,
+// made for the signed-in customer only. Nothing is typed and no token travels in our own URL.
+async function webLoginLink(request, response) {
+  const token = bearerToken(request);
+  if (!token) return json(response, 401, { error: 'Authentication required' });
+  const user = await currentUser(ACCOUNTS_SUPABASE_URL, ACCOUNTS_SUPABASE_ANON_KEY, token).catch(() => null);
+  if (!user?.id || !user.email) return json(response, 401, { error: 'Authentication required' });
+  const { data, error } = await supabaseAdmin().auth.admin.generateLink({
+    type: 'magiclink', email: user.email, options: { redirectTo: 'https://brightsite.app/account/callback.html' },
+  });
+  if (error || !data?.properties?.action_link) return json(response, 502, { error: 'Could not open your dashboard right now' });
+  return json(response, 200, { url: data.properties.action_link });
 }
 
 // A customer deletes their own account from the app or dashboard (App Store requirement):

@@ -985,6 +985,16 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
   const openPreview = () => { const u = realUrl || (isLive ? siteUrl : ''); if (u) void Linking.openURL(/^https?:/.test(u) ? u : `https://${u}`); };
   // The app only switches a paid site on or off. Plans are bought on brightsite.app (App Store rules).
   const goLive = () => { if (isPaying) void onGoLive?.(); };
+  // Opens the web dashboard already signed in, via a single-use link from the server.
+  const openWebDashboard = async () => {
+    try {
+      const { data: fresh } = await supabase.auth.getSession();
+      const token = fresh.session?.access_token || session?.access_token;
+      const res = await fetch(ADMIN_API, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'web-login-link' }) });
+      const j = await res.json().catch(() => ({}));
+      await Linking.openURL(res.ok && j.url ? j.url : 'https://brightsite.app/account/login.html');
+    } catch { void Linking.openURL('https://brightsite.app/account/login.html'); }
+  };
   const [deleting, setDeleting] = useState(false);
   // App Store requirement: customers can delete their account (and website) from inside the app.
   const confirmDeleteAccount = () => Alert.alert('Delete your account?', 'This permanently deletes your account, your website and your messages, cancels your plan and takes your site offline. This can\'t be undone.', [
@@ -1062,6 +1072,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
           <ChangePasswordModal visible={showPassword} onClose={() => setShowPassword(false)} />
           <View style={s.dashboardInfoCard}>
             <Text style={s.dashboardCardLabel}>Help</Text>
+            <Pressable onPress={() => void openWebDashboard()} style={s.cardLink} hitSlop={8}><Ionicons name="desktop-outline" size={15} color={C.primary} /><Text style={s.cardLinkText}>Open your dashboard on the web</Text></Pressable>
             <Pressable onPress={() => void Linking.openURL('mailto:tom@brightsite.app')} style={s.cardLink} hitSlop={8}><Ionicons name="mail-outline" size={15} color={C.primary} /><Text style={s.cardLinkText}>Contact support</Text></Pressable>
             <Pressable onPress={() => void Linking.openURL('https://brightsite.app/terms.html#privacy')} style={s.cardLink} hitSlop={8}><Ionicons name="shield-checkmark-outline" size={15} color={C.primary} /><Text style={s.cardLinkText}>Privacy policy</Text></Pressable>
             <Pressable onPress={() => void Linking.openURL('https://brightsite.app/terms.html')} style={s.cardLink} hitSlop={8}><Ionicons name="document-text-outline" size={15} color={C.primary} /><Text style={s.cardLinkText}>Terms</Text></Pressable>
