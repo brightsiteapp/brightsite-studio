@@ -2710,23 +2710,23 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       <View style={{ flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28 }}>
         <View style={s.loginHeader}><Logo height={20} /><Image source={require('./assets/brightsite-icon.png')} style={s.loginAppIcon} /></View>
         <ScrollView contentContainerStyle={[s.content, s.loginContent]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
-            {chooseMode === 'pick' ? <>
-              <Text style={s.heroTitle}>How would you like to build your website?</Text>
-              <Intro>You can change anything later.</Intro>
-              <View style={s.pathStack}>
+            {chooseMode === 'pick' ? <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: 40 }}>
+              <Text style={[s.heroTitle, { textAlign: 'center' }]}>How would you like to build your website?</Text>
+              <Text style={{ fontFamily: FONT, fontSize: 16, color: C.inkMuted, textAlign: 'center', marginTop: 10, marginBottom: 28 }}>You can change anything later.</Text>
+              <View style={[s.pathStack, { alignSelf: 'stretch' }]}>
                 <Pressable onPress={() => setChooseMode('auto')} style={({ pressed }) => [s.pathCard, s.pathCardPlain, pressed && s.pressed]}>
-                  <Text style={[s.pathTag, { color: C.inkMuted }]}>2 MINUTES</Text>
-                  <Text style={s.pathTitle}>Automatic</Text>
-                  <Text style={s.pathText}>Share your Google, Facebook or website link and our designer builds it for you.</Text>
+                  <Text style={[s.pathTag, { color: C.inkMuted, textAlign: 'center' }]}>2 MINUTES</Text>
+                  <Text style={[s.pathTitle, { textAlign: 'center' }]}>Automatic</Text>
+                  <Text style={[s.pathText, { textAlign: 'center' }]}>Share your Google, Facebook or website link and our designer builds it for you.</Text>
                 </Pressable>
                 <Pressable onPress={() => { setIndex(1); motion.setValue(CARD_TRAVEL); setAppScreen('onboarding'); }} style={({ pressed }) => [s.pathCard, s.pathCardPlain, pressed && s.pressed]}>
-                  <Text style={[s.pathTag, { color: C.inkMuted }]}>ABOUT 10 MINUTES</Text>
-                  <Image source={require('./assets/brightbuilder.png')} resizeMode="contain" style={{ width: 170, height: 170 * 137 / 1543, marginBottom: 8 }} />
-                  <Text style={s.pathTitle}>Manual</Text>
-                  <Text style={s.pathText}>Enter your details, hours, services and photos yourself.</Text>
+                  <Text style={[s.pathTag, { color: C.inkMuted, textAlign: 'center' }]}>ABOUT 10 MINUTES</Text>
+                  <Image source={require('./assets/brightbuilder.png')} resizeMode="contain" style={{ width: 170, height: 170 * 137 / 1543, marginBottom: 8, alignSelf: 'center' }} />
+                  <Text style={[s.pathTitle, { textAlign: 'center' }]}>Manual</Text>
+                  <Text style={[s.pathText, { textAlign: 'center' }]}>Enter your details, hours, services and photos yourself.</Text>
                 </Pressable>
               </View>
-            </> : <>
+            </View> : <>
               <Pressable onPress={() => setChooseMode('pick')} hitSlop={10} style={s.chooseBack}><Text style={s.chooseBackText}>‹ Back</Text></Pressable>
               <Text style={s.heroTitle}>Share your links</Text>
               <Intro>Add your name and at least one link. Our designer will take it from there.</Intro>
