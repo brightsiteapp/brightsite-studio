@@ -2785,8 +2785,9 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
               keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
               {content(deckStep)}
             </ScrollView>
-            <View pointerEvents="none" style={s.fixedPrompt}>
-              {!!validationMessage && isActive && <Text style={s.validationText}>{validationMessage}</Text>}
+            <View pointerEvents="box-none" style={s.fixedPrompt}>
+              {!!validationMessage && isActive && <Text pointerEvents="none" style={s.validationText}>{validationMessage}</Text>}
+              {isActive && !editingInfo && deckStep.id !== 'reviews' && <Pressable onPress={() => { Keyboard.dismiss(); go(index + 1); }} style={({ pressed }) => [s.primaryBtn, s.nextBtn, pressed && s.pressed]} accessibilityLabel="Next"><Text style={s.primaryBtnText}>Next</Text><Ionicons name="arrow-forward" size={18} color="#fff" /></Pressable>}
             </View>
           </Animated.View>;
         })}
@@ -3069,7 +3070,8 @@ buildingWrap: { alignItems: 'center', paddingBottom: 24 },
   saveBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 20, marginBottom: 14, padding: 12, borderRadius: 12, backgroundColor: C.dangerSoft },
   saveBannerText: { flex: 1, fontFamily: FONT, fontSize: 13, lineHeight: 18, fontWeight: '600', color: C.danger },
   primaryBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', minHeight: 54, borderRadius: 14, backgroundColor: C.primary, marginTop: 4 },
-  primaryBtnText: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: '#fff' },
+  nextBtn: { alignSelf: 'stretch', marginTop: 0, minHeight: 50 },
+primaryBtnText: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: '#fff' },
   secondaryBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', minHeight: 50, borderRadius: 14, backgroundColor: C.surface, borderWidth: 1, borderColor: C.line, marginTop: 10 },
   secondaryBtnText: { fontFamily: FONT, fontSize: 15, fontWeight: '700', color: C.ink },
   messageIconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
