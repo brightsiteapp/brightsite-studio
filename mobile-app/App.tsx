@@ -2660,7 +2660,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             {(['all', 'new', 'build', 'pending', 'live'] as const).map(f => (
               <Pressable key={f} onPress={() => setAdminFilter(f)} style={[aS.filterTab, adminFilter === f && aS.filterTabOn]}>
                 {f !== 'all' && <View style={[aS.filterDot, { backgroundColor: STATUS_COLORS[f] }]} />}
-                <Text style={[aS.filterTabText, adminFilter === f && aS.filterTabTextOn]}>{f === 'all' ? 'All' : STATUS_LABELS[f]} <Text style={aS.filterCount}>{tabCounts[f]}</Text></Text>
+                <Text style={[aS.filterTabText, adminFilter === f && aS.filterTabTextOn]}>{f === 'all' ? 'All' : STATUS_LABELS[f]} <Text style={[aS.filterCount, adminFilter === f && { color: 'rgba(255,255,255,.75)' }]}>{tabCounts[f]}</Text></Text>
               </Pressable>
             ))}
           </ScrollView>
