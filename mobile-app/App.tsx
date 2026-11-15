@@ -1455,7 +1455,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
                       <Text style={s.makeLiveBtnText}>Make Live</Text>
                     </View>
                   : <View />}
-            <View style={{ position: 'absolute', left: 0, right: 0, alignItems: 'center', pointerEvents: 'box-none' as any }}><DeviceToggle mode={previewMode} setMode={setPreviewMode} disabled={isBuilding} /></View>
+            <View style={{ position: 'absolute', left: 0, right: 0, alignItems: 'center', pointerEvents: 'box-none' as any }}><DeviceToggle mode={previewMode} setMode={setPreviewMode} /></View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               {/* analytics unlock once the site is live; they open the analytics view on the web dashboard */}
               <Pressable disabled={!isLive} onPress={() => void Linking.openURL(`https://brightsite.app/account/dashboard?slug=${encodeURIComponent(slug || '')}#analytics`)} accessibilityLabel="Analytics" style={({ pressed }) => [s.dashboardEdit, { paddingHorizontal: 11 }, !isLive && { opacity: .45 }, pressed && s.pressed]}>
@@ -1476,7 +1476,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           </View>
           {isBuilding
             ? <View style={s.buildingWrap}>
-              <View ref={buildCardRef} collapsable={false} style={[s.phoneFrame, s.buildingPhone]}>
+              <View ref={buildCardRef} collapsable={false} style={previewMode === 'desktop' && !playReveal ? [s.desktopFrame, s.buildingPhone, { alignSelf: 'stretch', height: (SCREEN_WIDTH - 32) * 0.68, marginTop: DASHBOARD_PREVIEW_INSET }] : [s.phoneFrame, s.buildingPhone]}>
                 <Animated.View style={[s.buildingGlow, isTodo && s.todoGlow, { opacity: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.35, 1] }), transform: [{ scale: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.92, 1] }) }] }]}><View style={[s.buildingGlowInner, isTodo && s.todoGlowInner]}><Image source={require('./assets/brightsite-b-white.png')} resizeMode="contain" style={s.buildingLogo} /></View></Animated.View>
                 {!isLoadingSite && <Text style={[s.buildingText, { color: '#fff', marginTop: 28 }]}>{isTodo ? 'Let’s build your website' : 'Building your preview'}</Text>}
                 {!isLoadingSite && <Text style={[s.buildingSub, { color: 'rgba(255,255,255,.6)' }]}>{isTodo ? 'Fill in your info cards. The more you add, the better your site. Then send it to your designer.' : 'We’ll send you a notification as soon as it’s ready to review.'}</Text>}

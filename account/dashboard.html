@@ -79,6 +79,11 @@
   .dvt-btn.active{background:var(--accent);color:#fff}
   /* toggle sits in the middle of the bar; Analytics on the right */
   .desk-preview-bar .desk-preview-toggle{position:absolute;left:50%;transform:translateX(-50%);margin-left:0}
+  html.admin-edit .app-header, html.admin-edit #mobileViewTabs, html.admin-edit #deskPreview, html.admin-edit #draftBanner, html.admin-edit #bbIntro, html.admin-edit #pathChoiceVeil, html.admin-edit #websiteAppHeader, html.admin-edit .mobile-preview-wrap, html.admin-edit #editorDone{display:none !important}
+  html.admin-edit #builderList{display:grid !important}
+  html.admin-edit #websiteEditorHeader{display:block !important}
+  html.admin-edit #dashWrap, html.admin-edit #leftCol{max-width:none !important;width:100% !important}
+  html.admin-edit body{background:transparent}
   .bb-intro{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(244,237,230,.96);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
   .bb-intro[hidden]{display:none}
   .bb-intro-card{max-width:440px;text-align:center;font-family:'Avenir Next','Avenir','Nunito Sans',sans-serif;color:#1C2832}
@@ -1140,6 +1145,9 @@
   var adminSession = null;
   try { adminSession = JSON.parse(localStorage.getItem('bs_admin') || 'null'); } catch(e) {}
   var isAdminView = !!(params.get('bs_admin_slug') && adminSession && adminSession.admin);
+  // Admin's "Edit info" tab embeds this page with adminEdit=1: just the info editor, nothing else.
+  var isAdminEdit = isAdminView && params.get('adminEdit') === '1';
+  if (isAdminEdit) document.documentElement.classList.add('admin-edit');
   if (isAdminView) {
     document.addEventListener('DOMContentLoaded', function() {
       var right = document.querySelector('.app-header-right');
@@ -1373,9 +1381,6 @@
   }
 
   function updateWebsiteAppHeader() {
-    // the preview toggle stays greyed out until there's a website preview to switch
-    var wahToggle = document.querySelector('#websiteAppHeader .wah-toggle');
-    if (wahToggle) wahToggle.classList.toggle('is-disabled', !getPreviewUrl());
     ['wahMakeLive', 'deskMakeLive'].forEach(function(id) {
       var btn = document.getElementById(id);
       if (!btn) return;
@@ -1768,7 +1773,8 @@
   };
 
   function renderDashboard() {
-    msgsStartUnreadCheck();
+    if (isAdminEdit) setTimeout(function() { try { showWebsiteTab(); } catch (e) {} document.getElementById('websitePanel').classList.add('editing'); }, 0);
+    else msgsStartUnreadCheck();
     console.log('[renderDashboard] called, business:', business);
     document.getElementById('mobileViewTabs').hidden = false;
     appBody().hidden = false;
@@ -1822,7 +1828,8 @@
   // ---------------- Automatic/Manual choice for new web signups ----------------
   function showPathChoice() {
     var raw = (business && business.data && business.data.raw) || {};
-    // Already chose (e.g. signed up via app) — skip
+    // Already chose (e.g. signed up via app) — skip; never shown to admin
+    if (isAdminView) return;
     if (raw.buildChoice || raw.sentToDesigner || raw.draft === false) return;
     document.getElementById('pathPickScreen').hidden = false;
     document.getElementById('pathAutoScreen').hidden = true;
@@ -1915,6 +1922,7 @@
 
   // BRIGHTBUILDER intro: shown once, the first time someone fills in their info cards.
   function showBuilderIntro() {
+    if (isAdminView) return;
     try { if (localStorage.getItem('bb_intro_seen')) return; } catch (e) { return; }
     var el = document.getElementById('bbIntro');
     if (!el || !el.hidden) return;
