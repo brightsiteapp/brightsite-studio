@@ -251,6 +251,35 @@ body { background: var(--bg); min-height: 100vh; }
 .work-tab .tab-dot { top: 4px; right: 3px; }
 .work-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .work-panel[hidden] { display: none; }
+.site-bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; margin-bottom: 14px; }
+.site-bar-right { justify-self: end; }
+.site-toggle { display: flex; gap: 2px; padding: 3px; border-radius: 12px; background: rgba(28,40,50,.07); }
+.site-toggle button { border: 0; background: none; border-radius: 9px; padding: 7px 12px; color: var(--muted); cursor: pointer; display: inline-flex; }
+.site-toggle button.active { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.live-btn { border: 0; border-radius: 999px; padding: 9px 15px; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; background: var(--accent); color: #fff; }
+.live-btn.off { background: #fff; color: var(--muted); border: 1px solid var(--line); }
+.live-btn:disabled { opacity: .5; cursor: default; }
+.site-open { font-size: 13px; font-weight: 700; color: var(--accent); text-decoration: none; }
+.site-preview { margin: 0 auto 18px; background: #141A1E; overflow: hidden; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,.7); font-size: 14px; text-align: center; }
+.site-preview.mobile { width: 300px; max-width: 100%; height: 560px; border: 7px solid #141A1E; border-radius: 28px; }
+.site-preview.desktop { width: 100%; aspect-ratio: 16/10; max-height: 560px; border: 6px solid #141A1E; border-radius: 12px; }
+.site-preview iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+.site-preview .pv-empty { padding: 24px; line-height: 1.5; }
+.site-preview .pv-empty b { display: block; color: #fff; font-size: 17px; margin-bottom: 6px; }
+#ws-edit iframe { flex: 1; width: 100%; border: 0; min-height: 0; background: var(--bg); }
+.acct-card { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+.acct-card h3 { margin: 0 0 10px; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.acct-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 8px; }
+.acct-row .k { color: var(--muted); min-width: 110px; }
+.acct-form { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.acct-form input { flex: 1; min-width: 180px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font: inherit; font-size: 14px; outline: none; background: #fbf9f6; }
+.acct-form input:focus { border-color: var(--accent); }
+.acct-btn { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 8px 14px; font: inherit; font-size: 13px; font-weight: 700; color: var(--ink); cursor: pointer; }
+.acct-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.acct-btn.danger { color: var(--red, #dc2626); }
+.acct-msg { font-size: 13px; margin-top: 6px; }
+.acct-msg.ok { color: #1F8A54; } .acct-msg.err { color: #dc2626; }
+@media (max-width: 600px) { .site-preview.mobile { width: 260px; height: 480px; } .work-tab { padding: 7px 10px; font-size: 13px; } }
 .view-dash-btn { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line, rgba(28,40,50,.14)); border-radius: 999px; background: #fff; color: var(--accent); font: inherit; font-size: 13px; font-weight: 700; padding: 7px 13px; cursor: pointer; white-space: nowrap; flex: none; }
 .view-dash-btn .vd-short { display: none; }
 @media (max-width: 600px) { .view-dash-btn .vd-long { display: none; } .view-dash-btn .vd-short { display: inline; } }
@@ -436,22 +465,34 @@ body { background: var(--bg); color: var(--ink); }
           <button type="button" class="ws-back" id="wsBack" aria-label="Back to clients">‹ Clients</button>
           <strong id="wsTitle"></strong>
           <span class="status-pill" id="wsStatus"></span>
-          <button type="button" class="view-dash-btn" id="wsViewDash"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg><span class="vd-long">View client's dashboard</span><span class="vd-short">Dashboard</span></button>
         </div>
         <nav class="work-tabs"><div class="tabs-inner">
-          <button type="button" class="work-tab active" id="tab-msgs">Messages<span class="tab-dot" id="msgsTabDot" hidden></span></button>
-          <button type="button" class="work-tab" id="tab-admin">Admin</button>
+          <button type="button" class="work-tab active" id="tab-site">Website</button>
+          <button type="button" class="work-tab" id="tab-msgs">Messages<span class="tab-dot" id="msgsTabDot" hidden></span></button>
+          <button type="button" class="work-tab" id="tab-edit">Edit info</button>
+          <button type="button" class="work-tab" id="tab-account">Account</button>
         </div></nav>
-        <div class="work-panel" id="ws-msgs">
+        <div class="work-panel admin-panel" id="ws-site">
+          <div class="site-bar">
+            <div class="site-bar-left" id="siteLiveBtnWrap"></div>
+            <div class="site-toggle" role="group" aria-label="Preview size">
+              <button type="button" class="active" id="sitePvMobile" aria-label="Mobile view"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg></button>
+              <button type="button" id="sitePvDesktop" aria-label="Desktop view"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></button>
+            </div>
+            <div class="site-bar-right" id="siteOpenWrap"></div>
+          </div>
+          <div class="site-preview mobile" id="sitePreview"></div>
+          <div id="adminActions"></div>
+        </div>
+        <div class="work-panel" id="ws-msgs" hidden>
           <div class="thread-body" id="threadBody"></div>
           <div class="composer">
             <textarea id="composerInput" rows="1" placeholder="Reply as Tom…"></textarea>
             <button type="button" id="composerSend">Send</button>
           </div>
         </div>
-        <div class="work-panel admin-panel" id="ws-admin" hidden>
-          <div class="admin-actions" id="adminActions"></div>
-        </div>
+        <div class="work-panel" id="ws-edit" hidden><iframe id="editFrame" title="Edit client info"></iframe></div>
+        <div class="work-panel admin-panel" id="ws-account" hidden><div id="accountPane"></div></div>
       </div>
     </section>
   </div>
@@ -711,7 +752,8 @@ function renderBusinesses(businesses, emails) {
 
   allBusinesses = sorted;
   applyFilter();
-  if (activeThreadId && activeTab === 'admin') renderAdminPanel();
+  if (activeThreadId && activeTab === 'site') renderAdminPanel();
+  if (activeThreadId && activeTab === 'account') renderAccountPane();
 }
 
 function applyFilter() {
@@ -1461,7 +1503,7 @@ document.getElementById('deleteConfirm').addEventListener('click', function() {
 var adminThreads = {};
 var adminThreadsLoaded = false;
 var activeThreadId = null;
-var activeTab = 'msgs';
+var activeTab = 'site';
 var adminPollTimer = null;
 var lastRenderedCount = -1;
 
@@ -1590,12 +1632,12 @@ function selectClient(id) {
   pill.className = 'status-pill ' + s;
   renderClientList();
   updateAdminDot();
-  showWorkTab('msgs');
+  showWorkTab('site');
 }
 
 function showWorkTab(name) {
   activeTab = name;
-  ['msgs', 'admin'].forEach(function(t) {
+  ['site', 'msgs', 'edit', 'account'].forEach(function(t) {
     document.getElementById('ws-' + t).hidden = t !== name;
     document.getElementById('tab-' + t).classList.toggle('active', t === name);
   });
@@ -1607,7 +1649,16 @@ function showWorkTab(name) {
     renderClientList();
     document.getElementById('composerInput').focus();
   }
-  if (name === 'admin') renderAdminPanel();
+  if (name === 'site') renderAdminPanel();
+  if (name === 'account') renderAccountPane();
+  if (name === 'edit') {
+    // the client's own info editor, opened as admin with nothing else around it
+    var frame = document.getElementById('editFrame');
+    if (frame.getAttribute('data-slug') !== activeThreadId) {
+      frame.setAttribute('data-slug', activeThreadId);
+      frame.src = '/account/dashboard.html?bs_admin_slug=' + encodeURIComponent(activeThreadId) + '&adminEdit=1';
+    }
+  }
 }
 
 function renderThread(forceScroll) {
@@ -1643,8 +1694,6 @@ function renderAdminPanel() {
       '<div class="adm-btns">' + btns + '</div></div></div>';
   }
   var html = '';
-  html += row('Contact', esc(email || 'No email'),
-    '<button type="button" onclick="copyClientInfo(\'' + slug + '\', this)">Copy info</button>');
   html += row('Website files',
     uploaded ? tick + (d.demoUrl ? '<a href="' + esc(d.demoUrl) + '" target="_blank" rel="noopener">View uploaded site</a>' : 'Uploaded') +
       (d.liveUrl ? '<span class="adm-note">Live at <a href="' + esc(d.liveUrl) + '" target="_blank" rel="noopener">' + esc(d.liveUrl.replace(/^https?:\/\//, '')) + '</a></span>' : '')
@@ -1659,11 +1708,108 @@ function renderAdminPanel() {
     domain
       ? (d.domainConnected ? '' : '<button type="button" onclick="recheckDomain(\'' + slug + '\', this)">Check again</button>') + '<button type="button" onclick="openDomainModal(\'' + slug + '\',\'' + nameArg + '\')">Edit</button><button type="button" class="danger" onclick="removeDomain(\'' + slug + '\')">Remove</button>'
       : '<button type="button" class="primary" onclick="openDomainModal(\'' + slug + '\',\'' + nameArg + '\')">Connect</button>', true);
-  html += row('Plan',
-    d.planActive ? tick + 'Paid' + (d.manualPlan ? '<span class="adm-note">set manually</span>' : '') : '<span class="adm-muted">Not paid</span>',
-    d.planActive && d.published ? '' : '<button type="button" onclick="openGoLiveModal(\'' + slug + '\',\'' + nameArg + '\')">Override: paid &amp; live</button>');
-  html += '<button type="button" class="adm-delete" onclick="openDeleteModal(\'' + slug + '\',\'' + nameArg + '\')">Delete account</button>';
   document.getElementById('adminActions').innerHTML = html;
+  renderSitePreview();
+}
+
+// ---- Website tab: preview + make live / take offline ----
+var sitePreviewMode = 'mobile';
+function renderSitePreview() {
+  var b = bizById(activeThreadId); if (!b) return;
+  var d = b.data || {};
+  var url = (d.published && d.liveUrl) || d.demoUrl || d.liveUrl || '';
+  document.getElementById('sitePvMobile').classList.toggle('active', sitePreviewMode === 'mobile');
+  document.getElementById('sitePvDesktop').classList.toggle('active', sitePreviewMode === 'desktop');
+  var pv = document.getElementById('sitePreview');
+  pv.className = 'site-preview ' + sitePreviewMode;
+  if (url) {
+    if (pv.getAttribute('data-url') !== url) { pv.setAttribute('data-url', url); pv.innerHTML = '<iframe src="' + esc(url) + '" title="Client website"></iframe>'; }
+  } else {
+    pv.removeAttribute('data-url');
+    pv.innerHTML = '<div class="pv-empty"><b>No website uploaded yet</b>Upload their files below and the preview shows here.</div>';
+  }
+  var live = !!d.published;
+  var canLive = !!(d.demoUrl || d.demoUploaded);
+  document.getElementById('siteLiveBtnWrap').innerHTML = live
+    ? '<button type="button" class="live-btn off" onclick="adminSetLive(false, this)">Take offline</button>'
+    : '<button type="button" class="live-btn" onclick="adminSetLive(true, this)"' + (canLive ? '' : ' disabled title="Upload their website first"') + '>Make live</button>';
+  document.getElementById('siteOpenWrap').innerHTML = url ? '<a class="site-open" href="' + esc(url) + '" target="_blank" rel="noopener">Open ↗</a>' : '';
+}
+
+function adminApi(payload) {
+  return fetch(API_BASE_URL + '/api/admin-businesses', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + (adminSession && adminSession.access_token || ''), 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(function(r) { return r.json().then(function(j) { if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status)); return j; }); });
+}
+
+function adminSetLive(live, btn) {
+  var slug = activeThreadId; if (!slug) return;
+  if (!live && !confirm('Take ' + bizName(slug) + '\'s website offline? They\'ll get a notification.')) return;
+  btn.disabled = true; btn.textContent = live ? 'Publishing…' : 'Taking offline…';
+  adminApi({ action: 'set-live', slug: slug, live: live })
+    .then(function() { return loadBusinesses(); })
+    .catch(function(err) { alert(err.message); })
+    .then(function() { if (activeThreadId === slug) renderAdminPanel(); });
+}
+
+// ---- Account tab: login, password, plan, delete ----
+function renderAccountPane() {
+  var slug = activeThreadId; var b = bizById(slug); if (!b) return;
+  var d = b.data || {}; var raw = d.raw || {};
+  var nameArg = esc(bizName(slug)); var sl = esc(slug);
+  var pane = document.getElementById('accountPane');
+  pane.innerHTML =
+    '<div class="acct-card"><h3>Login</h3><div class="acct-row"><span class="k">Email</span><span id="acctEmail">Loading…</span></div>' +
+      '<div class="acct-row"><span class="k">Signed in with</span><span id="acctProv">…</span></div>' +
+      '<div class="acct-row"><span class="k">Last signed in</span><span id="acctLast">…</span></div>' +
+      '<div class="acct-form"><input type="email" id="acctNewEmail" placeholder="New login email"><button type="button" class="acct-btn" onclick="acctUpdate(\'email\', this)">Change email</button></div>' +
+      '<div class="acct-form"><input type="text" id="acctNewPw" placeholder="New password (8+ characters)" autocomplete="off"><button type="button" class="acct-btn" onclick="acctUpdate(\'password\', this)">Set password</button></div>' +
+      '<div class="acct-form"><button type="button" class="acct-btn" onclick="acctReset(this)">Email them a reset link</button></div>' +
+      '<div class="acct-msg" id="acctMsg"></div></div>' +
+    '<div class="acct-card"><h3>Plan</h3><div id="acctPlan">' + (d.planActive ? 'Paid' + (d.manualPlan ? ' (set manually)' : '') : 'Not paid') + '</div>' +
+      '<div class="acct-form" id="acctPlanBtns"></div></div>' +
+    '<div class="acct-card"><h3>Contact</h3><div class="acct-row"><span class="k">Name</span>' + esc(raw.fullName || '—') + '</div><div class="acct-row"><span class="k">Business email</span>' + esc(raw.email || raw.contactEmail || '—') + '</div><div class="acct-row"><span class="k">Phone</span>' + esc(raw.phone || '—') + '</div>' +
+      '<div class="acct-form"><button type="button" class="acct-btn" onclick="copyClientInfo(\'' + sl + '\', this)">Copy all info</button></div></div>' +
+    '<div class="acct-card"><h3>Danger zone</h3><div class="acct-form"><button type="button" class="acct-btn danger" onclick="openDeleteModal(\'' + sl + '\',\'' + nameArg + '\')">Delete account</button></div></div>';
+  adminApi({ action: 'account-info', slug: slug }).then(function(info) {
+    if (activeThreadId !== slug) return;
+    var l = info.login;
+    document.getElementById('acctEmail').textContent = l ? l.email : 'No login';
+    document.getElementById('acctProv').textContent = l ? ((l.providers || []).join(', ') || 'email') : '—';
+    document.getElementById('acctLast').textContent = l && l.lastSignIn ? new Date(l.lastSignIn).toLocaleString('en-GB') : '—';
+    var sub = info.subscription; var planEl = document.getElementById('acctPlan'); var btns = document.getElementById('acctPlanBtns');
+    if (sub && !sub.error) {
+      planEl.innerHTML = esc((sub.amount != null ? '£' + (sub.amount / 100).toFixed(2) : '') + (sub.interval ? ' / ' + sub.interval : '')) + ' · <b>' + esc(sub.status) + '</b>' +
+        (sub.renews ? '<div class="adm-note">' + (sub.cancelAtPeriodEnd ? 'Ends ' : 'Renews ') + new Date(sub.renews).toLocaleDateString('en-GB') + '</div>' : '') +
+        (sub.card ? '<div class="adm-note">' + esc(sub.card) + '</div>' : '');
+      btns.innerHTML = sub.status === 'canceled' ? '' : (sub.cancelAtPeriodEnd
+        ? '<button type="button" class="acct-btn" onclick="acctPlan(\'undo\', this)">Keep plan (undo cancel)</button>'
+        : '<button type="button" class="acct-btn danger" onclick="acctPlan(\'end\', this)">Cancel at end of period</button>');
+    } else if (sub && sub.error) planEl.innerHTML += '<div class="adm-note">Stripe: ' + esc(sub.error) + '</div>';
+    if (!(d.planActive && d.published)) btns.innerHTML += '<button type="button" class="acct-btn" onclick="openGoLiveModal(\'' + sl + '\',\'' + nameArg + '\')">Override: paid &amp; live</button>';
+  }).catch(function(err) { var m = document.getElementById('acctMsg'); if (m) { m.textContent = err.message; m.className = 'acct-msg err'; } });
+}
+function acctSay(text, ok) { var m = document.getElementById('acctMsg'); m.textContent = text; m.className = 'acct-msg ' + (ok ? 'ok' : 'err'); }
+function acctUpdate(kind, btn) {
+  var v = document.getElementById(kind === 'email' ? 'acctNewEmail' : 'acctNewPw').value.trim();
+  if (!v) return;
+  var payload = { action: 'update-login', slug: activeThreadId }; payload[kind] = v;
+  btn.disabled = true;
+  adminApi(payload).then(function() { acctSay(kind === 'email' ? 'Login email changed.' : 'Password set. Let them know their new password.', true); renderAccountPane(); })
+    .catch(function(err) { acctSay(err.message, false); }).then(function() { btn.disabled = false; });
+}
+function acctReset(btn) {
+  btn.disabled = true;
+  adminApi({ action: 'send-reset', slug: activeThreadId }).then(function(r) { acctSay('Reset link sent to ' + r.email + '.', true); })
+    .catch(function(err) { acctSay(err.message, false); }).then(function() { btn.disabled = false; });
+}
+function acctPlan(kind, btn) {
+  if (kind === 'end' && !confirm('Cancel their plan at the end of this billing period? Their site goes offline when it ends.')) return;
+  btn.disabled = true;
+  adminApi({ action: 'cancel-plan', slug: activeThreadId, undo: kind === 'undo' }).then(function() { renderAccountPane(); })
+    .catch(function(err) { acctSay(err.message, false); btn.disabled = false; });
 }
 
 function patchClientData(slug, mutate) {
@@ -1790,9 +1936,11 @@ document.getElementById('wsBack').addEventListener('click', function() {
   window.scrollTo(0, 0);
 });
 // The client's own dashboard (with its own tabs) opens full page instead of nested inside these tabs.
-document.getElementById('wsViewDash').addEventListener('click', function() { if (activeThreadId) openAccountDashboard(activeThreadId); });
-document.getElementById('tab-msgs').addEventListener('click', function() { showWorkTab('msgs'); });
-document.getElementById('tab-admin').addEventListener('click', function() { showWorkTab('admin'); });
+['site', 'msgs', 'edit', 'account'].forEach(function(t) {
+  document.getElementById('tab-' + t).addEventListener('click', function() { showWorkTab(t); });
+});
+document.getElementById('sitePvMobile').addEventListener('click', function() { sitePreviewMode = 'mobile'; renderSitePreview(); });
+document.getElementById('sitePvDesktop').addEventListener('click', function() { sitePreviewMode = 'desktop'; renderSitePreview(); });
 
 function startAdminMessaging() {
   loadAdminMessages();

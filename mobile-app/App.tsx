@@ -117,6 +117,13 @@ function pushToSelf(pushToken: string | undefined, title: string, body: string) 
   void fetch('https://exp.host/--/api/v2/push/send', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ to: pushToken, title, body, sound: 'default' }) }).catch(() => {});
 }
 
+const ADMIN_API = 'https://api.brightsite.app/api/admin-businesses';
+// Tells the other side about something new: a customer's message/site change pushes to admins,
+// an admin's reply pushes to the customer. Fire-and-forget.
+function pingAdminApi(token: string, payload: Record<string, any>) {
+  void fetch(ADMIN_API, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(() => {});
+}
+
 async function registerPushToken(): Promise<string | null> {
   if (!Device.isDevice) return null;
   const { status: existing } = await Notifications.getPermissionsAsync();
@@ -1128,6 +1135,7 @@ function MessageThread({ session, slug, viewer, otherName, placeholder, intro }:
     scrollToLatest();
     try {
       await postMessage(session.access_token, slug, text, viewer);
+      pingAdminApi(session.access_token, viewer === 'admin' ? { action: 'push-customer', slug, text } : { action: 'notify-admin', kind: 'message', slug, text });
       await loadMessagesNow();
     } catch {
       setMessages(current => current.filter(m => m.id !== localId));
@@ -1871,6 +1879,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     setSession(authedSession);
     if (email.toLowerCase() === ADMIN_EMAIL) {
       setAppScreen('admin');
+      // register this phone for admin alerts (new clients, messages, payments)
+      registerPushToken().then(t => { if (t) pingAdminApi(authedSession.access_token, { action: 'register-admin-push', token: t }); }).catch(() => {});
       void loadAdminData(authedSession);
       return;
     }
@@ -2298,6 +2308,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           const res = await workerPublish(slug, true);
           await saveBusiness(slug, { published: true, manuallyOffline: false, needsPublish: false, liveUrl: res.url });
           setWebsiteStatus('live');
+          if (session?.access_token) pingAdminApi(session.access_token, { action: 'notify-admin', kind: 'online', slug });
           pushToSelf(businessRecord.current.pushToken, wasOffline ? 'Your website is back online' : 'Your website is live! 🎉', res.url ? `It’s live again at ${String(res.url).replace(/^https?:\/\//, '')}` : 'It’s live again.');
         } catch (err: any) {
           await saveBusiness(slug, { published: false, manuallyOffline: false, needsPublish: true });
@@ -2308,6 +2319,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         await workerPublish(slug, false);
         await saveBusiness(slug, { published: false, manuallyOffline: true });
         setWebsiteStatus('ready');
+        if (session?.access_token) pingAdminApi(session.access_token, { action: 'notify-admin', kind: 'offline', slug });
         pushToSelf(businessRecord.current.pushToken, 'Your website is offline', 'You took it offline. Tap Make Live whenever you want it back.');
       }
       return true;

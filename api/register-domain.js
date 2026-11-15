@@ -4,7 +4,7 @@ import { registerWithCloudflare, markBusinessLive } from './_lib/activate.js';
 import { runDomainRenewals } from './_lib/domain-renewals.js';
 import { addonPrice } from './_lib/plans.js';
 import { setSiteLive } from './_lib/activate.js';
-import { notifyBusiness } from './_lib/push.js';
+import { notifyBusiness, notifyAdmins } from './_lib/push.js';
 
 export default async function handler(req, res) {
   // GET is the nightly domain-renewals cron; POST is Stripe's checkout webhook
@@ -74,6 +74,7 @@ export default async function handler(req, res) {
       }
     }
 
+    await notifyAdmins(`💷 ${slug} paid`, `${session.metadata?.plan === 'pro' ? 'Pro' : 'Free'} plan, ${session.metadata?.billing || 'monthly'}${domain ? ' + ' + domain : ''}.`, slug);
     console.log(`Checkout complete for slug: ${slug}${domain ? `, domain registered: ${domain}` : ''}`);
     return res.status(200).json({ received: true, domain });
   } catch (err) {
@@ -96,6 +97,7 @@ async function handleBilling(event) {
   const data = row.data || {};
 
   if (event.type === 'invoice.payment_failed') {
+    await notifyAdmins(`⚠️ Payment failed: ${slug}`, 'Stripe will retry. They’ve been asked to update their card.', slug);
     await supabase.from('businesses').update({ data: { ...data, paymentFailed: true } }).eq('id', slug);
     await notifyBusiness(slug, {
       title: 'Payment failed',
@@ -104,6 +106,7 @@ async function handleBilling(event) {
     });
   } else if (event.type === 'invoice.paid') {
     if (!data.paymentFailed) return; // only after a failure, not every renewal
+    await notifyAdmins(`✅ Payment recovered: ${slug}`, 'Their payment went through after failing.', slug);
     await supabase.from('businesses').update({ data: { ...data, paymentFailed: false } }).eq('id', slug);
     await notifyBusiness(slug, {
       title: 'Payment sorted ✓',
@@ -114,6 +117,7 @@ async function handleBilling(event) {
     // An add-on subscription ending isn't the hosting plan; leave the site alone.
     if (obj.metadata?.addon) return;
     if (data.stripeSubscriptionId && data.stripeSubscriptionId !== obj.id) return;
+    await notifyAdmins(`❌ Plan ended: ${slug}`, 'Their subscription ended and the website was taken offline.', slug);
     await setSiteLive(slug, false).catch(err => console.error('Taking site offline failed:', err.message));
     await supabase.from('businesses').update({ data: { ...data, published: false, planActive: false, paymentFailed: false } }).eq('id', slug);
     await notifyBusiness(slug, {

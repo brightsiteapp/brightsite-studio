@@ -1,3 +1,4 @@
+import { notifyAdmins } from './_lib/push.js';
 const SUPABASE_URL = 'https://vlisyfshmxdsjuybirxe.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_gYdn5HCo63B0qZj3tG-7ow_myAMHeEB';
 
@@ -107,6 +108,9 @@ export default async function handler(request, response) {
       }),
     }).catch(() => {});
   }
+
+  const bizName = existingData.raw?.name || existingData.name || slug;
+  await notifyAdmins(isDesigner ? `🆕 ${bizName} sent their info` : `🆕 New client: ${bizName}`, isDesigner ? `${fullName || firstName} is ready for you to build their website.` : `${fullName || firstName} signed up.`, slug);
 
   return response.status(200).json({ ok: true });
 }
