@@ -2833,10 +2833,10 @@ function SplashGlow({ onDone }: { onDone: () => void }) {
   useEffect(() => {
     // one flash: the dot brightens with a soft light bleeding off it, then settles and the splash fades
     Animated.sequence([
-      Animated.delay(200),
-      Animated.timing(glow, { toValue: 1, duration: 260, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-      Animated.timing(glow, { toValue: 0, duration: 700, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-      Animated.timing(fade, { toValue: 0, duration: 380, useNativeDriver: true }),
+      Animated.delay(120),
+      Animated.timing(glow, { toValue: 1, duration: 150, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      Animated.timing(glow, { toValue: 0, duration: 380, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      Animated.timing(fade, { toValue: 0, duration: 300, useNativeDriver: true }),
     ]).start(onDone);
   }, []);
   const dot = 18 * SPLASH_K;
