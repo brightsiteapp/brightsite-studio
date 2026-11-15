@@ -1824,7 +1824,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     const res = await fetch(`${UPLOAD_WORKER}/publish`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug: id, live }),
+      // send the connected custom domain too, so the first go-live connects it
+      body: JSON.stringify({ slug: id, live, domain: live && businessRecord.current?.domainConnected ? (businessRecord.current.customDomain || '') : '' }),
     });
     const json = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(json.error || 'Could not update your website');
