@@ -401,6 +401,9 @@ body { background: var(--bg); color: var(--ink); }
 .edit-overlay[hidden]{display:none}
 .edit-head{display:flex;justify-content:space-between;align-items:center;padding:12px 18px}
 .edit-overlay iframe{flex:1;border:0;width:100%}
+#adminActions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:0 0 14px}
+#adminActions button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;font-size:13px;font-weight:700;color:var(--ink);cursor:pointer}
+#ws-msgs .thread-body,#ws-msgs .composer{padding-left:16px !important;padding-right:16px !important}
 </style>
 </head>
 <body>
@@ -484,8 +487,8 @@ body { background: var(--bg); color: var(--ink); }
             </div>
             <div class="site-bar-right" id="siteOpenWrap"></div>
           </div>
-          <div class="site-preview mobile" id="sitePreview"></div>
           <div id="adminActions"></div>
+          <div class="site-preview mobile" id="sitePreview"></div>
         </div>
         <div class="work-panel" id="ws-msgs" hidden>
           <div class="thread-body" id="threadBody"></div>
@@ -1685,36 +1688,13 @@ function renderAdminPanel() {
   var b = bizById(activeThreadId);
   if (!b) return;
   var d = b.data || {};
-  var raw = d.raw || {};
-  var name = bizName(activeThreadId);
-  var slug = esc(activeThreadId);
-  var nameArg = esc(name);
+  var slug = esc(activeThreadId), nameArg = esc(bizName(activeThreadId));
   var domain = d.customDomain || d.domain || '';
-  var email = raw.email || raw.ownerEmail || '';
   var uploaded = !!(d.demoUrl || d.demoUploaded);
-  var tick = '<span class="adm-tick" aria-hidden="true">✓</span>';
-  function row(title, line, btns, collapse) {
-    return '<div class="adm-card' + (collapse ? ' collapsible' : '') + '"><div class="adm-row"><div class="adm-main"><div class="adm-title">' + title + '</div><div class="adm-line">' + line + '</div></div>' +
-      (collapse ? '<button type="button" class="adm-edit" onclick="this.closest(\'.adm-card\').classList.toggle(\'open\')">Edit</button>' : '') +
-      '<div class="adm-btns">' + btns + '</div></div></div>';
-  }
-  var html = '';
-  html += row('Business info', '<span class="adm-muted">Their details, hours, services, photos</span>', '<button type="button" onclick="openEditInfo()">Edit info</button>');
-  html += row('Website files',
-    uploaded ? tick + (d.demoUrl ? '<a href="' + esc(d.demoUrl) + '" target="_blank" rel="noopener">View uploaded site</a>' : 'Uploaded') +
-      (d.liveUrl ? '<span class="adm-note">Live at <a href="' + esc(d.liveUrl) + '" target="_blank" rel="noopener">' + esc(d.liveUrl.replace(/^https?:\/\//, '')) + '</a></span>' : '')
-      : '<span class="adm-muted">Nothing uploaded</span>',
-    uploaded
-      ? '<button type="button" onclick="openUploadModal(\'' + slug + '\',\'' + nameArg + '\')">Replace</button><button type="button" class="danger" onclick="removeUpload(\'' + slug + '\')">Remove</button>'
-      : '<button type="button" class="primary" onclick="openUploadModal(\'' + slug + '\',\'' + nameArg + '\')">Upload</button>', true);
-  html += row('Domain',
-    domain ? (d.domainConnected ? tick : '<span class="adm-wait" aria-hidden="true">…</span>') + '<a href="https://' + esc(domain) + '" target="_blank" rel="noopener">' + esc(domain) + '</a>' +
-      (d.domainConnected ? '' : '<span class="adm-note">' + (d.domainNameservers && d.domainNameservers.length ? 'Waiting for nameservers: ' + d.domainNameservers.map(esc).join(', ') : 'Not connected yet') + '</span>')
-      : '<span class="adm-muted">No domain</span>',
-    domain
-      ? (d.domainConnected ? '' : '<button type="button" onclick="recheckDomain(\'' + slug + '\', this)">Check again</button>') + '<button type="button" onclick="openDomainModal(\'' + slug + '\',\'' + nameArg + '\')">Edit</button><button type="button" class="danger" onclick="removeDomain(\'' + slug + '\')">Remove</button>'
-      : '<button type="button" class="primary" onclick="openDomainModal(\'' + slug + '\',\'' + nameArg + '\')">Connect</button>', true);
-  document.getElementById('adminActions').innerHTML = html;
+  document.getElementById('adminActions').innerHTML =
+    '<button type="button" onclick="openEditInfo()">Edit info</button>' +
+    '<button type="button" onclick="openUploadModal(\'' + slug + '\',\'' + nameArg + '\')">' + (uploaded ? 'Replace website' : 'Upload website') + '</button>' +
+    '<button type="button" onclick="openDomainModal(\'' + slug + '\',\'' + nameArg + '\')">' + (domain ? esc(domain) + (d.domainConnected ? ' ✓' : ' …') : 'Connect domain') + '</button>';
   renderSitePreview();
 }
 
