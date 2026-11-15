@@ -1241,7 +1241,6 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
   const [previewMode, setPreviewMode] = useState<'mobile' | 'desktop'>('mobile');
   const [showPassword, setShowPassword] = useState(false);
   const [showEditMenu, setShowEditMenu] = useState(false);
-  const [fullPreview, setFullPreview] = useState(false);
   // the Website tab fits the screen, so it rubber-bands and springs back instead of scrolling
   const websiteDrag = useRef(new Animated.Value(0)).current;
   const websiteBounce = useMemo(() => PanResponder.create({
@@ -1250,7 +1249,6 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
     onPanResponderRelease: () => Animated.timing(websiteDrag, { toValue: 0, duration: 380, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(),
     onPanResponderTerminate: () => Animated.timing(websiteDrag, { toValue: 0, duration: 380, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(),
   }), []);
-  const [fullPage, setFullPage] = useState(0);
   const siteUrl = data.website?.trim() || `https://${domain}${suffix}`;
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [domainPriceLabel, setDomainPriceLabel] = useState<string | null>(null);
@@ -1408,7 +1406,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
     { text: 'Take offline', style: 'destructive', onPress: () => onTakeOffline?.() },
   ]);
   // Live site opens its real address; otherwise the uploaded preview opens in the browser; the in-app mock-up is the fallback.
-  const openPreview = () => { if (isLive) void Linking.openURL(siteUrl); else if (previewLink) void Linking.openURL(previewLink); else { setFullPage(0); setFullPreview(true); } };
+  const openPreview = () => { if (isLive) void Linking.openURL(siteUrl); else if (previewLink) void Linking.openURL(previewLink); };
   const goLive = () => { if (isPaying) void onGoLive?.(); else void openPlanModal(); };
   const confirmSignOut = () => Alert.alert('Log out?', 'Your website and details stay saved to your account.', [
     { text: 'Cancel', style: 'cancel' },
@@ -1514,30 +1512,16 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
                 <View pointerEvents="none" style={{ height: DESKTOP_VIEW_H, overflow: 'hidden' }}>
                   <ScaledView virtualWidth={DESKTOP_WIDTH} width={DESKTOP_VIEW_W}><SitePreview desktop palette={palette} font={font} page={0} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} media={media} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></ScaledView>
                 </View>
-                <View style={s.previewOpenBadge}><Ionicons name={isLive ? 'open-outline' : 'expand-outline'} size={12} color="#fff" /><Text style={s.previewOpenText}>{isLive ? 'Open site' : 'Tap to view'}</Text></View>
               </Pressable>
               : <Pressable onPress={openPreview} style={s.phoneFrame}>
                 <View pointerEvents="none" style={{ overflow: 'hidden', flex: 1 }}>
                   <ScaledView virtualWidth={MOBILE_WIDTH} width={DASHBOARD_PREVIEW_WIDTH - 14}><SitePreview palette={palette} font={font} page={0} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} media={media} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></ScaledView>
                 </View>
-                <View style={s.previewOpenBadge}><Ionicons name={isLive ? 'open-outline' : 'expand-outline'} size={12} color="#fff" /><Text style={s.previewOpenText}>{isLive ? 'Open site' : 'Tap to view'}</Text></View>
               </Pressable>}
             </>}
         </Animated.View>}
       </ScrollView>}
     </View>
-    <Modal visible={fullPreview} animationType="slide" presentationStyle="fullScreen" onRequestClose={() => setFullPreview(false)}>
-      <View style={s.fullPreview}>
-        <View style={s.fullPreviewBar}>
-          <Pressable onPress={() => setFullPreview(false)} hitSlop={12} style={s.fullPreviewBack} accessibilityLabel="Close preview"><Ionicons name="chevron-back" size={20} color={C.ink} /></Pressable>
-          <View style={s.fullPreviewUrl}><Ionicons name="lock-closed" size={11} color={C.inkMuted} /><Text style={s.fullPreviewUrlText} numberOfLines={1}>{domain ? `${domain}${suffix}` : 'preview.brightsite.app'}</Text></View>
-          <View style={{ width: 32 }} />
-        </View>
-        <ScrollView style={{ flex: 1, backgroundColor: '#fff' }} showsVerticalScrollIndicator={false}>
-          <ScaledView virtualWidth={MOBILE_WIDTH} width={SCREEN_WIDTH}><SitePreview palette={palette} font={font} page={fullPage} onPageChange={setFullPage} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} media={media} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></ScaledView>
-        </ScrollView>
-      </View>
-    </Modal>
     <Modal visible={showPlanModal} transparent animationType="slide" onRequestClose={() => setShowPlanModal(false)}>
       <View style={s.planModalOverlay}>
         <View style={s.planModalBox}>

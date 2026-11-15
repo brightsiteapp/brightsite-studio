@@ -1084,7 +1084,6 @@
 <div id="deskPreview">
   <div class="desk-preview-bar">
     <button type="button" class="wah-make-live" id="deskMakeLive" hidden></button>
-    <a class="desk-preview-link" id="deskPreviewLink" href="#" target="_blank" hidden>Open preview</a>
     <div class="desk-preview-toggle" id="deskViewToggle">
       <button type="button" class="dvt-btn active" id="dvtDesktop" aria-pressed="true" onclick="var p=document.getElementById('deskPreview'),b=p.querySelector('.fake-browser'),m=p.querySelector('.fake-phone');p.classList.remove('mobile-view');b.hidden=false;m.hidden=true;b.style.display='flex';m.style.display='none';this.classList.add('active');this.setAttribute('aria-pressed','true');document.getElementById('dvtMobile').classList.remove('active');document.getElementById('dvtMobile').setAttribute('aria-pressed','false');">Desktop</button>
       <button type="button" class="dvt-btn" id="dvtMobile" aria-pressed="false" onclick="var p=document.getElementById('deskPreview'),b=p.querySelector('.fake-browser'),m=p.querySelector('.fake-phone');p.classList.add('mobile-view');b.hidden=true;m.hidden=false;b.style.display='none';m.style.display='flex';this.classList.add('active');this.setAttribute('aria-pressed','true');document.getElementById('dvtDesktop').classList.remove('active');document.getElementById('dvtDesktop').setAttribute('aria-pressed','false');">Mobile</button>
@@ -1096,7 +1095,6 @@
       <div class="fake-browser-bar">
         <span class="fake-browser-dots"><span></span><span></span><span></span></span>
         <span class="fake-browser-url" id="fakeBrowserUrl">brightsite.app</span>
-        <a id="fakeBrowserViewBtn" href="#" target="_blank" hidden style="font:600 11px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;color:#fff;background:rgba(255,255,255,.15);border-radius:5px;padding:4px 9px;text-decoration:none;white-space:nowrap;flex:none">Open preview</a>
       </div>
       <div class="fake-browser-content">
         <div id="deskPreviewPlaceholder" class="preview-placeholder" data-state="loading">
