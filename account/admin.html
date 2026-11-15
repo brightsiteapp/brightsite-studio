@@ -402,6 +402,7 @@ body { background: var(--bg); color: var(--ink); }
 .edit-head{display:flex;justify-content:space-between;align-items:center;padding:12px 18px}
 .edit-overlay iframe{flex:1;border:0;width:100%}
 #adminActions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:0 0 14px}
+#adminActions .adm-link{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;font-size:13px;font-weight:700;color:var(--accent);text-decoration:none}
 #adminActions button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;font-size:13px;font-weight:700;color:var(--ink);cursor:pointer}
 #ws-msgs .thread-body,#ws-msgs .composer{padding-left:16px !important;padding-right:16px !important}
 </style>
@@ -1693,6 +1694,7 @@ function renderAdminPanel() {
   var uploaded = !!(d.demoUrl || d.demoUploaded);
   document.getElementById('adminActions').innerHTML =
     '<button type="button" onclick="openEditInfo()">Edit info</button>' +
+    '<a class="adm-link" href="/account/dashboard.html?bs_admin_slug=' + encodeURIComponent(activeThreadId) + '#analytics" target="_blank" rel="noopener">Analytics ↗</a>' +
     '<button type="button" onclick="openUploadModal(\'' + slug + '\',\'' + nameArg + '\')">' + (uploaded ? 'Replace website' : 'Upload website') + '</button>' +
     '<button type="button" onclick="openDomainModal(\'' + slug + '\',\'' + nameArg + '\')">' + (domain ? esc(domain) + (d.domainConnected ? ' ✓' : ' …') : 'Connect domain') + '</button>';
   renderSitePreview();
