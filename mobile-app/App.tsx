@@ -1697,6 +1697,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [adminSearch, setAdminSearch] = useState('');
   const [adminTab, setAdminTab] = useState<'businesses' | 'messages' | 'notifications'>('businesses');
   const [adminActiveThread, setAdminActiveThread] = useState<any>(null);
+  const [adminDetail, setAdminDetail] = useState<any>(null);
   const [adminAllMessages, setAdminAllMessages] = useState<any[]>([]);
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminViewingBusiness, setAdminViewingBusiness] = useState<any>(null);
@@ -2591,6 +2592,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           </View>
           <Pressable hitSlop={8} onPress={async () => { await supabase.auth.signOut(); onSignedOut(); }} style={aS.signOutBtn}><Text style={aS.signOutText}>Sign out</Text></Pressable>
         </View>
+        {adminDetail ? <AdminClientView key={adminDetail.id} biz={adminBusinesses.find(b => b.id === adminDetail.id) || adminDetail} session={session} onBack={() => { setAdminDetail(null); if (session) void loadAdminData(session); }} onChanged={() => { if (session) void loadAdminData(session); }} onViewAsClient={() => adminOpenBusiness(adminDetail)} /> : <>
         <View style={s.dashboardTabsTop}>
           {([['businesses', 'Accounts'], ['messages', 'Messages'], ['notifications', 'Activity']] as const).map(([key, label]) => {
             const active = adminTab === key;
@@ -2624,7 +2626,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
               const name = d.name || d.businessName || biz.id;
               const updated = biz.updatedAt ? timeAgo(biz.updatedAt) : '';
               const hasUnread = adminThreadUnread(biz.id);
-              return <Pressable key={biz.id} onPress={() => adminOpenBusiness(biz)} style={({ pressed }) => [aS.bizCard, pressed && s.pressed]}>
+              return <Pressable key={biz.id} onPress={() => setAdminDetail(biz)} style={({ pressed }) => [aS.bizCard, pressed && s.pressed]}>
                 <View style={[aS.bizStatusBar, { backgroundColor: STATUS_COLORS[st] }]} />
                 <View style={aS.bizCardInner}>
                   <View style={{ flex: 1, marginRight: 8 }}>
@@ -2689,6 +2691,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           })}
         </ScrollView>}
 
+        </>}
         </View>
       </View>
     </FadeIn>;
@@ -3149,7 +3152,101 @@ savedPill: { position: 'absolute', top: SAFE_TOP + 86, alignSelf: 'center', zInd
   stripHint: { fontFamily: FONT, fontSize: 12, color: C.inkMuted, marginLeft: 6 },
 });
 
+// Admin view of one client: Website / Messages / Account tabs (mirrors the web admin page).
+function AdminClientView({ biz, session, onBack, onChanged, onViewAsClient }: { biz: any; session: any; onBack: () => void; onChanged: () => void; onViewAsClient: () => void }) {
+  const [tab, setTab] = useState<'site' | 'msgs' | 'account'>('site');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [info, setInfo] = useState<any>(null);
+  const [newEmail, setNewEmail] = useState('');
+  const [newPw, setNewPw] = useState('');
+  const d = biz.data || {};
+  const name = d.name || d.businessName || biz.id;
+  const live = !!d.published;
+  const canLive = !!(d.demoUrl || d.demoUploaded);
+  const url = (d.published && d.liveUrl) || d.demoUrl || d.liveUrl || '';
+  const domain = d.customDomain || d.domain || '';
+  const api = (payload: Record<string, any>) => fetch(ADMIN_API, { method: 'POST', headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: biz.id, ...payload }) })
+    .then(async r => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`); return j; });
+  const run = async (fn: () => Promise<any>, ok?: string) => { setBusy(true); setMsg(''); try { await fn(); if (ok) setMsg(ok); } catch (e: any) { setMsg(e.message || 'Something went wrong'); } setBusy(false); };
+  const loadInfo = () => api({ action: 'account-info' }).then(setInfo).catch(e => setMsg(e.message));
+  useEffect(() => { if (tab === 'account' && !info) void loadInfo(); }, [tab]);
+  const setLive = (next: boolean) => {
+    const go = () => run(async () => { await api({ action: 'set-live', live: next }); onChanged(); });
+    if (next) go(); else Alert.alert('Take offline?', `${name}'s website goes offline and they get a notification.`, [{ text: 'Cancel', style: 'cancel' }, { text: 'Take offline', style: 'destructive', onPress: go }]);
+  };
+  const sub = info?.subscription;
+  const pill = (label: string, onPress: () => void, opts: { primary?: boolean; danger?: boolean; disabled?: boolean } = {}) =>
+    <Pressable key={label} disabled={busy || opts.disabled} onPress={onPress} style={({ pressed }) => [aS.admPill, opts.primary && aS.admPillPrimary, opts.disabled && { opacity: 0.45 }, pressed && s.pressed]}>
+      <Text style={[aS.admPillText, opts.primary && { color: '#fff' }, opts.danger && { color: C.danger }]}>{label}</Text>
+    </Pressable>;
+  return <View style={{ flex: 1 }}>
+    <View style={aS.threadHeader}>
+      <Pressable onPress={onBack} style={[aS.threadBack, { flex: 1 }]}><Ionicons name="chevron-back" size={20} color={C.ink} /><Text style={aS.threadBackText} numberOfLines={1}>{name}</Text></Pressable>
+      <View style={[aS.admStatus, { backgroundColor: live ? C.successSoft : C.warningSoft }]}><Text style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: '700', color: live ? C.success : C.warning }}>{live ? 'Live' : 'Not live'}</Text></View>
+    </View>
+    <View style={s.dashboardTabsTop}>
+      {([['site', 'Website'], ['msgs', 'Messages'], ['account', 'Account']] as const).map(([k, label]) =>
+        <Pressable key={k} onPress={() => setTab(k)} style={[s.dashboardTab, tab === k && s.dashboardTabOn]}><Text style={[s.dashboardTabText, tab === k && s.dashboardTabTextOn]}>{label}</Text></Pressable>)}
+    </View>
+    {tab === 'site' && <ScrollView contentContainerStyle={aS.admBody}>
+      <View style={aS.admPills}>
+        {live ? pill('Take offline', () => setLive(false), { danger: true }) : pill('Make live', () => setLive(true), { primary: true, disabled: !canLive })}
+        {pill('View as client', onViewAsClient)}
+        {!!url && pill('Open site ↗', () => void Linking.openURL(url))}
+        {pill('Copy info', () => void Share.share({ message: businessBrief(biz), title: 'Business brief' }))}
+      </View>
+      <View style={aS.admCard}><Text style={aS.admK}>Website files</Text><Text style={aS.admV}>{canLive ? 'Uploaded' : 'Nothing uploaded yet'}</Text>{!canLive && <Text style={aS.admNote}>Upload their website from the web admin page, then Make live unlocks.</Text>}</View>
+      <View style={aS.admCard}><Text style={aS.admK}>Domain</Text><Text style={aS.admV}>{domain ? `${domain}${d.domainConnected ? ' ✓' : ' …'}` : 'No domain'}</Text>{!!domain && !d.domainConnected && <Text style={aS.admNote}>Waiting for nameservers{d.domainNameservers?.length ? `: ${d.domainNameservers.join(', ')}` : ''}</Text>}</View>
+      {!!msg && <Text style={aS.admNote}>{msg}</Text>}
+    </ScrollView>}
+    {tab === 'msgs' && <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <MessageThread key={biz.id} session={session} slug={biz.id} viewer="admin" otherName={(d.fullName || d.name || 'Customer').trim().split(' ')[0]} placeholder="Message…" intro={<>
+        <View style={[s.messageBubble, s.messageBubbleSent]}><Text style={[s.messageText, { color: '#fff' }]}>{welcomeText(d.fullName, d.buildChoice || (/Build choice: designer/i.test(d.notes || '') ? 'designer' : null))}</Text></View>
+        <Text style={[s.messageMeta, s.messageMetaSent]}>You · Welcome message</Text>
+      </>} />
+    </KeyboardAvoidingView>}
+    {tab === 'account' && <ScrollView contentContainerStyle={aS.admBody} keyboardShouldPersistTaps="handled">
+      <View style={aS.admCard}>
+        <Text style={aS.admK}>Login</Text>
+        <Text style={aS.admV}>{info ? (info.login?.email || 'No login') : 'Loading…'}</Text>
+        {!!info?.login?.lastSignIn && <Text style={aS.admNote}>Last signed in {timeAgo(info.login.lastSignIn)}</Text>}
+        <TextInput style={aS.admInput} value={newEmail} onChangeText={setNewEmail} placeholder="New login email" autoCapitalize="none" keyboardType="email-address" placeholderTextColor={C.placeholder} />
+        <View style={aS.admPills}>{pill('Change email', () => { if (newEmail.trim()) void run(async () => { await api({ action: 'update-login', email: newEmail.trim() }); setNewEmail(''); await loadInfo(); }, 'Login email changed.'); })}</View>
+        <TextInput style={aS.admInput} value={newPw} onChangeText={setNewPw} placeholder="New password (8+ characters)" autoCapitalize="none" autoCorrect={false} placeholderTextColor={C.placeholder} />
+        <View style={aS.admPills}>
+          {pill('Set password', () => { if (newPw.length >= 8) void run(async () => { await api({ action: 'update-login', password: newPw }); setNewPw(''); }, 'Password set. Let them know.'); else setMsg('Password must be 8+ characters.'); })}
+          {pill('Email reset link', () => void run(async () => { const r = await api({ action: 'send-reset' }); setMsg(`Reset link sent to ${r.email}.`); }))}
+        </View>
+      </View>
+      <View style={aS.admCard}>
+        <Text style={aS.admK}>Plan</Text>
+        {sub && !sub.error ? <>
+          <Text style={aS.admV}>{sub.amount != null ? `£${(sub.amount / 100).toFixed(2)}` : ''}{sub.interval ? ` / ${sub.interval}` : ''} · {sub.status}</Text>
+          {!!sub.renews && <Text style={aS.admNote}>{sub.cancelAtPeriodEnd ? 'Ends' : 'Renews'} {new Date(sub.renews).toLocaleDateString('en-GB')}</Text>}
+          {!!sub.card && <Text style={aS.admNote}>{sub.card}</Text>}
+          {sub.status !== 'canceled' && <View style={aS.admPills}>{sub.cancelAtPeriodEnd
+            ? pill('Keep plan (undo cancel)', () => void run(async () => { await api({ action: 'cancel-plan', undo: true }); await loadInfo(); }))
+            : pill('Cancel at end of period', () => Alert.alert('Cancel plan?', 'Their site goes offline when the billing period ends.', [{ text: 'No', style: 'cancel' }, { text: 'Cancel plan', style: 'destructive', onPress: () => void run(async () => { await api({ action: 'cancel-plan' }); await loadInfo(); }) }]), { danger: true })}</View>}
+        </> : <Text style={aS.admV}>{info ? (d.planActive ? 'Paid' : 'Not paid') : 'Loading…'}</Text>}
+      </View>
+      {!!msg && <Text style={aS.admNote}>{msg}</Text>}
+    </ScrollView>}
+  </View>;
+}
+
 const aS = StyleSheet.create({
+  admPills: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
+  admPill: { minHeight: 38, paddingHorizontal: 15, borderRadius: 999, justifyContent: 'center', backgroundColor: C.surface, borderWidth: 1, borderColor: C.line },
+  admPillPrimary: { backgroundColor: C.primary, borderColor: C.primary },
+  admPillText: { fontFamily: FONT, fontSize: 13.5, fontWeight: '700', color: C.ink },
+  admStatus: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, marginBottom: 12 },
+  admBody: { padding: 20, gap: 12 },
+  admCard: { backgroundColor: C.surface, borderRadius: 16, padding: 16 },
+  admK: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, marginBottom: 3 },
+  admV: { fontFamily: FONT, fontSize: 15.5, fontWeight: '700', color: C.ink },
+  admNote: { fontFamily: FONT, fontSize: 13, color: C.inkMuted, marginTop: 4 },
+  admInput: { fontFamily: FONT, fontSize: 15, color: C.ink, borderWidth: 1, borderColor: C.line, borderRadius: 12, paddingHorizontal: 12, height: 44, marginTop: 12, backgroundColor: C.canvas },
   adminBadge: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999, backgroundColor: C.primarySoft },
   adminBadgeText: { fontFamily: FONT, fontSize: 11, fontWeight: '800', color: C.primary, letterSpacing: .6 },
   signOutBtn: { minHeight: 34, paddingHorizontal: 14, borderRadius: 999, justifyContent: 'center', backgroundColor: C.surface, borderWidth: 1, borderColor: C.line },
