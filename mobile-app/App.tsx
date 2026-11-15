@@ -563,6 +563,48 @@ function Logo({ height = 18, tint }: { height?: number; tint?: string }) {
 const DESKTOP_WIDTH = 960;
 const DESKTOP_VIEW_W = SCREEN_WIDTH - 52;
 const DESKTOP_VIEW_H = Math.round(DESKTOP_VIEW_W * 0.68);
+// In-app analytics: page views and visitors per day from the site worker (owner or admin login).
+function AnalyticsModal({ visible, slug, session, onClose }: { visible: boolean; slug: string; session: any; onClose: () => void }) {
+  const [rangeDays, setRangeDays] = useState(30);
+  const [days, setDays] = useState<{ day?: string; views: number; visitors: number }[] | null>(null);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    if (!visible || !slug || !session?.access_token) return;
+    setDays(null); setError('');
+    fetch(`${UPLOAD_WORKER}/stats/${encodeURIComponent(slug)}?days=${rangeDays}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
+      .then(async r => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || 'failed'); return j; })
+      .then(j => setDays(j.days || []))
+      .catch(() => setError('Could not load analytics. Try again in a moment.'));
+  }, [visible, slug, rangeDays]);
+  const views = (days || []).reduce((t, d) => t + d.views, 0);
+  const visitors = (days || []).reduce((t, d) => t + d.visitors, 0);
+  const max = Math.max(1, ...(days || []).map(d => d.views));
+  return <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+    <View style={{ flex: 1, backgroundColor: C.canvas, paddingTop: Platform.OS === 'ios' ? 54 : 28 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 14 }}>
+        <Text style={{ fontFamily: FONT, fontSize: 22, fontWeight: '800', color: C.ink }}>Analytics</Text>
+        <Pressable onPress={onClose} hitSlop={10}><Ionicons name="close" size={24} color={C.ink} /></Pressable>
+      </View>
+      <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 20 }}>
+        {[7, 30, 90].map(n => <Pressable key={n} onPress={() => setRangeDays(n)} style={[s.chip, rangeDays === n && s.chipOn]}><Text style={[s.chipText, rangeDays === n && s.chipTextOn]}>{n} days</Text></Pressable>)}
+      </View>
+      <View style={{ flexDirection: 'row', gap: 12, padding: 20 }}>
+        {[['Page views', views], ['Visitors', visitors]].map(([label, n]) => <View key={String(label)} style={[s.dashboardInfoCard, { flex: 1, marginBottom: 0 }]}><Text style={s.dashboardCardLabel}>{label}</Text><Text style={[s.dashboardCardTitle, { fontSize: 28 }]}>{Number(n).toLocaleString('en-GB')}</Text></View>)}
+      </View>
+      <View style={[s.dashboardInfoCard, { marginHorizontal: 20 }]}>
+        {days === null && !error && <ActivityIndicator color={C.primary} />}
+        {!!error && <Text style={s.dashboardCardText}>{error}</Text>}
+        {days !== null && <>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: 150, gap: days.length > 45 ? 1 : 3 }}>
+            {days.map((d, i) => <View key={i} style={{ flex: 1, height: Math.max(d.views ? 3 : 1, (d.views / max) * 150), borderRadius: 3, backgroundColor: d.views ? C.primary : C.line, opacity: d.views ? 0.85 : 1 }} />)}
+          </View>
+          <Text style={[s.dashboardCardText, { marginTop: 10 }]}>{views ? `Peak day: ${max} view${max === 1 ? '' : 's'}` : 'No visits recorded yet. Once people visit the site they will appear here.'}</Text>
+        </>}
+      </View>
+    </View>
+  </Modal>;
+}
+
 // The client's real website (uploaded site / live address) in the phone or desktop frame.
 function RealSitePreview({ url, label, desktop, onPress }: { url: string; label?: string; desktop: boolean; onPress: () => void }) {
   const scale = DESKTOP_VIEW_W / DESKTOP_WIDTH;
@@ -854,6 +896,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
   const [domainError, setDomainError] = useState('');
   const [domainAvailable, setDomainAvailable] = useState(false);
   const [subNote, setSubNote] = useState('');
+  const [showAnalytics, setShowAnalytics] = useState(false);
   useEffect(() => {
     if (!isPaying || adminBiz || !session?.access_token || !slug) return;
     fetch(ADMIN_API, { method: 'POST', headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'my-subscription', slug }) })
@@ -1114,7 +1157,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
             <View style={{ position: 'absolute', left: 0, right: 0, alignItems: 'center', pointerEvents: 'box-none' as any }}><DeviceToggle mode={previewMode} setMode={setPreviewMode} /></View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               {/* analytics unlock once the site is live; they open the analytics view on the web dashboard */}
-              <Pressable disabled={!isLive} onPress={() => void Linking.openURL(`https://brightsite.app/account/dashboard?slug=${encodeURIComponent(slug || '')}#analytics`)} accessibilityLabel="Analytics" style={({ pressed }) => [s.dashboardEdit, { paddingHorizontal: 11 }, !isLive && { opacity: .45 }, pressed && s.pressed]}>
+              <Pressable disabled={!isLive && !adminBiz} onPress={() => setShowAnalytics(true)} accessibilityLabel="Analytics" style={({ pressed }) => [s.dashboardEdit, { paddingHorizontal: 11 }, !isLive && !adminBiz && { opacity: .45 }, pressed && s.pressed]}>
                 <Ionicons name="stats-chart" size={15} color={C.primary} />
               </Pressable>
             <View>
@@ -1150,6 +1193,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
         </Animated.View>}
       </ScrollView>}
     </View>
+    <AnalyticsModal visible={showAnalytics} slug={adminBiz ? adminBiz.id : slug} session={session} onClose={() => setShowAnalytics(false)} />
     <Modal visible={showPlanModal} transparent animationType="slide" onRequestClose={() => setShowPlanModal(false)}>
       <View style={s.planModalOverlay}>
         <View style={s.planModalBox}>
