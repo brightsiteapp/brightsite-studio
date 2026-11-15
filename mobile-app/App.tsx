@@ -2710,10 +2710,10 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       <View style={{ flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28 }}>
         <View style={s.loginHeader}><Logo height={20} /><Image source={require('./assets/brightsite-icon.png')} style={s.loginAppIcon} /></View>
         <ScrollView contentContainerStyle={[s.content, s.loginContent]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
-            {chooseMode === 'pick' ? <View style={{ flex: 1, justifyContent: 'flex-start', paddingTop: 90, paddingBottom: 40 }}>
+            {chooseMode === 'pick' ? <View style={{ flex: 1, paddingTop: 64 }}>
               <Text style={[s.heroTitle, { textAlign: 'center' }]}>How would you like to build your website?</Text>
-              <Text style={{ fontFamily: FONT, fontSize: 16, color: C.inkMuted, textAlign: 'center', marginTop: 10, marginBottom: 26 }}>You can change anything later.</Text>
-              <View style={[s.pathStack, { alignSelf: 'stretch' }]}>
+              <Text style={{ fontFamily: FONT, fontSize: 16, color: C.inkMuted, textAlign: 'center', marginTop: 10, marginBottom: 40 }}>You can change anything later.</Text>
+              <View style={[s.pathStack, { alignSelf: 'stretch', gap: 18 }]}>
                 <Pressable onPress={() => setChooseMode('auto')} style={({ pressed }) => [s.pathCard, s.pathCardPlain, pressed && s.pressed]}>
                   <Text style={[s.pathTag, { color: C.inkMuted, textAlign: 'center' }]}>2 MINUTES</Text>
                   <Text style={[s.pathTitle, { textAlign: 'center' }]}>Automatic</Text>
@@ -2721,7 +2721,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
                 </Pressable>
                 <Pressable onPress={() => { setIndex(1); motion.setValue(CARD_TRAVEL); setAppScreen('onboarding'); }} style={({ pressed }) => [s.pathCard, s.pathCardPlain, pressed && s.pressed]}>
                   <Text style={[s.pathTag, { color: C.inkMuted, textAlign: 'center' }]}>ABOUT 10 MINUTES</Text>
-                  <Image source={require('./assets/brightbuilder.png')} resizeMode="contain" style={{ width: 170, height: 170 * 137 / 1543, marginBottom: 8, alignSelf: 'center' }} />
+                  <Image source={require('./assets/brightbuilder.png')} resizeMode="contain" style={{ width: 170, height: 170 * 137 / 1543, marginTop: 12, marginBottom: 12, alignSelf: 'center' }} />
                   <Text style={[s.pathTitle, { textAlign: 'center' }]}>Manual</Text>
                   <Text style={[s.pathText, { textAlign: 'center' }]}>Enter your details, hours, services and photos yourself.</Text>
                 </Pressable>
