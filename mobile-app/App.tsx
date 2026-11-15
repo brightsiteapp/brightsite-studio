@@ -1173,7 +1173,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
           <View style={[s.dashboardWebsiteHead, { zIndex: 20 }]}>
             {adminBiz
               ? <View style={{ flexDirection: 'row', alignItems: 'center', width: (SCREEN_WIDTH - 40) / 2 - 43 }}>
-                  <Pressable onPress={() => void Linking.openURL(`https://brightsite.app/account/admin.html?client=${encodeURIComponent(adminBiz.id)}&upload=1`)} accessibilityLabel="Upload website" style={({ pressed }) => [s.dashboardEdit, { paddingHorizontal: 12 }, pressed && s.pressed]}><Ionicons name="cloud-upload-outline" size={15} color={C.ink} /><Text style={s.dashboardEditText}>Upload</Text></Pressable>
+                  <Pressable onPress={() => void Linking.openURL(`https://brightsite.app/account/admin.html?client=${encodeURIComponent(adminBiz.id)}&upload=1`)} accessibilityLabel="Upload website" style={({ pressed }) => [s.dashboardEdit, { paddingHorizontal: 11 }, pressed && s.pressed]}><Ionicons name="cloud-upload-outline" size={15} color={C.ink} /></Pressable>
                   <View style={{ flex: 1, alignItems: 'center' }}>
                   <Pressable onPress={() => void Share.share({ message: businessBrief(adminBiz), title: 'Business brief' })} accessibilityLabel="Copy all business info" style={({ pressed }) => [s.dashboardEdit, { paddingHorizontal: 11 }, pressed && s.pressed]}><Ionicons name="copy-outline" size={15} color={C.ink} /></Pressable>
                   </View>
