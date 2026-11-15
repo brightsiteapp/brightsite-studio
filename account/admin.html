@@ -430,6 +430,11 @@ body { background: var(--bg); color: var(--ink); }
 .workspace:not(.detail) { grid-template-columns: minmax(0, 720px); justify-content: center; }
 .workspace:not(.detail) .work-col { display: none; }
 .workspace:not(.detail) .client-col { max-width: 720px; width: 100%; justify-self: center; }
+.filter-pills { display: flex; gap: 6px; overflow-x: auto; width: 100%; padding-bottom: 2px; scrollbar-width: none; }
+.filter-pills::-webkit-scrollbar { display: none; }
+.filter-pills button { flex: none; border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 7px 13px; font: inherit; font-size: 13px; font-weight: 700; color: var(--ink); cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+.filter-pills button.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+.filter-pills button i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 </style>
 </head>
 <body>
@@ -467,7 +472,8 @@ body { background: var(--bg); color: var(--ink); }
       <div class="client-col-head">
         <div class="search-wrap">
         <input type="search" id="searchInput" placeholder="Search clients…">
-        <select id="clientFilter" aria-label="Filter clients" title="Filter">
+        <div class="filter-pills" id="filterPills"></div>
+        <select id="clientFilter" aria-label="Filter clients" title="Filter" hidden>
           <option value="all">All</option>
           <option value="unread">Unread</option>
           <option value="red">To build</option>
@@ -1284,9 +1290,11 @@ function renderClientList() {
     var s = statusOf(b);
     var msgs = adminThreads[id] || [];
     var last = msgs[msgs.length - 1];
-    var meta = !adminThreadsLoaded ? '…' : last
-      ? timeAgo(last.created_at) + ' · ' + (last.sender === 'admin' ? 'You: ' : '') + last.body
-      : 'No messages yet';
+    var meta;
+    if (last) meta = (last.sender === 'admin' ? 'You replied' : 'Message from client') + ' · ' + timeAgo(last.created_at);
+    else if (businessUpdatedTime(id)) meta = 'Updated · ' + timeAgo(new Date(businessUpdatedTime(id)).toISOString());
+    else meta = 'No activity yet';
+    if (!adminThreadsLoaded) meta = '…';
     return '<button type="button" class="client-item' + (id === activeThreadId ? ' active' : '') + '" data-id="' + esc(id) + '">' +
       '<span class="status-dot ' + s + '"></span>' +
       (isUnread(id) ? '<span class="row-dot"></span>' : '') +
@@ -1637,6 +1645,24 @@ document.getElementById('composerInput').addEventListener('input', function() {
   this.style.height = '';
   this.style.height = Math.min(this.scrollHeight, 140) + 'px';
 });
+(function buildFilterPills() {
+  var opts = [['all', 'All', null], ['unread', 'Unread', null], ['red', 'To build', '#B42318'], ['yellow', 'Preview sent', '#B26A00'], ['green', 'Live', '#1F8A54'], ['stub', 'Setup pending', '#6B7680']];
+  var wrap = document.getElementById('filterPills');
+  var sel = document.getElementById('clientFilter');
+  opts.forEach(function(o) {
+    var b = document.createElement('button'); b.type = 'button'; b.setAttribute('data-v', o[0]);
+    if (o[2]) { var i = document.createElement('i'); i.style.background = o[2]; b.appendChild(i); }
+    b.appendChild(document.createTextNode(o[1]));
+    b.addEventListener('click', function() {
+      sel.value = o[0];
+      sel.dispatchEvent(new Event('change'));
+    });
+    wrap.appendChild(b);
+  });
+  function sync() { wrap.querySelectorAll('button').forEach(function(b) { b.classList.toggle('on', b.getAttribute('data-v') === sel.value); }); }
+  sel.addEventListener('change', sync);
+  sync();
+})();
 document.getElementById('clientFilter').addEventListener('change', function() {
   this.classList.toggle('on', this.value !== 'all');
   renderClientList();
