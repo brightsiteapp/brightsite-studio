@@ -2713,13 +2713,13 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         {chooseMode === 'pick' ? <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 18, paddingBottom: 24 }}>
           <Text style={[s.heroTitle, { textAlign: 'center' }]}>How would you like to build your website?</Text>
           <Text style={{ fontFamily: FONT, fontSize: 17, lineHeight: 24, color: C.inkSoft, textAlign: 'center', marginTop: 10, marginBottom: 34 }}>You can change anything later.</Text>
-          <View style={{ gap: 18 }}>
+          <View style={{ gap: 14 }}>
             <Pressable onPress={() => setChooseMode('auto')} style={({ pressed }) => [s.pathCard, s.pathCardBlue, pressed && s.pressed]}>
               <Text style={[s.pathTitle, { color: '#fff' }]}>Automatic</Text>
               <Text style={[s.pathText, { color: '#fff' }]}>Share your Google, Facebook or website link and our designer builds it for you.</Text>
             </Pressable>
             <Pressable onPress={() => { setIndex(1); motion.setValue(CARD_TRAVEL); setAppScreen('onboarding'); }} style={({ pressed }) => [s.pathCard, s.pathCardWhite, pressed && s.pressed]}>
-              <Image source={require('./assets/brightbuilder.png')} resizeMode="contain" style={{ width: 22*1543/137, height: 22, tintColor: C.primaryPressed, marginBottom: 8 }} />
+              <Image source={require('./assets/brightbuilder.png')} resizeMode="contain" style={{ width: 19*1543/137, height: 19, tintColor: C.primaryPressed, marginBottom: 8 }} />
               <Text style={[s.pathTitle, { color: C.primaryPressed }]}>Seven. Simple. Steps.</Text>
               <Text style={[s.pathText, { color: C.primaryPressed }]}>Under 10 minutes. Enter your details, hours, services and photos yourself.</Text>
             </Pressable>
@@ -3087,11 +3087,11 @@ buildingWrap: { alignItems: 'center', paddingBottom: 24 },
   sendGlow: { marginTop: 6, borderWidth: 2, borderColor: 'rgba(147,197,253,.95)', shadowColor: '#3B82F6', shadowOpacity: .75, shadowRadius: 16, shadowOffset: { width: 0, height: 0 }, elevation: 10 },
   sendGlowOff: { opacity: .45, shadowOpacity: 0, borderColor: 'transparent', elevation: 0 },
   sendHint: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, textAlign: 'center', marginTop: 4, marginBottom: 8 },
-  pathCard: { minHeight: 196, borderRadius: 22, paddingVertical: 26, paddingHorizontal: 24, justifyContent: 'center', alignItems: 'center' },
+  pathCard: { height: 158, borderRadius: 20, paddingVertical: 20, paddingHorizontal: 22, justifyContent: 'center', alignItems: 'center' },
 pathCardBlue: { backgroundColor: C.primary, shadowColor: '#1D4ED8', shadowOpacity: .28, shadowRadius: 18, shadowOffset: { width: 0, height: 8 } },
 pathCardWhite: { backgroundColor: '#fff', shadowColor: '#1C2832', shadowOpacity: .1, shadowRadius: 16, shadowOffset: { width: 0, height: 6 } },
-  pathTitle: { fontFamily: FONT, fontSize: 26, fontWeight: '800', letterSpacing: -.5, color: C.ink, marginBottom: 8, textAlign: 'center' },
-  pathText: { fontFamily: FONT, fontSize: 17, lineHeight: 24, fontWeight: '500', color: C.ink, textAlign: 'center' },
+  pathTitle: { fontFamily: FONT, fontSize: 23, fontWeight: '800', letterSpacing: -.5, color: C.ink, marginBottom: 8, textAlign: 'center' },
+  pathText: { fontFamily: FONT, fontSize: 16, lineHeight: 22, fontWeight: '500', color: C.ink, textAlign: 'center' },
   chooseBack: { flexDirection: 'row', alignItems: 'center', gap: 2, alignSelf: 'flex-start', marginBottom: 14 },
   chooseBackText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.primary },
   // the lowercase i from the BrightSite wordmark: round dot over a rounded stem
