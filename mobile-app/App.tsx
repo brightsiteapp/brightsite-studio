@@ -2751,6 +2751,20 @@ function AdminAccountPanel({ biz, session, isLive }: { biz: any; session: any; i
   const realDomain = /brightsite\.app/i.test(shownDomain) ? '' : shownDomain;
   return <View>
     <View style={s.dashboardInfoCard}>
+      <Text style={s.dashboardCardLabel}>Login email</Text>
+      <Text style={s.dashboardCardTitle}>{info ? (info.login?.email || 'No login') : 'Loading…'}</Text>
+      {!!info?.login?.lastSignIn && <Text style={s.dashboardCardText}>Last signed in {timeAgo(info.login.lastSignIn)}</Text>}
+      {link('mail-outline', 'Change email', () => { setValue(''); setPrompt('email'); })}
+      {link('key-outline', 'Set password', () => { setValue(''); setPrompt('password'); })}
+      {link('paper-plane-outline', 'Email reset link', () => Alert.alert('Send reset link?', `This emails ${info?.login?.email || 'the client'} a link to reset their password.`, [{ text: 'Cancel', style: 'cancel' }, { text: 'Send', onPress: () => void run(async () => { const r = await api({ action: 'send-reset' }); setMsg(`Reset link sent to ${r.email}.`); }) }]))}
+    </View>
+    <View style={s.dashboardInfoCard}>
+      <Text style={s.dashboardCardLabel}>Contact</Text>
+      <Text style={s.dashboardCardTitle}>{(biz?.data?.raw?.fullName || '').trim() || 'No name yet'}</Text>
+      <Text style={s.dashboardCardText}>{biz?.data?.raw?.phone || 'No phone number'}</Text>
+      {!!biz?.data?.raw?.email && <Text style={s.dashboardCardText}>{biz.data.raw.email}</Text>}
+    </View>
+    <View style={s.dashboardInfoCard}>
       <Text style={s.dashboardCardLabel}>Domain</Text>
       <Text style={s.dashboardCardTitle}>{realDomain || 'No domain yet'}</Text>
       <Text style={s.dashboardCardText}>{realDomain ? (isLive || d.domainConnected ? 'Connected to the website' : 'Waiting for nameservers / connects when live') : 'Connect one they already own'}</Text>
@@ -2765,20 +2779,6 @@ function AdminAccountPanel({ biz, session, isLive }: { biz: any; session: any; i
           ? link('refresh-outline', 'Keep plan (undo cancel)', () => void run(async () => { await api({ action: 'cancel-plan', undo: true }); await loadInfo(); }))
           : link('close-circle-outline', 'Cancel at end of period', () => Alert.alert('Cancel plan?', 'Their site goes offline when the billing period ends.', [{ text: 'No', style: 'cancel' }, { text: 'Cancel plan', style: 'destructive', onPress: () => void run(async () => { await api({ action: 'cancel-plan' }); await loadInfo(); }) }]), true))}
       </> : <Text style={s.dashboardCardTitle}>{info ? (d.planActive ? 'Paid' : 'No plan yet') : 'Loading…'}</Text>}
-    </View>
-    <View style={s.dashboardInfoCard}>
-      <Text style={s.dashboardCardLabel}>Contact</Text>
-      <Text style={s.dashboardCardTitle}>{(biz?.data?.raw?.fullName || '').trim() || 'No name yet'}</Text>
-      <Text style={s.dashboardCardText}>{biz?.data?.raw?.phone || 'No phone number'}</Text>
-      {!!biz?.data?.raw?.email && <Text style={s.dashboardCardText}>{biz.data.raw.email}</Text>}
-    </View>
-    <View style={s.dashboardInfoCard}>
-      <Text style={s.dashboardCardLabel}>Login email</Text>
-      <Text style={s.dashboardCardTitle}>{info ? (info.login?.email || 'No login') : 'Loading…'}</Text>
-      {!!info?.login?.lastSignIn && <Text style={s.dashboardCardText}>Last signed in {timeAgo(info.login.lastSignIn)}</Text>}
-      {link('mail-outline', 'Change email', () => { setValue(''); setPrompt('email'); })}
-      {link('key-outline', 'Set password', () => { setValue(''); setPrompt('password'); })}
-      {link('paper-plane-outline', 'Email reset link', () => Alert.alert('Send reset link?', `This emails ${info?.login?.email || 'the client'} a link to reset their password.`, [{ text: 'Cancel', style: 'cancel' }, { text: 'Send', onPress: () => void run(async () => { const r = await api({ action: 'send-reset' }); setMsg(`Reset link sent to ${r.email}.`); }) }]))}
     </View>
     {!!msg && <Text style={[s.dashboardCardText, { paddingHorizontal: 4 }]}>{msg}</Text>}
     <Modal visible={!!prompt} transparent animationType="fade" onRequestClose={() => setPrompt(null)}>
