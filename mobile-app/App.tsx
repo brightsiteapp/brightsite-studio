@@ -2710,10 +2710,10 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       <View style={{ flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28 }}>
         <View style={s.loginHeader}><Logo height={20} /><Image source={require('./assets/brightsite-icon.png')} style={s.loginAppIcon} /></View>
         <ScrollView contentContainerStyle={[s.content, s.loginContent]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
-            {chooseMode === 'pick' ? <View style={{ flex: 1, paddingTop: 0 }}>
+            {chooseMode === 'pick' ? <View style={{ position: 'absolute', left: 0, right: 0, top: 121, paddingHorizontal: 30 }}>
               <Text style={[s.heroTitle, { textAlign: 'center' }]}>How would you like to build your website?</Text>
               <Text style={{ fontFamily: FONT, fontSize: 16, color: C.inkMuted, textAlign: 'center', marginTop: 10, marginBottom: 40 }}>You can change anything later.</Text>
-              <View style={[s.pathStack, { alignSelf: 'stretch', gap: 18, position: 'absolute', left: 0, right: 0, top: SCREEN_HEIGHT / 2 - 322 }]}>
+              <View style={[s.pathStack, { alignSelf: 'stretch', gap: 18 }]}>
                 <Pressable onPress={() => setChooseMode('auto')} style={({ pressed }) => [s.pathCard, s.pathCardPlain, pressed && s.pressed]}>
                   <Text style={[s.pathTag, { color: C.inkMuted, textAlign: 'center' }]}>2 MINUTES</Text>
                   <Text style={[s.pathTitle, { textAlign: 'center' }]}>Automatic</Text>
