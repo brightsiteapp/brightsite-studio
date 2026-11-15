@@ -397,6 +397,19 @@ body { background: var(--bg); color: var(--ink); }
   .work-tabs .tabs-inner { max-width: none; }
   .adm-row { align-items: flex-start; }
 }
+.admin-bar{display:flex;flex-wrap:wrap;gap:8px;padding:6px 18px 12px;align-items:center}
+.admin-bar button,.admin-bar a{font:inherit;font-size:13px;font-weight:700;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;text-decoration:none;white-space:nowrap}
+.admin-bar .live-btn{background:#16a34a;color:#fff;border-color:#16a34a}
+.admin-bar .live-btn.off{background:#fff;color:#b91c1c;border-color:#fca5a5}
+.admin-bar button:disabled{opacity:.5;cursor:not-allowed}
+#ws-dash{flex:1;display:flex;min-height:0}
+#ws-dash iframe{flex:1;width:100%;border:0;min-height:0;background:var(--bg);border-radius:0 0 18px 18px}
+.work-col{position:relative}
+.acct-overlay{position:absolute;inset:0;background:rgba(28,40,50,.35);z-index:20;display:flex;justify-content:flex-end}
+.acct-overlay[hidden]{display:none}
+.acct-sheet{width:min(460px,100%);height:100%;background:var(--bg);overflow:auto;padding:16px}
+.acct-sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+@media(max-width:820px){.admin-bar{padding:4px 12px 10px}}
 </style>
 </head>
 <body>
@@ -466,33 +479,11 @@ body { background: var(--bg); color: var(--ink); }
           <strong id="wsTitle"></strong>
           <span class="status-pill" id="wsStatus"></span>
         </div>
-        <nav class="work-tabs"><div class="tabs-inner">
-          <button type="button" class="work-tab active" id="tab-site">Website</button>
-          <button type="button" class="work-tab" id="tab-msgs">Messages<span class="tab-dot" id="msgsTabDot" hidden></span></button>
-          <button type="button" class="work-tab" id="tab-edit">Edit info</button>
-          <button type="button" class="work-tab" id="tab-account">Account</button>
-        </div></nav>
-        <div class="work-panel admin-panel" id="ws-site">
-          <div class="site-bar">
-            <div class="site-bar-left" id="siteLiveBtnWrap"></div>
-            <div class="site-toggle" role="group" aria-label="Preview size">
-              <button type="button" class="active" id="sitePvMobile" aria-label="Mobile view"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg></button>
-              <button type="button" id="sitePvDesktop" aria-label="Desktop view"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></button>
-            </div>
-            <div class="site-bar-right" id="siteOpenWrap"></div>
-          </div>
-          <div class="site-preview mobile" id="sitePreview"></div>
-          <div id="adminActions"></div>
+        <div class="admin-bar" id="adminBar"></div>
+        <div class="work-panel" id="ws-dash"><iframe id="dashFrame" title="Client dashboard"></iframe></div>
+        <div class="acct-overlay" id="acctOverlay" hidden>
+          <div class="acct-sheet"><div class="acct-sheet-head"><strong>Account</strong><button type="button" class="logout-btn" id="acctClose">Close</button></div><div id="accountPane"></div></div>
         </div>
-        <div class="work-panel" id="ws-msgs" hidden>
-          <div class="thread-body" id="threadBody"></div>
-          <div class="composer">
-            <textarea id="composerInput" rows="1" placeholder="Reply as Tom…"></textarea>
-            <button type="button" id="composerSend">Send</button>
-          </div>
-        </div>
-        <div class="work-panel" id="ws-edit" hidden><iframe id="editFrame" title="Edit client info"></iframe></div>
-        <div class="work-panel admin-panel" id="ws-account" hidden><div id="accountPane"></div></div>
       </div>
     </section>
   </div>
@@ -752,8 +743,7 @@ function renderBusinesses(businesses, emails) {
 
   allBusinesses = sorted;
   applyFilter();
-  if (activeThreadId && activeTab === 'site') renderAdminPanel();
-  if (activeThreadId && activeTab === 'account') renderAccountPane();
+  if (activeThreadId) renderAdminBar();
 }
 
 function applyFilter() {
@@ -1503,7 +1493,6 @@ document.getElementById('deleteConfirm').addEventListener('click', function() {
 var adminThreads = {};
 var adminThreadsLoaded = false;
 var activeThreadId = null;
-var activeTab = 'site';
 var adminPollTimer = null;
 var lastRenderedCount = -1;
 
@@ -1539,11 +1528,6 @@ function markThreadSeen(id) {
   try { localStorage.setItem(seenKey(id), String(c)); } catch (e) {}
 }
 
-function updateAdminDot() {
-  var any = Object.keys(adminThreads).some(isUnread);
-  document.getElementById('msgsTabDot').hidden = !any;
-}
-
 function bizById(id) {
   return allBusinesses.find(function(x) { return x.id === id; }) || null;
 }
@@ -1573,9 +1557,7 @@ function loadAdminMessages() {
       rows.forEach(function(m) { (next[m.business_id] = next[m.business_id] || []).push(m); });
       adminThreads = next;
       adminThreadsLoaded = true;
-      updateAdminDot();
       renderClientList();
-      if (activeThreadId && activeTab === 'msgs') renderThread(false);
     })
     .catch(function(e) { console.warn('[admin messages] load failed', e); });
 }
@@ -1631,110 +1613,36 @@ function selectClient(id) {
   pill.textContent = statusLabel(s);
   pill.className = 'status-pill ' + s;
   renderClientList();
-  updateAdminDot();
   showWorkTab('site');
 }
 
 function showWorkTab(name) {
-  activeTab = name;
-  ['site', 'msgs', 'edit', 'account'].forEach(function(t) {
-    document.getElementById('ws-' + t).hidden = t !== name;
-    document.getElementById('tab-' + t).classList.toggle('active', t === name);
-  });
   if (!activeThreadId) return;
-  if (name === 'msgs') {
-    markThreadSeen(activeThreadId);
-    renderThread(true);
-    updateAdminDot();
-    renderClientList();
-    document.getElementById('composerInput').focus();
+  var frame = document.getElementById('dashFrame');
+  if (frame.getAttribute('data-slug') !== activeThreadId) {
+    frame.setAttribute('data-slug', activeThreadId);
+    frame.src = '/account/dashboard.html?bs_admin_slug=' + encodeURIComponent(activeThreadId) + '&embed=1';
   }
-  if (name === 'site') renderAdminPanel();
-  if (name === 'account') renderAccountPane();
-  if (name === 'edit') {
-    // the client's own info editor, opened as admin with nothing else around it
-    var frame = document.getElementById('editFrame');
-    if (frame.getAttribute('data-slug') !== activeThreadId) {
-      frame.setAttribute('data-slug', activeThreadId);
-      frame.src = '/account/dashboard.html?bs_admin_slug=' + encodeURIComponent(activeThreadId) + '&adminEdit=1';
-    }
-  }
+  renderAdminBar();
 }
 
-function renderThread(forceScroll) {
-  var msgs = adminThreads[activeThreadId] || [];
-  var body = document.getElementById('threadBody');
-  var changed = msgs.length !== lastRenderedCount;
-  if (!msgs.length) body.innerHTML = '<div class="thread-empty">No messages yet. Send the first one below.</div>';
-  else body.innerHTML = msgs.map(function(m) {
-    var out = m.sender === 'admin';
-    var when = new Date(m.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-    return '<div class="bubble ' + (out ? 'out' : 'in') + '">' + esc(m.body) +
-      '<div class="bubble-meta">' + (out ? 'Tom' : esc(bizLabel(activeThreadId))) + ' · ' + esc(when) + '</div></div>';
-  }).join('');
-  if (forceScroll || changed) body.scrollTop = body.scrollHeight;
-  lastRenderedCount = msgs.length;
-}
-
-function renderAdminPanel() {
-  var b = bizById(activeThreadId);
-  if (!b) return;
-  var d = b.data || {};
-  var raw = d.raw || {};
-  var name = bizName(activeThreadId);
-  var slug = esc(activeThreadId);
-  var nameArg = esc(name);
-  var domain = d.customDomain || d.domain || '';
-  var email = raw.email || raw.ownerEmail || '';
-  var uploaded = !!(d.demoUrl || d.demoUploaded);
-  var tick = '<span class="adm-tick" aria-hidden="true">✓</span>';
-  function row(title, line, btns, collapse) {
-    return '<div class="adm-card' + (collapse ? ' collapsible' : '') + '"><div class="adm-row"><div class="adm-main"><div class="adm-title">' + title + '</div><div class="adm-line">' + line + '</div></div>' +
-      (collapse ? '<button type="button" class="adm-edit" onclick="this.closest(\'.adm-card\').classList.toggle(\'open\')">Edit</button>' : '') +
-      '<div class="adm-btns">' + btns + '</div></div></div>';
-  }
-  var html = '';
-  html += row('Website files',
-    uploaded ? tick + (d.demoUrl ? '<a href="' + esc(d.demoUrl) + '" target="_blank" rel="noopener">View uploaded site</a>' : 'Uploaded') +
-      (d.liveUrl ? '<span class="adm-note">Live at <a href="' + esc(d.liveUrl) + '" target="_blank" rel="noopener">' + esc(d.liveUrl.replace(/^https?:\/\//, '')) + '</a></span>' : '')
-      : '<span class="adm-muted">Nothing uploaded</span>',
-    uploaded
-      ? '<button type="button" onclick="openUploadModal(\'' + slug + '\',\'' + nameArg + '\')">Replace</button><button type="button" class="danger" onclick="removeUpload(\'' + slug + '\')">Remove</button>'
-      : '<button type="button" class="primary" onclick="openUploadModal(\'' + slug + '\',\'' + nameArg + '\')">Upload</button>', true);
-  html += row('Domain',
-    domain ? (d.domainConnected ? tick : '<span class="adm-wait" aria-hidden="true">…</span>') + '<a href="https://' + esc(domain) + '" target="_blank" rel="noopener">' + esc(domain) + '</a>' +
-      (d.domainConnected ? '' : '<span class="adm-note">' + (d.domainNameservers && d.domainNameservers.length ? 'Waiting for nameservers: ' + d.domainNameservers.map(esc).join(', ') : 'Not connected yet') + '</span>')
-      : '<span class="adm-muted">No domain</span>',
-    domain
-      ? (d.domainConnected ? '' : '<button type="button" onclick="recheckDomain(\'' + slug + '\', this)">Check again</button>') + '<button type="button" onclick="openDomainModal(\'' + slug + '\',\'' + nameArg + '\')">Edit</button><button type="button" class="danger" onclick="removeDomain(\'' + slug + '\')">Remove</button>'
-      : '<button type="button" class="primary" onclick="openDomainModal(\'' + slug + '\',\'' + nameArg + '\')">Connect</button>', true);
-  document.getElementById('adminActions').innerHTML = html;
-  renderSitePreview();
-}
-
-// ---- Website tab: preview + make live / take offline ----
-var sitePreviewMode = 'mobile';
-function renderSitePreview() {
+function renderAdminBar() {
   var b = bizById(activeThreadId); if (!b) return;
   var d = b.data || {};
+  var slug = esc(activeThreadId), nameArg = esc(bizName(activeThreadId));
+  var live = !!d.published, canLive = !!(d.demoUrl || d.demoUploaded);
   var url = (d.published && d.liveUrl) || d.demoUrl || d.liveUrl || '';
-  document.getElementById('sitePvMobile').classList.toggle('active', sitePreviewMode === 'mobile');
-  document.getElementById('sitePvDesktop').classList.toggle('active', sitePreviewMode === 'desktop');
-  var pv = document.getElementById('sitePreview');
-  pv.className = 'site-preview ' + sitePreviewMode;
-  if (url) {
-    if (pv.getAttribute('data-url') !== url) { pv.setAttribute('data-url', url); pv.innerHTML = '<iframe src="' + esc(url) + '" title="Client website"></iframe>'; }
-  } else {
-    pv.removeAttribute('data-url');
-    pv.innerHTML = '<div class="pv-empty"><b>No website uploaded yet</b>Upload their files below and the preview shows here.</div>';
-  }
-  var live = !!d.published;
-  var canLive = !!(d.demoUrl || d.demoUploaded);
-  document.getElementById('siteLiveBtnWrap').innerHTML = live
-    ? '<button type="button" class="live-btn off" onclick="adminSetLive(false, this)">Take offline</button>'
-    : '<button type="button" class="live-btn" onclick="adminSetLive(true, this)"' + (canLive ? '' : ' disabled title="Upload their website first"') + '>Make live</button>';
-  document.getElementById('siteOpenWrap').innerHTML = url ? '<a class="site-open" href="' + esc(url) + '" target="_blank" rel="noopener">Open ↗</a>' : '';
+  var domain = d.customDomain || d.domain || '';
+  document.getElementById('adminBar').innerHTML =
+    (live ? '<button type="button" class="live-btn off" onclick="adminSetLive(false, this)">Take offline</button>'
+          : '<button type="button" class="live-btn" onclick="adminSetLive(true, this)"' + (canLive ? '' : ' disabled title="Upload their website first"') + '>Make live</button>') +
+    '<button type="button" onclick="openUploadModal(\'' + slug + '\',\'' + nameArg + '\')">' + (canLive ? 'Replace website' : 'Upload website') + '</button>' +
+    '<button type="button" onclick="openDomainModal(\'' + slug + '\',\'' + nameArg + '\')">' + (domain ? 'Domain: ' + esc(domain) : 'Connect domain') + '</button>' +
+    '<button type="button" onclick="openAcct()">Account</button>' +
+    (url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener">Open site ↗</a>' : '');
 }
+function openAcct() { document.getElementById('acctOverlay').hidden = false; renderAccountPane(); }
+document.addEventListener('click', function(e) { if (e.target.id === 'acctClose' || e.target.id === 'acctOverlay') document.getElementById('acctOverlay').hidden = true; });
 
 function adminApi(payload) {
   return fetch(API_BASE_URL + '/api/admin-businesses', {
@@ -1751,7 +1659,7 @@ function adminSetLive(live, btn) {
   adminApi({ action: 'set-live', slug: slug, live: live })
     .then(function() { return loadBusinesses(); })
     .catch(function(err) { alert(err.message); })
-    .then(function() { if (activeThreadId === slug) renderAdminPanel(); });
+    .then(function() { if (activeThreadId === slug) renderAdminBar(); });
 }
 
 // ---- Account tab: login, password, plan, delete ----
@@ -1895,37 +1803,6 @@ function copyClientInfo(id, btn) {
   }
 }
 
-function sendAdminReply() {
-  var input = document.getElementById('composerInput');
-  var body = input.value.trim();
-  if (!body || !activeThreadId) return;
-  var btn = document.getElementById('composerSend');
-  var threadId = activeThreadId;
-  btn.disabled = true;
-  fetch(SUPABASE_URL + '/rest/v1/messages', {
-    method: 'POST',
-    headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
-    body: JSON.stringify({ business_id: threadId, sender: 'admin', body: body })
-  })
-    .then(function(r) {
-      if (!r.ok) return r.text().then(function(t) { throw new Error('HTTP ' + r.status + ': ' + t); });
-      input.value = '';
-      input.style.height = '';
-      pushToBusiness(threadId, 'New message from Tom', body.length > 140 ? body.slice(0, 137) + '…' : body);
-      return loadAdminMessages().then(function() { markThreadSeen(threadId); renderThread(true); renderClientList(); updateAdminDot(); });
-    })
-    .catch(function(e) { alert('Message not sent: ' + e.message); })
-    .then(function() { btn.disabled = false; });
-}
-
-document.getElementById('composerSend').addEventListener('click', sendAdminReply);
-document.getElementById('composerInput').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAdminReply(); }
-});
-document.getElementById('composerInput').addEventListener('input', function() {
-  this.style.height = '';
-  this.style.height = Math.min(this.scrollHeight, 140) + 'px';
-});
 document.getElementById('clientFilter').addEventListener('change', function() {
   this.classList.toggle('on', this.value !== 'all');
   renderClientList();
@@ -1935,13 +1812,6 @@ document.getElementById('wsBack').addEventListener('click', function() {
   document.querySelector('.workspace').classList.remove('detail');
   window.scrollTo(0, 0);
 });
-// The client's own dashboard (with its own tabs) opens full page instead of nested inside these tabs.
-['site', 'msgs', 'edit', 'account'].forEach(function(t) {
-  document.getElementById('tab-' + t).addEventListener('click', function() { showWorkTab(t); });
-});
-document.getElementById('sitePvMobile').addEventListener('click', function() { sitePreviewMode = 'mobile'; renderSitePreview(); });
-document.getElementById('sitePvDesktop').addEventListener('click', function() { sitePreviewMode = 'desktop'; renderSitePreview(); });
-
 function startAdminMessaging() {
   loadAdminMessages();
   if (!adminPollTimer) adminPollTimer = setInterval(loadAdminMessages, 8000);

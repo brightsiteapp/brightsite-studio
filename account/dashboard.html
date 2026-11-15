@@ -1127,7 +1127,7 @@
   // Admin's "Edit info" tab embeds this page with adminEdit=1: just the info editor, nothing else.
   var isAdminEdit = isAdminView && params.get('adminEdit') === '1';
   if (isAdminEdit) document.documentElement.classList.add('admin-edit');
-  if (isAdminView) {
+  if (isAdminView && params.get('embed') !== '1') {
     document.addEventListener('DOMContentLoaded', function() {
       var right = document.querySelector('.app-header-right');
       if (right) {
