@@ -2714,14 +2714,14 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           <Text style={[s.heroTitle, { textAlign: 'center' }]}>How would you like to build your website?</Text>
           <Text style={{ fontFamily: FONT, fontSize: 17, lineHeight: 24, color: C.inkSoft, textAlign: 'center', marginTop: 10, marginBottom: 34 }}>You can change anything later.</Text>
           <View style={{ gap: 14 }}>
-            <Pressable onPress={() => setChooseMode('auto')} style={({ pressed }) => [s.pathCard, s.pathCardBlue, pressed && s.pressed]}>
-              <Text style={[s.pathTitle, { color: '#fff' }]}>Automatic</Text>
-              <Text style={[s.pathText, { color: '#fff' }]}>Share your Google, Facebook or website link and our designer builds it for you.</Text>
+            <Pressable onPress={() => setChooseMode('auto')} style={({ pressed }) => [s.pathCard, s.pathCardWhite, pressed && s.pressed]}>
+              <Text style={[s.pathTitle, { color: C.primaryPressed }]}>Automatic</Text>
+              <Text style={[s.pathText, { color: C.primaryPressed }]}>Share your Google, Facebook or website link and our designer builds it for you.</Text>
             </Pressable>
-            <Pressable onPress={() => { setIndex(1); motion.setValue(CARD_TRAVEL); setAppScreen('onboarding'); }} style={({ pressed }) => [s.pathCard, s.pathCardWhite, pressed && s.pressed]}>
-              <Image source={require('./assets/brightbuilder.png')} resizeMode="contain" style={{ width: 19*1543/137, height: 19, tintColor: C.primaryPressed, marginBottom: 8 }} />
-              <Text style={[s.pathTitle, { color: C.primaryPressed }]}>Seven. Simple. Steps.</Text>
-              <Text style={[s.pathText, { color: C.primaryPressed }]}>Under 10 minutes. Enter your details, hours, services and photos yourself.</Text>
+            <Pressable onPress={() => { setIndex(1); motion.setValue(CARD_TRAVEL); setAppScreen('onboarding'); }} style={({ pressed }) => [s.pathCard, s.pathCardBlue, pressed && s.pressed]}>
+              <Image source={require('./assets/brightbuilder.png')} resizeMode="contain" style={{ width: 19*1543/137, height: 19, tintColor: '#fff', marginBottom: 8 }} />
+              <Text style={[s.pathTitle, { color: '#fff' }]}>Seven. Simple. Steps.</Text>
+              <Text style={[s.pathText, { color: '#fff' }]}>Under 10 minutes. Enter your details, hours, services and photos yourself.</Text>
             </Pressable>
           </View>
         </View> : <ScrollView contentContainerStyle={[s.content, s.loginContent]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
