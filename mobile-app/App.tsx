@@ -1,14 +1,14 @@
 import { StatusBar } from 'expo-status-bar';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { WebView } from 'react-native-webview';
 import * as ImagePicker from 'expo-image-picker';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Alert, Animated, AppState, Dimensions, Easing, Image, Keyboard, KeyboardAvoidingView, LayoutAnimation, Modal, PanResponder,
-  Linking, Platform, Pressable, ScrollView, SectionList, Share, StyleSheet, Switch, Text, TextInput, View, useWindowDimensions,
+  ActivityIndicator, Alert, Animated, AppState, Dimensions, Easing, Image, Keyboard, KeyboardAvoidingView, Modal, PanResponder,
+  Linking, Platform, Pressable, ScrollView, Share, StyleSheet, Switch, Text, TextInput, View,
 } from 'react-native';
 import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
@@ -278,7 +278,6 @@ function isImageMessage(body: string) {
 }
 // Replace with your Stripe publishable key from stripe.com/dashboard
 const CARD = '#EFE4DB';
-const FS_SLOT = (SCREEN_WIDTH - 32) / 5;
 const DARK = '#1C2832';
 const GALLERY_COLS = 4;
 const GALLERY_GAP = 8;
@@ -300,17 +299,6 @@ const steps: Step[] = [
   { id: 'reviews', title: 'Reviews', icon: 'star-outline' },
 ];
 const setupStepIndexes = Array.from({ length: 7 }, (_, i) => i + 1);
-const paletteGroups = [
-  { name: 'Light', options: [['#B98B5F', '#F5EFE5', '#201B18'], ['#C78561', '#FFF5EC', '#2D1811'], ['#8E9B7A', '#F2F5EC', '#20321D'], ['#A47A57', '#F6F0E8', '#271C15'], ['#7697A6', '#EDF6F7', '#162D35'], ['#C59C7B', '#FCF8F2', '#302015']] },
-  { name: 'Dark', options: [['#D6A56B', '#15110E', '#F3EADF'], ['#78BDCF', '#0C2028', '#E7F8FC'], ['#B2C798', '#142016', '#F2F6ED'], ['#CE8471', '#261412', '#FAEDEA'], ['#A19BDB', '#171529', '#F2F1FF'], ['#D7B179', '#211A11', '#FBF1DF']] },
-  { name: 'Neon', options: [['#E8FF38', '#10140D', '#F4F8E8'], ['#5BEEFF', '#091A20', '#E8FCFF'], ['#FE77BF', '#21101D', '#FFEAF7'], ['#A8FF75', '#10200C', '#EFFFE7'], ['#FF8E4F', '#24140B', '#FFF0E7'], ['#A990FF', '#171126', '#F5F0FF']] },
-  { name: 'Monotone', options: [['#B8B8B8', '#F1F1F1', '#1B1B1B'], ['#B9AFA6', '#F3F0ED', '#27221E'], ['#9EADB2', '#EFF2F3', '#1A2428'], ['#A9B19C', '#F1F3EE', '#20241C'], ['#B0A4A2', '#F4EFEE', '#29201F'], ['#9EA4AE', '#F0F2F5', '#1B2029']] },
-  { name: 'Blush', options: [['#C4768A', '#FDF0F3', '#2A1419'], ['#D4879B', '#FEF5F7', '#311920'], ['#E29BB0', '#FFF0F5', '#301528'], ['#B87190', '#F9EEF3', '#281122'], ['#CF9FAF', '#FDF4F7', '#2E1821'], ['#A6637E', '#F6EBF0', '#241018']] },
-  { name: 'Earthy', options: [['#B5704E', '#F7F0E8', '#2C1A0F'], ['#A8835E', '#F5EDE0', '#281609'], ['#9C8B6E', '#F4EDDE', '#241A0D'], ['#B99060', '#F8F1E4', '#2E1C0C'], ['#8E7A5E', '#F2EBD8', '#201508'], ['#C08262', '#F9EFE5', '#321B0D']] },
-  { name: 'Jewel', options: [['#5B8DB8', '#EEF5FB', '#0D2035'], ['#7B6FAE', '#F2F0FA', '#1A1230'], ['#3D8E6C', '#EBF6F1', '#0C2A1E'], ['#B85C5C', '#FBF0F0', '#300F0F'], ['#8A6B2E', '#F9F4E8', '#2A1E08'], ['#4E8B8B', '#EBF6F6', '#0D2828']] },
-];
-const palettes = paletteGroups.flatMap(group => group.options);
-const fonts = ['Editorial', 'Rounded', 'Modern', 'Thin', 'Classic'];
 // ordered so the chip rows come out roughly even in width
 // Mirrors api/_lib/plans.js: annual plans and Pro cover the first £12 of the domain.
 function domainNote(pence: number, included: boolean) {
@@ -326,38 +314,7 @@ const PLAN_OPTIONS = [
   { id: 'pro' as const, name: 'Pro', note: 'For websites over 5 pages', build: '£199', buildLabel: 'one-off build', tag: '5+ PAGES' },
 ];
 const BUSINESS_TYPES = ['Hair & Beauty', 'Aesthetics', 'Fitness', 'Pets', 'Health & Wellness', 'Home & Garden', 'Food & Drink', 'Automotive', 'Trades', 'Professional Services', 'Creative', 'Other'];
-const HOME_SECTIONS_DEFAULT = ['Hero', 'About & Services', 'Reviews', 'Gallery', 'Contact'];
-const SERVICES_SECTIONS_DEFAULT = ['Services List', 'Contact CTA'];
-const CONTACT_SECTIONS_DEFAULT = ['Info & Hours', 'Map', 'Contact Form'];
-const ALL_PAGE_SECTIONS = [...HOME_SECTIONS_DEFAULT, ...SERVICES_SECTIONS_DEFAULT, ...CONTACT_SECTIONS_DEFAULT];
 
-const CATEGORY_PRESETS: Record<string, { topServices: string[]; about: string; heroTitle: string; heroBody: string }> = {
-  'Hair': { topServices: ['Cuts & Styling', 'Colour', 'Treatments'], about: 'Personal service, honest advice and a finish made for real life.', heroTitle: 'Beautiful hair, beautifully yours.', heroBody: 'Thoughtful cuts, colour and styling in a calm modern salon.' },
-  'Beauty': { topServices: ['Facials', 'Nails', 'Waxing'], about: 'A sanctuary of calm where you leave feeling your best self.', heroTitle: 'Feel beautiful, every day.', heroBody: 'Luxurious treatments tailored to you in a serene and welcoming space.' },
-  'Restaurant': { topServices: ['Starters', 'Mains', 'Desserts'], about: 'Freshly prepared dishes made with locally sourced ingredients.', heroTitle: 'Honest food, made with love.', heroBody: 'Seasonal menus, warm service and a table worth coming back to.' },
-  'Café': { topServices: ['Breakfast', 'Lunch', 'Drinks'], about: 'Good coffee, fresh food and a space worth staying in.', heroTitle: 'Your neighbourhood café.', heroBody: 'Freshly brewed coffee and handmade food from early morning.' },
-  'Fitness': { topServices: ['Personal Training', 'Group Classes', 'Nutrition'], about: 'Expert coaching to help you reach your health and fitness goals.', heroTitle: 'Your best body starts here.', heroBody: 'Science-backed training, real results and a community that supports you.' },
-  'Gym': { topServices: ['Memberships', 'Classes', 'PT Sessions'], about: 'A fully equipped gym with classes for every fitness level.', heroTitle: 'Push your limits.', heroBody: 'State-of-the-art equipment and expert trainers to help you achieve more.' },
-  'Photography': { topServices: ['Portraits', 'Events', 'Commercial'], about: 'Capturing the moments that matter most in your most authentic light.', heroTitle: 'Your story, beautifully told.', heroBody: 'Natural light portraits, events and commercial photography.' },
-  'Dental': { topServices: ['Check-ups', 'Whitening', 'Orthodontics'], about: 'Gentle, professional dental care for the whole family.', heroTitle: "A smile you’re proud of.", heroBody: 'Expert dental care delivered with warmth and attention to detail.' },
-  'Plumbing': { topServices: ['Boiler Repair', 'Installation', 'Emergency'], about: 'Reliable, qualified plumbers for every job big or small.', heroTitle: 'Plumbing you can count on.', heroBody: 'Fast, professional service from fully qualified engineers.' },
-  'Aesthetics': { topServices: ['Skin Treatments', 'Injectables', 'Consultations'], about: 'Advanced aesthetic treatments delivered with care, safety and natural-looking results.', heroTitle: 'Look like you, only refreshed.', heroBody: 'Expert aesthetic treatments in a calm, clinical setting.' },
-  'Health': { topServices: ['Treatments', 'Therapies', 'Consultations'], about: 'Caring, qualified practitioners focused on how you feel day to day.', heroTitle: 'Feel better, live better.', heroBody: 'Professional care that puts your wellbeing first.' },
-  'Automotive': { topServices: ['Servicing', 'Repairs', 'MOT'], about: 'Honest, reliable work on your vehicle with clear prices and no surprises.', heroTitle: 'Keeping you on the road.', heroBody: 'Trusted servicing and repairs from experienced technicians.' },
-  'Trades': { topServices: ['Installations', 'Repairs', 'Free Quotes'], about: 'Qualified, insured and proud of a job done properly the first time.', heroTitle: 'Quality work, done right.', heroBody: 'Reliable local tradespeople with fair, upfront pricing.' },
-  'Home': { topServices: ['Garden Design', 'Maintenance', 'Landscaping'], about: 'Making homes and gardens look their best, season after season.', heroTitle: 'Love where you live.', heroBody: 'Friendly, reliable home and garden services near you.' },
-  'Food': { topServices: ['Menu', 'Takeaway', 'Private Hire'], about: 'Freshly prepared food made with good ingredients and real care.', heroTitle: 'Good food, made with love.', heroBody: 'Fresh, seasonal food and a warm welcome every time.' },
-  'Professional': { topServices: ['Consultations', 'Advice', 'Ongoing Support'], about: 'Clear, expert advice from people who take the time to understand you.', heroTitle: 'Expertise you can trust.', heroBody: 'Professional services built around your goals.' },
-  'Creative': { topServices: ['Projects', 'Commissions', 'Packages'], about: 'Creative work with a clear eye for detail and a personal approach.', heroTitle: 'Ideas, beautifully made.', heroBody: 'Thoughtful creative work that tells your story.' },
-  'Pets': { topServices: ['Grooming', 'Walking', 'Boarding'], about: 'Caring for your pets like they’re our own.', heroTitle: 'Happy pets, happy owners.', heroBody: 'Trusted, loving care for your four-legged family.' },
-  'Cleaning': { topServices: ['Domestic', 'Commercial', 'Deep Clean'], about: 'Professional cleaning services for homes and businesses.', heroTitle: 'Spotlessly clean, every time.', heroBody: 'Reliable, thorough cleaning using eco-friendly products.' },
-};
-function getPreset(category: string) {
-  const key = category?.trim() && Object.keys(CATEGORY_PRESETS).find(k =>
-    (category || '').toLowerCase().includes(k.toLowerCase()) || k.toLowerCase().includes((category || '').toLowerCase())
-  );
-  return key ? CATEGORY_PRESETS[key] : { topServices: ['Our Services', 'Consultations', 'Packages'], about: 'Professional, friendly service tailored to your needs.', heroTitle: 'Quality you can count on.', heroBody: 'Friendly, professional service from a local business that cares.' };
-}
 
 function Field({ label, optional = false, value, onChangeText, placeholder, keyboardType = 'default', multiline = false, inputRef, ...inputProps }: any) {
   return <View style={s.fieldWrap}>
@@ -501,209 +458,6 @@ function Upload({ icon, title, subtitle, value, onChange, multiple = false, fill
   </Pressable>;
 }
 
-function SitePreview({ palette, font, page = 0, onPageChange, editing, siteTexts = {}, onEditText,
-  businessName = '', category = '', servicesData = [], hoursData = [],
-  contactData = {} as any, contactForm = true,
-  homeSections = HOME_SECTIONS_DEFAULT, servicesSections = SERVICES_SECTIONS_DEFAULT, contactSections = CONTACT_SECTIONS_DEFAULT, media = { gallery: [] } as any, desktop = false,
-}: any) {
-  const colors = palettes[palette];
-  const [accent, bg, textColor] = colors;
-  const preset = getPreset(category);
-  const titleFamily = font === 0 ? Platform.select({ ios: 'Didot', android: 'serif', default: 'serif' }) : FONT;
-  const fw: any = font === 1 ? '800' : font === 2 ? '300' : font === 3 ? '200' : font === 4 ? '900' : undefined;
-  const fo: any = { fontFamily: FONT, ...(fw && { fontWeight: fw }), ...(font === 2 && { letterSpacing: 1.2 }), ...(font === 3 && { letterSpacing: 1.8 }), ...(font === 4 && { letterSpacing: -0.5 }) };
-  const tf: any = { ...fo, fontFamily: titleFamily };
-  const tx = (key: string, fallback: string) => (siteTexts as any)[key] || fallback;
-  const biz = businessName || 'Business';
-  const fallbacks: Record<string, string> = { brand: biz.toUpperCase(), headline: preset.heroTitle, heroBody: preset.heroBody, aboutTitle: biz, aboutBody: preset.about };
-  const ep = (key: string) => editing ? () => onEditText?.(key, tx(key, fallbacks[key] || '')) : undefined;
-  const topSvcs = servicesData?.filter((sv: any) => sv.name).slice(0, 3).map((sv: any) => sv.name);
-  const displaySvcs = topSvcs?.length ? topSvcs : preset.topServices;
-
-  const eyebrow = (text: string) => <Text style={[s.siteEyebrow, fo, { color: accent }]}>{text}</Text>;
-
-  const renderHome = (name: string) => {
-    switch (name) {
-      case 'Hero': return <View key="Hero" style={{ backgroundColor: bg }}>
-        <View style={[s.siteTop, { paddingHorizontal: 14, paddingVertical: 10, backgroundColor: bg }]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>{!!media.logo && <Image source={{ uri: media.logo }} style={s.siteLogo} />}<Text style={[s.siteKicker, fo, { color: textColor }, editing && s.editing]} onPress={ep('brand')} numberOfLines={1}>{tx('brand', biz.toUpperCase())}</Text></View>
-          <Ionicons name="menu" size={18} color={textColor} />
-        </View>
-        <Image source={media.hero ? { uri: media.hero } : require('./assets/hair-beauty-hero.jpg')} style={[s.siteHeroImg, desktop && s.siteHeroImgDesktop]} resizeMode="cover" />
-        <View style={[s.siteHeroCopy, { backgroundColor: bg }]}>
-          <Text style={[s.siteEyebrow, fo, { color: accent, textAlign: 'center', marginBottom: 8 }]}>{contactData.address ? contactData.address.split(',').slice(-2).join(' · ').trim() || category : category}</Text>
-          <Text style={[s.siteHeadline, tf, { color: textColor, textAlign: 'center' }, editing && s.editing]} onPress={ep('headline')}>{tx('headline', preset.heroTitle)}</Text>
-          <Text style={[s.siteBody, fo, { color: textColor, opacity: .65, textAlign: 'center', marginTop: 6 }, editing && s.editing]} onPress={ep('heroBody')}>{tx('heroBody', preset.heroBody)}</Text>
-          <View style={[s.heroButtons, { justifyContent: 'center', marginTop: 14 }]}>
-            <View style={[s.siteCtaFilled, { backgroundColor: textColor }]}><Text style={[s.siteCtaFilledText, fo, { color: bg }]}>Book Now</Text></View>
-            <View style={[s.siteCta, { borderColor: textColor, marginTop: 0 }]}><Text style={[s.siteCtaText, fo, { color: textColor }]}>View Treatments</Text></View>
-          </View>
-        </View>
-      </View>;
-      case 'About & Services': return <View key="About & Services" style={[s.siteSection, { backgroundColor: bg }]}>
-        {desktop ? <View style={s.siteAboutDesktopRow}>
-          <View style={{ flex: 1 }}>
-            {eyebrow(`Welcome to ${biz}`)}
-            <Text style={[s.siteSectionTitle, tf, { color: textColor }, editing && s.editing]} onPress={ep('aboutTitle')}>{tx('aboutTitle', `${category || 'Everything'}, all under one roof`)}</Text>
-            <Text style={[s.siteSectionBody, fo, { color: textColor }, editing && s.editing]} onPress={ep('aboutBody')}>{tx('aboutBody', preset.about)}</Text>
-            <View style={[s.heroButtons, { marginTop: 10 }]}>
-              <View style={[s.siteCta, { borderColor: textColor }]}><Text style={[s.siteCtaText, fo, { color: textColor }]}>Browse Treatments</Text></View>
-            </View>
-          </View>
-          <View style={{ flex: 1, gap: 8 }}>
-            {displaySvcs.map((sv: string, i: number) => <View key={i} style={[s.siteAboutCard, { borderColor: textColor + '14' }]}>
-              <Text style={[s.siteAboutCardLabel, fo, { color: accent }]}>Most Popular</Text>
-              <Text style={[s.siteAboutCardTitle, fo, { color: textColor }]}>{sv}</Text>
-              <Text style={[s.siteAboutCardCta, fo, { color: accent }]}>View treatments</Text>
-            </View>)}
-          </View>
-        </View> : <View>
-          {eyebrow(`Welcome to ${biz}`)}
-          <Text style={[s.siteSectionTitle, tf, { color: textColor }, editing && s.editing]} onPress={ep('aboutTitle')}>{tx('aboutTitle', `${category || 'Everything'}, all under one roof`)}</Text>
-          <Text style={[s.siteSectionBody, fo, { color: textColor }, editing && s.editing]} onPress={ep('aboutBody')}>{tx('aboutBody', preset.about)}</Text>
-          <View style={{ gap: 8, marginTop: 14 }}>
-            {displaySvcs.map((sv: string, i: number) => <View key={i} style={[s.siteAboutCard, { borderColor: textColor + '14' }]}>
-              <Text style={[s.siteAboutCardLabel, fo, { color: accent }]}>Most Popular</Text>
-              <Text style={[s.siteAboutCardTitle, fo, { color: textColor }]}>{sv}</Text>
-              <Text style={[s.siteAboutCardCta, fo, { color: accent }]}>View treatments</Text>
-            </View>)}
-          </View>
-        </View>}
-      </View>;
-      case 'Reviews': return <View key="Reviews" style={[s.siteSection, { backgroundColor: accent + '14' }]}>
-        <View style={{ alignItems: 'center', marginBottom: 12 }}>
-          {eyebrow('Client Reviews')}
-          <Text style={[s.siteSectionTitle, tf, { color: textColor, textAlign: 'center' }]}>What our clients say</Text>
-        </View>
-        <View style={desktop ? s.siteReviewGrid : { gap: 8 }}>
-          {[{ text: '"Amazing results every time. Highly recommend."', name: 'Sarah M.', type: category || 'Facial' },
-            { text: '"Wonderful experience and great service."', name: 'Linda B.', type: 'Treatment' },
-            { text: '"Blown away! I look and feel fantastic."', name: 'Carol H.', type: category || 'Facial' }].map((r, i) => <View key={i} style={[s.siteReviewCard, { backgroundColor: bg }]}>
-            <View style={s.siteStars}>{[0,1,2,3,4].map(j => <Ionicons key={j} name="star" size={8} color={accent} />)}</View>
-            <Text style={[s.siteReviewText, fo, { color: textColor }]}>{r.text}</Text>
-            <Text style={[s.siteReviewAuthor, fo, { color: textColor }]}>{r.name}<Text style={{ color: accent, fontSize: 6 }}>  {r.type}</Text></Text>
-          </View>)}
-        </View>
-        {contactData.reviewSource === 'Trustpilot' && <View style={[s.siteTrustBadge, { borderColor: textColor + '33', marginTop: 10 }]}>
-          <Text style={[s.siteTrustTitle, fo, { color: textColor }]}>Rated Excellent on Trustpilot</Text>
-          <View style={[s.siteStars, { marginTop: 4 }]}>{[0,1,2,3,4].map(i => <Ionicons key={i} name="star" size={9} color="#00B67A" />)}</View>
-          {!!contactData.reviewLink && <Text style={[s.siteTrustLink, fo, { color: accent }]}>See our reviews</Text>}
-        </View>}
-      </View>;
-      case 'Gallery': return <View key="Gallery" style={[s.siteSection, { backgroundColor: bg }]}>
-        <View style={{ alignItems: 'center', marginBottom: 12 }}>
-          {eyebrow('Gallery')}
-          <Text style={[s.siteSectionTitle, tf, { color: textColor, textAlign: 'center' }]}>Inside the studio</Text>
-        </View>
-        <View style={s.siteGalleryGrid}>
-          {media.gallery?.length ? media.gallery.slice(0, 6).map((uri: string, i: number) => <Image key={uri} source={{ uri }} style={[s.siteGalleryImg, i < 2 && desktop && { flex: 1 }]} />) : Array.from({ length: 6 }, (_, i) => <View key={i} style={[s.siteGalleryImg, { backgroundColor: i % 2 === 0 ? accent + '44' : textColor + '14' }]} />)}
-        </View>
-      </View>;
-      case 'Contact': return <View key="Contact" style={[s.siteSection, s.siteCTABand, { backgroundColor: textColor }]}>
-        {eyebrow('Ready when you are')}
-        <Text style={[s.siteSectionTitle, tf, { color: '#fff' }]}>Book your appointment</Text>
-        <Text style={[s.siteSectionBody, fo, { color: 'rgba(255,255,255,.7)' }]}>Get in touch to find a time that works for you.</Text>
-        <View style={[s.heroButtons, { marginTop: 6 }]}>
-          <View style={[s.siteCtaFilled, { backgroundColor: '#fff' }]}><Text style={[s.siteCtaFilledText, fo, { color: textColor }]}>Book Now</Text></View>
-          <View style={[s.siteCta, { borderColor: 'rgba(255,255,255,.6)' }]}><Text style={[s.siteCtaText, fo]}>Get in Touch</Text></View>
-        </View>
-      </View>;
-      default: return null;
-    }
-  };
-
-  const renderServices = (name: string) => {
-    const allSvcs = servicesData?.filter((sv: any) => sv.name) || [];
-    const listItems = allSvcs.length ? allSvcs : preset.topServices.map((n: string) => ({ name: n, duration: '', price: '' }));
-    switch (name) {
-      case 'Services List': return <View key="Services List" style={s.siteSvcsListSection}>
-        <Text style={[s.siteSectionTitle, tf, { color: textColor }]}>Our Services</Text>
-        {listItems.map((sv: any, i: number) => <View key={i} style={[s.siteSvcRow, { borderBottomColor: accent + '22' }]}>
-          <View style={{ flex: 1 }}><Text style={[s.siteSvcRowName, fo, { color: textColor }]}>{sv.name || sv}</Text>
-            {!!sv.duration && <Text style={[s.siteSvcRowDetail, fo, { color: textColor }]}>{sv.duration}</Text>}</View>
-          <Text style={[s.siteSvcRowPrice, fo, { color: accent }]}>{sv.price || '—'}</Text>
-        </View>)}
-      </View>;
-      case 'Contact CTA': return <View key="Contact CTA" style={[s.siteContactCta, { borderTopColor: accent + '33' }]}>
-        <View style={[s.siteCtaFilled, { backgroundColor: accent }]}><Text style={[s.siteCtaFilledText, fo]}>Contact Us</Text></View>
-      </View>;
-      default: return null;
-    }
-  };
-
-  const renderContact = (name: string) => {
-    switch (name) {
-      case 'Info & Hours': return <View key="Info & Hours" style={[s.siteSection, { backgroundColor: accent + '14' }]}>
-        {eyebrow('Find Us')}
-        <View style={s.siteContactInfoRow}>
-        <View style={s.siteContactInfoCol}>
-          <Text style={[s.siteContactInfoTitle, tf, { color: textColor }]}>Contact</Text>
-          {!!contactData.phone && <View style={s.siteContactItem}><Ionicons name="call-outline" size={8} color={accent} /><Text style={[s.siteContactItemText, fo, { color: textColor }]}>{contactData.phone}</Text></View>}
-          {!!contactData.email && <View style={s.siteContactItem}><Ionicons name="mail-outline" size={8} color={accent} /><Text style={[s.siteContactItemText, fo, { color: textColor }]}>{contactData.email}</Text></View>}
-          {!!contactData.address && <View style={s.siteContactItem}><Ionicons name="location-outline" size={8} color={accent} /><Text style={[s.siteContactItemText, fo, { color: textColor }]}>{contactData.address}</Text></View>}
-          {!!contactData.instagram && <View style={s.siteContactItem}><Ionicons name="logo-instagram" size={8} color={accent} /><Text style={[s.siteContactItemText, fo, { color: textColor }]}>{contactData.instagram}</Text></View>}
-        </View>
-        <View style={s.siteHoursCol}>
-          <Text style={[s.siteContactInfoTitle, tf, { color: textColor }]}>Hours</Text>
-          {(hoursData.length ? hoursData : ['Mon','Tue','Wed','Thu','Fri'].map((d: string) => ({ label: d, start: '9:00', end: '17:30', enabled: true }))).slice(0, 5).map((row: any, i: number) => <View key={i} style={s.siteHoursRow}>
-            <Text style={[s.siteHoursDay, fo, { color: textColor }]}>{(row.label || row).slice(0, 3)}</Text>
-            <Text style={[s.siteHoursTime, fo, { color: textColor }]}>{row.enabled ? `${row.start}–${row.end}` : 'Closed'}</Text>
-          </View>)}
-        </View>
-        </View>
-      </View>;
-      case 'Map': return <View key="Map" style={[s.siteMockMap, { backgroundColor: accent + '14', borderColor: accent + '28' }]}>
-        <Ionicons name="location" size={18} color={accent} />
-        <View><Text style={[s.siteMockMapAddr, fo, { color: textColor }]}>{contactData.address || 'Your business location'}</Text>
-          <Text style={[s.siteMockMapSub, fo, { color: textColor }]}>Google Maps</Text></View>
-      </View>;
-      case 'Contact Form': return contactForm
-        ? <View key="Contact Form" style={s.siteFormSection}>
-            <Text style={[s.siteSectionTitle, tf, { color: textColor }]}>Send a message</Text>
-            {['Your name', 'Your email'].map((ph, i) => <View key={i} style={[s.siteFormField, { borderColor: accent + '44' }]}><Text style={[s.siteFormPh, fo, { color: textColor }]}>{ph}</Text></View>)}
-            <View style={[s.siteFormField, { borderColor: accent + '44', minHeight: 36 }]}><Text style={[s.siteFormPh, fo, { color: textColor }]}>Message</Text></View>
-            <View style={[s.siteCtaFilled, { backgroundColor: accent, alignSelf: 'stretch', marginTop: 6 }]}><Text style={[s.siteCtaFilledText, fo]}>Send Message</Text></View>
-          </View>
-        : <View key="Contact Form" style={[s.siteContactCta, { borderTopColor: accent + '33' }]}>
-            <View style={[s.siteCtaFilled, { backgroundColor: accent }]}><Text style={[s.siteCtaFilledText, fo]}>Contact Us</Text></View>
-          </View>;
-      default: return null;
-    }
-  };
-
-  return <View style={[s.site, { backgroundColor: bg }]}>
-    <View style={s.previewBrowserWrap}>
-      {!desktop && <View style={s.previewBrowser}><View style={s.previewDots}><View style={s.previewDot} /><View style={s.previewDot} /><View style={s.previewDot} /></View><Text style={s.previewAddress}>{biz.toLowerCase().replace(/\s+/g, '')}.co.uk</Text></View>}
-      <View style={[s.previewPageNav, { borderBottomColor: accent + '33' }]}>
-        {['Home', 'Services', 'Contact'].map((name, i) => <Pressable key={name} onPress={() => onPageChange?.(i)} style={[s.previewPageTab, page === i && { borderBottomColor: accent, borderBottomWidth: 2 }]}>
-          <Text style={[s.previewPageTabText, fo, page === i && { color: accent }]}>{name}</Text>
-        </Pressable>)}
-      </View>
-    </View>
-    {page === 0 && <View>{homeSections.map((n: string) => renderHome(n))}{renderFooter()}</View>}
-    {page === 1 && <View>{servicesSections.map((n: string) => renderServices(n))}{renderFooter()}</View>}
-    {page === 2 && <View>{contactSections.map((n: string) => renderContact(n))}{renderFooter()}</View>}
-  </View>;
-
-  function renderFooter() {
-    return <View style={[s.siteFooter, { backgroundColor: textColor }]}>
-      {!!media.logo && <Image source={{ uri: media.logo }} style={[s.siteLogo, { tintColor: '#fff', marginBottom: 6 }]} />}
-      <Text style={[fo, { color: 'rgba(255,255,255,.5)', fontSize: 7 }]}>{biz}</Text>
-      <View style={s.siteFooterCols}>
-        <View style={{ flex: 1 }}>
-          <Text style={[fo, { color: 'rgba(255,255,255,.4)', fontSize: 6, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4 }]}>Pages</Text>
-          {['Home', 'Treatments', 'Contact'].map(p => <Text key={p} style={[fo, { color: 'rgba(255,255,255,.6)', fontSize: 7, marginBottom: 2 }]}>{p}</Text>)}
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={[fo, { color: 'rgba(255,255,255,.4)', fontSize: 6, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4 }]}>Get in touch</Text>
-          {!!contactData.phone && <Text style={[fo, { color: 'rgba(255,255,255,.6)', fontSize: 7, marginBottom: 2 }]}>{contactData.phone}</Text>}
-          {!!contactData.address && <Text style={[fo, { color: 'rgba(255,255,255,.6)', fontSize: 7 }]}>{contactData.address}</Text>}
-        </View>
-      </View>
-      <Text style={[fo, { color: 'rgba(255,255,255,.3)', fontSize: 6, marginTop: 10 }]}>{'©'} 2026 {biz}. All rights reserved.</Text>
-    </View>;
-  }
-}
 
 function GalleryGrid({ gallery, setGallery, containerWidth }: any) {
   const tile = containerWidth ? Math.floor((containerWidth - GALLERY_GAP * (GALLERY_COLS - 1)) / GALLERY_COLS) : 80;
@@ -787,180 +541,9 @@ function GalleryGrid({ gallery, setGallery, containerWidth }: any) {
   </>;
 }
 
-function SectionDragList({ sections, setSections, sectionVisible, onToggle }: any) {
-  const ITEM_H = 50;
-  const [activeName, setActiveName] = useState<string | null>(null);
-  const itemDys = useRef(Object.fromEntries(ALL_PAGE_SECTIONS.map(n => [n, new Animated.Value(0)]))).current;
-  const currentIdxRef = useRef<Record<string, number>>({});
-  const sectionsRef = useRef(sections);
-  const hoverRef = useRef<number | null>(null);
-  sectionsRef.current = sections;
-  sections.forEach((name: string, i: number) => { currentIdxRef.current[name] = i; });
 
-  const resetAll = () => { ALL_PAGE_SECTIONS.forEach(n => itemDys[n].setValue(0)); hoverRef.current = null; };
 
-  const pans = useMemo(() => Object.fromEntries(ALL_PAGE_SECTIONS.map(name => [name, PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 4,
-    onPanResponderGrant: () => { if (name === 'Hero') return; hoverRef.current = currentIdxRef.current[name]; setActiveName(name); },
-    // Animated.event links gesture.dy directly to itemDys[name] — moves immediately, no re-render needed
-    onPanResponderMove: Animated.event([null, { dy: itemDys[name] }], {
-      useNativeDriver: false,
-      listener: ((_: any, g: any) => {
-        const fromIdx = currentIdxRef.current[name];
-        const secs = sectionsRef.current;
-        const minIdx = secs[0] === 'Hero' ? 1 : 0;
-        const newHover = Math.max(minIdx, Math.min(secs.length - 1, fromIdx + Math.round(g.dy / ITEM_H)));
-        if (newHover !== hoverRef.current) {
-          hoverRef.current = newHover;
-          secs.forEach((sName: string, i: number) => {
-            if (sName === name) return;
-            let target = 0;
-            if (fromIdx < newHover && i > fromIdx && i <= newHover) target = -ITEM_H;
-            if (fromIdx > newHover && i < fromIdx && i >= newHover) target = ITEM_H;
-            Animated.spring(itemDys[sName], { toValue: target, useNativeDriver: false, damping: 20, stiffness: 220 }).start();
-          });
-        }
-      }) as any,
-    }),
-    onPanResponderRelease: (_, g) => {
-      const secs = sectionsRef.current;
-      const fromIdx = currentIdxRef.current[name];
-      const minIdx = secs[0] === 'Hero' ? 1 : 0;
-      const to = Math.max(minIdx, Math.min(secs.length - 1, fromIdx + Math.round(g.dy / ITEM_H)));
-      resetAll(); setActiveName(null);
-      if (to !== fromIdx) {
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-        const next = [...secs]; const [item] = next.splice(fromIdx, 1); next.splice(to, 0, item); setSections(next);
-      }
-    },
-    onPanResponderTerminate: () => { resetAll(); setActiveName(null); },
-  })])), []);
 
-  return <View>
-    {sections.filter((name: string) => name !== 'Hero').map((name: string) => {
-      const isActive = activeName === name;
-      return <Animated.View key={name} style={[s.sectionOption, {
-        transform: [{ translateY: itemDys[name] }],
-        zIndex: isActive ? 10 : 1, opacity: isActive ? 0.88 : 1,
-        backgroundColor: isActive ? 'rgba(255,255,255,.35)' : 'transparent',
-        borderRadius: isActive ? 12 : 0,
-      }]}>
-        <Pressable onPress={() => onToggle(name)} style={s.sectionEye}>
-          <Ionicons name={sectionVisible[name] !== false ? 'eye-outline' : 'eye-off-outline'} size={21} color={sectionVisible[name] !== false ? '#436172' : 'rgba(67,97,114,.28)'} />
-        </Pressable>
-        <Text style={s.sectionText}>{name}</Text>
-        <Animated.View {...pans[name].panHandlers} style={s.sectionDragHandle}>
-          <Ionicons name="reorder-three" size={24} color={C.inkSoft} />
-        </Animated.View>
-      </Animated.View>;
-    })}
-  </View>;
-}
-
-function DesignTools({ landscape = false, active, setActive, palette, setPalette, font, setFont, setEditing,
-  homeSections, setHomeSections, servicesSections, setServicesSections, contactSections, setContactSections }: any) {
-  const items = [{ id: 'colour', icon: 'color-palette-outline' }, { id: 'font', icon: 'text-outline' }, { id: 'edit', icon: 'create-outline' }];
-  const [sectionVisible, setSectionVisible] = useState<Record<string, boolean>>({});
-  const [editPage, setEditPage] = useState(0);
-  const pageSections = [homeSections, servicesSections, contactSections];
-  const setPageSections = [setHomeSections, setServicesSections, setContactSections];
-  const curSections = pageSections[editPage];
-  const setCurSections = setPageSections[editPage];
-  const handleToggle = (name: string) => {
-    setSectionVisible((v: any) => ({ ...v, [name]: v[name] === false ? true : false }));
-  };
-  return <View style={landscape ? s.toolsLandscape : s.tools}>
-    <View style={s.toolStack}>{items.map(item => {
-      const open = active === item.id;
-      return (
-        <View key={item.id} style={landscape ? s.toolSlotLandscape : s.toolSlot}><Pressable onPress={() => {
-          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-          const next = active === item.id ? null : item.id;
-          setActive(next);
-          setEditing(next === 'edit');
-        }} style={({ pressed }) => [s.toolButton, landscape && s.toolButtonSmall, open && s.toolActive, pressed && s.pressed]}>
-          <Ionicons name={item.icon as any} size={19} color={open ? '#fff' : C.primary} />
-        </Pressable></View>
-      );
-    })}</View>
-    {active && !landscape && <BlurView intensity={58} tint="light" style={s.toolPanel}>
-      <Text style={s.toolTitle}>{active === 'colour' ? 'Colour' : active === 'font' ? 'Font' : 'Edit site'}</Text>
-      {active === 'colour' && <View style={s.paletteWrap}><SectionList
-        style={s.paletteScroll}
-        showsVerticalScrollIndicator={false}
-        stickySectionHeadersEnabled
-        sections={paletteGroups.map((group, groupIndex) => ({ title: group.name, data: group.options.map((colors, i) => ({ colors, paletteIndex: paletteGroups.slice(0, groupIndex).reduce((t, g) => t + g.options.length, 0) + i })) }))}
-        keyExtractor={(item) => item.colors.join()}
-        renderSectionHeader={({ section }) => <Text style={[s.paletteHeadingText, s.paletteStickyHeader]}>{section.title}</Text>}
-        renderItem={({ item }) => <Pressable onPress={() => setPalette(item.paletteIndex)} style={[s.option, palette === item.paletteIndex && s.selected]}>{item.colors.map(c => <View key={c} style={[s.dot, { backgroundColor: c }]} />)}</Pressable>}
-        SectionSeparatorComponent={() => <View style={{ height: 8 }} />}
-      /></View>}
-      {active === 'font' && fonts.map((name, i) => <Pressable key={name} onPress={() => setFont(i)} style={[s.fontOption, font === i && s.selected]}><Text style={s.fontOptionText}>{name}</Text></Pressable>)}
-      {active === 'edit' && <>
-        <View style={s.editPageTabs}>
-          {['Home', 'Svcs', 'Contact'].map((name, i) => <Pressable key={name} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setEditPage(i); }} style={[s.editPageTab, editPage === i && s.editPageTabOn]}>
-            <Text style={[s.editPageTabText, editPage === i && s.editPageTabTextOn]}>{name}</Text>
-          </Pressable>)}
-        </View>
-        <SectionDragList sections={curSections} setSections={setCurSections} sectionVisible={sectionVisible} onToggle={handleToggle} />
-      </>}
-    </BlurView>}
-  </View>;
-}
-
-function LandscapeToolStrip({ active, palette, setPalette, font, setFont, homeSections, setHomeSections, servicesSections, setServicesSections, contactSections, setContactSections }: any) {
-  const [editPage, setEditPage] = useState(0);
-  const pages = [[homeSections, setHomeSections], [servicesSections, setServicesSections], [contactSections, setContactSections]];
-  const [secs, setSecs] = pages[editPage];
-  const move = (name: string, dir: -1 | 1) => {
-    const i = secs.indexOf(name);
-    const firstMovableIndex = secs[0] === 'Hero' ? 1 : 0;
-    const j = i + dir; if (j < firstMovableIndex || j >= secs.length) return;
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    const next = [...secs]; [next[i], next[j]] = [next[j], next[i]]; setSecs(next);
-  };
-  return <View style={s.stripPanel}>
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.stripContent}>
-      {active === 'colour' && paletteGroups.map((group, g) => <View key={group.name} style={s.stripGroup}>
-        <Text style={s.stripGroupLabel}>{group.name}</Text>
-        <View style={{ flexDirection: 'row', gap: 8 }}>{group.options.map((colors, i) => {
-          const idx = paletteGroups.slice(0, g).reduce((t, x) => t + x.options.length, 0) + i;
-          return <Pressable key={colors.join()} onPress={() => setPalette(idx)} style={[s.stripChip, palette === idx && s.stripChipOn]}>{colors.map(c => <View key={c} style={[s.dot, { width: 16, height: 16 }, { backgroundColor: c }]} />)}</Pressable>;
-        })}</View>
-      </View>)}
-      {active === 'font' && fonts.map((name, i) => <Pressable key={name} onPress={() => setFont(i)} style={[s.stripChip, { paddingHorizontal: 18 }, font === i && s.stripChipOn]}><Text style={s.fontOptionText}>{name}</Text></Pressable>)}
-      {active === 'edit' && <>
-        <View style={[s.editPageTabs, { marginBottom: 0, alignSelf: 'center' }]}>{['Home', 'Services', 'Contact'].map((name, i) => <Pressable key={name} onPress={() => setEditPage(i)} style={[s.editPageTab, { paddingHorizontal: 12 }, editPage === i && s.editPageTabOn]}><Text style={[s.editPageTabText, editPage === i && s.editPageTabTextOn]}>{name}</Text></Pressable>)}</View>
-        {secs.filter((name: string) => name !== 'Hero').map((name: string, visibleIndex: number, visibleSections: string[]) => <View key={name} style={[s.stripChip, { gap: 4, paddingHorizontal: 6 }]}>
-          <Pressable onPress={() => move(name, -1)} hitSlop={6} disabled={visibleIndex === 0} style={{ opacity: visibleIndex === 0 ? .3 : 1, padding: 4 }}><Ionicons name="chevron-back" size={16} color={C.inkSoft} /></Pressable>
-          <Text style={s.fontOptionText}>{name}</Text>
-          <Pressable onPress={() => move(name, 1)} hitSlop={6} disabled={visibleIndex === visibleSections.length - 1} style={{ opacity: visibleIndex === visibleSections.length - 1 ? .3 : 1, padding: 4 }}><Ionicons name="chevron-forward" size={16} color={C.inkSoft} /></Pressable>
-        </View>)}
-        <Text style={s.stripHint}>Tap text on the page to edit it</Text>
-      </>}
-    </ScrollView>
-  </View>;
-}
-
-function TextEditModal({ visible, value, label, onSave, onClose }: any) {
-  const [draft, setDraft] = useState(value || '');
-  useEffect(() => setDraft(value || ''), [value, visible]);
-  return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-      <Pressable style={s.modalOverlay} onPress={onClose}>
-        <Pressable onPress={() => {}} style={s.modalBox}>
-          <Text style={s.modalLabel}>{label}</Text>
-          <TextInput style={s.modalInput} value={draft} onChangeText={setDraft} multiline autoFocus placeholderTextColor="rgba(0,0,0,.35)" />
-          <View style={s.modalButtons}>
-            <Pressable onPress={onClose} style={[s.modalButton, s.modalButtonCancel]}><Text style={s.modalButtonText}>Cancel</Text></Pressable>
-            <Pressable onPress={() => { onSave(draft); onClose(); }} style={[s.modalButton, s.modalButtonSave]}><Text style={[s.modalButtonText, { color: '#fff' }]}>Save</Text></Pressable>
-          </View>
-        </Pressable>
-      </Pressable>
-    </KeyboardAvoidingView>
-  </Modal>;
-}
 
 function FlowBackdrop({ children, plain = false }: any) {
   // plain: full-screen cream page with no blue frame (login, choice and the card builder)
@@ -978,15 +561,23 @@ function Logo({ height = 18, tint }: { height?: number; tint?: string }) {
 }
 
 const DESKTOP_WIDTH = 960;
-const MOBILE_WIDTH = 390;
 const DESKTOP_VIEW_W = SCREEN_WIDTH - 52;
 const DESKTOP_VIEW_H = Math.round(DESKTOP_VIEW_W * 0.68);
-function ScaledView({ virtualWidth, width, children }: { virtualWidth: number; width: number; children: React.ReactNode }) {
-  const [innerHeight, setInnerHeight] = useState(0);
-  const scale = width / virtualWidth;
-  return <View style={{ width, height: innerHeight * scale, overflow: 'hidden' }}>
-    <View onLayout={e => setInnerHeight(e.nativeEvent.layout.height)} style={{ position: 'absolute', top: 0, left: 0, width: virtualWidth, transform: [{ scale }], transformOrigin: 'top left' }}>{children}</View>
-  </View>;
+// The client's real website (uploaded site / live address) in the phone or desktop frame.
+function RealSitePreview({ url, label, desktop, onPress }: { url: string; label?: string; desktop: boolean; onPress: () => void }) {
+  const scale = DESKTOP_VIEW_W / DESKTOP_WIDTH;
+  const host = label || url.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  if (!desktop) return <Pressable onPress={onPress} style={s.phoneFrame}>
+    <View pointerEvents="none" style={{ overflow: 'hidden', flex: 1, backgroundColor: '#fff' }}><WebView source={{ uri: url }} style={{ flex: 1 }} scrollEnabled={false} startInLoadingState /></View>
+  </Pressable>;
+  return <Pressable onPress={onPress} style={s.desktopFrame}>
+    <View style={s.desktopBar}><View style={s.previewDots}><View style={s.previewDot} /><View style={s.previewDot} /><View style={s.previewDot} /></View><Text style={s.desktopBarUrl} numberOfLines={1}>{host}</Text></View>
+    <View pointerEvents="none" style={{ height: DESKTOP_VIEW_H, overflow: 'hidden', backgroundColor: '#fff' }}>
+      <View style={{ position: 'absolute', top: 0, left: 0, width: DESKTOP_WIDTH, height: DESKTOP_VIEW_H / scale, transform: [{ scale }], transformOrigin: 'top left' }}>
+        <WebView source={{ uri: url }} style={{ flex: 1 }} scrollEnabled={false} startInLoadingState />
+      </View>
+    </View>
+  </Pressable>;
 }
 
 function DeviceToggle({ mode, setMode, dark = false, disabled = false }: { mode: 'mobile' | 'desktop'; setMode: (m: 'mobile' | 'desktop') => void; dark?: boolean; disabled?: boolean }) {
@@ -1176,7 +767,7 @@ function MessageThread({ session, slug, viewer, otherName, placeholder, intro }:
   </>;
 }
 
-function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, onPaid, saveError, planAnnual, planPro, media, isPaying, buildChoice, session, slug, onAdminBack, onDomainChosen, ownedDomain = '', adminBiz, infoComplete, onSendToDesigner, playReveal, onRevealDone, previewLink = '' }: any) {
+function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, contactForm, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, onPaid, saveError, planAnnual, planPro, media, isPaying, buildChoice, session, slug, onAdminBack, onDomainChosen, ownedDomain = '', adminBiz, liveUrl = '', infoComplete, onSendToDesigner, playReveal, onRevealDone, previewLink = '' }: any) {
   // After sending to the designer: a full-screen preview card, the B fades in, then the text,
   // then the card shrinks into its place on the dashboard.
   const buildCardRef = useRef<View>(null);
@@ -1427,6 +1018,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
     { text: 'Take offline', style: 'destructive', onPress: () => onTakeOffline?.() },
   ]);
   // Live site opens its real address; otherwise the uploaded preview opens in the browser; the in-app mock-up is the fallback.
+  const realUrl = (isLive && liveUrl) || previewLink || '';
   const openPreview = () => { if (isLive) void Linking.openURL(siteUrl); else if (previewLink) void Linking.openURL(previewLink); };
   const goLive = () => { if (isPaying) void onGoLive?.(); else void openPlanModal(); };
   const confirmSignOut = () => Alert.alert('Log out?', 'Your website and details stay saved to your account.', [
@@ -1544,17 +1136,9 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
               </View>
             </View>
             : <>
-              {previewMode === 'desktop' ? <Pressable onPress={openPreview} style={s.desktopFrame}>
-                <View style={s.desktopBar}><View style={s.previewDots}><View style={s.previewDot} /><View style={s.previewDot} /><View style={s.previewDot} /></View><Text style={s.desktopBarUrl} numberOfLines={1}>{domain ? `${domain}${suffix}` : 'yourwebsite.co.uk'}</Text></View>
-                <View pointerEvents="none" style={{ height: DESKTOP_VIEW_H, overflow: 'hidden' }}>
-                  <ScaledView virtualWidth={DESKTOP_WIDTH} width={DESKTOP_VIEW_W}><SitePreview desktop palette={palette} font={font} page={0} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} media={media} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></ScaledView>
-                </View>
-              </Pressable>
-              : <Pressable onPress={openPreview} style={s.phoneFrame}>
-                <View pointerEvents="none" style={{ overflow: 'hidden', flex: 1 }}>
-                  <ScaledView virtualWidth={MOBILE_WIDTH} width={DASHBOARD_PREVIEW_WIDTH - 14}><SitePreview palette={palette} font={font} page={0} editing={false} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} media={media} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} /></ScaledView>
-                </View>
-              </Pressable>}
+              {realUrl
+                ? <RealSitePreview url={realUrl} label={isLive && domain ? `${domain}${suffix}` : ''} desktop={previewMode === 'desktop'} onPress={openPreview} />
+                : <View style={[previewMode === 'desktop' ? s.desktopFrame : s.phoneFrame, { alignItems: 'center', justifyContent: 'center', padding: 24 }]}><Text style={[s.buildingSub, { color: 'rgba(255,255,255,.6)', textAlign: 'center' }]}>Your website preview appears here once it's ready.</Text></View>}
             </>}
         </Animated.View>}
       </ScrollView>}
@@ -1635,60 +1219,6 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
   </KeyboardAvoidingView>;
 }
 
-function DesignEditorFullscreen({ media, palette, setPalette, font, setFont, siteTexts, setSiteTexts, homeSections, setHomeSections, servicesSections, setServicesSections, contactSections, setContactSections, data, services, hours, contactForm, onBack, onConfirm }: any) {
-  const [tool, setTool] = useState<string | null>(null);
-  const [editing, setEditing] = useState(false);
-  const [previewPage, setPreviewPage] = useState(0);
-  const [editingText, setEditingText] = useState<{ key: string; label: string; current: string } | null>(null);
-  const [previewMode, setPreviewMode] = useState<'mobile' | 'desktop'>('mobile');
-  const { width: winW, height: winH } = useWindowDimensions();
-  const landscape = winW > winH;
-  useEffect(() => {
-    void ScreenOrientation.lockAsync(previewMode === 'desktop' ? ScreenOrientation.OrientationLock.LANDSCAPE : ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
-  }, [previewMode]);
-  useEffect(() => () => { void ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {}); }, []);
-  const urlLabel = `${(data.businessName || 'yourwebsite').toLowerCase().replace(/[^a-z0-9]/g, '')}.co.uk`;
-  const toolProps = { active: tool, setActive: setTool, palette, setPalette, font, setFont, setEditing, homeSections, setHomeSections, servicesSections, setServicesSections, contactSections, setContactSections };
-  const preview = (desktop: boolean) => <SitePreview desktop={desktop} palette={palette} font={font} page={previewPage} onPageChange={setPreviewPage} editing={editing} siteTexts={siteTexts} onEditText={(key: string, current: string) => { const labels: Record<string, string> = { headline: 'Hero headline', heroBody: 'Hero subtext', aboutTitle: 'About title', aboutBody: 'About description', brand: 'Brand name' }; setEditingText({ key, label: labels[key] || key, current }); }} businessName={data.businessName} category={data.category} servicesData={services} hoursData={hours} contactData={{ email: data.contactEmail, phone: data.phone, address: data.address, instagram: data.instagram, facebook: data.facebook, reviewSource: data.reviewSource, reviewLink: data.reviewLink }} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} media={media} />;
-  const frameW = landscape ? winW - 120 : DESKTOP_VIEW_W;
-  const desktopFrame = <View style={[s.desktopFrame, { marginBottom: 0, width: frameW + 12, alignSelf: 'center' }, landscape && { flex: 1 }]}>
-    <View style={s.desktopBar}><View style={s.previewDots}><View style={s.previewDot} /><View style={s.previewDot} /><View style={s.previewDot} /></View><Text style={s.desktopBarUrl} numberOfLines={1}>{urlLabel}</Text></View>
-    <ScrollView style={landscape ? { flex: 1 } : { height: DESKTOP_VIEW_H }} showsVerticalScrollIndicator={false}><ScaledView virtualWidth={DESKTOP_WIDTH} width={frameW}>{preview(true)}</ScaledView></ScrollView>
-  </View>;
-  const editModal = <TextEditModal visible={!!editingText} value={editingText ? (siteTexts[editingText.key] || editingText.current) : ''} label={editingText?.label || ''} onSave={(v: string) => setSiteTexts((t: any) => ({ ...t, [editingText!.key]: v }))} onClose={() => setEditingText(null)} />;
-
-  if (landscape) return <View style={{ flex: 1, backgroundColor: '#070D12' }}>
-    <StatusBar hidden />
-    {editModal}
-    <View style={s.landBar}>
-      <Pressable onPress={onBack} style={[s.fsBackBtn, s.toolButtonSmall]} accessibilityLabel="Back"><Ionicons name="chevron-back" size={20} color={C.primary} /></Pressable>
-      <DesignTools landscape {...toolProps} />
-      <View style={{ flex: 1 }} />
-      <DeviceToggle dark mode={previewMode} setMode={setPreviewMode} />
-      <Pressable onPress={onConfirm} style={[s.fsTickBtn, s.toolButtonSmall]} accessibilityLabel="Save design"><Ionicons name="checkmark" size={20} color="#fff" /></Pressable>
-    </View>
-    {!!tool && <LandscapeToolStrip {...toolProps} />}
-    <View style={{ flex: 1, zIndex: 0, paddingHorizontal: 54, paddingBottom: 14, paddingTop: 6 }}>{desktopFrame}</View>
-  </View>;
-
-  return <View style={{ flex: 1, backgroundColor: '#070D12' }}>
-    <StatusBar style="light" />
-    {editModal}
-    <View style={s.fsBrowserBar}>
-      <View style={s.fsSlot}><Pressable onPress={onBack} style={s.fsBackBtn}><Ionicons name="chevron-back" size={22} color={C.primary} /></Pressable></View>
-      <View style={s.fsBrowserRight}>
-        <DesignTools {...toolProps} />
-        <View style={s.fsSlot}><Pressable onPress={onConfirm} style={s.fsTickBtn}>
-          <Ionicons name="checkmark" size={22} color="#fff" />
-        </Pressable></View>
-      </View>
-    </View>
-    <View style={s.editorToggleRow}><DeviceToggle dark mode={previewMode} setMode={setPreviewMode} /></View>
-    {previewMode === 'desktop'
-      ? <View style={s.editorDesktopStage}>{desktopFrame}</View>
-      : <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>{preview(false)}</ScrollView>}
-  </View>;
-}
 
 function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [index, setIndex] = useState(0);
@@ -1704,8 +1234,6 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [authSession, setAuthSession] = useState(false);
   const [authStatus, setAuthStatus] = useState('');
   const [complete, setComplete] = useState<Set<number>>(new Set());
-  const [palette, setPalette] = useState(0);
-  const [font, setFont] = useState(0);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [deckDirection, setDeckDirection] = useState<-1 | 0 | 1>(0);
   const railOpacity = useRef(new Animated.Value(.32)).current;
@@ -1720,11 +1248,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [domainReady, setDomainReady] = useState(false);
   const [contactForm, setContactForm] = useState(false);
   const [tab, setTab] = useState('Website');
-  const [siteTexts, setSiteTexts] = useState<Record<string, string>>({});
-  const [homeSections, setHomeSections] = useState([...HOME_SECTIONS_DEFAULT]);
-  const [servicesSections, setServicesSections] = useState([...SERVICES_SECTIONS_DEFAULT]);
-  const [contactSections, setContactSections] = useState([...CONTACT_SECTIONS_DEFAULT]);
-  const [appScreen, setAppScreen] = useState<'onboarding' | 'choose' | 'loading' | 'design-editor' | 'dashboard' | 'admin'>('onboarding');
+  const [appScreen, setAppScreen] = useState<'onboarding' | 'choose' | 'loading' | 'dashboard' | 'admin'>('onboarding');
   const [chooseMode, setChooseMode] = useState<'pick' | 'auto'>('pick');
   const [autoPending, setAutoPending] = useState(false);
   const [adminBusinesses, setAdminBusinesses] = useState<any[]>([]);
@@ -1806,12 +1330,6 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     if (dot > 0) { setDomain(chosen.slice(0, dot)); setSuffix(chosen.slice(dot)); setDomainReady(true); }
     else { setDomain(''); setSuffix('.co.uk'); setDomainReady(false); } // don't carry the previous client's domain over
     const design = raw.design || {};
-    if (typeof design.palette === 'number' && palettes[design.palette]) setPalette(design.palette);
-    if (typeof design.font === 'number' && fonts[design.font]) setFont(design.font);
-    if (design.siteTexts) setSiteTexts(design.siteTexts);
-    if (Array.isArray(design.homeSections)) setHomeSections(design.homeSections);
-    if (Array.isArray(design.servicesSections)) setServicesSections(design.servicesSections);
-    if (Array.isArray(design.contactSections)) setContactSections(design.contactSections);
     setContactForm(!!(raw.contactForm ?? design.contactForm));
     setPlanAnnual(!!raw.chosenAnnual);
     setPlanPro(raw.chosenPlan === 'pro');
@@ -1857,7 +1375,6 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     return row;
   };
 
-  const designSnapshot = () => ({ palette, font, siteTexts, homeSections, servicesSections, contactSections, contactForm });
 
   const signOut = async () => {
     await supabase.auth.signOut().catch(() => {});
@@ -2217,7 +1734,6 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       heroImage: heroImage || undefined,
       gallery: gallery.filter((url): url is string => !!url),
       chosenDomain: domainReady ? domain + suffix : undefined,
-      design: designSnapshot(),
     });
     // Admin editing a client: save through the admin API (never the client's own row via this login).
     if (adminViewingBusiness) {
@@ -2362,11 +1878,6 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     if (steps[index]?.id === 'contact' && data.sameEmail && (data.ownerEmail || data.email)) setData(d => ({ ...d, contactEmail: d.ownerEmail || d.email }));
   }, [index]);
 
-  const saveDesign = async () => {
-    if (!slug || !session) return;
-    try { await saveBusiness(slug, { raw: { design: designSnapshot(), contactForm }, needsPublish: websiteStatus === 'live' }); setSaveError(''); }
-    catch { setSaveError('Your design changes couldn’t be saved. Please try again.'); }
-  };
 
   const setLive = async (live: boolean) => {
     if (!slug || !session) return false;
@@ -2400,7 +1911,6 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     loadingProgress.setValue(0);
     designReveal.setValue(0);
     loadingFades.forEach(value => value.setValue(0));
-    const isTemplate = buildChoice === 'template';
     // One continuous Animated sequence, not four independent setTimeouts —
     // a run of unlinked timers each firing its own Animated.timing is fragile
     // under Fast Refresh and easy to leave half-run if the effect is ever
@@ -2415,13 +1925,9 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     checklist.start(() => {
       setDesignReady(true);
       Animated.timing(designReveal, { toValue: 1, duration: 700, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(() => {
-        if (isTemplate) {
-          setAppScreen('design-editor');
-        } else {
-          setWebsiteStatus('building');
-          setTab('Messages');
-          setAppScreen('dashboard');
-        }
+        setWebsiteStatus('building');
+        setTab('Messages');
+        setAppScreen('dashboard');
       });
     });
     return () => checklist.stop();
@@ -2745,14 +2251,9 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   }
 
   if (appScreen === 'dashboard') return <FadeIn>
-    <DashboardHome previewLink={businessRecord.current?.demoUrl || businessRecord.current?.previewUrl || ''} playReveal={playReveal} onRevealDone={() => setPlayReveal(false)} onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean, isPro: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true }; setPlanAnnual(isAnnual); setPlanPro(isPro); setWebsiteStatus('publishing'); }} infoComplete={infoComplete} onSendToDesigner={sendFromDashboard} onEditInfo={() => { setEditingInfo(websiteStatus !== 'todo'); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} saveError={saveError} planAnnual={planAnnual} planPro={planPro} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onDomainChosen={(d: string, sfx: string) => { setDomain(d); setSuffix(sfx); setDomainReady(true); }} adminBiz={adminViewingBusiness} ownedDomain={businessRecord.current?.domainRegistered ? (businessRecord.current?.customDomain || businessRecord.current?.domain || '') : ''} />
+    <DashboardHome previewLink={businessRecord.current?.demoUrl || businessRecord.current?.previewUrl || ''} playReveal={playReveal} onRevealDone={() => setPlayReveal(false)} onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} services={services} hours={hours} contactForm={contactForm} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean, isPro: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true }; setPlanAnnual(isAnnual); setPlanPro(isPro); setWebsiteStatus('publishing'); }} infoComplete={infoComplete} onSendToDesigner={sendFromDashboard} onEditInfo={() => { setEditingInfo(websiteStatus !== 'todo'); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} saveError={saveError} planAnnual={planAnnual} planPro={planPro} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onDomainChosen={(d: string, sfx: string) => { setDomain(d); setSuffix(sfx); setDomainReady(true); }} adminBiz={adminViewingBusiness} liveUrl={businessRecord.current?.liveUrl || ''} ownedDomain={businessRecord.current?.domainRegistered ? (businessRecord.current?.customDomain || businessRecord.current?.domain || '') : ''} />
   </FadeIn>;
 
-  if (appScreen === 'design-editor') return <FadeIn><DesignEditorFullscreen palette={palette} setPalette={setPalette} font={font} setFont={setFont} siteTexts={siteTexts} setSiteTexts={setSiteTexts} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} data={data} services={services} hours={hours} contactForm={contactForm} onBack={() => {
-    setAppScreen('onboarding');
-    setIndex(steps.length - 1);
-    motion.setValue((steps.length - 1) * CARD_TRAVEL);
-  }} media={media} onConfirm={() => { if (websiteStatus !== 'live') setWebsiteStatus('ready'); void saveDesign(); setTab('Messages'); setAppScreen('dashboard'); }} /></FadeIn>;
 
   if (appScreen === 'choose') {
     const canSend = !!data.fullName.trim() && (!!data.googleLink.trim() || !!data.facebook.trim() || !!data.website.trim());
@@ -2956,81 +2457,15 @@ const s = StyleSheet.create({
   uploadTitle: { fontFamily: FONT, fontWeight: '800', fontSize: 14, color: '#1C2832' }, uploadSub: { fontFamily: FONT, fontSize: 11, color: C.inkSoft, marginTop: 3 }, swipeHint: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.ink, textAlign: 'center' },
   fixedPrompt: { position: 'absolute', left: 18, right: 18, bottom: 14, zIndex: 120, elevation: 120, alignItems: 'center', gap: 7 }, swipeRow: { minHeight: 34, paddingHorizontal: 14, borderRadius: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,.7)' }, validationText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.danger, textAlign: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: C.dangerSoft, overflow: 'hidden' },
   addService: { marginTop: 14, height: 46, borderRadius: 12, borderWidth: 1, borderColor: C.primaryBorder, backgroundColor: C.primarySoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, addServiceText: { fontFamily: FONT, fontWeight: '700', fontSize: 14, color: C.ink }, site: { overflow: 'hidden' },
-  previewBrowserWrap: { backgroundColor: 'rgba(8,15,20,.9)' },
-  previewBrowser: { height: 29, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   previewDots: { position: 'absolute', left: 11, flexDirection: 'row', gap: 4 }, previewDot: { width: 6, height: 6, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.35)' }, previewAddress: { fontFamily: FONT, fontSize: 8, color: 'rgba(255,255,255,.54)' },
-  previewPageNav: { flexDirection: 'row', borderBottomWidth: StyleSheet.hairlineWidth },
-  previewPageTab: { flex: 1, paddingVertical: 6, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
-  previewPageTabText: { fontFamily: FONT, fontSize: 8, fontWeight: '700', color: 'rgba(255,255,255,.45)', letterSpacing: .5 },
-  siteHeroImg: { width: '100%', height: 260 },
-  siteHeroImgDesktop: { height: 520 },
-  siteHeroCopy: { paddingHorizontal: 28, paddingVertical: 28 },
-  siteTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, siteKicker: { fontFamily: FONT, fontSize: 14, letterSpacing: 2, fontWeight: '700' }, 
-  siteHeadline: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 38, lineHeight: 44, marginBottom: 10 },
-  siteBody: { fontFamily: FONT, fontSize: 16, lineHeight: 24 }, editing: { borderWidth: 1, borderColor: BRAND, borderRadius: 4, padding: 2 },
-  siteCta: { marginTop: 0, alignSelf: 'flex-start', paddingVertical: 14, paddingHorizontal: 22, borderWidth: 1.5 }, siteCtaText: { fontFamily: FONT, fontSize: 13, fontWeight: '800', letterSpacing: 1.4 },
-  siteCtaFilled: { paddingVertical: 14, paddingHorizontal: 24, borderRadius: 6, alignItems: 'center', alignSelf: 'flex-start' }, siteCtaFilledText: { fontFamily: FONT, fontSize: 14, fontWeight: '800' }, siteSectionTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 30, lineHeight: 36, marginBottom: 8 }, siteSectionBody: { fontFamily: FONT, fontSize: 15, lineHeight: 22, opacity: .68 },
-  siteEyebrow: { fontSize: 11, fontWeight: '700', letterSpacing: 3, textTransform: 'uppercase' as any, marginBottom: 8 },
-  heroButtons: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 10 },
-  siteSection: { padding: 28 },
-  siteAboutDesktopRow: { flexDirection: 'row', gap: 24 },
-  siteAboutCard: { padding: 18, borderRadius: 12, borderWidth: 1 },
-  siteAboutCardLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' as any, marginBottom: 5 },
-  siteAboutCardTitle: { fontSize: 17, fontWeight: '700', marginBottom: 7 },
-  siteAboutCardCta: { fontSize: 13, fontWeight: '600' },
-  siteReviewGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  siteReviewCard: { flex: 1, minWidth: '28%', padding: 16, borderRadius: 12 },
-  siteGalleryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
-  siteCTABand: { alignItems: 'center', paddingVertical: 40 },
-  siteFooter: { padding: 28, paddingBottom: 32 },
-  siteFooterCols: { flexDirection: 'row', gap: 24, marginTop: 16 },
-  siteTrustBadge: { marginTop: 16, paddingVertical: 14, paddingHorizontal: 16, borderWidth: 1, borderRadius: 14, alignItems: 'flex-start' },
-  siteTrustTitle: { fontSize: 16, fontWeight: '700' },
-  siteTrustLink: { fontSize: 14, fontWeight: '600', marginTop: 8 },
-  siteStars: { flexDirection: 'row', gap: 3, marginBottom: 10 },
-  siteReviewText: { fontFamily: FONT, fontSize: 14, lineHeight: 20, fontStyle: 'italic', marginBottom: 6 },
-  siteReviewAuthor: { fontFamily: FONT, fontSize: 12, opacity: .6 },
-  siteContactCta: { padding: 28, borderTopWidth: 1, alignItems: 'center', gap: 14 },
-  siteSvcsListSection: { padding: 28 },
-  siteSvcRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth },
-  siteSvcRowName: { fontFamily: FONT, fontSize: 15, fontWeight: '700' },
-  siteSvcRowDetail: { fontFamily: FONT, fontSize: 12, opacity: .55, marginTop: 2 },
-  siteSvcRowPrice: { fontFamily: FONT, fontSize: 15, fontWeight: '800' },
-  siteContactInfoRow: { flexDirection: 'row', padding: 24, gap: 16 },
-  siteContactInfoCol: { flex: 1 }, siteHoursCol: { flex: 1 },
-  siteContactInfoTitle: { fontFamily: Platform.select({ ios: 'Didot', android: 'serif' }), fontSize: 20, marginBottom: 10 },
-  siteContactItem: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  siteContactItemText: { fontFamily: FONT, fontSize: 13, lineHeight: 18, flex: 1 },
-  siteHoursRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  siteHoursDay: { fontFamily: FONT, fontSize: 13, fontWeight: '700', width: 36 },
-  siteHoursTime: { fontFamily: FONT, fontSize: 13, opacity: .7 },
-  siteMockMap: { margin: 24, marginTop: 0, borderRadius: 14, borderWidth: 1, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 72 },
-  siteMockMapAddr: { fontFamily: FONT, fontSize: 14, fontWeight: '700' },
-  siteMockMapSub: { fontFamily: FONT, fontSize: 12, opacity: .5, marginTop: 2 },
-  siteFormSection: { padding: 24 },
-  siteFormField: { borderWidth: 1, borderRadius: 10, padding: 14, marginBottom: 10, minHeight: 48 },
-  siteFormPh: { fontFamily: FONT, fontSize: 14, opacity: .45 },
-  editPageTabs: { flexDirection: 'row', marginBottom: 8, borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(66,104,125,.18)' },
-  editPageTab: { flex: 1, paddingVertical: 6, alignItems: 'center' },
-  editPageTabOn: { backgroundColor: 'rgba(59,130,246,.18)' },
-  editPageTabText: { fontFamily: FONT, fontSize: 11, fontWeight: '700', color: C.inkSoft },
-  editPageTabTextOn: { color: C.primary },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,.45)', justifyContent: 'flex-end', cursor: 'default' as any },
   modalBox: { backgroundColor: C.canvas, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: Platform.OS === 'ios' ? 42 : 24 },
-  modalLabel: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.inkSoft, marginBottom: 8 },
-  modalInput: { borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 14, fontFamily: FONT, fontSize: 16, color: C.ink, backgroundColor: '#fff', minHeight: 90, textAlignVertical: 'top', marginBottom: 16, outlineWidth: 0 },
   modalButtons: { flexDirection: 'row', gap: 10 },
   modalButton: { flex: 1, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   modalButtonCancel: { backgroundColor: 'rgba(0,0,0,.06)' },
   modalButtonSave: { backgroundColor: C.primary },
   modalButtonText: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#1C2832' },
-  tools: { position: 'relative', zIndex: 30, width: FS_SLOT * 3, alignItems: 'center' }, toolStack: { alignSelf: 'stretch', alignItems: 'center', flexDirection: 'row' }, toolSlot: { width: FS_SLOT, alignItems: 'center' },
-  toolButton: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' }, toolActive: { backgroundColor: C.primary },
-  toolPanel: { position: 'absolute', top: 49, right: 0, width: 186, maxHeight: 400, padding: 12, borderRadius: 23, overflow: 'hidden', borderWidth: 1, borderColor: '#fff', backgroundColor: 'rgba(255,255,255,.92)', shadowColor: '#174E66', shadowOpacity: .18, shadowRadius: 18, zIndex: 200, elevation: 200 }, paletteWrap: { gap: 5 }, paletteScroll: { maxHeight: 274 }, paletteHeadingText: { fontFamily: FONT, fontSize: 11, fontWeight: '800', letterSpacing: .8, color: C.inkSoft, textTransform: 'uppercase' }, paletteStickyHeader: { backgroundColor: 'rgba(255,255,255,.95)', paddingVertical: 6, marginBottom: 2 },
-  toolTitle: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: C.ink, textAlign: 'center', marginBottom: 9 }, option: { minHeight: 44, borderRadius: 16, paddingHorizontal: 9, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' },
   dot: { width: 20, height: 20, borderRadius: 10 }, selected: { borderColor: BRAND, backgroundColor: 'rgba(59,130,246,.12)' }, fontOption: { paddingVertical: 10, borderRadius: 14, marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' }, fontOptionText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', textAlign: 'center', color: C.ink },
-  sectionOption: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(28,40,50,.18)' }, sectionText: { flex: 1, fontFamily: FONT, fontSize: 12, fontWeight: '600', color: '#1C2832', marginHorizontal: 8 },
-  sectionEye: { padding: 7 }, sectionDragHandle: { padding: 7 },
   domainError: { marginTop: 10, fontFamily: FONT, fontSize: 13, lineHeight: 18, color: C.danger }, domainResult: { marginTop: 14, padding: 15, borderRadius: 14, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: C.successSoft, borderWidth: 1, borderColor: 'rgba(31,138,84,.3)' }, domainName: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#1C2832' }, domainPrice: { fontFamily: FONT, fontSize: 13, color: C.success, fontWeight: '600', marginTop: 2 },
   formChoice: { marginTop: 22, padding: 17, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: 'rgba(255,255,255,.45)', borderWidth: 1, borderColor: 'rgba(28,40,50,.16)' }, formChoiceIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(59,130,246,.12)' }, formChoiceTitle: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#1C2832' }, formChoiceText: { fontFamily: FONT, fontSize: 13, color: C.inkSoft, marginTop: 3, lineHeight: 18 },
   rail: { position: 'absolute', top: SAFE_TOP + 2, left: '25%', right: '25%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', zIndex: 140, elevation: 140 }, railButton: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }, railActive: { position: 'absolute', width: 27, height: 27, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: C.primary, borderWidth: 0, shadowColor: C.primary, shadowOpacity: .45, shadowRadius: 8, elevation: 8 }, railDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#1A1E22', borderWidth: 1, borderColor: 'rgba(0,0,0,.32)', shadowColor: '#000', shadowOpacity: .2, shadowRadius: 2 }, railDotOn: { backgroundColor: C.primary, borderColor: '#A9C8FF', shadowColor: C.primary, shadowOpacity: .45, shadowRadius: 5 },
@@ -3083,8 +2518,6 @@ buildingWrap: { alignItems: 'center', paddingBottom: 24 },
   todoGlowInner: { shadowColor: '#FFD27F' },
   buildingText: { fontFamily: FONT, fontSize: 18, fontWeight: '800', color: C.ink },
   buildingSub: { fontFamily: FONT, fontSize: 14, lineHeight: 20, color: C.inkSoft, textAlign: 'center', marginTop: 6, paddingHorizontal: 24 },
-  previewOpenBadge: { position: 'absolute', bottom: 12, right: 12, flexDirection: 'row', gap: 6, alignItems: 'center', backgroundColor: 'rgba(0,0,0,.6)', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999 },
-  previewOpenText: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: '#fff' },
   planModalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(3,10,16,.6)' },
   planModalBox: { backgroundColor: C.canvas, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 22, paddingBottom: Platform.OS === 'ios' ? 40 : 24 },
   planModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
@@ -3109,10 +2542,6 @@ buildingWrap: { alignItems: 'center', paddingBottom: 24 },
   fullLoadingLine: { flex: 1, fontFamily: FONT, fontSize: 15, fontWeight: '600', color: '#fff' },
   fullLoadingTrack: { height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,.25)', overflow: 'hidden', marginTop: 10 },
   fullLoadingFill: { height: '100%', borderRadius: 2, backgroundColor: '#fff' },
-  fsBrowserBar: { flexDirection: 'row', alignItems: 'center', paddingTop: Platform.OS === 'ios' ? 56 : 30, paddingBottom: 12, paddingHorizontal: 16, backgroundColor: '#0E1A24', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.08)' },
-  fsBackBtn: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
-  fsTickBtn: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: C.primary },
-  fsBrowserRight: { width: FS_SLOT * 4, flexDirection: 'row', alignItems: 'center' }, fsSlot: { width: FS_SLOT, alignItems: 'center' },
   statusPill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 11, paddingVertical: 6, borderRadius: 999 },
   statusDot: { width: 7, height: 7, borderRadius: 4 },
   statusPillText: { fontFamily: FONT, fontSize: 12, fontWeight: '800' },
@@ -3124,8 +2553,6 @@ primaryBtnText: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: '#ff
   secondaryBtnText: { fontFamily: FONT, fontSize: 15, fontWeight: '700', color: C.ink },
   messageIconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   messageSendBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: C.primary },
-  siteLogo: { width: 18, height: 18, borderRadius: 4 },
-  siteGalleryImg: { width: '31.5%', aspectRatio: 1, borderRadius: 6 },
   fieldOptional: { fontWeight: '600', color: C.inkMuted, fontSize: 12 },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginBottom: 16 },
   typeChip: { paddingHorizontal: 9, paddingVertical: 8, flexGrow: 1, justifyContent: 'center' },
@@ -3167,32 +2594,14 @@ savedPill: { position: 'absolute', top: SAFE_TOP + 86, alignSelf: 'center', zInd
   deviceToggleBtnOn: { backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 } },
   deviceToggleBtnOnDark: { backgroundColor: '#fff' },
   desktopFrame: { alignSelf: 'stretch', marginHorizontal: 0, borderRadius: 12, overflow: 'hidden', marginBottom: 18, backgroundColor: '#fff', borderWidth: 6, borderColor: '#141A1E', shadowColor: '#000', shadowOpacity: .18, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } },
-  fullPreview: { flex: 1, backgroundColor: '#E9ECEF', paddingTop: Platform.OS === 'ios' ? 54 : 24 },
-  fullPreviewBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingBottom: 10 },
-  fullPreviewBack: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
-  fullPreviewUrl: { flex: 1, height: 32, borderRadius: 10, backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingHorizontal: 10 },
-  fullPreviewUrlText: { fontFamily: FONT, fontSize: 13, color: C.inkSoft },
   desktopBar: { height: 26, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#E9ECEF' },
   desktopBarUrl: { fontFamily: FONT, fontSize: 11, color: C.inkMuted, maxWidth: '60%' },
-  editorToggleRow: { alignItems: 'center', paddingVertical: 10, backgroundColor: '#0E1A24' },
   cardLink: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, alignSelf: 'flex-start' },
   cardLinkText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.primary },
   editMenu: { position: 'absolute', top: 46, right: 0, width: 250, padding: 6, borderRadius: 14, backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .14, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 12, zIndex: 50 },
   editMenuItem: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 10 },
   editMenuTitle: { fontFamily: FONT, fontSize: 15, fontWeight: '700', color: C.ink },
   editMenuSub: { fontFamily: FONT, fontSize: 12, color: C.inkMuted, marginTop: 1 },
-  editorDesktopStage: { flex: 1, justifyContent: 'center', paddingHorizontal: 20 },
-  toolsLandscape: { flexDirection: 'row', alignItems: 'center' },
-  toolSlotLandscape: { marginHorizontal: 5 },
-  toolButtonSmall: { width: 38, height: 38, borderRadius: 19 },
-  landBar: { zIndex: 30, elevation: 30, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 54, paddingVertical: 8, backgroundColor: '#0E1A24', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.08)' },
-  stripPanel: { zIndex: 20, elevation: 20, backgroundColor: 'rgba(255,255,255,.96)', borderBottomWidth: 1, borderBottomColor: C.line },
-  stripContent: { alignItems: 'center', gap: 10, paddingHorizontal: 54, paddingVertical: 8 },
-  stripGroup: { gap: 4 },
-  stripGroupLabel: { fontFamily: FONT, fontSize: 10, fontWeight: '800', letterSpacing: .8, color: C.inkSoft, textTransform: 'uppercase' },
-  stripChip: { minHeight: 38, paddingHorizontal: 10, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderColor: C.line, backgroundColor: '#fff' },
-  stripChipOn: { borderColor: C.primary, backgroundColor: C.primarySoft },
-  stripHint: { fontFamily: FONT, fontSize: 12, color: C.inkMuted, marginLeft: 6 },
 });
 
 const adminApiCall = (session: any, slug: string, payload: Record<string, any>) => fetch(ADMIN_API, { method: 'POST', headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ slug, ...payload }) })
