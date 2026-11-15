@@ -1446,20 +1446,22 @@ function renderAccountPane() {
   var hasDomain = dm && !/brightsite\.app/i.test(dm);
   var pane = document.getElementById('accountPane');
   pane.innerHTML =
-    '<div class="ac-card"><div class="ac-label">Domain</div>' +
-      (hasDomain
-        ? '<div class="ac-value">' + esc(dm.replace(/^https?:\/\//, '').replace(/\/$/, '')) + '</div><div class="ac-sub">' + (d.domainConnected ? 'Connected to the website' : 'Connects when the website goes live') + '</div>'
-        : '<div class="ac-value">No domain yet</div><div class="ac-sub">Connect one they already own</div>') +
-      '<button type="button" class="ac-link" onclick="openDomainModal(\'' + sl + '\',\'' + nameArg + '\')">' + (hasDomain ? 'Change domain' : 'Add domain') + '</button></div>' +
     '<div class="ac-card"><div class="ac-label">Login email</div><div class="ac-value" id="acctEmail">Loading…</div><div class="ac-sub" id="acctLast"></div>' +
       '<button type="button" class="ac-link" onclick="openPrompt(\'email\')">Change email</button>' +
       '<button type="button" class="ac-link" onclick="openPrompt(\'password\')">Set password</button>' +
       '<button type="button" class="ac-link" onclick="acctReset(this)">Email reset link</button>' +
       '<div class="acct-msg" id="acctMsg"></div></div>' +
-    '<div class="ac-card"><div class="ac-label">Plan</div><div class="ac-value" id="acctPlan">' + (d.planActive ? 'Paid' : 'No plan yet') + '</div><div id="acctPlanBtns"></div></div>' +
     '<div class="ac-card"><div class="ac-label">Contact</div>' +
-      '<div class="ac-sub">' + esc(raw.fullName || '—') + ' · ' + esc(raw.email || raw.contactEmail || '—') + ' · ' + esc(raw.phone || '—') + '</div>' +
+      '<div class="ac-value">' + esc((raw.fullName || '').trim() || 'No name yet') + '</div>' +
+      '<div class="ac-sub">' + esc(raw.phone || 'No phone number') + '</div>' +
+      ((raw.email || raw.contactEmail) ? '<div class="ac-sub">' + esc(raw.email || raw.contactEmail) + '</div>' : '') +
       '<button type="button" class="ac-link" onclick="copyClientInfo(\'' + sl + '\', this)">Copy all info</button></div>' +
+    '<div class="ac-card"><div class="ac-label">Domain</div>' +
+      (hasDomain
+        ? '<div class="ac-value">' + esc(dm.replace(/^https?:\/\//, '').replace(/\/$/, '')) + '</div><div class="ac-sub">' + (d.domainConnected ? 'Connected to the website' : 'Connects when the website goes live') + '</div>'
+        : '<div class="ac-value">No domain yet</div><div class="ac-sub">Connect one they already own</div>') +
+      '<button type="button" class="ac-link" onclick="openDomainModal(\'' + sl + '\',\'' + nameArg + '\')">' + (hasDomain ? 'Change domain' : 'Add domain') + '</button></div>' +
+    '<div class="ac-card"><div class="ac-label">Plan</div><div class="ac-value" id="acctPlan">' + (d.planActive ? 'Paid' : 'No plan yet') + '</div><div id="acctPlanBtns"></div></div>' +
     '<div class="ac-card"><div class="ac-label">Danger zone</div><button type="button" class="ac-link ac-danger" onclick="openDeleteModal(\'' + sl + '\',\'' + nameArg + '\')">Delete account</button></div>';
   adminApi({ action: 'account-info', slug: slug }).then(function(info) {
     if (activeThreadId !== slug) return;
@@ -1468,13 +1470,13 @@ function renderAccountPane() {
     document.getElementById('acctLast').textContent = l && l.lastSignIn ? 'Last signed in ' + new Date(l.lastSignIn).toLocaleString('en-GB') : '';
     var sub = info.subscription; var planEl = document.getElementById('acctPlan'); var btns = document.getElementById('acctPlanBtns');
     if (sub && !sub.error) {
-      planEl.innerHTML = esc((sub.amount != null ? '£' + (sub.amount / 100).toFixed(2) : '') + (sub.interval ? ' / ' + sub.interval : '') + ' · ' + sub.status);
+      planEl.textContent = (sub.amount != null ? '£' + (sub.amount / 100).toFixed(2) : '') + (sub.interval ? ' / ' + sub.interval : '') + ' · ' + sub.status;
       var extra = (sub.renews ? '<div class="ac-sub">' + (sub.cancelAtPeriodEnd ? 'Ends ' : 'Renews ') + new Date(sub.renews).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + '</div>' : '') +
         (sub.card ? '<div class="ac-sub">' + esc(sub.card) + '</div>' : '');
       btns.innerHTML = extra + (sub.status === 'canceled' ? '' : (sub.cancelAtPeriodEnd
         ? '<button type="button" class="ac-link" onclick="acctPlan(\'undo\', this)">Keep plan (undo cancel)</button>'
         : '<button type="button" class="ac-link ac-danger" onclick="acctPlan(\'end\', this)">Cancel at end of period</button>'));
-    } else if (sub && sub.error) planEl.innerHTML += '<div class="ac-sub">Stripe: ' + esc(sub.error) + '</div>';
+    } else if (sub && sub.error) planEl.textContent += ' · Stripe: ' + sub.error;
   }).catch(function(err) { var m = document.getElementById('acctMsg'); if (m) { m.textContent = err.message; m.className = 'acct-msg err'; } });
 }
 function acctSay(text, ok) { var m = document.getElementById('acctMsg'); m.textContent = text; m.className = 'acct-msg ' + (ok ? 'ok' : 'err'); }
