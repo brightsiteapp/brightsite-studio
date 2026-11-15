@@ -407,7 +407,14 @@ body { background: var(--bg); color: var(--ink); }
 .site-bar .site-toggle { flex: none; }
 .sb-btn { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: #fff; color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
 .sb-btn.sb-blue { color: var(--accent); }
-@media (max-width: 520px) { .sb-btn { height: 32px; padding: 0 9px; gap: 4px; font-size: 12px; } .sb-btn svg { width: 13px; height: 13px; } .site-toggle button { padding: 6px 8px; } .site-bar { gap: 4px; } }
+@media (max-width: 520px) {
+  .site-bar { flex-wrap: wrap; row-gap: 10px; }
+  .site-bar > .site-toggle { order: -1; width: 100%; justify-content: center; }
+  #siteBarLeft, #siteBarRight { flex: 1 1 0; min-width: 0; }
+  #siteBarRight { justify-content: flex-end; }
+  .sb-btn { height: 34px; padding: 0 11px; gap: 5px; font-size: 12.5px; white-space: nowrap; }
+  .sb-btn svg { width: 14px; height: 14px; flex: none; }
+}
 .work-head .status-pill { margin-left: auto; }
 .site-preview .pv-empty { background: #141A1E; }
 .site-preview .pv-b { width: 150px; height: 150px; margin: 0 auto 26px; display: flex; align-items: center; justify-content: center; animation: pvPulse 2.2s ease-in-out infinite; }
