@@ -1341,8 +1341,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     onSignedOut();
   };
 
-  // Same admin list as api/_lib/push.js (ADMIN_EMAILS)
-  const ADMIN_EMAILS = ['brightsiteapp@gmail.com', 'tommeofficial1@gmail.com'];
+  const ADMIN_EMAILS = ['brightsiteapp@gmail.com'];
 
   // Same categories and rules as the web admin: stub = setup pending, green = live,
   // yellow = preview sent, red = to build.
@@ -1595,7 +1594,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       const redirectTo = makeRedirectUri({ scheme: 'app.brightsite.mobile', path: 'auth-callback' });
       const { data: oauthData, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo, skipBrowserRedirect: true },
+        options: { redirectTo, skipBrowserRedirect: true, queryParams: { prompt: 'select_account' } },
       });
       if (error || !oauthData.url) { setAuthStatus('Google sign-in failed. Try again.'); return; }
       const result = await WebBrowser.openAuthSessionAsync(oauthData.url, redirectTo);
