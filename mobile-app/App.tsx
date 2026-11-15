@@ -1451,6 +1451,14 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       // Sites published before the site worker (hosted elsewhere) keep their saved status.
       if (!st.hasSite && record.published && record.liveUrl && !/sites\.brightsite\.app/.test(record.liveUrl)) return;
       if (st.live) { setWebsiteStatus('live'); if (st.url) businessRecord.current = { ...businessRecord.current, liveUrl: st.url }; return; }
+      // Published sites served from their own address (e.g. name.brightsite.app) count as live when that address really answers.
+      const addr = [record.liveUrl, record.customDomain].find((u: any) => /^https?:\/\//.test(String(u || '')));
+      if (record.published && addr) {
+        const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), 6000);
+        const ok = await fetch(addr, { signal: ctl.signal }).then(r => r.ok).catch(() => false);
+        clearTimeout(timer);
+        if (ok) { setWebsiteStatus('live'); businessRecord.current = { ...businessRecord.current, liveUrl: addr }; return; }
+      }
       if (record.published) setWebsiteStatus(st.hasSite ? 'publishing' : 'building');
       else if (record.planActive && !record.manuallyOffline) setWebsiteStatus(st.hasSite ? 'publishing' : 'building');
       else if (isDesigner && !st.hasSite && !(record.demoUrl || record.previewUrl)) setWebsiteStatus('building');
