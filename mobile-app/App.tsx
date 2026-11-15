@@ -2332,7 +2332,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             </ScrollView>
           ) : (
             <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-              <View style={aS.threadHeader}><Pressable onPress={() => { setAdminActiveThread(null); if (session) void loadAdminData(session); }} style={[aS.threadBack, { flex: 1 }]}><Ionicons name="chevron-back" size={20} color={C.ink} /><Text style={aS.threadBackText}>{adminActiveThread?.data?.name || adminActiveThread?.data?.businessName || adminActiveThread?.id}</Text></Pressable><Pressable onPress={() => void Share.share({ message: businessBrief(adminActiveThread), title: 'Business brief' })} hitSlop={8} style={aS.briefBtn} accessibilityLabel="Copy all business info"><Ionicons name="copy-outline" size={15} color="#fff" /><Text style={aS.briefBtnText}>Copy info</Text></Pressable></View>
+              <View style={aS.threadHeader}><Pressable onPress={() => { setAdminActiveThread(null); if (session) void loadAdminData(session); }} style={[aS.threadBack, { flex: 1 }]}><Ionicons name="chevron-back" size={20} color={C.ink} /><Text style={aS.threadBackText}>{adminActiveThread?.data?.name || adminActiveThread?.data?.businessName || adminActiveThread?.id}</Text></Pressable></View>
               <MessageThread key={adminActiveThread?.id} session={session} slug={adminActiveThread?.id} viewer="admin" otherName={(adminActiveThread?.data?.fullName || adminActiveThread?.data?.name || 'Customer').trim().split(' ')[0]} placeholder="Message…" intro={<>
                 <View style={[s.messageBubble, s.messageBubbleSent]}><Text style={[s.messageText, { color: '#fff' }]}>{welcomeText(adminActiveThread?.data?.fullName, adminActiveThread?.data?.buildChoice || (/Build choice: designer/i.test(adminActiveThread?.data?.notes || '') ? 'designer' : null))}</Text></View>
                 <Text style={[s.messageMeta, s.messageMetaSent]}>You · Welcome message</Text>
@@ -2836,8 +2836,6 @@ const aS = StyleSheet.create({
   threadUnread: { width: 9, height: 9, borderRadius: 5, backgroundColor: C.primary },
   threadHeader: { flexDirection: 'row', alignItems: 'center', paddingRight: 16 },
   threadBack: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 12, gap: 4 },
-  briefBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, backgroundColor: C.primary },
-  briefBtnText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: '#fff' },
   threadBackText: { fontFamily: FONT, fontSize: 17, fontWeight: '600', color: C.ink, flex: 1 },
   notifRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.line, gap: 12 },
   notifIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
