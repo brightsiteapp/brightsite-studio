@@ -3256,7 +3256,7 @@ function AdminAccountPanel({ biz, session, isLive }: { biz: any; session: any; i
       {!!info?.login?.lastSignIn && <Text style={s.dashboardCardText}>Last signed in {timeAgo(info.login.lastSignIn)}</Text>}
       {link('mail-outline', 'Change email', () => { setValue(''); setPrompt('email'); })}
       {link('key-outline', 'Set password', () => { setValue(''); setPrompt('password'); })}
-      {link('paper-plane-outline', 'Email reset link', () => void run(async () => { const r = await api({ action: 'send-reset' }); setMsg(`Reset link sent to ${r.email}.`); }))}
+      {link('paper-plane-outline', 'Email reset link', () => Alert.alert('Send reset link?', `This emails ${info?.login?.email || 'the client'} a link to reset their password.`, [{ text: 'Cancel', style: 'cancel' }, { text: 'Send', onPress: () => void run(async () => { const r = await api({ action: 'send-reset' }); setMsg(`Reset link sent to ${r.email}.`); }) }]))}
     </View>
     {!!msg && <Text style={[s.dashboardCardText, { paddingHorizontal: 4 }]}>{msg}</Text>}
     <Modal visible={!!prompt} transparent animationType="fade" onRequestClose={() => setPrompt(null)}>
