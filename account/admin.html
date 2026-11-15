@@ -226,7 +226,7 @@ body { background: var(--bg); min-height: 100vh; }
 .client-name { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 16px; }
 .client-meta { margin-top: 2px; font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .work-empty { margin: auto; color: var(--muted); }
-.ws-back { display: none; white-space: nowrap; border: 0; background: none; padding: 4px 10px 4px 0; margin-right: 4px; font: inherit; font-size: 14px; font-weight: 600; color: var(--accent); cursor: pointer; }
+.ws-back { display: inline-block; white-space: nowrap; border: 0; background: none; padding: 4px 10px 4px 0; margin-right: 4px; font: inherit; font-size: 14px; font-weight: 600; color: var(--accent); cursor: pointer; }
 #wsPane { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 #wsPane[hidden] { display: none; }
 .work-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--line); }
@@ -298,7 +298,6 @@ body { background: var(--bg); min-height: 100vh; }
   .workspace.detail .client-col { display: none; }
   .client-list { max-height: none; }
   .work-col { min-height: calc(100vh - 100px); }
-  .ws-back { display: inline-block; }
   .work-head > div:nth-child(2) { min-width: 0; flex: 1; }
   .work-head { padding: 10px 14px; gap: 10px; }
   .work-head > div:nth-child(2) { min-width: 0; flex: 1; display: flex; flex-direction: column; }
@@ -427,6 +426,10 @@ body { background: var(--bg); color: var(--ink); }
 .ac-sub { font-size: 13px; color: var(--muted); margin-top: 2px; line-height: 1.45; overflow-wrap: anywhere; }
 .ac-link { border: 0; background: none; padding: 7px 0; font: inherit; font-size: 14px; font-weight: 700; color: var(--accent); cursor: pointer; text-align: left; }
 .ac-link.ac-danger { color: #b23b2c; }
+/* desktop: "‹ Clients" closes the client's dashboard and shows the list full width (like the app) */
+.workspace:not(.detail) { grid-template-columns: minmax(0, 720px); justify-content: center; }
+.workspace:not(.detail) .work-col { display: none; }
+.workspace:not(.detail) .client-col { max-width: 720px; width: 100%; justify-self: center; }
 </style>
 </head>
 <body>
