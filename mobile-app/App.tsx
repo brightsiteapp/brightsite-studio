@@ -1125,7 +1125,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
             <Pressable hitSlop={10} onPress={onAdminBack} style={[s.adminBackBtn, { marginRight: 0, marginLeft: 0 }]}><Ionicons name="chevron-back" size={15} color={C.primary} /><Text style={s.adminBackText}>Dashboard</Text></Pressable>
           </View>
           <View style={[s.dashboardBrandRow, { paddingBottom: 14, gap: 10 }]}>
-            <Text style={{ flex: 1, fontFamily: FONT, fontSize: 20, fontWeight: '800', color: C.ink }} numberOfLines={1}>{adminBiz.data?.name || adminBiz.data?.businessName || adminBiz.id}</Text>
+            <Text style={[aS.bizName, { flex: 1, fontSize: 18 }]} numberOfLines={1}>{adminBiz.data?.name || adminBiz.data?.businessName || adminBiz.id}</Text>
             {!isLoadingSite && <View style={[s.statusPill, { backgroundColor: status.bg }]}><Animated.View style={[s.statusDot, { backgroundColor: status.color, opacity: isPublishing ? pulseAnim : 1 }]} /><Text style={[s.statusPillText, { color: status.color }]}>{status.label}</Text></View>}
           </View>
         </>
