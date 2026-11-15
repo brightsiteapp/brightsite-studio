@@ -962,7 +962,9 @@ function TextEditModal({ visible, value, label, onSave, onClose }: any) {
   </Modal>;
 }
 
-function FlowBackdrop({ children }: any) {
+function FlowBackdrop({ children, plain = false }: any) {
+  // plain: full-screen cream page with no blue frame (login, choice and the card builder)
+  if (plain) return <View style={{ flex: 1, backgroundColor: C.card }}>{children}</View>;
   return <View style={{ flex: 1, backgroundColor: C.primary }}>
     <LinearGradient colors={['#7DB0FA', '#3B82F6', '#2563EB']} locations={[0, .45, 1]} style={StyleSheet.absoluteFill} />
     {children}
@@ -2703,23 +2705,23 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
 
   if (appScreen === 'choose') {
     const canSend = !!data.fullName.trim() && (!!data.googleLink.trim() || !!data.facebook.trim() || !!data.website.trim());
-    return <FlowBackdrop>
+    return <View style={{ flex: 1, backgroundColor: C.card }}>
       <StatusBar style="dark" />
-      <View style={s.loginStage}>
-        <View style={[s.card, s.loginCard]}>
-          <View style={s.loginHeader}><Logo height={20} /><Image source={require('./assets/brightsite-icon.png')} style={s.loginAppIcon} /></View>
-          <ScrollView contentContainerStyle={[s.content, s.loginContent]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
+      <View style={{ flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28 }}>
+        <View style={s.loginHeader}><Logo height={20} /><Image source={require('./assets/brightsite-icon.png')} style={s.loginAppIcon} /></View>
+        <ScrollView contentContainerStyle={[s.content, s.loginContent]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
             {chooseMode === 'pick' ? <>
               <Text style={s.heroTitle}>How would you like to build your website?</Text>
               <Intro>You can change anything later.</Intro>
               <View style={s.pathStack}>
-                <Pressable onPress={() => setChooseMode('auto')} style={({ pressed }) => [s.pathCard, s.pathCardMain, pressed && s.pressed]}>
-                  <Text style={s.pathTag}>RECOMMENDED · 2 MINUTES</Text>
-                  <Text style={[s.pathTitle, { color: '#fff' }]}>Automatic</Text>
-                  <Text style={[s.pathText, { color: 'rgba(255,255,255,.85)' }]}>Share your Google, Facebook or website link and our designer builds it for you.</Text>
+                <Pressable onPress={() => setChooseMode('auto')} style={({ pressed }) => [s.pathCard, s.pathCardPlain, pressed && s.pressed]}>
+                  <Text style={[s.pathTag, { color: C.inkMuted }]}>2 MINUTES</Text>
+                  <Text style={s.pathTitle}>Automatic</Text>
+                  <Text style={s.pathText}>Share your Google, Facebook or website link and our designer builds it for you.</Text>
                 </Pressable>
                 <Pressable onPress={() => { setIndex(1); motion.setValue(CARD_TRAVEL); setAppScreen('onboarding'); }} style={({ pressed }) => [s.pathCard, s.pathCardPlain, pressed && s.pressed]}>
                   <Text style={[s.pathTag, { color: C.inkMuted }]}>ABOUT 10 MINUTES</Text>
+                  <Image source={require('./assets/brightbuilder.png')} resizeMode="contain" style={{ width: 170, height: 170 * 137 / 1543, marginBottom: 8 }} />
                   <Text style={s.pathTitle}>Manual</Text>
                   <Text style={s.pathText}>Enter your details, hours, services and photos yourself.</Text>
                 </Pressable>
@@ -2738,9 +2740,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
               </Pressable>
             </>}
           </ScrollView>
-        </View>
       </View>
-    </FlowBackdrop>;
+    </View>;
   }
 
   if (appScreen === 'loading') {
@@ -2757,7 +2758,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     </FlowBackdrop>;
   }
 
-  return <FlowBackdrop>
+  return <FlowBackdrop plain>
     <StatusBar style="dark" />
     <View style={{ flex: 1 }}>
       <View style={s.stage}>
