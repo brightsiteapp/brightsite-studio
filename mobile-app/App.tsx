@@ -2720,7 +2720,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             </Pressable>
             <Pressable onPress={() => { setIndex(1); motion.setValue(CARD_TRAVEL); setAppScreen('onboarding'); }} style={({ pressed }) => [s.pathCard, s.pathCardWhite, pressed && s.pressed]}>
               <Image source={require('./assets/brightbuilder-blue.png')} resizeMode="contain" style={{ width: 19*1543/137, height: 19, marginBottom: 8 }} />
-              <Text style={[s.pathTitle, { color: C.ink }]}>Seven. Simple. Steps.</Text>
+              <Text style={[s.pathTitle, { color: C.ink, fontSize: 20 }]}>Seven. Simple. Steps.</Text>
               <Text style={[s.pathText, { color: C.ink }]}>Under 10 minutes. Enter your details, hours, services and photos yourself.</Text>
             </Pressable>
           </View>
