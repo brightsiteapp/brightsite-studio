@@ -2767,6 +2767,12 @@ function AdminAccountPanel({ biz, session, isLive }: { biz: any; session: any; i
       </> : <Text style={s.dashboardCardTitle}>{info ? (d.planActive ? 'Paid' : 'No plan yet') : 'Loading…'}</Text>}
     </View>
     <View style={s.dashboardInfoCard}>
+      <Text style={s.dashboardCardLabel}>Contact</Text>
+      <Text style={s.dashboardCardTitle}>{(biz?.data?.raw?.fullName || '').trim() || 'No name yet'}</Text>
+      <Text style={s.dashboardCardText}>{biz?.data?.raw?.phone || 'No phone number'}</Text>
+      {!!biz?.data?.raw?.email && <Text style={s.dashboardCardText}>{biz.data.raw.email}</Text>}
+    </View>
+    <View style={s.dashboardInfoCard}>
       <Text style={s.dashboardCardLabel}>Login email</Text>
       <Text style={s.dashboardCardTitle}>{info ? (info.login?.email || 'No login') : 'Loading…'}</Text>
       {!!info?.login?.lastSignIn && <Text style={s.dashboardCardText}>Last signed in {timeAgo(info.login.lastSignIn)}</Text>}
