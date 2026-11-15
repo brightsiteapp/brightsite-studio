@@ -1155,15 +1155,12 @@ function MessageThread({ session, slug, viewer, otherName, placeholder, intro }:
       {intro}
       {visible.map((m, i) => {
         const mine = m.sender === viewer;
-        const showDay = i === 0 || dayLabel(m.created_at) !== dayLabel(visible[i - 1].created_at);
-        const lastOfRun = i === visible.length - 1 || visible[i + 1].sender !== m.sender || dayLabel(visible[i + 1].created_at) !== dayLabel(m.created_at);
         const pending = m.id.startsWith('local-');
         return <React.Fragment key={m.id}>
-          {showDay && <Text style={s.messageDay}>{dayLabel(m.created_at)}</Text>}
-          <Pressable onLongPress={() => handleLongPressMessage(m)} style={[s.messageBubble, mine ? s.messageBubbleSent : s.messageBubbleReceived, !lastOfRun && { marginBottom: 3 }]}>
+          <Pressable onLongPress={() => handleLongPressMessage(m)} style={[s.messageBubble, mine ? s.messageBubbleSent : s.messageBubbleReceived]}>
             {isImageMessage(m.body) ? <Image source={{ uri: m.body }} style={s.messageImage} resizeMode="cover" /> : <Text style={[s.messageText, mine && { color: '#fff' }]}>{m.body}</Text>}
           </Pressable>
-          {lastOfRun && <Text style={[s.messageMeta, mine ? s.messageMetaSent : s.messageMetaReceived]}>{mine ? 'You' : otherName} · {pending ? 'Sending…' : timeLabel(m.created_at)}</Text>}
+          <Text style={[s.messageMeta, mine ? s.messageMetaSent : s.messageMetaReceived]}>{mine ? 'You' : otherName} · {pending ? 'Sending…' : `${dayLabel(m.created_at)}, ${timeLabel(m.created_at)}`}</Text>
         </React.Fragment>;
       })}
     </ScrollView>
@@ -1173,7 +1170,7 @@ function MessageThread({ session, slug, viewer, otherName, placeholder, intro }:
       </Pressable>
       <TextInput style={s.messageInputField} value={messageDraft} onChangeText={v => setMessageDraft(v.charAt(0).toUpperCase() + v.slice(1))} placeholder={placeholder} placeholderTextColor={C.placeholder} autoCapitalize="sentences" autoCorrect spellCheck keyboardType="default" enablesReturnKeyAutomatically multiline />
       <Pressable onPress={() => void sendMessage(undefined)} disabled={!messageDraft.trim() || sendingMessage} hitSlop={10} style={[s.messageSendBtn, (!messageDraft.trim() || sendingMessage) && { opacity: .35 }]} accessibilityLabel="Send message">
-        {sendingMessage ? <ActivityIndicator size="small" color={C.ink} /> : <View style={s.sendI}><View style={s.sendIDot} /><View style={s.sendIStem} /></View>}
+        {sendingMessage ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="arrow-up" size={21} color="#fff" />}
       </Pressable>
     </View>
   </>;
@@ -3063,16 +3060,15 @@ dashboardTab: { flex: 1, minHeight: 38, borderRadius: 11, alignItems: 'center', 
   phoneFrame: { width: DASHBOARD_PREVIEW_WIDTH, height: DASHBOARD_PREVIEW_HEIGHT, alignSelf: 'center', borderRadius: 28, borderWidth: 7, borderColor: '#141A1E', overflow: 'hidden', marginVertical: DASHBOARD_PREVIEW_INSET, backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: .18, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } },
   makeLiveBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 7, paddingHorizontal: 13, borderRadius: 20, backgroundColor: C.primary },
   makeLiveBtnText: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: '#fff' },
-  messageDay: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: C.inkMuted, textAlign: 'center', marginTop: 14, marginBottom: 10 },
-  messageMeta: { fontFamily: FONT, fontSize: 11, color: C.inkMuted, marginTop: 3, marginBottom: 12 },
+  messageMeta: { fontFamily: FONT, fontSize: 11, fontWeight: '600', color: C.inkMuted, marginTop: 5, marginBottom: 14 },
   messageMetaSent: { alignSelf: 'flex-end', marginRight: 4 },
   messageMetaReceived: { alignSelf: 'flex-start', marginLeft: 4 },
-  messageBubble: { padding: 12, paddingHorizontal: 15, borderRadius: 18, maxWidth: '82%', backgroundColor: C.surface },
+  messageBubble: { paddingVertical: 11, paddingHorizontal: 16, borderRadius: 22, maxWidth: '80%', backgroundColor: C.surface, shadowColor: '#1C2832', shadowOpacity: 0.07, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 1 },
   messageImage: { width: 180, height: 180, borderRadius: 12 },
-  messageBubbleReceived: { alignSelf: 'flex-start', borderBottomLeftRadius: 6 },
-  messageText: { fontFamily: FONT, fontSize: 15, lineHeight: 21, color: C.ink },
+  messageBubbleReceived: { alignSelf: 'flex-start', borderBottomLeftRadius: 7 },
+  messageText: { fontFamily: FONT, fontSize: 15.5, lineHeight: 22, color: C.ink },
   messageInputFixed: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingTop: 10, paddingHorizontal: 14, paddingBottom: Platform.OS === 'ios' ? 30 : 14, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.lineStrong, backgroundColor: C.surface },
-  messageBubbleSent: { backgroundColor: C.primary, alignSelf: 'flex-end', borderBottomRightRadius: 6 },
+  messageBubbleSent: { backgroundColor: C.primary, alignSelf: 'flex-end', borderBottomRightRadius: 7, shadowColor: C.primary, shadowOpacity: 0.28 },
   messageInputField: { flex: 1, minHeight: 40, maxHeight: 110, paddingHorizontal: 14, paddingTop: 10, paddingBottom: 10, borderRadius: 20, backgroundColor: 'rgba(28,40,50,.06)', fontFamily: FONT, fontSize: 15, color: C.ink },
   revealCard: { position: 'absolute', zIndex: 999, elevation: 999, backgroundColor: '#141A1E', borderColor: '#141A1E', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
 buildingWrap: { alignItems: 'center', paddingBottom: 24 },
@@ -3147,9 +3143,6 @@ pathCardWhite: { backgroundColor: '#fff', shadowColor: '#1C2832', shadowOpacity:
   chooseBack: { flexDirection: 'row', alignItems: 'center', gap: 2, alignSelf: 'flex-start', marginBottom: 14 },
   chooseBackText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.primary },
   // the lowercase i from the BrightSite wordmark: round dot over a rounded stem
-  sendI: { alignItems: 'center', gap: 2 },
-  sendIDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#fff' },
-  sendIStem: { width: 6, height: 13, borderRadius: 3, backgroundColor: '#fff' },
   listRow: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 8, borderRadius: 14, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line },
   gridRow: { flexDirection: 'row', gap: 6 },
   gridCell: { minHeight: 44, borderRadius: 11, paddingHorizontal: 10, fontFamily: FONT, fontSize: 14, color: C.ink, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line },
