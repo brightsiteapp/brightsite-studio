@@ -185,9 +185,6 @@ body { background: var(--bg); min-height: 100vh; }
 .seminar-pref { justify-self: start; margin: 4px 0 2px; background: var(--accent); color: #fff; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 700; }
 .seminar-time { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
 
-/* ---- settings btn ---- */
-.settings-btn { border: 1px solid var(--line); border-radius: 999px; background: none; padding: 7px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); font-size: 17px; line-height: 1; }
-.settings-btn:hover { border-color: var(--muted); color: var(--ink); }
 .admin-tabs { display: flex; gap: 4px; margin-left: 6px; }
 .admin-tab { position: relative; border: 0; background: none; padding: 7px 14px; border-radius: 999px; font: inherit; font-weight: 600; color: var(--muted); cursor: pointer; }
 .admin-tab.active { background: var(--bg); color: var(--ink); }
@@ -457,7 +454,6 @@ body { background: var(--bg); color: var(--ink); }
     <span class="admin-badge">Admin</span>
     <div class="app-header-right">
       <button type="button" class="logout-btn" id="seminarBtn" title="Seminar sign-ups">Seminar<span id="seminarCount"></span></button>
-      <button type="button" class="settings-btn" id="settingsBtn" title="Settings">⚙</button>
       <button type="button" class="logout-btn" id="logoutBtn">Sign out</button>
     </div>
   </header>
@@ -604,25 +600,6 @@ body { background: var(--bg); color: var(--ink); }
 
 
 <!-- SETTINGS MODAL -->
-<div class="modal-veil hidden" id="settingsModal">
-  <div class="modal">
-    <h2>Admin settings</h2>
-    <p>Vercel API credentials — used to connect custom domains to your project.</p>
-    <div class="modal-field">
-      <label>Vercel API token</label>
-      <input type="password" id="vercelToken" placeholder="Paste your Vercel token">
-    </div>
-    <div class="modal-field">
-      <label>Vercel project name or ID</label>
-      <input type="text" id="vercelProjectId" placeholder="e.g. brightsite-marketing-site">
-    </div>
-    <div class="modal-actions">
-      <button type="button" class="modal-cancel" id="settingsCancel">Cancel</button>
-      <button type="button" class="modal-confirm" id="settingsSave">Save</button>
-    </div>
-    <div class="modal-status" id="settingsStatus"></div>
-  </div>
-</div>
 
 <script>
 var SUPABASE_URL = 'https://vlisyfshmxdsjuybirxe.supabase.co';
@@ -1106,155 +1083,7 @@ function patchBusinessAfterUpload(demoUrl, failed, btn, status, progressWrap) {
   });
 }
 
-// ---- go live modal ----
-
-// ---- vercel helpers ----
-function blobToBase64(blob) {
-  return new Promise(function(resolve, reject) {
-    var reader = new FileReader();
-    reader.onload = function() { resolve(reader.result.split(',')[1]); };
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-}
-
-// Deploy the uploaded site files for `slug` to Vercel, alias `domain` to that deployment.
-// Falls back to just adding the domain to the project if no files exist yet.
-async function deployAndAliasToVercel(slug, domain, statusEl) {
-  var token, projectId;
-  try { token = localStorage.getItem('bs_vercel_token'); projectId = localStorage.getItem('bs_vercel_project'); } catch(e) {}
-  if (!token || !projectId) return;
-
-  var cleanDomain = domain.replace(/^https?:\/\//, '').replace(/\/.*$/, '').trim();
-  if (!cleanDomain) return;
-
-  // 1. List files in R2 for this slug
-  if (statusEl) { statusEl.textContent = 'Domain saved · Fetching site files…'; statusEl.className = 'modal-status ok'; }
-  var adminToken = (adminSession && adminSession.access_token) ? adminSession.access_token : '';
-  var listResp = await fetch(UPLOAD_WORKER + '/list/' + slug + '/site/', {
-    headers: { 'Authorization': 'Bearer ' + adminToken, 'x-admin': '1' }
-  });
-  var files = await listResp.json();
-
-  if (!Array.isArray(files) || files.length === 0) {
-    // No uploaded files yet — just register the domain on the project
-    tryAddVercelDomain('https://' + cleanDomain, statusEl);
-    return;
-  }
-
-  // 2. Download each file from R2 public URL and encode as base64
-  if (statusEl) { statusEl.textContent = 'Domain saved · Downloading ' + files.length + ' file(s)…'; }
-  var vercelFiles = [];
-  for (var i = 0; i < files.length; i++) {
-    var f = files[i];
-    if (!f.name || f.name.endsWith('/')) continue; // skip virtual folder entries
-    try {
-      var fileResp = await fetch(f.url);
-      if (!fileResp.ok) continue;
-      var blob = await fileResp.blob();
-      var b64 = await blobToBase64(blob);
-      vercelFiles.push({ file: f.name, data: b64, encoding: 'base64' });
-    } catch(e) {}
-  }
-
-  if (!vercelFiles.length) {
-    tryAddVercelDomain('https://' + cleanDomain, statusEl);
-    return;
-  }
-
-  // 3. Create a Vercel deployment with the site files
-  if (statusEl) { statusEl.textContent = 'Domain saved · Deploying to Vercel…'; }
-  var deployResp = await fetch('https://api.vercel.com/v13/deployments', {
-    method: 'POST',
-    headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: projectId, files: vercelFiles, projectSettings: { framework: null }, target: 'production' })
-  });
-  var deployData = await deployResp.json();
-
-  if (!deployData.id) {
-    if (statusEl) { statusEl.textContent = 'Domain saved · Deploy failed: ' + ((deployData.error && deployData.error.message) || 'unknown error'); }
-    return;
-  }
-
-  // 4. Poll until deployment is ready (static files are usually fast)
-  var deployId = deployData.id;
-  var ready = false;
-  for (var attempt = 0; attempt < 20; attempt++) {
-    await new Promise(function(r) { setTimeout(r, 3000); });
-    try {
-      var checkResp = await fetch('https://api.vercel.com/v13/deployments/' + encodeURIComponent(deployId), {
-        headers: { Authorization: 'Bearer ' + token }
-      });
-      var checkData = await checkResp.json();
-      if (checkData.readyState === 'READY') { ready = true; break; }
-      if (checkData.readyState === 'ERROR') { break; }
-      if (statusEl) { statusEl.textContent = 'Domain saved · Deploying… (' + (checkData.readyState || 'building') + ')'; }
-    } catch(e) {}
-  }
-
-  if (!ready) {
-    if (statusEl) { statusEl.textContent = 'Domain saved · Deployment timed out — check Vercel dashboard'; }
-    return;
-  }
-
-  // 5. Alias the custom domain to this specific deployment
-  var aliasResp = await fetch('https://api.vercel.com/v2/deployments/' + encodeURIComponent(deployId) + '/aliases', {
-    method: 'POST',
-    headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ alias: cleanDomain })
-  });
-  var aliasData = await aliasResp.json();
-
-  if (aliasData.error) {
-    if (statusEl) { statusEl.textContent = 'Deployed · Alias failed: ' + aliasData.error.message; }
-  } else {
-    if (statusEl) { statusEl.textContent = 'Domain saved · Site deployed and ' + cleanDomain + ' connected! ✓'; statusEl.className = 'modal-status ok'; }
-    // Show DNS records
-    try {
-      var dnsResp = await fetch('https://api.vercel.com/v6/domains/' + encodeURIComponent(cleanDomain) + '/config', {
-        headers: { Authorization: 'Bearer ' + token }
-      });
-      var cfg = await dnsResp.json();
-      var records = [];
-      if (cfg.cnames && cfg.cnames.length) records.push('CNAME → ' + cfg.cnames[0]);
-      if (cfg.aValues && cfg.aValues.length) records.push('A → ' + cfg.aValues[0]);
-      if (statusEl && records.length) statusEl.textContent += ' · DNS: ' + records.join(', ');
-    } catch(e) {}
-  }
-}
-
-// Lightweight fallback: just register the domain on the Vercel project (no file deploy)
-function tryAddVercelDomain(liveUrl, statusEl) {
-  var token, projectId;
-  try { token = localStorage.getItem('bs_vercel_token'); projectId = localStorage.getItem('bs_vercel_project'); } catch(e) {}
-  if (!token || !projectId) return;
-  var domain = liveUrl.replace(/^https?:\/\//, '').replace(/\/.*$/, '').trim();
-  if (!domain) return;
-
-  fetch('https://api.vercel.com/v9/projects/' + encodeURIComponent(projectId) + '/domains', {
-    method: 'POST',
-    headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: domain })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    if (data.error) {
-      if (statusEl) { statusEl.textContent += ' · Vercel: ' + data.error.message; }
-      return;
-    }
-    return fetch('https://api.vercel.com/v6/domains/' + encodeURIComponent(domain) + '/config', {
-      headers: { Authorization: 'Bearer ' + token }
-    }).then(function(r) { return r.json(); }).then(function(cfg) {
-      var records = [];
-      if (cfg.cnames && cfg.cnames.length) records.push('CNAME → ' + cfg.cnames[0]);
-      if (cfg.aValues && cfg.aValues.length) records.push('A → ' + cfg.aValues[0]);
-      if (statusEl && records.length) statusEl.textContent += ' · DNS: ' + records.join(', ');
-    });
-  })
-  .catch(function() {});
-}
-
-// domain modal — deploys site files to Vercel and aliases the domain
+// domain modal: connects the domain through the admin API
 function connectDomainRequest(slug, domain) {
   return fetch(API_BASE_URL + '/api/admin-businesses', {
     method: 'POST',
@@ -1397,31 +1226,6 @@ document.getElementById('seminarBtn').addEventListener('click', openSeminar);
 document.getElementById('seminarBack').addEventListener('click', closeSeminar);
 document.getElementById('seminarRefresh').addEventListener('click', loadSeminar);
 
-// ---- settings modal ----
-document.getElementById('settingsBtn').addEventListener('click', function() {
-  try {
-    document.getElementById('vercelToken').value = localStorage.getItem('bs_vercel_token') || '';
-    document.getElementById('vercelProjectId').value = localStorage.getItem('bs_vercel_project') || '';
-  } catch(e) {}
-  document.getElementById('settingsStatus').textContent = '';
-  document.getElementById('settingsModal').classList.remove('hidden');
-});
-
-document.getElementById('settingsCancel').addEventListener('click', function() {
-  document.getElementById('settingsModal').classList.add('hidden');
-});
-
-document.getElementById('settingsSave').addEventListener('click', function() {
-  var token = document.getElementById('vercelToken').value.trim();
-  var project = document.getElementById('vercelProjectId').value.trim();
-  try {
-    if (token) localStorage.setItem('bs_vercel_token', token); else localStorage.removeItem('bs_vercel_token');
-    if (project) localStorage.setItem('bs_vercel_project', project); else localStorage.removeItem('bs_vercel_project');
-  } catch(e) {}
-  var s = document.getElementById('settingsStatus');
-  s.textContent = 'Saved.'; s.className = 'modal-status ok';
-  setTimeout(function() { document.getElementById('settingsModal').classList.add('hidden'); }, 900);
-});
 
 // ---- delete modal ----
 var deleteTargetSlug = null;
@@ -1470,7 +1274,7 @@ document.getElementById('deleteConfirm').addEventListener('click', function() {
 });
 
 // Close modals on veil click
-['domainModal', 'deleteModal', 'uploadModal', 'settingsModal', 'promptModal', 'anModal'].forEach(function(id) {
+['domainModal', 'deleteModal', 'uploadModal', 'promptModal', 'anModal'].forEach(function(id) {
   document.getElementById(id).addEventListener('click', function(e) {
     if (e.target === this) this.classList.add('hidden');
   });
