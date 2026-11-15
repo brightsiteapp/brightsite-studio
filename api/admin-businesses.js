@@ -44,6 +44,7 @@ export default async function handler(request, response) {
   if (request.method === 'POST') {
     const body = typeof request.body === 'string' ? JSON.parse(request.body || '{}') : (request.body || {});
     if (body.action === 'delete-account') return deleteAccount(request, response, body);
+    if (body.action === 'delete-my-account') return deleteMyAccount(request, response);
     if (body.action === 'list-logins' || body.action === 'delete-logins') return manageLogins(request, response, body);
     if (body.action === 'notify-admin') return notifyAdminFromCustomer(request, response, body);
     if (body.action === 'my-subscription') return mySubscription(request, response, body);
@@ -133,6 +134,32 @@ async function connectDomain(request, response) {
   return json(response, 200, result);
 }
 
+// Cancels billing, takes the site offline and deletes one business with its messages.
+// Returns { done } on success or { error } (nothing further is touched after an error).
+async function purgeBusiness(supabase, slug, data) {
+  const done = [];
+  if (data.stripeSubscriptionId && process.env.STRIPE_SECRET_KEY) {
+    try {
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
+      await stripe.subscriptions.cancel(data.stripeSubscriptionId);
+      done.push('subscription cancelled');
+    } catch (err) {
+      if (!/No such subscription|canceled/i.test(err.message)) return { error: 'Could not cancel the Stripe subscription, so nothing was deleted: ' + err.message };
+    }
+  }
+  if (data.published) {
+    const off = await setSiteLive(slug, false);
+    if (!off.error) done.push('site taken offline');
+  }
+  const { error: msgErr } = await supabase.from('messages').delete().eq('business_id', slug);
+  if (msgErr) return { error: 'Could not delete messages: ' + msgErr.message };
+  done.push('messages deleted');
+  const { error: bizErr, count } = await supabase.from('businesses').delete({ count: 'exact' }).eq('id', slug);
+  if (bizErr || !count) return { error: 'Could not delete the business' + (bizErr ? ': ' + bizErr.message : '') };
+  done.push('business deleted');
+  return { done };
+}
+
 async function deleteAccount(request, response, body) {
   const token = bearerToken(request);
   if (!token) return json(response, 401, { error: 'Authentication required' });
@@ -146,34 +173,10 @@ async function deleteAccount(request, response, body) {
   const { data: row, error } = await supabase.from('businesses').select('user_id,data').eq('id', slug).maybeSingle();
   if (error) return json(response, 502, { error: error.message });
   if (!row) return json(response, 404, { error: 'Client not found' });
-  const data = row.data || {};
-  const done = [];
 
-  if (data.stripeSubscriptionId && process.env.STRIPE_SECRET_KEY) {
-    try {
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
-      await stripe.subscriptions.cancel(data.stripeSubscriptionId);
-      done.push('subscription cancelled');
-    } catch (err) {
-      if (!/No such subscription|canceled/i.test(err.message)) {
-        return json(response, 502, { error: 'Could not cancel their Stripe subscription, so nothing was deleted: ' + err.message });
-      }
-    }
-  }
-
-  if (data.published) {
-    const off = await setSiteLive(slug, false);
-    if (!off.error) done.push('site taken offline');
-  }
-
-  const { error: msgErr } = await supabase.from('messages').delete().eq('business_id', slug);
-  if (msgErr) return json(response, 502, { error: 'Could not delete messages: ' + msgErr.message });
-  done.push('messages deleted');
-
-  const { error: bizErr, count } = await supabase.from('businesses').delete({ count: 'exact' }).eq('id', slug);
-  if (bizErr || !count) return json(response, 502, { error: 'Could not delete the business' + (bizErr ? ': ' + bizErr.message : '') });
-  done.push('business deleted');
-
+  const result = await purgeBusiness(supabase, slug, row.data || {});
+  if (result.error) return json(response, 502, { error: result.error });
+  const done = result.done;
   if (row.user_id) {
     const { count: others } = await supabase.from('businesses').select('id', { count: 'exact', head: true }).eq('user_id', row.user_id);
     if (!others) {
@@ -184,6 +187,26 @@ async function deleteAccount(request, response, body) {
     }
   }
   return json(response, 200, { ok: true, done });
+}
+
+// A customer deletes their own account from the app or dashboard (App Store requirement):
+// every business they own, then their login. Admin logins can't delete themselves this way.
+async function deleteMyAccount(request, response) {
+  const token = bearerToken(request);
+  if (!token) return json(response, 401, { error: 'Authentication required' });
+  const user = await currentUser(ACCOUNTS_SUPABASE_URL, ACCOUNTS_SUPABASE_ANON_KEY, token).catch(() => null);
+  if (!user?.id) return json(response, 401, { error: 'Authentication required' });
+  if (ADMIN_EMAILS.has(String(user.email || '').trim().toLowerCase())) return json(response, 403, { error: 'Admin accounts can\'t be deleted here' });
+  const supabase = supabaseAdmin();
+  const { data: rows, error } = await supabase.from('businesses').select('id,data').eq('user_id', user.id);
+  if (error) return json(response, 502, { error: error.message });
+  for (const row of rows || []) {
+    const result = await purgeBusiness(supabase, row.id, row.data || {});
+    if (result.error) return json(response, 502, { error: result.error });
+  }
+  const { error: userErr } = await supabase.auth.admin.deleteUser(user.id);
+  if (userErr) return json(response, 502, { error: 'Your website was removed but your login could not be deleted: ' + userErr.message });
+  return json(response, 200, { ok: true });
 }
 
 // Logins left behind by deletes made before the account delete removed them too.

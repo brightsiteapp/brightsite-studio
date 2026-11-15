@@ -2,6 +2,8 @@ import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
 import * as ImagePicker from 'expo-image-picker';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
@@ -1109,6 +1111,24 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
   // Opens exactly what the preview shows: the live address once live, otherwise the uploaded preview.
   const openPreview = () => { const u = realUrl || (isLive ? siteUrl : ''); if (u) void Linking.openURL(/^https?:/.test(u) ? u : `https://${u}`); };
   const goLive = () => { if (isPaying) void onGoLive?.(); else void openPlanModal(); };
+  const [deleting, setDeleting] = useState(false);
+  // App Store requirement: customers can delete their account (and website) from inside the app.
+  const confirmDeleteAccount = () => Alert.alert('Delete your account?', 'This permanently deletes your account, your website and your messages, cancels your plan and takes your site offline. This can\'t be undone.', [
+    { text: 'Cancel', style: 'cancel' },
+    { text: 'Delete', style: 'destructive', onPress: async () => {
+      setDeleting(true);
+      try {
+        const { data: fresh } = await supabase.auth.getSession();
+        const token = fresh.session?.access_token || session?.access_token;
+        const res = await fetch(ADMIN_API, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete-my-account' }) });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(j.error || 'Something went wrong.');
+        Alert.alert('Account deleted', 'Your account and website have been deleted.');
+        onSignOut?.();
+      } catch (e: any) { Alert.alert('Could not delete account', e.message || 'Please try again, or contact tom@brightsite.app.'); }
+      finally { setDeleting(false); }
+    } },
+  ]);
   const confirmSignOut = () => Alert.alert('Log out?', 'Your website and details stay saved to your account.', [
     { text: 'Cancel', style: 'cancel' },
     { text: 'Log out', style: 'destructive', onPress: () => onSignOut?.() },
@@ -1167,7 +1187,16 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
             <Pressable onPress={() => setShowPassword(true)} style={s.cardLink} hitSlop={8}><Ionicons name="key-outline" size={15} color={C.primary} /><Text style={s.cardLinkText}>Change password</Text></Pressable>
           </View>
           <ChangePasswordModal visible={showPassword} onClose={() => setShowPassword(false)} />
+          <View style={s.dashboardInfoCard}>
+            <Text style={s.dashboardCardLabel}>Help</Text>
+            <Pressable onPress={() => void Linking.openURL('mailto:tom@brightsite.app')} style={s.cardLink} hitSlop={8}><Ionicons name="mail-outline" size={15} color={C.primary} /><Text style={s.cardLinkText}>Contact support</Text></Pressable>
+            <Pressable onPress={() => void Linking.openURL('https://brightsite.app/terms.html#privacy')} style={s.cardLink} hitSlop={8}><Ionicons name="shield-checkmark-outline" size={15} color={C.primary} /><Text style={s.cardLinkText}>Privacy policy</Text></Pressable>
+            <Pressable onPress={() => void Linking.openURL('https://brightsite.app/terms.html')} style={s.cardLink} hitSlop={8}><Ionicons name="document-text-outline" size={15} color={C.primary} /><Text style={s.cardLinkText}>Terms</Text></Pressable>
+          </View>
           <Pressable onPress={confirmSignOut} style={({ pressed }) => [s.secondaryBtn, pressed && s.pressed]}><Ionicons name="log-out-outline" size={17} color={C.danger} /><Text style={[s.secondaryBtnText, { color: C.danger }]}>Log out</Text></Pressable>
+          <Pressable disabled={deleting} onPress={confirmDeleteAccount} style={({ pressed }) => [{ alignSelf: 'center', paddingVertical: 14, paddingHorizontal: 12 }, pressed && s.pressed]}>
+            {deleting ? <ActivityIndicator size="small" color={C.danger} /> : <Text style={{ fontFamily: FONT, fontSize: 14, fontWeight: '600', color: C.danger }}>Delete account</Text>}
+          </Pressable>
         </>}
         {tab === 'Website' && <Animated.View {...websiteBounce.panHandlers} style={{ transform: [{ translateY: websiteDrag }] }}>
           <View style={[s.dashboardWebsiteHead, { zIndex: 20 }]}>
@@ -1778,6 +1807,32 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     }
   };
 
+  // Sign in with Apple (required by the App Store when Google sign-in is offered). Supabase checks the
+  // identity token against the nonce; Apple only shares the person's name on their very first sign-in.
+  const appleSignIn = async () => {
+    Keyboard.dismiss();
+    setAuthBusy(true);
+    setAuthStatus('');
+    try {
+      const rawNonce = Crypto.randomUUID();
+      const hashedNonce = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, rawNonce);
+      const cred = await AppleAuthentication.signInAsync({
+        requestedScopes: [AppleAuthentication.AppleAuthenticationScope.FULL_NAME, AppleAuthentication.AppleAuthenticationScope.EMAIL],
+        nonce: hashedNonce,
+      });
+      if (!cred.identityToken) throw new Error('No identity token');
+      const { data: signed, error } = await supabase.auth.signInWithIdToken({ provider: 'apple', token: cred.identityToken, nonce: rawNonce });
+      if (error || !signed.session) throw error || new Error('No session');
+      const given = [cred.fullName?.givenName, cred.fullName?.familyName].filter(Boolean).join(' ');
+      if (given) setData((d: any) => ({ ...d, fullName: d.fullName || given }));
+      await loadAccountDestination(signed.session);
+    } catch (e: any) {
+      if (e?.code !== 'ERR_REQUEST_CANCELED') setAuthStatus('Apple sign-in failed. Try again.');
+    } finally {
+      setAuthBusy(false);
+    }
+  };
+
   const go = (to: number) => {
     const requested = Math.max(0, Math.min(steps.length - 1, to));
     const next = Math.max(index - 1, Math.min(index + 1, requested));
@@ -2106,6 +2161,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         }} style={s.forgotLink}><Text style={s.forgotText}>Forgot password?</Text></Pressable>}
         <Pressable disabled={authBusy || authChecking} onPress={() => void authenticate()} style={({ pressed }) => [s.authSubmit, pressed && s.pressed, (authBusy || authChecking) && s.authSubmitDisabled]}>{authBusy || authChecking ? <ActivityIndicator size="small" color="#fff" /> : <Text style={s.authSubmitText}>{authMode === 'signup' ? 'Create account' : 'Log in'}</Text>}</Pressable>
         <View style={s.orRow}><View style={s.orLine} /><Text style={s.orText}>or</Text><View style={s.orLine} /></View>
+        {Platform.OS === 'ios' && <AppleAuthentication.AppleAuthenticationButton buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE} buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK} cornerRadius={14} style={{ width: '100%', height: 52, marginBottom: 12 }} onPress={() => { if (!authBusy && !authChecking) void appleSignIn(); }} />}
         <Pressable disabled={authBusy || authChecking} onPress={() => void googleSignIn()} style={({ pressed }) => [s.googleBtn, pressed && s.pressed, (authBusy || authChecking) && s.authSubmitDisabled]}>
           <Image source={require('./assets/google-g.png')} style={{ width: 18, height: 18 }} />
           <Text style={s.googleBtnText}>Continue with Google</Text>
