@@ -46,7 +46,7 @@ export default async function handler(request, response) {
     if (body.action === 'delete-account') return deleteAccount(request, response, body);
     if (body.action === 'list-logins' || body.action === 'delete-logins') return manageLogins(request, response, body);
     if (body.action === 'notify-admin') return notifyAdminFromCustomer(request, response, body);
-    if (['account-info', 'update-login', 'send-reset', 'cancel-plan', 'register-admin-push', 'push-customer'].includes(body.action)) return adminAction(request, response, body);
+    if (['account-info', 'update-login', 'send-reset', 'update-info', 'cancel-plan', 'register-admin-push', 'push-customer'].includes(body.action)) return adminAction(request, response, body);
     return connectDomain(request, response);
   }
   if (request.method !== 'GET') {
@@ -288,6 +288,17 @@ async function adminAction(request, response, body) {
     if (upErr) return json(response, 502, { error: upErr.message });
     if (patch.email) await supabase.from('businesses').update({ data: { ...data, raw: { ...(data.raw || {}), email: patch.email } } }).eq('id', slug);
     return json(response, 200, { ok: true });
+  }
+
+  if (body.action === 'update-info') {
+    const allowed = ['name', 'fullName', 'phone', 'email', 'address', 'tagline', 'website', 'instagram', 'facebook', 'designerNotes'];
+    const raw = { ...(data.raw || {}) };
+    for (const k of allowed) if (typeof body.info?.[k] === 'string') raw[k] = body.info[k].trim().slice(0, 2000);
+    const nextData = { ...data, raw };
+    if (typeof body.info?.name === 'string' && body.info.name.trim()) nextData.name = raw.name;
+    const { error: upErr } = await supabase.from('businesses').update({ data: nextData, ...(nextData.name ? { name: nextData.name } : {}) }).eq('id', slug);
+    if (upErr) return json(response, 502, { error: upErr.message });
+    return json(response, 200, { ok: true, data: nextData });
   }
 
   if (body.action === 'send-reset') {

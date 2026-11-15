@@ -1179,7 +1179,7 @@ function MessageThread({ session, slug, viewer, otherName, placeholder, intro }:
   </>;
 }
 
-function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, onPaid, saveError, planAnnual, planPro, media, isPaying, buildChoice, session, slug, onAdminBack, onDomainChosen, ownedDomain = '', infoComplete, onSendToDesigner, playReveal, onRevealDone, previewLink = '' }: any) {
+function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, onPaid, saveError, planAnnual, planPro, media, isPaying, buildChoice, session, slug, onAdminBack, onDomainChosen, ownedDomain = '', adminBiz, onAdminSaved, infoComplete, onSendToDesigner, playReveal, onRevealDone, previewLink = '' }: any) {
   // After sending to the designer: a full-screen preview card, the B fades in, then the text,
   // then the card shrinks into its place on the dashboard.
   const buildCardRef = useRef<View>(null);
@@ -1261,6 +1261,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
   const [liveSuffix, setLiveSuffix] = useState(suffix || '.co.uk');
   const [domainError, setDomainError] = useState('');
   const [domainAvailable, setDomainAvailable] = useState(false);
+  const [showAdminEdit, setShowAdminEdit] = useState(false);
   const [buyMode, setBuyMode] = useState(false); // Account page: buying just a domain, no plan yet
   const openPlanModal = () => {
     setBuyMode(false);
@@ -1441,12 +1442,25 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
       </View>
       <View style={s.dashboardTabsTop}>{['Website', 'Messages', 'Account'].map(name => <Pressable key={name} onPress={() => setTab(name)} style={[s.dashboardTab, tab === name && s.dashboardTabOn]}><Text style={[s.dashboardTabText, tab === name && s.dashboardTabTextOn]}>{name}</Text>{name === 'Messages' && hasUnread && tab !== 'Messages' && <View style={s.unreadDot} accessibilityLabel="New message" />}</Pressable>)}</View>
       {!!saveError && <View style={s.saveBanner}><Ionicons name="alert-circle" size={16} color={C.danger} /><Text style={s.saveBannerText}>{saveError}</Text></View>}
-      {tab === 'Messages' ? <MessageThread session={session} slug={slug} viewer="customer" otherName="Tom" placeholder="Message Tom…" intro={<>
+      {tab === 'Messages' ? (adminBiz
+        ? <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}><MessageThread key={adminBiz.id} session={session} slug={adminBiz.id} viewer="admin" otherName={(adminBiz.data?.fullName || adminBiz.data?.name || 'Customer').trim().split(' ')[0]} placeholder="Message…" intro={<>
+            <View style={[s.messageBubble, s.messageBubbleSent]}><Text style={[s.messageText, { color: '#fff' }]}>{welcomeText(adminBiz.data?.fullName, adminBiz.data?.buildChoice || (/Build choice: designer/i.test(adminBiz.data?.notes || '') ? 'designer' : null))}</Text></View>
+            <Text style={[s.messageMeta, s.messageMetaSent]}>You · Welcome message</Text>
+          </>} /></KeyboardAvoidingView>
+        : <MessageThread session={session} slug={slug} viewer="customer" otherName="Tom" placeholder="Message Tom…" intro={<>
           <View style={[s.messageBubble, s.messageBubbleReceived]}><Text style={s.messageText}>{welcomeText(data.fullName, buildChoice)}</Text></View>
           <Text style={[s.messageMeta, s.messageMetaReceived]}>Tom · BrightSite</Text>
-        </>} /> :
+        </>} />) :
       <ScrollView key={tab} scrollEnabled={tab !== 'Website'} contentContainerStyle={s.dashboardContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
-        {tab === 'Account' && <>
+        {tab === 'Account' && adminBiz && <>
+          <View style={s.dashboardInfoCard}>
+            <Text style={s.dashboardCardLabel}>Domain</Text>
+            <Text style={s.dashboardCardTitle}>{ownedDomain || domainLabel}</Text>
+            <Text style={s.dashboardCardText}>{isLive ? 'Connected to the website' : ownedDomain || domain ? 'Connects when the website goes live' : 'No domain yet'}</Text>
+          </View>
+          <AdminAccountPanel biz={adminBiz} session={session} />
+        </>}
+        {tab === 'Account' && !adminBiz && <>
           <View style={s.dashboardInfoCard}>
             <Text style={s.dashboardCardLabel}>Plan</Text>
             <Text style={s.dashboardCardTitle}>{isPaying ? `${planPro ? 'Pro' : 'Free'} plan · ${planAnnual ? 'Annual' : 'Monthly'}` : 'No plan yet'}</Text>
@@ -1468,7 +1482,9 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
         </>}
         {tab === 'Website' && <Animated.View {...websiteBounce.panHandlers} style={{ transform: [{ translateY: websiteDrag }] }}>
           <View style={[s.dashboardWebsiteHead, { zIndex: 20 }]}>
-            {(isReady || isLive || isPublishing) && !isBuilding
+            {adminBiz
+              ? <Pressable onPress={() => void Share.share({ message: businessBrief(adminBiz), title: 'Business brief' })} accessibilityLabel="Copy all business info" style={({ pressed }) => [s.dashboardEdit, { paddingHorizontal: 11 }, pressed && s.pressed]}><Ionicons name="copy-outline" size={15} color={C.ink} /></Pressable>
+              : (isReady || isLive || isPublishing) && !isBuilding
               ? isLive
                 ? <Pressable onPress={confirmOffline} style={({ pressed }) => [s.dashboardEdit, pressed && s.pressed]}>
                     <Ionicons name="cloud-offline-outline" size={14} color={C.inkMuted} />
@@ -1502,9 +1518,9 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
                 <Ionicons name="stats-chart" size={15} color={C.primary} />
               </Pressable>
             <View>
-              <Pressable onPress={() => isBuilding ? onEditInfo?.() : setShowEditMenu(v => !v)} style={({ pressed }) => [s.dashboardEdit, pressed && s.pressed]}>
+              <Pressable onPress={() => adminBiz ? setShowAdminEdit(true) : isBuilding ? onEditInfo?.() : setShowEditMenu(v => !v)} style={({ pressed }) => [s.dashboardEdit, pressed && s.pressed]}>
                 <Ionicons name="create-outline" size={15} color={C.ink} /><Text style={s.dashboardEditText}>Edit</Text>
-                {!isBuilding && <Ionicons name={showEditMenu ? 'chevron-up' : 'chevron-down'} size={14} color={C.inkMuted} />}
+                {!isBuilding && !adminBiz && <Ionicons name={showEditMenu ? 'chevron-up' : 'chevron-down'} size={14} color={C.inkMuted} />}
               </Pressable>
               {showEditMenu && <View style={s.editMenu}>
                 <Pressable onPress={() => { setShowEditMenu(false); onEditInfo?.(); }} style={({ pressed }) => [s.editMenuItem, pressed && { backgroundColor: C.primarySoft }]}>
@@ -1540,6 +1556,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
         </Animated.View>}
       </ScrollView>}
     </View>
+    {adminBiz && <AdminInfoEditor visible={showAdminEdit} biz={adminBiz} session={session} onClose={() => setShowAdminEdit(false)} onSaved={onAdminSaved} />}
     <Modal visible={showPlanModal} transparent animationType="slide" onRequestClose={() => setShowPlanModal(false)}>
       <View style={s.planModalOverlay}>
         <View style={s.planModalBox}>
@@ -1713,7 +1730,6 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [adminSearch, setAdminSearch] = useState('');
   const [adminTab, setAdminTab] = useState<'businesses' | 'messages' | 'notifications'>('businesses');
   const [adminActiveThread, setAdminActiveThread] = useState<any>(null);
-  const [adminDetail, setAdminDetail] = useState<any>(null);
   const [adminAllMessages, setAdminAllMessages] = useState<any[]>([]);
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminViewingBusiness, setAdminViewingBusiness] = useState<any>(null);
@@ -2608,7 +2624,6 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           </View>
           <Pressable hitSlop={8} onPress={async () => { await supabase.auth.signOut(); onSignedOut(); }} style={aS.signOutBtn}><Text style={aS.signOutText}>Sign out</Text></Pressable>
         </View>
-        {adminDetail ? <AdminClientView key={adminDetail.id} biz={adminBusinesses.find(b => b.id === adminDetail.id) || adminDetail} session={session} onBack={() => { setAdminDetail(null); if (session) void loadAdminData(session); }} onChanged={() => { if (session) void loadAdminData(session); }} onViewAsClient={() => adminOpenBusiness(adminDetail)} /> : <>
         <View style={s.dashboardTabsTop}>
           {([['businesses', 'Accounts'], ['messages', 'Messages'], ['notifications', 'Activity']] as const).map(([key, label]) => {
             const active = adminTab === key;
@@ -2642,7 +2657,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
               const name = d.name || d.businessName || biz.id;
               const updated = biz.updatedAt ? timeAgo(biz.updatedAt) : '';
               const hasUnread = adminThreadUnread(biz.id);
-              return <Pressable key={biz.id} onPress={() => setAdminDetail(biz)} style={({ pressed }) => [aS.bizCard, pressed && s.pressed]}>
+              return <Pressable key={biz.id} onPress={() => adminOpenBusiness(biz)} style={({ pressed }) => [aS.bizCard, pressed && s.pressed]}>
                 <View style={[aS.bizStatusBar, { backgroundColor: STATUS_COLORS[st] }]} />
                 <View style={aS.bizCardInner}>
                   <View style={{ flex: 1, marginRight: 8 }}>
@@ -2707,14 +2722,13 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           })}
         </ScrollView>}
 
-        </>}
         </View>
       </View>
     </FadeIn>;
   }
 
   if (appScreen === 'dashboard') return <FadeIn>
-    <DashboardHome previewLink={businessRecord.current?.demoUrl || businessRecord.current?.previewUrl || ''} playReveal={playReveal} onRevealDone={() => setPlayReveal(false)} onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean, isPro: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true }; setPlanAnnual(isAnnual); setPlanPro(isPro); setWebsiteStatus('publishing'); }} infoComplete={infoComplete} onSendToDesigner={sendFromDashboard} onEditInfo={() => { if (adminViewingBusiness) return; setEditingInfo(websiteStatus !== 'todo'); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} saveError={saveError} planAnnual={planAnnual} planPro={planPro} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onDomainChosen={(d: string, sfx: string) => { setDomain(d); setSuffix(sfx); setDomainReady(true); }} ownedDomain={businessRecord.current?.domainRegistered ? (businessRecord.current?.customDomain || businessRecord.current?.domain || '') : ''} />
+    <DashboardHome previewLink={businessRecord.current?.demoUrl || businessRecord.current?.previewUrl || ''} playReveal={playReveal} onRevealDone={() => setPlayReveal(false)} onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean, isPro: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true }; setPlanAnnual(isAnnual); setPlanPro(isPro); setWebsiteStatus('publishing'); }} infoComplete={infoComplete} onSendToDesigner={sendFromDashboard} onEditInfo={() => { if (adminViewingBusiness) return; setEditingInfo(websiteStatus !== 'todo'); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} saveError={saveError} planAnnual={planAnnual} planPro={planPro} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onDomainChosen={(d: string, sfx: string) => { setDomain(d); setSuffix(sfx); setDomainReady(true); }} adminBiz={adminViewingBusiness} onAdminSaved={(d: any) => { const b = { ...adminViewingBusiness, data: d }; setAdminViewingBusiness(b); hydrateFromRecord(d, d?.contactEmail || d?.email || ''); setAdminBusinesses(list => list.map(x => x.id === b.id ? b : x)); }} ownedDomain={businessRecord.current?.domainRegistered ? (businessRecord.current?.customDomain || businessRecord.current?.domain || '') : ''} />
   </FadeIn>;
 
   if (appScreen === 'design-editor') return <FadeIn><DesignEditorFullscreen palette={palette} setPalette={setPalette} font={font} setFont={setFont} siteTexts={siteTexts} setSiteTexts={setSiteTexts} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} data={data} services={services} hours={hours} contactForm={contactForm} onBack={() => {
@@ -3168,82 +3182,87 @@ savedPill: { position: 'absolute', top: SAFE_TOP + 86, alignSelf: 'center', zInd
   stripHint: { fontFamily: FONT, fontSize: 12, color: C.inkMuted, marginLeft: 6 },
 });
 
-// Admin view of one client: Website / Messages / Account tabs (mirrors the web admin page).
-function AdminClientView({ biz, session, onBack, onChanged, onViewAsClient }: { biz: any; session: any; onBack: () => void; onChanged: () => void; onViewAsClient: () => void }) {
-  const [tab, setTab] = useState<'site' | 'msgs' | 'account'>('site');
+const adminApiCall = (session: any, slug: string, payload: Record<string, any>) => fetch(ADMIN_API, { method: 'POST', headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ slug, ...payload }) })
+  .then(async r => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`); return j; });
+
+// Admin-only account controls (login, password, plan), shown in the client's Account tab.
+function AdminAccountPanel({ biz, session }: { biz: any; session: any }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [info, setInfo] = useState<any>(null);
   const [newEmail, setNewEmail] = useState('');
   const [newPw, setNewPw] = useState('');
   const d = biz.data || {};
-  const name = d.name || d.businessName || biz.id;
-  const live = !!d.published;
-  const canLive = !!(d.demoUrl || d.demoUploaded);
-  const url = (d.published && d.liveUrl) || d.demoUrl || d.liveUrl || '';
-  const domain = d.customDomain || d.domain || '';
-  const api = (payload: Record<string, any>) => fetch(ADMIN_API, { method: 'POST', headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: biz.id, ...payload }) })
-    .then(async r => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`); return j; });
+  const api = (payload: Record<string, any>) => adminApiCall(session, biz.id, payload);
   const run = async (fn: () => Promise<any>, ok?: string) => { setBusy(true); setMsg(''); try { await fn(); if (ok) setMsg(ok); } catch (e: any) { setMsg(e.message || 'Something went wrong'); } setBusy(false); };
   const loadInfo = () => api({ action: 'account-info' }).then(setInfo).catch(e => setMsg(e.message));
-  useEffect(() => { if (tab === 'account' && !info) void loadInfo(); }, [tab]);
+  useEffect(() => { void loadInfo(); }, [biz.id]);
   const sub = info?.subscription;
-  const pill = (label: string, onPress: () => void, opts: { primary?: boolean; danger?: boolean; disabled?: boolean } = {}) =>
-    <Pressable key={label} disabled={busy || opts.disabled} onPress={onPress} style={({ pressed }) => [aS.admPill, opts.primary && aS.admPillPrimary, opts.disabled && { opacity: 0.45 }, pressed && s.pressed]}>
-      <Text style={[aS.admPillText, opts.primary && { color: '#fff' }, opts.danger && { color: C.danger }]}>{label}</Text>
-    </Pressable>;
-  return <View style={{ flex: 1 }}>
-    <View style={aS.threadHeader}>
-      <Pressable onPress={onBack} style={[aS.threadBack, { flex: 1 }]}><Ionicons name="chevron-back" size={20} color={C.ink} /><Text style={aS.threadBackText} numberOfLines={1}>{name}</Text></Pressable>
-      <View style={[aS.admStatus, { backgroundColor: live ? C.successSoft : C.warningSoft }]}><Text style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: '700', color: live ? C.success : C.warning }}>{live ? 'Live' : 'Not live'}</Text></View>
-    </View>
-    <View style={s.dashboardTabsTop}>
-      {([['site', 'Website'], ['msgs', 'Messages'], ['account', 'Account']] as const).map(([k, label]) =>
-        <Pressable key={k} onPress={() => setTab(k)} style={[s.dashboardTab, tab === k && s.dashboardTabOn]}><Text style={[s.dashboardTabText, tab === k && s.dashboardTabTextOn]}>{label}</Text></Pressable>)}
-    </View>
-    {tab === 'site' && <ScrollView contentContainerStyle={aS.admBody}>
+  const pill = (label: string, onPress: () => void, danger = false) =>
+    <Pressable key={label} disabled={busy} onPress={onPress} style={({ pressed }) => [aS.admPill, pressed && s.pressed]}><Text style={[aS.admPillText, danger && { color: C.danger }]}>{label}</Text></Pressable>;
+  return <View style={{ gap: 12 }}>
+    <View style={aS.admCard}>
+      <Text style={aS.admK}>Client login</Text>
+      <Text style={aS.admV}>{info ? (info.login?.email || 'No login') : 'Loading…'}</Text>
+      {!!info?.login?.lastSignIn && <Text style={aS.admNote}>Last signed in {timeAgo(info.login.lastSignIn)}</Text>}
+      <TextInput style={aS.admInput} value={newEmail} onChangeText={setNewEmail} placeholder="New login email" autoCapitalize="none" keyboardType="email-address" placeholderTextColor={C.placeholder} />
+      <View style={aS.admPills}>{pill('Change email', () => { if (newEmail.trim()) void run(async () => { await api({ action: 'update-login', email: newEmail.trim() }); setNewEmail(''); await loadInfo(); }, 'Login email changed.'); })}</View>
+      <TextInput style={aS.admInput} value={newPw} onChangeText={setNewPw} placeholder="New password (8+ characters)" autoCapitalize="none" autoCorrect={false} placeholderTextColor={C.placeholder} />
       <View style={aS.admPills}>
-        {pill('View as client', onViewAsClient)}
-        {!!url && pill('Open site ↗', () => void Linking.openURL(url))}
-        {pill('Copy info', () => void Share.share({ message: businessBrief(biz), title: 'Business brief' }))}
+        {pill('Set password', () => { if (newPw.length >= 8) void run(async () => { await api({ action: 'update-login', password: newPw }); setNewPw(''); }, 'Password set. Let them know.'); else setMsg('Password must be 8+ characters.'); })}
+        {pill('Email reset link', () => void run(async () => { const r = await api({ action: 'send-reset' }); setMsg(`Reset link sent to ${r.email}.`); }))}
       </View>
-      <View style={aS.admCard}><Text style={aS.admK}>Website files</Text><Text style={aS.admV}>{canLive ? 'Uploaded' : 'Nothing uploaded yet'}</Text>{!canLive && <Text style={aS.admNote}>Upload their website from the web admin page.</Text>}</View>
-      <View style={aS.admCard}><Text style={aS.admK}>Domain</Text><Text style={aS.admV}>{domain ? `${domain}${d.domainConnected ? ' ✓' : ' …'}` : 'No domain'}</Text>{!!domain && !d.domainConnected && <Text style={aS.admNote}>Waiting for nameservers{d.domainNameservers?.length ? `: ${d.domainNameservers.join(', ')}` : ''}</Text>}</View>
-      {!!msg && <Text style={aS.admNote}>{msg}</Text>}
-    </ScrollView>}
-    {tab === 'msgs' && <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <MessageThread key={biz.id} session={session} slug={biz.id} viewer="admin" otherName={(d.fullName || d.name || 'Customer').trim().split(' ')[0]} placeholder="Message…" intro={<>
-        <View style={[s.messageBubble, s.messageBubbleSent]}><Text style={[s.messageText, { color: '#fff' }]}>{welcomeText(d.fullName, d.buildChoice || (/Build choice: designer/i.test(d.notes || '') ? 'designer' : null))}</Text></View>
-        <Text style={[s.messageMeta, s.messageMetaSent]}>You · Welcome message</Text>
-      </>} />
-    </KeyboardAvoidingView>}
-    {tab === 'account' && <ScrollView contentContainerStyle={aS.admBody} keyboardShouldPersistTaps="handled">
-      <View style={aS.admCard}>
-        <Text style={aS.admK}>Login</Text>
-        <Text style={aS.admV}>{info ? (info.login?.email || 'No login') : 'Loading…'}</Text>
-        {!!info?.login?.lastSignIn && <Text style={aS.admNote}>Last signed in {timeAgo(info.login.lastSignIn)}</Text>}
-        <TextInput style={aS.admInput} value={newEmail} onChangeText={setNewEmail} placeholder="New login email" autoCapitalize="none" keyboardType="email-address" placeholderTextColor={C.placeholder} />
-        <View style={aS.admPills}>{pill('Change email', () => { if (newEmail.trim()) void run(async () => { await api({ action: 'update-login', email: newEmail.trim() }); setNewEmail(''); await loadInfo(); }, 'Login email changed.'); })}</View>
-        <TextInput style={aS.admInput} value={newPw} onChangeText={setNewPw} placeholder="New password (8+ characters)" autoCapitalize="none" autoCorrect={false} placeholderTextColor={C.placeholder} />
-        <View style={aS.admPills}>
-          {pill('Set password', () => { if (newPw.length >= 8) void run(async () => { await api({ action: 'update-login', password: newPw }); setNewPw(''); }, 'Password set. Let them know.'); else setMsg('Password must be 8+ characters.'); })}
-          {pill('Email reset link', () => void run(async () => { const r = await api({ action: 'send-reset' }); setMsg(`Reset link sent to ${r.email}.`); }))}
-        </View>
-      </View>
-      <View style={aS.admCard}>
-        <Text style={aS.admK}>Plan</Text>
-        {sub && !sub.error ? <>
-          <Text style={aS.admV}>{sub.amount != null ? `£${(sub.amount / 100).toFixed(2)}` : ''}{sub.interval ? ` / ${sub.interval}` : ''} · {sub.status}</Text>
-          {!!sub.renews && <Text style={aS.admNote}>{sub.cancelAtPeriodEnd ? 'Ends' : 'Renews'} {new Date(sub.renews).toLocaleDateString('en-GB')}</Text>}
-          {!!sub.card && <Text style={aS.admNote}>{sub.card}</Text>}
-          {sub.status !== 'canceled' && <View style={aS.admPills}>{sub.cancelAtPeriodEnd
-            ? pill('Keep plan (undo cancel)', () => void run(async () => { await api({ action: 'cancel-plan', undo: true }); await loadInfo(); }))
-            : pill('Cancel at end of period', () => Alert.alert('Cancel plan?', 'Their site goes offline when the billing period ends.', [{ text: 'No', style: 'cancel' }, { text: 'Cancel plan', style: 'destructive', onPress: () => void run(async () => { await api({ action: 'cancel-plan' }); await loadInfo(); }) }]), { danger: true })}</View>}
-        </> : <Text style={aS.admV}>{info ? (d.planActive ? 'Paid' : 'Not paid') : 'Loading…'}</Text>}
-      </View>
-      {!!msg && <Text style={aS.admNote}>{msg}</Text>}
-    </ScrollView>}
+    </View>
+    <View style={aS.admCard}>
+      <Text style={aS.admK}>Subscription</Text>
+      {sub && !sub.error ? <>
+        <Text style={aS.admV}>{sub.amount != null ? `£${(sub.amount / 100).toFixed(2)}` : ''}{sub.interval ? ` / ${sub.interval}` : ''} · {sub.status}</Text>
+        {!!sub.renews && <Text style={aS.admNote}>{sub.cancelAtPeriodEnd ? 'Ends' : 'Renews'} {new Date(sub.renews).toLocaleDateString('en-GB')}</Text>}
+        {!!sub.card && <Text style={aS.admNote}>{sub.card}</Text>}
+        {sub.status !== 'canceled' && <View style={aS.admPills}>{sub.cancelAtPeriodEnd
+          ? pill('Keep plan (undo cancel)', () => void run(async () => { await api({ action: 'cancel-plan', undo: true }); await loadInfo(); }))
+          : pill('Cancel at end of period', () => Alert.alert('Cancel plan?', 'Their site goes offline when the billing period ends.', [{ text: 'No', style: 'cancel' }, { text: 'Cancel plan', style: 'destructive', onPress: () => void run(async () => { await api({ action: 'cancel-plan' }); await loadInfo(); }) }]), true)}</View>}
+      </> : <Text style={aS.admV}>{info ? (d.planActive ? 'Paid' : 'Not paid') : 'Loading…'}</Text>}
+    </View>
+    {!!msg && <Text style={aS.admNote}>{msg}</Text>}
   </View>;
+}
+
+// Admin edits a client's main details (saved through the admin API, never the client's own login).
+const ADMIN_INFO_FIELDS: [string, string][] = [['name', 'Business name'], ['fullName', 'Owner name'], ['phone', 'Phone'], ['email', 'Business email'], ['address', 'Address'], ['tagline', 'Business type'], ['website', 'Website'], ['instagram', 'Instagram'], ['facebook', 'Facebook'], ['designerNotes', 'Notes for designer']];
+function AdminInfoEditor({ visible, biz, session, onClose, onSaved }: { visible: boolean; biz: any; session: any; onClose: () => void; onSaved: (data: any) => void }) {
+  const raw = biz?.data?.raw || {};
+  const [vals, setVals] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  useEffect(() => { if (visible) { const v: Record<string, string> = {}; ADMIN_INFO_FIELDS.forEach(([k]) => { v[k] = String(raw[k] ?? (k === 'name' ? biz?.data?.name || '' : '')); }); setVals(v); setErr(''); } }, [visible, biz?.id]);
+  const save = async () => {
+    setBusy(true); setErr('');
+    try { const r = await adminApiCall(session, biz.id, { action: 'update-info', info: vals }); onSaved(r.data); onClose(); }
+    catch (e: any) { setErr(e.message || 'Could not save.'); }
+    setBusy(false);
+  };
+  return <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+    <View style={{ flex: 1, backgroundColor: C.canvas, paddingTop: Platform.OS === 'ios' ? 54 : 28 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 10 }}>
+        <Text style={{ fontFamily: FONT, fontSize: 20, fontWeight: '800', color: C.ink }}>Edit client info</Text>
+        <Pressable onPress={onClose} hitSlop={10}><Ionicons name="close" size={24} color={C.ink} /></Pressable>
+      </View>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 4, gap: 4 }} keyboardShouldPersistTaps="handled">
+          {ADMIN_INFO_FIELDS.map(([k, label]) => <View key={k}>
+            <Text style={aS.admK}>{label}</Text>
+            <TextInput style={[aS.admInput, { marginTop: 4, marginBottom: 10 }, k === 'designerNotes' && { height: 90, paddingTop: 10, textAlignVertical: 'top' }]} multiline={k === 'designerNotes'} value={vals[k] || ''} onChangeText={t => setVals(v => ({ ...v, [k]: t }))} autoCapitalize={k === 'email' || k === 'website' ? 'none' : 'sentences'} placeholderTextColor={C.placeholder} />
+          </View>)}
+          {!!err && <Text style={[aS.admNote, { color: C.danger }]}>{err}</Text>}
+          <Text style={aS.admNote}>Hours, services and photos can be edited from the web admin page.</Text>
+          <Pressable disabled={busy} onPress={() => void save()} style={({ pressed }) => [s.planModalPayBtn, { marginTop: 12 }, busy && { opacity: .5 }, pressed && s.pressed]}>
+            {busy ? <ActivityIndicator size="small" color="#fff" /> : <Text style={s.planModalPayBtnText}>Save</Text>}
+          </Pressable>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
+  </Modal>;
 }
 
 const aS = StyleSheet.create({
