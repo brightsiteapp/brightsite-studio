@@ -1692,6 +1692,7 @@ function acctUpdate(kind, btn) {
     .catch(function(err) { acctSay(err.message, false); }).then(function() { btn.disabled = false; });
 }
 function acctReset(btn) {
+  if (!confirm('Email this client a password reset link?')) return;
   btn.disabled = true;
   adminApi({ action: 'send-reset', slug: activeThreadId }).then(function(r) { acctSay('Reset link sent to ' + r.email + '.', true); })
     .catch(function(err) { acctSay(err.message, false); }).then(function() { btn.disabled = false; });
