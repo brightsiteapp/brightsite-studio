@@ -983,12 +983,8 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
   const realUrl = (isLive && liveUrl) || previewLink || '';
   // Opens exactly what the preview shows: the live address once live, otherwise the uploaded preview.
   const openPreview = () => { const u = realUrl || (isLive ? siteUrl : ''); if (u) void Linking.openURL(/^https?:/.test(u) ? u : `https://${u}`); };
-  // Like Wix and Squarespace, plans and domains are bought on the website, never inside the app
-  // (App Store rules). Once paid there, the app picks it up when it's next opened.
-  const goLive = () => {
-    if (isPaying) { void onGoLive?.(); return; }
-    Alert.alert('Choose your plan on the web', 'To put your website live, sign in to your account at brightsite.app and choose a plan. Your site goes live as soon as it\'s paid, and the app updates when you next open it.');
-  };
+  // The app only switches a paid site on or off. Plans are bought on brightsite.app (App Store rules).
+  const goLive = () => { if (isPaying) void onGoLive?.(); };
   const [deleting, setDeleting] = useState(false);
   // App Store requirement: customers can delete their account (and website) from inside the app.
   const confirmDeleteAccount = () => Alert.alert('Delete your account?', 'This permanently deletes your account, your website and your messages, cancels your plan and takes your site offline. This can\'t be undone.', [
@@ -1051,12 +1047,12 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
           <View style={s.dashboardInfoCard}>
             <Text style={s.dashboardCardLabel}>Plan</Text>
             <Text style={s.dashboardCardTitle}>{isPaying ? `${planPro ? 'Pro' : 'Free'} plan · ${planAnnual ? 'Annual' : 'Monthly'}` : 'No plan yet'}</Text>
-            <Text style={s.dashboardCardText}>{isPaying ? (planAnnual ? '£16/month hosting, billed £192 yearly' : '£19/month hosting') + subNote : 'Choose your plan at brightsite.app'}</Text>
+            <Text style={s.dashboardCardText}>{isPaying ? (planAnnual ? '£16/month hosting, billed £192 yearly' : '£19/month hosting') + subNote : 'No plan yet'}</Text>
           </View>
           <View style={s.dashboardInfoCard}>
             <Text style={s.dashboardCardLabel}>Domain</Text>
             <Text style={s.dashboardCardTitle}>{ownedDomain || domainLabel}</Text>
-            <Text style={s.dashboardCardText}>{isLive ? 'Connected to your website' : ownedDomain ? 'Bought. Connects when your website goes live' : domain ? 'Connects when your website goes live' : 'Choose one at brightsite.app'}</Text>
+            <Text style={s.dashboardCardText}>{isLive ? 'Connected to your website' : ownedDomain ? 'Bought. Connects when your website goes live' : domain ? 'Connects when your website goes live' : 'No domain yet'}</Text>
           </View>
           <View style={s.dashboardInfoCard}>
             <Text style={s.dashboardCardLabel}>Login email</Text>
@@ -1095,22 +1091,18 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
                       <ActivityIndicator size="small" color="#fff" style={{ marginRight: 5 }} />
                       <Text style={s.makeLiveBtnText}>Publishing...</Text>
                     </Animated.View>
-                  : <Pressable onPress={goLive} style={({ pressed }) => [s.makeLiveBtn, pressed && s.pressed]}>
-                      <Ionicons name="rocket-outline" size={13} color="#fff" />
-                      <Text style={s.makeLiveBtnText}>Make Live</Text>
-                    </Pressable>
+                  : isPaying
+                    ? <Pressable onPress={goLive} style={({ pressed }) => [s.makeLiveBtn, pressed && s.pressed]}>
+                        <Ionicons name="rocket-outline" size={13} color="#fff" />
+                        <Text style={s.makeLiveBtnText}>Make Live</Text>
+                      </Pressable>
+                    : <View />
               : isTodo
                 ? <Pressable disabled={!infoComplete} onPress={() => onSendToDesigner?.()} style={({ pressed }) => [s.makeLiveBtn, !infoComplete && { opacity: .45 }, pressed && s.pressed]}>
                     <Ionicons name="paper-plane-outline" size={13} color="#fff" />
                     <Text style={s.makeLiveBtnText}>Send to designer</Text>
                   </Pressable>
-                : isBuilding
-                  // shown while the designer builds the site so customers know what's next; unlocks once it's ready
-                  ? <View style={[s.makeLiveBtn, { opacity: .45 }]} accessibilityState={{ disabled: true }}>
-                      <Ionicons name="rocket-outline" size={13} color="#fff" />
-                      <Text style={s.makeLiveBtnText}>Make Live</Text>
-                    </View>
-                  : <View />}
+                : <View />}
             <View style={{ position: 'absolute', left: 0, right: 0, alignItems: 'center', pointerEvents: 'box-none' as any }}><DeviceToggle mode={previewMode} setMode={setPreviewMode} /></View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               {/* analytics unlock once the site is live; they open the analytics view on the web dashboard */}
