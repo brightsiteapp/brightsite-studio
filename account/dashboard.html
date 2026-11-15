@@ -606,7 +606,7 @@
   #builderList:not(.preview-sent) .sec-btn.is-complete:hover{box-shadow:0 0 0 3px rgba(36,155,88,.12),0 0 14px rgba(36,155,88,.22) !important}
   #builderList.preview-sent .sec-btn{background:#fff !important;border:1px solid rgba(28,40,50,.14) !important;box-shadow:none !important}
   /* before the details are sent: amber B while filling in; green B once all done */
-  .preview-placeholder[data-state="loading"]::before{filter:drop-shadow(0 0 7px rgba(255,255,255,.45)) drop-shadow(0 0 18px rgba(255,255,255,.18)) !important}
+  .preview-placeholder[data-state="loading"]::before{filter:drop-shadow(0 0 7px #7FB2FF) drop-shadow(0 0 22px #3B82F6) !important}
   .preview-placeholder[data-state="todo"]::before{filter:drop-shadow(0 0 7px #FFD27F) drop-shadow(0 0 22px #F59E0B) !important}
   .preview-placeholder[data-state="all-done"]::before{filter:drop-shadow(0 0 7px #7FD9A8) drop-shadow(0 0 22px #22c55e) !important}
   .wah-make-live:disabled{opacity:.45;cursor:not-allowed}
@@ -620,10 +620,9 @@
   @media(max-width:799px){.website-panel:not(.editing) #websiteEditorHeader{display:none !important}}
   .preview-placeholder{background:#141A1E !important;padding:32px 24px !important}
   .preview-placeholder::before{content:'' !important;position:relative !important;inset:auto !important;width:64px;height:70px;margin-bottom:28px;flex:none;
-    background:#DC2626 !important;
-    -webkit-mask:url(../img/brightsite-b-white.png) center/contain no-repeat;mask:url(../img/brightsite-b-white.png) center/contain no-repeat;
-    filter:drop-shadow(0 0 7px #FF8A80) drop-shadow(0 0 22px #DC2626);animation:bsBPulse 2.8s ease-in-out infinite !important;transition:background .5s}
-  .preview-placeholder[data-state="all-done"]::before{background:#22c55e !important;filter:drop-shadow(0 0 7px #7FD9A8) drop-shadow(0 0 22px #22c55e) !important}
+    background:url(../img/brightsite-b-white.png) center/contain no-repeat !important;-webkit-mask:none;mask:none;
+    filter:drop-shadow(0 0 7px #7FB2FF) drop-shadow(0 0 22px #3B82F6);animation:bsBPulse 2.8s ease-in-out infinite !important;transition:background .5s}
+  .preview-placeholder[data-state="all-done"]::before{filter:drop-shadow(0 0 7px #7FD9A8) drop-shadow(0 0 22px #22c55e) !important}
   @keyframes bsBPulse{0%,100%{opacity:.35;transform:scale(.92)}50%{opacity:1;transform:scale(1)}}
   .preview-placeholder-biz{display:none !important}
   .preview-placeholder .preview-placeholder-title{background:none !important;-webkit-text-fill-color:#fff !important;color:#fff;animation:none !important;filter:none !important;font-size:18px !important;margin-bottom:6px !important}
