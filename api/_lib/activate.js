@@ -94,6 +94,8 @@ export async function markBusinessLive(slug, domain, publishOnPayment) {
   if (readError) throw readError;
   const previous = row?.data || {};
 
+  // A domain bought earlier (from the Account page, before choosing a plan) connects now.
+  if (!domain && previous.domainRegistered && (previous.customDomain || previous.domain)) domain = previous.customDomain || previous.domain;
   let domainConnected = false;
   let domainError = '';
   if (domain) {
@@ -150,3 +152,15 @@ async function notifyClientLive(supabase, slug, pushToken, businessName, siteUrl
   }).catch(() => {});
 }
 
+
+// A domain bought on its own (before any plan): register it and record it on the business.
+// The plan is NOT activated and nothing goes live; it connects when they later pay for a plan.
+export async function markDomainBought(slug, domain) {
+  if (!slug || !domain) return;
+  const supabase = supabaseAdmin();
+  const { data: row, error } = await supabase.from('businesses').select('data').eq('id', slug).single();
+  if (error) throw error;
+  const data = { ...(row?.data || {}), customDomain: domain, domain, domainRegistered: true, domainConnected: false, domainBoughtEarly: true, domainError: '' };
+  const { error: updateError } = await supabase.from('businesses').update({ data, updated_at: new Date().toISOString() }).eq('id', slug);
+  if (updateError) throw updateError;
+}

@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import { quoteDomainInGbp } from './_lib/domain-pricing.js';
+import { supabaseAdmin } from './_lib/supabase-admin.js';
 
 const ALLOWED_ORIGINS = ['https://brightsite.app'];
 export default async function handler(req, res) {
@@ -13,10 +14,15 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { domain, email, slug, return_url } = req.body || {};
+  const { domain, email, slug, return_url, ui_mode: uiMode } = req.body || {};
   if (!domain) return res.status(400).json({ error: 'Missing domain' });
 
   const clean = domain.toLowerCase().trim();
+
+  if (slug) {
+    const { data: row } = await supabaseAdmin().from('businesses').select('data').eq('id', slug).single();
+    if (row?.data?.domainRegistered) return res.status(409).json({ error: `You already have ${row.data.customDomain || row.data.domain}.` });
+  }
 
   let priceInPence;
   try {
@@ -30,8 +36,11 @@ export default async function handler(req, res) {
 
     const returnUrl = return_url || `https://brightsite.app/checkout?domain_success=1&domain=${encodeURIComponent(clean)}`;
 
+    const hosted = uiMode === 'hosted';
     const session = await stripe.checkout.sessions.create({
-      ui_mode: 'embedded',
+      ...(hosted
+        ? { success_url: `https://brightsite.app/account/dashboard?slug=${encodeURIComponent(slug || '')}&domain=bought`, cancel_url: `https://brightsite.app/account/dashboard?slug=${encodeURIComponent(slug || '')}` }
+        : { ui_mode: 'embedded', return_url: returnUrl }),
       mode: 'payment',
       line_items: [{
         price_data: {
@@ -44,7 +53,6 @@ export default async function handler(req, res) {
         },
         quantity: 1,
       }],
-      return_url: returnUrl,
       customer_email: email || undefined,
       metadata: {
         type: 'domain_registration',
@@ -56,7 +64,7 @@ export default async function handler(req, res) {
       },
     });
 
-    res.status(200).json({ clientSecret: session.client_secret, priceInPence });
+    res.status(200).json(hosted ? { url: session.url, priceInPence } : { clientSecret: session.client_secret, priceInPence });
   } catch (err) {
     console.error('Stripe domain checkout error:', err.message);
     res.status(500).json({ error: err.message });

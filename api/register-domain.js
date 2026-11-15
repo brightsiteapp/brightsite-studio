@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
 import { supabaseAdmin } from './_lib/supabase-admin.js';
-import { registerWithCloudflare, markBusinessLive } from './_lib/activate.js';
+import { registerWithCloudflare, markBusinessLive, markDomainBought } from './_lib/activate.js';
 import { runDomainRenewals } from './_lib/domain-renewals.js';
 import { addonPrice } from './_lib/plans.js';
 import { setSiteLive } from './_lib/activate.js';
@@ -50,6 +50,13 @@ export default async function handler(req, res) {
 
   try {
     if (domain) await registerWithCloudflare(domain);
+
+    if (isDomainOnly) {
+      await markDomainBought(slug, domain);
+      await notifyAdmins(`🌐 ${slug} bought a domain`, `${domain} (no plan yet).`, slug);
+      await notifyBusiness(slug, { title: 'Domain bought ✓', body: `${domain} is yours. It connects when your website goes live.` });
+      return res.status(200).json({ received: true, domain });
+    }
 
     await markBusinessLive(slug, domain || null, session.metadata?.publish_on_payment === 'true');
 

@@ -46,7 +46,7 @@ export default async function handler(request, response) {
     if (body.action === 'delete-account') return deleteAccount(request, response, body);
     if (body.action === 'list-logins' || body.action === 'delete-logins') return manageLogins(request, response, body);
     if (body.action === 'notify-admin') return notifyAdminFromCustomer(request, response, body);
-    if (['account-info', 'update-login', 'send-reset', 'set-live', 'cancel-plan', 'register-admin-push', 'push-customer'].includes(body.action)) return adminAction(request, response, body);
+    if (['account-info', 'update-login', 'send-reset', 'cancel-plan', 'register-admin-push', 'push-customer'].includes(body.action)) return adminAction(request, response, body);
     return connectDomain(request, response);
   }
   if (request.method !== 'GET') {
@@ -298,21 +298,6 @@ async function adminAction(request, response, body) {
     const r = await fetch(`${ACCOUNTS_SUPABASE_URL}/auth/v1/recover`, { method: 'POST', headers: { apikey: ACCOUNTS_SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, redirect_to: 'https://brightsite.app/account/reset-password' }) });
     return r.ok ? json(response, 200, { ok: true, email }) : json(response, 502, { error: 'Could not send the reset email' });
-  }
-
-  if (body.action === 'set-live') {
-    const live = !!body.live;
-    const result = await setSiteLive(slug, live, live && data.domainConnected ? data.customDomain : '').catch(err => ({ error: err.message }));
-    if (result?.error) return json(response, 502, { error: result.error });
-    const next = live
-      ? { ...data, published: true, needsPublish: false, manuallyOffline: false, publishError: '', liveUrl: result.url || data.liveUrl }
-      : { ...data, published: false, manuallyOffline: true };
-    await supabase.from('businesses').update({ data: next }).eq('id', slug);
-    const url = (next.liveUrl || '').replace(/^https?:\/\//, '');
-    await notifyBusiness(slug, live
-      ? { title: 'Your website is live! 🎉', body: url ? `It’s live at ${url}` : 'Your website is now online.', message: `🎉 Your website is live${url ? ' at ' + next.liveUrl : ''}! Share it with everyone.` }
-      : { title: 'Your website is offline', body: 'Your website has been taken offline. Message Tom if you have any questions.', message: 'Your website has been taken offline for now. Message me here if you have any questions.' });
-    return json(response, 200, { ok: true, url: next.liveUrl || '' });
   }
 
   if (body.action === 'push-customer') {

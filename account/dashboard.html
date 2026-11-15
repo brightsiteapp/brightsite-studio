@@ -750,6 +750,7 @@
           <h2>Domain</h2>
           <div class="acct-value" id="acctDomainTitle">No domain yet</div>
           <div class="acct-sub" id="acctDomainSub">You can choose one when you go live</div>
+          <button type="button" class="acct-link" id="buyDomainBtn" hidden>Buy a domain</button>
         </div>
         <div class="info-card">
           <h2>Login email</h2>
@@ -2058,7 +2059,9 @@
     document.getElementById('billingBtn').hidden = !isPaying;
     var domain = data.customDomain || data.domain || pendingDomain || '';
     set('acctDomainTitle', domain || 'No domain yet');
-    set('acctDomainSub', isLive ? 'Connected to your website' : domain ? 'Connects when your website goes live' : 'You can choose one when you go live');
+    set('acctDomainSub', isLive ? 'Connected to your website' : data.domainRegistered ? 'Bought. Connects when your website goes live' : domain ? 'Connects when your website goes live' : 'Buy one now or choose it when you go live');
+    var buyBtn = document.getElementById('buyDomainBtn');
+    if (buyBtn) buyBtn.hidden = isAdminView || !!data.domainRegistered || isPaying;
     renderWebsiteStatus();
   }
 
@@ -2645,7 +2648,13 @@
   }
 
   // ---------------- Make Live: domain, then plan, then Stripe checkout (same steps as the app) ----------------
-  function openLiveSheet() {
+  function ownedDomain() {
+    var d = (business && business.data) || {};
+    return d.domainRegistered ? (d.customDomain || d.domain || '') : '';
+  }
+  // buyOnly: Account-page "Buy a domain" (no plan yet). Otherwise the Make Live flow, which skips this step if they already own one.
+  function openLiveSheet(buyOnly) {
+    if (!buyOnly && ownedDomain()) { openPlanSheet(); return; }
     var name = pendingDomain ? pendingDomain.split('.')[0] : '';
     var tld = pendingDomain ? pendingDomain.slice(name.length) : '.co.uk';
     var available = !!pendingDomain, checking = false, input, msg;
@@ -2654,7 +2663,7 @@
     function showAvailable() {
       msg.className = 'bs-domain-msg ok';
       msg.textContent = '✓ ' + input.value.trim() + tld + ' is available' + (pendingDomainPrice ? ' — ' + pendingDomainPrice : '');
-      label('Continue');
+      label(buyOnly ? 'Buy domain' : 'Continue');
     }
     function check() {
       var q = input.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
@@ -2673,8 +2682,8 @@
         .then(function() { checking = false; refreshSheet(); });
     }
     openSheet({
-      title: 'Choose your domain',
-      saveLabel: available ? 'Continue' : 'Check availability',
+      title: buyOnly ? 'Buy a domain' : 'Choose your domain',
+      saveLabel: available ? (buyOnly ? 'Buy domain' : 'Continue') : 'Check availability',
       build: function(body) {
         body.appendChild(el('p', { 'class': 'bs-sheet-sub' }, 'This is the web address people will type to find you.'));
         input = el('input', { type: 'text', placeholder: 'yourbusiness', autocapitalize: 'none', autocomplete: 'off' });
@@ -2712,7 +2721,14 @@
         if (available) showAvailable();
         return function() { return !checking && !!input.value.trim(); };
       },
-      onSave: function() { if (available) openPlanSheet(); else check(); return true; }
+      onSave: function() {
+        if (!available) { check(); return true; }
+        if (!buyOnly) { openPlanSheet(); return true; }
+        var email = (business.data.raw && business.data.raw.email) || session.email || '';
+        window.location.assign('/checkout.html?domain_only=1&domain=' + encodeURIComponent(pendingDomain)
+          + '&email=' + encodeURIComponent(email) + '&slug=' + encodeURIComponent(slug || ''));
+        return true;
+      }
     });
   }
 
@@ -2746,7 +2762,7 @@
       // mirrors api/_lib/plans.js: annual plans and Pro cover the first £12 of the domain
       var included = annual || plan === 'pro';
       var charge = pendingDomainPence ? (included ? Math.max(0, pendingDomainPence - 1200) : pendingDomainPence) : null;
-      body.appendChild(el('p', { 'class': 'bs-plan-domain' }, pendingDomain + ': ' + (charge === null ? 'registration charged at checkout'
+      body.appendChild(el('p', { 'class': 'bs-plan-domain' }, ownedDomain() ? ownedDomain() + ': already yours, nothing to pay for your domain' : pendingDomain + ': ' + (charge === null ? 'registration charged at checkout'
         : !charge ? 'free domain included with your plan'
         : '£' + (charge / 100).toFixed(2) + ' today' + (included ? ' (£12 off with your plan)' : ' registration'))));
     }
@@ -2765,16 +2781,18 @@
             + '&billing=' + (annual ? 'annual' : 'monthly')
             + '&email=' + encodeURIComponent(email)
             + '&slug=' + encodeURIComponent(slug || '')
-            + '&addon_domain=' + encodeURIComponent(pendingDomain || '')
+            + '&addon_domain=' + encodeURIComponent(ownedDomain() ? '' : (pendingDomain || ''))
             + '&publish_on_payment=1');
         });
         return true;
       },
-      onDelete: function() { openLiveSheet(); return true; },
+      onDelete: ownedDomain() ? null : function() { openLiveSheet(); return true; },
       deleteLabel: '‹ Back',
       deleteNeutral: true
     });
   }
+
+  (function() { var b = document.getElementById('buyDomainBtn'); if (b) b.addEventListener('click', function() { openLiveSheet(true); }); })();
 
   function listRow(title, sub, onClick) {
     var b = el('button', { type: 'button', 'class': 'bs-list-row' });

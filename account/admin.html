@@ -256,9 +256,6 @@ body { background: var(--bg); min-height: 100vh; }
 .site-toggle { display: flex; gap: 2px; padding: 3px; border-radius: 12px; background: rgba(28,40,50,.07); }
 .site-toggle button { border: 0; background: none; border-radius: 9px; padding: 7px 12px; color: var(--muted); cursor: pointer; display: inline-flex; }
 .site-toggle button.active { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
-.live-btn { border: 0; border-radius: 999px; padding: 9px 15px; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; background: var(--accent); color: #fff; }
-.live-btn.off { background: #fff; color: var(--muted); border: 1px solid var(--line); }
-.live-btn:disabled { opacity: .5; cursor: default; }
 .site-open { font-size: 13px; font-weight: 700; color: var(--accent); text-decoration: none; }
 .site-preview { margin: 0 auto 18px; background: #141A1E; overflow: hidden; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,.7); font-size: 14px; text-align: center; }
 .site-preview.mobile { width: 300px; max-width: 100%; height: 560px; border: 7px solid #141A1E; border-radius: 28px; }
@@ -481,7 +478,7 @@ body { background: var(--bg); color: var(--ink); }
         </div></nav>
         <div class="work-panel admin-panel" id="ws-site">
           <div class="site-bar">
-            <div class="site-bar-left" id="siteLiveBtnWrap"></div>
+            <div class="site-bar-left"></div>
             <div class="site-toggle" role="group" aria-label="Preview size">
               <button type="button" class="active" id="sitePvMobile" aria-label="Mobile view"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg></button>
               <button type="button" id="sitePvDesktop" aria-label="Desktop view"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></button>
@@ -554,22 +551,6 @@ body { background: var(--bg); color: var(--ink); }
   </div>
 </div>
 
-<!-- GO LIVE MODAL -->
-<div class="modal-veil hidden" id="goLiveModal">
-  <div class="modal">
-    <h2>Override — <span id="goLiveModalName"></span></h2>
-    <p>For legacy customers who paid outside the site. This marks them as paid and makes the site live without Stripe. If you've connected a domain, enter the live address below.</p>
-    <div class="modal-field">
-      <label>Live URL (optional)</label>
-      <input type="text" id="goLiveUrl" placeholder="https://theirbusiness.co.uk">
-    </div>
-    <div class="modal-actions">
-      <button type="button" class="modal-cancel" id="goLiveCancel">Cancel</button>
-      <button type="button" class="modal-confirm" id="goLiveConfirm">Mark paid & live ✓</button>
-    </div>
-    <div class="modal-status" id="goLiveStatus"></div>
-  </div>
-</div>
 
 <!-- SETTINGS MODAL -->
 <div class="modal-veil hidden" id="settingsModal">
@@ -1066,77 +1047,6 @@ function patchBusinessAfterUpload(demoUrl, failed, btn, status, progressWrap) {
 }
 
 // ---- go live modal ----
-var goLiveTargetSlug = null;
-function openGoLiveModal(slug, name) {
-  goLiveTargetSlug = slug;
-  document.getElementById('goLiveModalName').textContent = name;
-  document.getElementById('goLiveUrl').value = '';
-  document.getElementById('goLiveStatus').textContent = '';
-  document.getElementById('goLiveStatus').className = 'modal-status';
-  document.getElementById('goLiveModal').classList.remove('hidden');
-  setTimeout(function() { document.getElementById('goLiveUrl').focus(); }, 50);
-}
-
-document.getElementById('goLiveCancel').addEventListener('click', function() {
-  document.getElementById('goLiveModal').classList.add('hidden');
-});
-
-document.getElementById('goLiveConfirm').addEventListener('click', function() {
-  var liveUrl = document.getElementById('goLiveUrl').value.trim();
-  var status = document.getElementById('goLiveStatus');
-  var btn = document.getElementById('goLiveConfirm');
-  btn.textContent = 'Saving…'; btn.disabled = true;
-
-  fetch(SUPABASE_URL + '/rest/v1/businesses?select=id,name,data&id=eq.' + encodeURIComponent(goLiveTargetSlug), {
-    headers: authHeaders()
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(rows) {
-    var existing = (rows && rows[0]) || {};
-    var d0 = existing.data || {};
-    d0 = Object.assign({}, d0, { planActive: true, manualPlan: true, manualPlanAt: new Date().toISOString() });
-    return fetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(goLiveTargetSlug), {
-      method: 'PATCH',
-      headers: authHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ data: d0 })
-    }).then(function() {
-    return publishSite(goLiveTargetSlug, true, d0.domainConnected ? d0.customDomain : '').then(function(res) {
-    var patch = { published: true, needsPublish: false, manuallyOffline: false, publishError: '', liveUrl: liveUrl || res.url };
-    var newData = Object.assign({}, d0, patch);
-    return fetch(SUPABASE_URL + '/rest/v1/businesses?id=eq.' + encodeURIComponent(goLiveTargetSlug), {
-      method: 'PATCH',
-      headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
-      body: JSON.stringify({ data: newData, updated_at: new Date().toISOString() })
-    }).then(function(response) {
-      existing.data = newData;
-      return { response: response, existing: existing };
-    });
-    });
-    });
-  })
-  .then(function(result) {
-    var r = result.response;
-    var existing = result.existing;
-    btn.textContent = 'Mark paid & live ✓'; btn.disabled = false;
-    if (r.ok) {
-      var businessName = existing.name || (existing.data && existing.data.raw && existing.data.raw.name) || '';
-      var siteUrl = (existing.data && existing.data.liveUrl) || liveUrl || '';
-      var liveMsg = '🎉 Your website is live' + (siteUrl ? ' at ' + siteUrl : '') + '! Share it with everyone.';
-      sendBusinessMessage(goLiveTargetSlug, liveMsg);
-      sendPushNotification(existing.data && existing.data.pushToken, businessName ? businessName + ' is live! 🎉' : 'Your website is live! 🎉', siteUrl ? 'Tap to open ' + siteUrl : 'Your website is now live and ready to share.');
-      status.textContent = 'Site marked as live!'; status.className = 'modal-status ok';
-      // Also add Vercel domain if token is set
-      if (liveUrl) tryAddVercelDomain(liveUrl, status);
-      setTimeout(function() { document.getElementById('goLiveModal').classList.add('hidden'); loadBusinesses(); }, 2000);
-    } else {
-      status.textContent = 'Save failed.'; status.className = 'modal-status err';
-    }
-  })
-  .catch(function(err) {
-    btn.textContent = 'Mark paid & live ✓'; btn.disabled = false;
-    status.textContent = (err && err.message) || 'Network error.'; status.className = 'modal-status err';
-  });
-});
 
 // ---- vercel helpers ----
 function blobToBase64(blob) {
@@ -1500,7 +1410,7 @@ document.getElementById('deleteConfirm').addEventListener('click', function() {
 });
 
 // Close modals on veil click
-['domainModal', 'deleteModal', 'uploadModal', 'goLiveModal', 'settingsModal'].forEach(function(id) {
+['domainModal', 'deleteModal', 'uploadModal', 'settingsModal'].forEach(function(id) {
   document.getElementById(id).addEventListener('click', function(e) {
     if (e.target === this) this.classList.add('hidden');
   });
@@ -1716,11 +1626,6 @@ function renderSitePreview() {
     pv.removeAttribute('data-url');
     pv.innerHTML = '<div class="pv-empty"><b>No website uploaded yet</b>Upload their files below and the preview shows here.</div>';
   }
-  var live = !!d.published;
-  var canLive = !!(d.demoUrl || d.demoUploaded);
-  document.getElementById('siteLiveBtnWrap').innerHTML = live
-    ? '<button type="button" class="live-btn off" onclick="adminSetLive(false, this)">Take offline</button>'
-    : '<button type="button" class="live-btn" onclick="adminSetLive(true, this)"' + (canLive ? '' : ' disabled title="Upload their website first"') + '>Make live</button>';
   document.getElementById('siteOpenWrap').innerHTML = url ? '<a class="site-open" href="' + esc(url) + '" target="_blank" rel="noopener">Open ↗</a>' : '';
 }
 
@@ -1730,16 +1635,6 @@ function adminApi(payload) {
     headers: { 'Authorization': 'Bearer ' + (adminSession && adminSession.access_token || ''), 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   }).then(function(r) { return r.json().then(function(j) { if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status)); return j; }); });
-}
-
-function adminSetLive(live, btn) {
-  var slug = activeThreadId; if (!slug) return;
-  if (!live && !confirm('Take ' + bizName(slug) + '\'s website offline? They\'ll get a notification.')) return;
-  btn.disabled = true; btn.textContent = live ? 'Publishing…' : 'Taking offline…';
-  adminApi({ action: 'set-live', slug: slug, live: live })
-    .then(function() { return loadBusinesses(); })
-    .catch(function(err) { alert(err.message); })
-    .then(function() { if (activeThreadId === slug) renderAdminPanel(); });
 }
 
 // ---- Account tab: login, password, plan, delete ----
@@ -1756,7 +1651,7 @@ function renderAccountPane() {
       '<div class="acct-form"><input type="text" id="acctNewPw" placeholder="New password (8+ characters)" autocomplete="off"><button type="button" class="acct-btn" onclick="acctUpdate(\'password\', this)">Set password</button></div>' +
       '<div class="acct-form"><button type="button" class="acct-btn" onclick="acctReset(this)">Email them a reset link</button></div>' +
       '<div class="acct-msg" id="acctMsg"></div></div>' +
-    '<div class="acct-card"><h3>Plan</h3><div id="acctPlan">' + (d.planActive ? 'Paid' + (d.manualPlan ? ' (set manually)' : '') : 'Not paid') + '</div>' +
+    '<div class="acct-card"><h3>Plan</h3><div id="acctPlan">' + (d.planActive ? 'Paid' : 'Not paid') + '</div>' +
       '<div class="acct-form" id="acctPlanBtns"></div></div>' +
     '<div class="acct-card"><h3>Contact</h3><div class="acct-row"><span class="k">Name</span>' + esc(raw.fullName || '—') + '</div><div class="acct-row"><span class="k">Business email</span>' + esc(raw.email || raw.contactEmail || '—') + '</div><div class="acct-row"><span class="k">Phone</span>' + esc(raw.phone || '—') + '</div>' +
       '<div class="acct-form"><button type="button" class="acct-btn" onclick="copyClientInfo(\'' + sl + '\', this)">Copy all info</button></div></div>' +
@@ -1776,7 +1671,6 @@ function renderAccountPane() {
         ? '<button type="button" class="acct-btn" onclick="acctPlan(\'undo\', this)">Keep plan (undo cancel)</button>'
         : '<button type="button" class="acct-btn danger" onclick="acctPlan(\'end\', this)">Cancel at end of period</button>');
     } else if (sub && sub.error) planEl.innerHTML += '<div class="adm-note">Stripe: ' + esc(sub.error) + '</div>';
-    if (!(d.planActive && d.published)) btns.innerHTML += '<button type="button" class="acct-btn" onclick="openGoLiveModal(\'' + sl + '\',\'' + nameArg + '\')">Override: paid &amp; live</button>';
   }).catch(function(err) { var m = document.getElementById('acctMsg'); if (m) { m.textContent = err.message; m.className = 'acct-msg err'; } });
 }
 function acctSay(text, ok) { var m = document.getElementById('acctMsg'); m.textContent = text; m.className = 'acct-msg ' + (ok ? 'ok' : 'err'); }

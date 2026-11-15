@@ -211,6 +211,8 @@
   var addonBooking = params.get('addon_booking') === '1';
   var addonStore   = params.get('addon_store') === '1';
   var addonDomain  = params.get('addon_domain') || '';
+  var domainOnly   = params.get('domain_only') === '1';
+  var onlyDomain   = domainOnly ? (params.get('domain') || '') : '';
   var publishOnPayment = params.get('publish_on_payment') === '1';
   var referral = '';
 
@@ -228,6 +230,15 @@
   var dashUrl = '/account/dashboard' + (slug ? '?slug=' + encodeURIComponent(slug) : '');
   document.getElementById('back-link').href = dashUrl;
   document.getElementById('success-btn').href = dashUrl;
+  if (domainOnly) {
+    document.querySelector('.plan-summary-label').textContent = 'Your domain';
+    document.getElementById('plan-name').textContent = onlyDomain;
+    document.getElementById('plan-price').textContent = '1-year registration';
+    document.getElementById('plan-note').textContent = 'You can pick a plan any time. Your domain connects to your site when you go live.';
+    document.getElementById('billing-toggle').style.display = 'none';
+    document.querySelector('.success-title').textContent = 'Domain bought';
+    document.querySelector('.success-body').textContent = onlyDomain + ' is yours. We will connect it when your website goes live.';
+  }
 
   // Render add-on badges if selected
   var addonBadges = '';
@@ -319,10 +330,11 @@
     var billing = selectedAnnual ? 'annual' : 'monthly';
     var returnUrl = 'https://brightsite.app/checkout?success=1&plan=' + encodeURIComponent(plan) + '&slug=' + encodeURIComponent(slug) + (addonDomain ? '&addon_domain=' + encodeURIComponent(addonDomain) : '');
 
-    fetch('https://api.brightsite.app/api/create-checkout-session', {
+    var domainReturn = 'https://brightsite.app/checkout?success=1&domain_only=1&domain=' + encodeURIComponent(onlyDomain) + '&slug=' + encodeURIComponent(slug);
+    fetch(domainOnly ? 'https://api.brightsite.app/api/create-domain-checkout' : 'https://api.brightsite.app/api/create-checkout-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan: plan, billing: billing, email: email, slug: slug, return_url: returnUrl, addon_booking: addonBooking, addon_store: addonStore, addon_domain: addonDomain, publish_on_payment: publishOnPayment, referral: referral })
+      body: domainOnly ? JSON.stringify({ domain: onlyDomain, email: email, slug: slug, return_url: domainReturn }) : JSON.stringify({ plan: plan, billing: billing, email: email, slug: slug, return_url: returnUrl, addon_booking: addonBooking, addon_store: addonStore, addon_domain: addonDomain, publish_on_payment: publishOnPayment, referral: referral })
     })
       .then(function (r) { return r.json(); })
       .then(function (data) {

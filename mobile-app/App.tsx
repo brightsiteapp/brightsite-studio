@@ -1179,7 +1179,7 @@ function MessageThread({ session, slug, viewer, otherName, placeholder, intro }:
   </>;
 }
 
-function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, onPaid, saveError, planAnnual, planPro, media, isPaying, buildChoice, session, slug, onAdminBack, onDomainChosen, infoComplete, onSendToDesigner, playReveal, onRevealDone, previewLink = '' }: any) {
+function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, onPaid, saveError, planAnnual, planPro, media, isPaying, buildChoice, session, slug, onAdminBack, onDomainChosen, ownedDomain = '', infoComplete, onSendToDesigner, playReveal, onRevealDone, previewLink = '' }: any) {
   // After sending to the designer: a full-screen preview card, the B fades in, then the text,
   // then the card shrinks into its place on the dashboard.
   const buildCardRef = useRef<View>(null);
@@ -1261,8 +1261,10 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
   const [liveSuffix, setLiveSuffix] = useState(suffix || '.co.uk');
   const [domainError, setDomainError] = useState('');
   const [domainAvailable, setDomainAvailable] = useState(false);
+  const [buyMode, setBuyMode] = useState(false); // Account page: buying just a domain, no plan yet
   const openPlanModal = () => {
-    setPlanStep('domain');
+    setBuyMode(false);
+    setPlanStep(ownedDomain ? 'plan' : 'domain');
     setDomainError('');
     setDomainAvailable(false);
     setShowPlanModal(true);
@@ -1283,6 +1285,19 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
     finally { setDomainPriceLoading(false); }
   };
   const confirmDomain = () => { onDomainChosen?.(liveDomain, liveSuffix); setPlanStep('plan'); };
+  const openBuyDomain = () => { setBuyMode(true); setPlanStep('domain'); setDomainError(''); setDomainAvailable(false); setShowPlanModal(true); };
+  const buyDomain = async () => {
+    setDomainPriceLoading(true); setDomainError('');
+    try {
+      const email = session?.user?.email || data.contactEmail || data.email;
+      const res = await fetch('https://api.brightsite.app/api/create-domain-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ domain: liveDomain + liveSuffix, email, slug, ui_mode: 'hosted' }) });
+      const json = await res.json();
+      if (!res.ok || !json.url) throw new Error(json.error || 'Could not open checkout.');
+      await Linking.openURL(json.url);
+      setShowPlanModal(false);
+    } catch (error: any) { setDomainError(error.message || 'Could not open checkout.'); }
+    finally { setDomainPriceLoading(false); }
+  };
   const [annual, setAnnual] = useState(!!planAnnual);
   const [planChoice, setPlanChoice] = useState<'essential' | 'pro'>('essential');
   const [payBusy, setPayBusy] = useState(false);
@@ -1310,7 +1325,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
       const res = await fetch(PAYMENT_SHEET_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: planChoice, billing: annual ? 'annual' : 'monthly', email, slug, domain: liveDomain ? liveDomain + liveSuffix : '', referral: referralApplied || undefined }),
+        body: JSON.stringify({ plan: planChoice, billing: annual ? 'annual' : 'monthly', email, slug, domain: !ownedDomain && liveDomain ? liveDomain + liveSuffix : '', referral: referralApplied || undefined }),
       });
       const json = await res.json();
       if (!res.ok || !json.paymentIntentClientSecret) throw new Error(json.error || 'Could not set up payment.');
@@ -1336,7 +1351,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
         const fb = await fetch('https://api.brightsite.app/api/create-checkout-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ plan: planChoice, billing: annual ? 'annual' : 'monthly', email, slug, domain: liveDomain ? liveDomain + liveSuffix : '', ui_mode: 'hosted', referral: referralApplied || undefined }),
+          body: JSON.stringify({ plan: planChoice, billing: annual ? 'annual' : 'monthly', email, slug, domain: !ownedDomain && liveDomain ? liveDomain + liveSuffix : '', ui_mode: 'hosted', referral: referralApplied || undefined }),
         });
         const fbJson = await fb.json();
         if (fb.ok && fbJson.url) { await Linking.openURL(fbJson.url); setShowPlanModal(false); return; }
@@ -1439,8 +1454,9 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           </View>
           <View style={s.dashboardInfoCard}>
             <Text style={s.dashboardCardLabel}>Domain</Text>
-            <Text style={s.dashboardCardTitle}>{domainLabel}</Text>
-            <Text style={s.dashboardCardText}>{isLive ? 'Connected to your website' : domain ? 'Connects when your website goes live' : 'You can choose one when you go live'}</Text>
+            <Text style={s.dashboardCardTitle}>{ownedDomain || domainLabel}</Text>
+            <Text style={s.dashboardCardText}>{isLive ? 'Connected to your website' : ownedDomain ? 'Bought. Connects when your website goes live' : domain ? 'Connects when your website goes live' : 'Buy one now or choose it when you go live'}</Text>
+            {!ownedDomain && !isPaying && !onAdminBack && <Pressable onPress={openBuyDomain} style={s.cardLink} hitSlop={8}><Ionicons name="globe-outline" size={15} color={C.primary} /><Text style={s.cardLinkText}>Buy a domain</Text></Pressable>}
           </View>
           <View style={s.dashboardInfoCard}>
             <Text style={s.dashboardCardLabel}>Login email</Text>
@@ -1528,7 +1544,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
       <View style={s.planModalOverlay}>
         <View style={s.planModalBox}>
           {planStep === 'domain' ? <>
-          <View style={s.planModalHeader}><Text style={s.planModalTitle}>Choose your domain</Text><Pressable onPress={() => setShowPlanModal(false)} hitSlop={10}><Ionicons name="close" size={22} color={C.ink} /></Pressable></View>
+          <View style={s.planModalHeader}><Text style={s.planModalTitle}>{buyMode ? 'Buy a domain' : 'Choose your domain'}</Text><Pressable onPress={() => setShowPlanModal(false)} hitSlop={10}><Ionicons name="close" size={22} color={C.ink} /></Pressable></View>
           <Text style={s.planModalSub}>This is the web address people will type to find you.</Text>
           <TextInput value={liveDomain} onChangeText={v => { setLiveDomain(v); setDomainAvailable(false); setDomainError(''); }} placeholder="yourbusiness" placeholderTextColor={C.placeholder} autoCapitalize="none" autoCorrect={false} keyboardType="url" returnKeyType="search" onSubmitEditing={() => void checkLiveDomain()} style={[s.input, { marginTop: 14 }]} />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 8, paddingVertical: 12 }}>
@@ -1536,11 +1552,11 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           </ScrollView>
           {!!domainError && <Text style={s.domainError}>{domainError}</Text>}
           {domainAvailable && <View style={s.domainResult}><Ionicons name="checkmark-circle" size={24} color={C.success || '#1f9d55'} /><View style={{ flex: 1 }}><Text style={s.domainName}>{liveDomain}{liveSuffix}</Text><Text style={s.domainPrice}>Available{domainPriceLabel ? ` — ${domainPriceLabel}` : ''}</Text></View></View>}
-          <Pressable disabled={domainPriceLoading || !liveDomain.trim()} onPress={() => domainAvailable ? confirmDomain() : void checkLiveDomain()} style={[s.planModalPayBtn, (domainPriceLoading || !liveDomain.trim()) && { opacity: .5 }]}>
-            {domainPriceLoading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={s.planModalPayBtnText}>{domainAvailable ? 'Continue' : 'Check availability'}</Text>}
+          <Pressable disabled={domainPriceLoading || !liveDomain.trim()} onPress={() => domainAvailable ? (buyMode ? void buyDomain() : confirmDomain()) : void checkLiveDomain()} style={[s.planModalPayBtn, (domainPriceLoading || !liveDomain.trim()) && { opacity: .5 }]}>
+            {domainPriceLoading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={s.planModalPayBtnText}>{domainAvailable ? (buyMode ? 'Buy domain' : 'Continue') : 'Check availability'}</Text>}
           </Pressable>
           </> : <>
-          <View style={s.planModalHeader}><Pressable onPress={() => setPlanStep('domain')} hitSlop={10}><Ionicons name="chevron-back" size={22} color={C.ink} /></Pressable><Text style={[s.planModalTitle, { flex: 1, marginLeft: 6 }]}>Choose your plan</Text><Pressable onPress={() => setShowPlanModal(false)} hitSlop={10}><Ionicons name="close" size={22} color={C.ink} /></Pressable></View>
+          <View style={s.planModalHeader}><Pressable onPress={() => ownedDomain ? setShowPlanModal(false) : setPlanStep('domain')} hitSlop={10}><Ionicons name="chevron-back" size={22} color={C.ink} /></Pressable><Text style={[s.planModalTitle, { flex: 1, marginLeft: 6 }]}>Choose your plan</Text><Pressable onPress={() => setShowPlanModal(false)} hitSlop={10}><Ionicons name="close" size={22} color={C.ink} /></Pressable></View>
           <View style={s.billingToggle}>
             {([false, true] as const).map(isAnnual => <Pressable key={String(isAnnual)} onPress={() => setAnnual(isAnnual)} style={[s.billingOption, annual === isAnnual && s.billingOptionOn]}>
               <Text style={[s.billingText, annual === isAnnual && s.billingTextOn]}>{isAnnual ? 'Annual' : 'Monthly'}</Text>
@@ -1562,10 +1578,10 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           <View style={s.planModalFeeNote}>
             <Ionicons name="globe-outline" size={14} color={C.primary} />
             <Text style={s.planModalFeeText}>
-              {liveDomain}{liveSuffix}: {domainPriceLoading ? 'checking price…' : domainNote(domainPence, annual || planChoice === 'pro')}
+              {ownedDomain ? `${ownedDomain}: already yours, nothing to pay for your domain` : `${liveDomain}${liveSuffix}: ${domainPriceLoading ? 'checking price…' : domainNote(domainPence, annual || planChoice === 'pro')}`}
             </Text>
           </View>
-          {!!liveDomain && <View style={{ marginTop: 10 }}>
+          {!!liveDomain && !ownedDomain && <View style={{ marginTop: 10 }}>
             <Text style={{ fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.ink, marginBottom: 6 }}>Have a referral code?</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <TextInput value={referralCode} onChangeText={v => { setReferralCode(v.toUpperCase()); setReferralApplied(''); setReferralNote(null); }} placeholder="Enter code" placeholderTextColor={C.placeholder} autoCapitalize="characters" autoCorrect={false} style={{ flex: 1, height: 44, borderRadius: 12, borderWidth: 1, borderColor: C.line, paddingHorizontal: 12, fontFamily: FONT, fontSize: 15, color: C.ink, backgroundColor: C.field }} />
@@ -2698,7 +2714,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   }
 
   if (appScreen === 'dashboard') return <FadeIn>
-    <DashboardHome previewLink={businessRecord.current?.demoUrl || businessRecord.current?.previewUrl || ''} playReveal={playReveal} onRevealDone={() => setPlayReveal(false)} onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean, isPro: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true }; setPlanAnnual(isAnnual); setPlanPro(isPro); setWebsiteStatus('publishing'); }} infoComplete={infoComplete} onSendToDesigner={sendFromDashboard} onEditInfo={() => { if (adminViewingBusiness) return; setEditingInfo(websiteStatus !== 'todo'); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} saveError={saveError} planAnnual={planAnnual} planPro={planPro} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onDomainChosen={(d: string, sfx: string) => { setDomain(d); setSuffix(sfx); setDomainReady(true); }} />
+    <DashboardHome previewLink={businessRecord.current?.demoUrl || businessRecord.current?.previewUrl || ''} playReveal={playReveal} onRevealDone={() => setPlayReveal(false)} onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean, isPro: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true }; setPlanAnnual(isAnnual); setPlanPro(isPro); setWebsiteStatus('publishing'); }} infoComplete={infoComplete} onSendToDesigner={sendFromDashboard} onEditInfo={() => { if (adminViewingBusiness) return; setEditingInfo(websiteStatus !== 'todo'); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} saveError={saveError} planAnnual={planAnnual} planPro={planPro} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onDomainChosen={(d: string, sfx: string) => { setDomain(d); setSuffix(sfx); setDomainReady(true); }} ownedDomain={businessRecord.current?.domainRegistered ? (businessRecord.current?.customDomain || businessRecord.current?.domain || '') : ''} />
   </FadeIn>;
 
   if (appScreen === 'design-editor') return <FadeIn><DesignEditorFullscreen palette={palette} setPalette={setPalette} font={font} setFont={setFont} siteTexts={siteTexts} setSiteTexts={setSiteTexts} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} data={data} services={services} hours={hours} contactForm={contactForm} onBack={() => {
@@ -3171,10 +3187,6 @@ function AdminClientView({ biz, session, onBack, onChanged, onViewAsClient }: { 
   const run = async (fn: () => Promise<any>, ok?: string) => { setBusy(true); setMsg(''); try { await fn(); if (ok) setMsg(ok); } catch (e: any) { setMsg(e.message || 'Something went wrong'); } setBusy(false); };
   const loadInfo = () => api({ action: 'account-info' }).then(setInfo).catch(e => setMsg(e.message));
   useEffect(() => { if (tab === 'account' && !info) void loadInfo(); }, [tab]);
-  const setLive = (next: boolean) => {
-    const go = () => run(async () => { await api({ action: 'set-live', live: next }); onChanged(); });
-    if (next) go(); else Alert.alert('Take offline?', `${name}'s website goes offline and they get a notification.`, [{ text: 'Cancel', style: 'cancel' }, { text: 'Take offline', style: 'destructive', onPress: go }]);
-  };
   const sub = info?.subscription;
   const pill = (label: string, onPress: () => void, opts: { primary?: boolean; danger?: boolean; disabled?: boolean } = {}) =>
     <Pressable key={label} disabled={busy || opts.disabled} onPress={onPress} style={({ pressed }) => [aS.admPill, opts.primary && aS.admPillPrimary, opts.disabled && { opacity: 0.45 }, pressed && s.pressed]}>
@@ -3191,12 +3203,11 @@ function AdminClientView({ biz, session, onBack, onChanged, onViewAsClient }: { 
     </View>
     {tab === 'site' && <ScrollView contentContainerStyle={aS.admBody}>
       <View style={aS.admPills}>
-        {live ? pill('Take offline', () => setLive(false), { danger: true }) : pill('Make live', () => setLive(true), { primary: true, disabled: !canLive })}
         {pill('View as client', onViewAsClient)}
         {!!url && pill('Open site ↗', () => void Linking.openURL(url))}
         {pill('Copy info', () => void Share.share({ message: businessBrief(biz), title: 'Business brief' }))}
       </View>
-      <View style={aS.admCard}><Text style={aS.admK}>Website files</Text><Text style={aS.admV}>{canLive ? 'Uploaded' : 'Nothing uploaded yet'}</Text>{!canLive && <Text style={aS.admNote}>Upload their website from the web admin page, then Make live unlocks.</Text>}</View>
+      <View style={aS.admCard}><Text style={aS.admK}>Website files</Text><Text style={aS.admV}>{canLive ? 'Uploaded' : 'Nothing uploaded yet'}</Text>{!canLive && <Text style={aS.admNote}>Upload their website from the web admin page.</Text>}</View>
       <View style={aS.admCard}><Text style={aS.admK}>Domain</Text><Text style={aS.admV}>{domain ? `${domain}${d.domainConnected ? ' ✓' : ' …'}` : 'No domain'}</Text>{!!domain && !d.domainConnected && <Text style={aS.admNote}>Waiting for nameservers{d.domainNameservers?.length ? `: ${d.domainNameservers.join(', ')}` : ''}</Text>}</View>
       {!!msg && <Text style={aS.admNote}>{msg}</Text>}
     </ScrollView>}
