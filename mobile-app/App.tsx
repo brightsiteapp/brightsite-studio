@@ -1341,7 +1341,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     onSignedOut();
   };
 
-  const ADMIN_EMAIL = 'brightsiteapp@gmail.com';
+  // Same admin list as api/_lib/push.js (ADMIN_EMAILS)
+  const ADMIN_EMAILS = ['brightsiteapp@gmail.com', 'tommeofficial1@gmail.com'];
 
   // Same categories and rules as the web admin: stub = setup pending, green = live,
   // yellow = preview sent, red = to build.
@@ -1401,7 +1402,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     const email = authedSession?.user?.email || data.email.trim();
     setAuthSession(true);
     setSession(authedSession);
-    if (email.toLowerCase() === ADMIN_EMAIL) {
+    if (ADMIN_EMAILS.includes(email.toLowerCase())) {
       setAppScreen('admin');
       // register this phone for admin alerts (new clients, messages, payments)
       registerPushToken().then(t => { if (t) pingAdminApi(authedSession.access_token, { action: 'register-admin-push', token: t }); }).catch(() => {});
