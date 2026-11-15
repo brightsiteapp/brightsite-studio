@@ -2729,11 +2729,11 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             const name = biz.data?.name || biz.data?.businessName || biz.id;
             const icon = ({ new: 'person-add-outline', build: 'hammer-outline', pending: 'time-outline', live: 'checkmark-circle-outline' } as any)[st];
             const desc = ({ new: 'Signed up', build: 'Submitted to build', pending: 'Preview ready — awaiting payment', live: 'Live and paying' } as any)[st];
-            return <View key={biz.id} style={aS.notifRow}>
+            return <Pressable key={biz.id} onPress={() => adminOpenBusiness(biz)} style={({ pressed }) => [aS.notifRow, pressed && s.pressed]}>
               <View style={[aS.notifIcon, { backgroundColor: STATUS_COLORS[st] + '18' }]}><Ionicons name={icon} size={18} color={STATUS_COLORS[st]} /></View>
               <View style={{ flex: 1 }}><Text style={aS.notifName} numberOfLines={1}>{name}</Text><Text style={aS.notifDesc}>{desc}</Text></View>
               <Text style={aS.notifTime}>{biz.updatedAt ? timeAgo(biz.updatedAt) : ''}</Text>
-            </View>;
+            </Pressable>;
           })}
         </ScrollView>}
 
