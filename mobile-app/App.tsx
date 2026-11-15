@@ -1121,8 +1121,8 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
       {adminBiz
         ? <>
           <View style={[s.dashboardBrandRow, { paddingBottom: 10 }]}>
-            <Logo height={17} />
-            <Pressable hitSlop={10} onPress={onAdminBack} style={[s.adminBackBtn, { marginRight: 0 }]}><Ionicons name="chevron-back" size={15} color={C.primary} /><Text style={s.adminBackText}>Admin</Text></Pressable>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><Logo height={17} /><View style={aS.adminBadge}><Text style={aS.adminBadgeText}>ADMIN</Text></View></View>
+            <Pressable hitSlop={10} onPress={onAdminBack} style={[s.adminBackBtn, { marginRight: 0, marginLeft: 0 }]}><Ionicons name="chevron-back" size={15} color={C.primary} /><Text style={s.adminBackText}>Dashboard</Text></Pressable>
           </View>
           <View style={[s.dashboardBrandRow, { paddingBottom: 14, gap: 10 }]}>
             <Text style={{ flex: 1, fontFamily: FONT, fontSize: 20, fontWeight: '800', color: C.ink }} numberOfLines={1}>{adminBiz.data?.name || adminBiz.data?.businessName || adminBiz.id}</Text>
