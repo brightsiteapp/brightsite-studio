@@ -599,13 +599,13 @@ function AnalyticsModal({ visible, slug, session, onClose }: { visible: boolean;
         <Text style={{ fontFamily: FONT, fontSize: 22, fontWeight: '800', color: C.ink }}>Analytics</Text>
         <Pressable onPress={onClose} hitSlop={10}><Ionicons name="close" size={24} color={C.ink} /></Pressable>
       </View>
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
       <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 20 }}>
         {([7, 30, 90, 'all'] as const).map(n => <Pressable key={n} onPress={() => setRangeDays(n)} style={[s.chip, rangeDays === n && s.chipOn]}><Text style={[s.chipText, rangeDays === n && s.chipTextOn]}>{n === 'all' ? 'All time' : `${n} days`}</Text></Pressable>)}
       </View>
       <View style={{ flexDirection: 'row', gap: 12, padding: 20 }}>
         {[['Page views', views], ['Visitors', visitors]].map(([label, n]) => <View key={String(label)} style={[s.dashboardInfoCard, { flex: 1, marginBottom: 0 }]}><Text style={s.dashboardCardLabel}>{label}</Text><Text style={[s.dashboardCardTitle, { fontSize: 28 }]}>{Number(n).toLocaleString('en-GB')}</Text></View>)}
       </View>
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
       <View style={[s.dashboardInfoCard, { marginHorizontal: 20 }]}>
         {days === null && !error && <ActivityIndicator color={C.primary} />}
         {!!error && <Text style={s.dashboardCardText}>{error}</Text>}
