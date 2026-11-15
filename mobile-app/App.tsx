@@ -1179,7 +1179,7 @@ function MessageThread({ session, slug, viewer, otherName, placeholder, intro }:
   </>;
 }
 
-function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, onPaid, saveError, planAnnual, planPro, media, isPaying, buildChoice, session, slug, onAdminBack, onDomainChosen, ownedDomain = '', adminBiz, onAdminSaved, infoComplete, onSendToDesigner, playReveal, onRevealDone, previewLink = '' }: any) {
+function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, services, hours, contactForm, homeSections, servicesSections, contactSections, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, onPaid, saveError, planAnnual, planPro, media, isPaying, buildChoice, session, slug, onAdminBack, onDomainChosen, ownedDomain = '', adminBiz, infoComplete, onSendToDesigner, playReveal, onRevealDone, previewLink = '' }: any) {
   // After sending to the designer: a full-screen preview card, the B fades in, then the text,
   // then the card shrinks into its place on the dashboard.
   const buildCardRef = useRef<View>(null);
@@ -1261,7 +1261,13 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
   const [liveSuffix, setLiveSuffix] = useState(suffix || '.co.uk');
   const [domainError, setDomainError] = useState('');
   const [domainAvailable, setDomainAvailable] = useState(false);
-  const [showAdminEdit, setShowAdminEdit] = useState(false);
+  const [subNote, setSubNote] = useState('');
+  useEffect(() => {
+    if (!isPaying || adminBiz || !session?.access_token || !slug) return;
+    fetch(ADMIN_API, { method: 'POST', headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'my-subscription', slug }) })
+      .then(r => r.json()).then(j => { const sub = j?.subscription; if (sub?.renews) setSubNote(` · ${sub.cancelAtPeriodEnd ? 'Ends' : 'Renews'} ${new Date(sub.renews).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`); })
+      .catch(() => {});
+  }, [isPaying, slug]);
   const [buyMode, setBuyMode] = useState(false); // Account page: buying just a domain, no plan yet
   const openPlanModal = () => {
     setBuyMode(false);
@@ -1464,7 +1470,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
           <View style={s.dashboardInfoCard}>
             <Text style={s.dashboardCardLabel}>Plan</Text>
             <Text style={s.dashboardCardTitle}>{isPaying ? `${planPro ? 'Pro' : 'Free'} plan · ${planAnnual ? 'Annual' : 'Monthly'}` : 'No plan yet'}</Text>
-            <Text style={s.dashboardCardText}>{isPaying ? (planAnnual ? '£16/month hosting, billed £192 yearly' : '£19/month hosting') : 'Choose a plan when you tap Make Live.'}</Text>
+            <Text style={s.dashboardCardText}>{isPaying ? (planAnnual ? '£16/month hosting, billed £192 yearly' : '£19/month hosting') + subNote : 'Choose a plan when you tap Make Live.'}</Text>
           </View>
           <View style={s.dashboardInfoCard}>
             <Text style={s.dashboardCardLabel}>Domain</Text>
@@ -1518,7 +1524,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
                 <Ionicons name="stats-chart" size={15} color={C.primary} />
               </Pressable>
             <View>
-              <Pressable onPress={() => adminBiz ? setShowAdminEdit(true) : isBuilding ? onEditInfo?.() : setShowEditMenu(v => !v)} style={({ pressed }) => [s.dashboardEdit, pressed && s.pressed]}>
+              <Pressable onPress={() => isBuilding || adminBiz ? onEditInfo?.() : setShowEditMenu(v => !v)} style={({ pressed }) => [s.dashboardEdit, pressed && s.pressed]}>
                 <Ionicons name="create-outline" size={15} color={C.ink} /><Text style={s.dashboardEditText}>Edit</Text>
                 {!isBuilding && !adminBiz && <Ionicons name={showEditMenu ? 'chevron-up' : 'chevron-down'} size={14} color={C.inkMuted} />}
               </Pressable>
@@ -1556,7 +1562,6 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
         </Animated.View>}
       </ScrollView>}
     </View>
-    {adminBiz && <AdminInfoEditor visible={showAdminEdit} biz={adminBiz} session={session} onClose={() => setShowAdminEdit(false)} onSaved={onAdminSaved} />}
     <Modal visible={showPlanModal} transparent animationType="slide" onRequestClose={() => setShowPlanModal(false)}>
       <View style={s.planModalOverlay}>
         <View style={s.planModalBox}>
@@ -2215,6 +2220,19 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       chosenDomain: domainReady ? domain + suffix : undefined,
       design: designSnapshot(),
     });
+    // Admin editing a client: save through the admin API (never the client's own row via this login).
+    if (adminViewingBusiness) {
+      try {
+        const remote = (u?: string | null) => (u && /^https?:\/\//.test(u) ? u : undefined);
+        const { notes: _n, buildChoice: _b, ...raw } = buildRaw(remote(media.logo) || null, remote(media.hero) || null, media.gallery.map(u => remote(u) || null)) as any;
+        const res = await fetch(ADMIN_API, { method: 'POST', headers: { Authorization: `Bearer ${authed.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'save-raw', slug: adminViewingBusiness.id, raw }) });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(j.error || `HTTP ${res.status}`);
+        setAdminViewingBusiness((b: any) => ({ ...b, data: j.data }));
+        setAdminBusinesses(list => list.map(x => x.id === adminViewingBusiness.id ? { ...x, data: j.data } : x));
+        return true;
+      } catch (err: any) { if (!draft) setSaveError(err.message || 'Could not save.'); return false; }
+    }
     // A slug owned by another account is rejected by the RPC, so try a few suffixed variants.
     for (let attempt = 0; attempt < 4; attempt++) {
       const chosenSlug = attempt === 0 ? baseSlug : `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
@@ -2728,7 +2746,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   }
 
   if (appScreen === 'dashboard') return <FadeIn>
-    <DashboardHome previewLink={businessRecord.current?.demoUrl || businessRecord.current?.previewUrl || ''} playReveal={playReveal} onRevealDone={() => setPlayReveal(false)} onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean, isPro: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true }; setPlanAnnual(isAnnual); setPlanPro(isPro); setWebsiteStatus('publishing'); }} infoComplete={infoComplete} onSendToDesigner={sendFromDashboard} onEditInfo={() => { if (adminViewingBusiness) return; setEditingInfo(websiteStatus !== 'todo'); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} saveError={saveError} planAnnual={planAnnual} planPro={planPro} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onDomainChosen={(d: string, sfx: string) => { setDomain(d); setSuffix(sfx); setDomainReady(true); }} adminBiz={adminViewingBusiness} onAdminSaved={(d: any) => { const b = { ...adminViewingBusiness, data: d }; setAdminViewingBusiness(b); hydrateFromRecord(d, d?.contactEmail || d?.email || ''); setAdminBusinesses(list => list.map(x => x.id === b.id ? b : x)); }} ownedDomain={businessRecord.current?.domainRegistered ? (businessRecord.current?.customDomain || businessRecord.current?.domain || '') : ''} />
+    <DashboardHome previewLink={businessRecord.current?.demoUrl || businessRecord.current?.previewUrl || ''} playReveal={playReveal} onRevealDone={() => setPlayReveal(false)} onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} palette={palette} font={font} services={services} hours={hours} contactForm={contactForm} homeSections={homeSections} servicesSections={servicesSections} contactSections={contactSections} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean, isPro: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true }; setPlanAnnual(isAnnual); setPlanPro(isPro); setWebsiteStatus('publishing'); }} infoComplete={infoComplete} onSendToDesigner={sendFromDashboard} onEditInfo={() => { setEditingInfo(websiteStatus !== 'todo'); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} saveError={saveError} planAnnual={planAnnual} planPro={planPro} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onDomainChosen={(d: string, sfx: string) => { setDomain(d); setSuffix(sfx); setDomainReady(true); }} adminBiz={adminViewingBusiness} ownedDomain={businessRecord.current?.domainRegistered ? (businessRecord.current?.customDomain || businessRecord.current?.domain || '') : ''} />
   </FadeIn>;
 
   if (appScreen === 'design-editor') return <FadeIn><DesignEditorFullscreen palette={palette} setPalette={setPalette} font={font} setFont={setFont} siteTexts={siteTexts} setSiteTexts={setSiteTexts} homeSections={homeSections} setHomeSections={setHomeSections} servicesSections={servicesSections} setServicesSections={setServicesSections} contactSections={contactSections} setContactSections={setContactSections} data={data} services={services} hours={hours} contactForm={contactForm} onBack={() => {
@@ -3185,84 +3203,58 @@ savedPill: { position: 'absolute', top: SAFE_TOP + 86, alignSelf: 'center', zInd
 const adminApiCall = (session: any, slug: string, payload: Record<string, any>) => fetch(ADMIN_API, { method: 'POST', headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ slug, ...payload }) })
   .then(async r => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`); return j; });
 
-// Admin-only account controls (login, password, plan), shown in the client's Account tab.
+// Admin-only account controls, laid out like the client's Account cards. Inputs pop up when an option is tapped.
 function AdminAccountPanel({ biz, session }: { biz: any; session: any }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [info, setInfo] = useState<any>(null);
-  const [newEmail, setNewEmail] = useState('');
-  const [newPw, setNewPw] = useState('');
+  const [prompt, setPrompt] = useState<null | 'email' | 'password'>(null);
+  const [value, setValue] = useState('');
   const d = biz.data || {};
   const api = (payload: Record<string, any>) => adminApiCall(session, biz.id, payload);
   const run = async (fn: () => Promise<any>, ok?: string) => { setBusy(true); setMsg(''); try { await fn(); if (ok) setMsg(ok); } catch (e: any) { setMsg(e.message || 'Something went wrong'); } setBusy(false); };
   const loadInfo = () => api({ action: 'account-info' }).then(setInfo).catch(e => setMsg(e.message));
   useEffect(() => { void loadInfo(); }, [biz.id]);
   const sub = info?.subscription;
-  const pill = (label: string, onPress: () => void, danger = false) =>
-    <Pressable key={label} disabled={busy} onPress={onPress} style={({ pressed }) => [aS.admPill, pressed && s.pressed]}><Text style={[aS.admPillText, danger && { color: C.danger }]}>{label}</Text></Pressable>;
-  return <View style={{ gap: 12 }}>
-    <View style={aS.admCard}>
-      <Text style={aS.admK}>Client login</Text>
-      <Text style={aS.admV}>{info ? (info.login?.email || 'No login') : 'Loading…'}</Text>
-      {!!info?.login?.lastSignIn && <Text style={aS.admNote}>Last signed in {timeAgo(info.login.lastSignIn)}</Text>}
-      <TextInput style={aS.admInput} value={newEmail} onChangeText={setNewEmail} placeholder="New login email" autoCapitalize="none" keyboardType="email-address" placeholderTextColor={C.placeholder} />
-      <View style={aS.admPills}>{pill('Change email', () => { if (newEmail.trim()) void run(async () => { await api({ action: 'update-login', email: newEmail.trim() }); setNewEmail(''); await loadInfo(); }, 'Login email changed.'); })}</View>
-      <TextInput style={aS.admInput} value={newPw} onChangeText={setNewPw} placeholder="New password (8+ characters)" autoCapitalize="none" autoCorrect={false} placeholderTextColor={C.placeholder} />
-      <View style={aS.admPills}>
-        {pill('Set password', () => { if (newPw.length >= 8) void run(async () => { await api({ action: 'update-login', password: newPw }); setNewPw(''); }, 'Password set. Let them know.'); else setMsg('Password must be 8+ characters.'); })}
-        {pill('Email reset link', () => void run(async () => { const r = await api({ action: 'send-reset' }); setMsg(`Reset link sent to ${r.email}.`); }))}
-      </View>
-    </View>
-    <View style={aS.admCard}>
-      <Text style={aS.admK}>Subscription</Text>
-      {sub && !sub.error ? <>
-        <Text style={aS.admV}>{sub.amount != null ? `£${(sub.amount / 100).toFixed(2)}` : ''}{sub.interval ? ` / ${sub.interval}` : ''} · {sub.status}</Text>
-        {!!sub.renews && <Text style={aS.admNote}>{sub.cancelAtPeriodEnd ? 'Ends' : 'Renews'} {new Date(sub.renews).toLocaleDateString('en-GB')}</Text>}
-        {!!sub.card && <Text style={aS.admNote}>{sub.card}</Text>}
-        {sub.status !== 'canceled' && <View style={aS.admPills}>{sub.cancelAtPeriodEnd
-          ? pill('Keep plan (undo cancel)', () => void run(async () => { await api({ action: 'cancel-plan', undo: true }); await loadInfo(); }))
-          : pill('Cancel at end of period', () => Alert.alert('Cancel plan?', 'Their site goes offline when the billing period ends.', [{ text: 'No', style: 'cancel' }, { text: 'Cancel plan', style: 'destructive', onPress: () => void run(async () => { await api({ action: 'cancel-plan' }); await loadInfo(); }) }]), true)}</View>}
-      </> : <Text style={aS.admV}>{info ? (d.planActive ? 'Paid' : 'Not paid') : 'Loading…'}</Text>}
-    </View>
-    {!!msg && <Text style={aS.admNote}>{msg}</Text>}
-  </View>;
-}
-
-// Admin edits a client's main details (saved through the admin API, never the client's own login).
-const ADMIN_INFO_FIELDS: [string, string][] = [['name', 'Business name'], ['fullName', 'Owner name'], ['phone', 'Phone'], ['email', 'Business email'], ['address', 'Address'], ['tagline', 'Business type'], ['website', 'Website'], ['instagram', 'Instagram'], ['facebook', 'Facebook'], ['designerNotes', 'Notes for designer']];
-function AdminInfoEditor({ visible, biz, session, onClose, onSaved }: { visible: boolean; biz: any; session: any; onClose: () => void; onSaved: (data: any) => void }) {
-  const raw = biz?.data?.raw || {};
-  const [vals, setVals] = useState<Record<string, string>>({});
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState('');
-  useEffect(() => { if (visible) { const v: Record<string, string> = {}; ADMIN_INFO_FIELDS.forEach(([k]) => { v[k] = String(raw[k] ?? (k === 'name' ? biz?.data?.name || '' : '')); }); setVals(v); setErr(''); } }, [visible, biz?.id]);
-  const save = async () => {
-    setBusy(true); setErr('');
-    try { const r = await adminApiCall(session, biz.id, { action: 'update-info', info: vals }); onSaved(r.data); onClose(); }
-    catch (e: any) { setErr(e.message || 'Could not save.'); }
-    setBusy(false);
+  const link = (icon: any, label: string, onPress: () => void, danger = false) =>
+    <Pressable disabled={busy} onPress={onPress} style={s.cardLink} hitSlop={8}><Ionicons name={icon} size={15} color={danger ? C.danger : C.primary} /><Text style={[s.cardLinkText, danger && { color: C.danger }]}>{label}</Text></Pressable>;
+  const submit = () => {
+    const v = value.trim();
+    if (prompt === 'email' && v) void run(async () => { await api({ action: 'update-login', email: v }); await loadInfo(); }, 'Login email changed.');
+    else if (prompt === 'password') { if (v.length < 8) { setMsg('Password must be 8+ characters.'); } else void run(async () => { await api({ action: 'update-login', password: v }); }, 'Password set. Let them know.'); }
+    setPrompt(null); setValue('');
   };
-  return <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-    <View style={{ flex: 1, backgroundColor: C.canvas, paddingTop: Platform.OS === 'ios' ? 54 : 28 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 10 }}>
-        <Text style={{ fontFamily: FONT, fontSize: 20, fontWeight: '800', color: C.ink }}>Edit client info</Text>
-        <Pressable onPress={onClose} hitSlop={10}><Ionicons name="close" size={24} color={C.ink} /></Pressable>
-      </View>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 4, gap: 4 }} keyboardShouldPersistTaps="handled">
-          {ADMIN_INFO_FIELDS.map(([k, label]) => <View key={k}>
-            <Text style={aS.admK}>{label}</Text>
-            <TextInput style={[aS.admInput, { marginTop: 4, marginBottom: 10 }, k === 'designerNotes' && { height: 90, paddingTop: 10, textAlignVertical: 'top' }]} multiline={k === 'designerNotes'} value={vals[k] || ''} onChangeText={t => setVals(v => ({ ...v, [k]: t }))} autoCapitalize={k === 'email' || k === 'website' ? 'none' : 'sentences'} placeholderTextColor={C.placeholder} />
-          </View>)}
-          {!!err && <Text style={[aS.admNote, { color: C.danger }]}>{err}</Text>}
-          <Text style={aS.admNote}>Hours, services and photos can be edited from the web admin page.</Text>
-          <Pressable disabled={busy} onPress={() => void save()} style={({ pressed }) => [s.planModalPayBtn, { marginTop: 12 }, busy && { opacity: .5 }, pressed && s.pressed]}>
-            {busy ? <ActivityIndicator size="small" color="#fff" /> : <Text style={s.planModalPayBtnText}>Save</Text>}
-          </Pressable>
-        </ScrollView>
-      </KeyboardAvoidingView>
+  const when = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  return <View>
+    <View style={s.dashboardInfoCard}>
+      <Text style={s.dashboardCardLabel}>Plan</Text>
+      {sub && !sub.error ? <>
+        <Text style={s.dashboardCardTitle}>{sub.amount != null ? `£${(sub.amount / 100).toFixed(2)}` : ''}{sub.interval ? ` / ${sub.interval}` : ''} · {sub.status}</Text>
+        <Text style={s.dashboardCardText}>{[sub.renews ? `${sub.cancelAtPeriodEnd ? 'Ends' : 'Renews'} ${when(sub.renews)}` : '', sub.card].filter(Boolean).join(' · ')}</Text>
+        {sub.status !== 'canceled' && (sub.cancelAtPeriodEnd
+          ? link('refresh-outline', 'Keep plan (undo cancel)', () => void run(async () => { await api({ action: 'cancel-plan', undo: true }); await loadInfo(); }))
+          : link('close-circle-outline', 'Cancel at end of period', () => Alert.alert('Cancel plan?', 'Their site goes offline when the billing period ends.', [{ text: 'No', style: 'cancel' }, { text: 'Cancel plan', style: 'destructive', onPress: () => void run(async () => { await api({ action: 'cancel-plan' }); await loadInfo(); }) }]), true))}
+      </> : <Text style={s.dashboardCardTitle}>{info ? (d.planActive ? 'Paid' : 'No plan yet') : 'Loading…'}</Text>}
     </View>
-  </Modal>;
+    <View style={s.dashboardInfoCard}>
+      <Text style={s.dashboardCardLabel}>Login email</Text>
+      <Text style={s.dashboardCardTitle}>{info ? (info.login?.email || 'No login') : 'Loading…'}</Text>
+      {!!info?.login?.lastSignIn && <Text style={s.dashboardCardText}>Last signed in {timeAgo(info.login.lastSignIn)}</Text>}
+      {link('mail-outline', 'Change email', () => { setValue(''); setPrompt('email'); })}
+      {link('key-outline', 'Set password', () => { setValue(''); setPrompt('password'); })}
+      {link('paper-plane-outline', 'Email reset link', () => void run(async () => { const r = await api({ action: 'send-reset' }); setMsg(`Reset link sent to ${r.email}.`); }))}
+    </View>
+    {!!msg && <Text style={[s.dashboardCardText, { paddingHorizontal: 4 }]}>{msg}</Text>}
+    <Modal visible={!!prompt} transparent animationType="fade" onRequestClose={() => setPrompt(null)}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.planModalOverlay}>
+        <View style={s.planModalBox}>
+          <View style={s.planModalHeader}><Text style={s.planModalTitle}>{prompt === 'email' ? 'Change login email' : 'Set password'}</Text><Pressable onPress={() => setPrompt(null)} hitSlop={10}><Ionicons name="close" size={22} color={C.ink} /></Pressable></View>
+          <TextInput autoFocus value={value} onChangeText={setValue} placeholder={prompt === 'email' ? 'New login email' : 'New password (8+ characters)'} placeholderTextColor={C.placeholder} autoCapitalize="none" autoCorrect={false} keyboardType={prompt === 'email' ? 'email-address' : 'default'} onSubmitEditing={submit} style={aS.admInput} />
+          <Pressable onPress={submit} style={({ pressed }) => [s.planModalPayBtn, { marginTop: 14 }, pressed && s.pressed]}><Text style={s.planModalPayBtnText}>Save</Text></Pressable>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  </View>;
 }
 
 const aS = StyleSheet.create({

@@ -2055,8 +2055,19 @@
     var data = (business && business.data) || {};
     var set = function(id, text) { var el = document.getElementById(id); if (el) el.textContent = text; };
     set('acctPlanTitle', isPaying ? (selectedPlan === 'pro' ? 'Pro' : 'Free') + ' plan · ' + (selectedAnnual ? 'Annual' : 'Monthly') : 'No plan yet');
-    set('acctPlanSub', isPaying ? (selectedAnnual ? '£17/month hosting, billed £204 yearly' : '£19/month hosting') : 'Choose a plan when you tap Make Live.');
+    set('acctPlanSub', isPaying ? (selectedAnnual ? '£17/month hosting, billed £204 yearly' : '£19/month hosting') + (window.__subNote || '') : 'Choose a plan when you tap Make Live.');
     document.getElementById('billingBtn').hidden = !isPaying;
+    if (isPaying && !isAdminView && !window.__subLoaded && session && session.access_token) {
+      window.__subLoaded = true;
+      fetch('https://api.brightsite.app/api/admin-businesses', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token }, body: JSON.stringify({ action: 'my-subscription', slug: slug }) })
+        .then(function(r) { return r.json(); })
+        .then(function(j) {
+          var sub = j && j.subscription; if (!sub || !sub.renews) return;
+          var when = new Date(sub.renews).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+          window.__subNote = ' · ' + (sub.cancelAtPeriodEnd ? 'Ends ' : 'Renews ') + when;
+          renderAccountCards();
+        }).catch(function() {});
+    }
     var domain = data.customDomain || data.domain || pendingDomain || '';
     set('acctDomainTitle', domain || 'No domain yet');
     set('acctDomainSub', isLive ? 'Connected to your website' : data.domainRegistered ? 'Bought. Connects when your website goes live' : domain ? 'Connects when your website goes live' : 'Buy one now or choose it when you go live');

@@ -46,7 +46,8 @@ export default async function handler(request, response) {
     if (body.action === 'delete-account') return deleteAccount(request, response, body);
     if (body.action === 'list-logins' || body.action === 'delete-logins') return manageLogins(request, response, body);
     if (body.action === 'notify-admin') return notifyAdminFromCustomer(request, response, body);
-    if (['account-info', 'update-login', 'send-reset', 'update-info', 'cancel-plan', 'register-admin-push', 'push-customer'].includes(body.action)) return adminAction(request, response, body);
+    if (body.action === 'my-subscription') return mySubscription(request, response, body);
+    if (['account-info', 'update-login', 'send-reset', 'save-raw', 'cancel-plan', 'register-admin-push', 'push-customer'].includes(body.action)) return adminAction(request, response, body);
     return connectDomain(request, response);
   }
   if (request.method !== 'GET') {
@@ -290,12 +291,13 @@ async function adminAction(request, response, body) {
     return json(response, 200, { ok: true });
   }
 
-  if (body.action === 'update-info') {
-    const allowed = ['name', 'fullName', 'phone', 'email', 'address', 'tagline', 'website', 'instagram', 'facebook', 'designerNotes'];
-    const raw = { ...(data.raw || {}) };
-    for (const k of allowed) if (typeof body.info?.[k] === 'string') raw[k] = body.info[k].trim().slice(0, 2000);
+  if (body.action === 'save-raw') {
+    // Admin edits the client's info through the same 7-card editor the client uses.
+    const incoming = body.raw && typeof body.raw === 'object' ? body.raw : {};
+    if (JSON.stringify(incoming).length > 200000) return json(response, 400, { error: 'Too much data' });
+    const raw = { ...(data.raw || {}), ...incoming, draft: data.raw?.draft };
     const nextData = { ...data, raw };
-    if (typeof body.info?.name === 'string' && body.info.name.trim()) nextData.name = raw.name;
+    if (typeof raw.name === 'string' && raw.name.trim()) nextData.name = raw.name;
     const { error: upErr } = await supabase.from('businesses').update({ data: nextData, ...(nextData.name ? { name: nextData.name } : {}) }).eq('id', slug);
     if (upErr) return json(response, 502, { error: upErr.message });
     return json(response, 200, { ok: true, data: nextData });
@@ -330,6 +332,25 @@ async function adminAction(request, response, body) {
 
 // Customers' apps and dashboards ping this after they send a message or switch their site off,
 // so admins get a push. The caller must own the business.
+// A customer's own subscription (plan, renewal / end date, card) for their Account page.
+async function mySubscription(request, response, body) {
+  const token = bearerToken(request);
+  if (!token) return json(response, 401, { error: 'Authentication required' });
+  const user = await currentUser(ACCOUNTS_SUPABASE_URL, ACCOUNTS_SUPABASE_ANON_KEY, token).catch(() => null);
+  if (!user?.id) return json(response, 401, { error: 'Authentication required' });
+  const { data: row } = await supabaseAdmin().from('businesses').select('user_id,data').eq('id', String(body.slug || '')).maybeSingle();
+  if (!row || row.user_id !== user.id) return json(response, 403, { error: 'Forbidden' });
+  const subId = row.data?.stripeSubscriptionId;
+  if (!subId || !process.env.STRIPE_SECRET_KEY) return json(response, 200, { subscription: null });
+  try {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
+    const sub = await stripe.subscriptions.retrieve(subId);
+    const price = sub.items?.data?.[0]?.price;
+    return json(response, 200, { subscription: { status: sub.status, cancelAtPeriodEnd: sub.cancel_at_period_end,
+      renews: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null, amount: price?.unit_amount, interval: price?.recurring?.interval } });
+  } catch (err) { return json(response, 200, { subscription: null }); }
+}
+
 async function notifyAdminFromCustomer(request, response, body) {
   const token = bearerToken(request);
   if (!token) return json(response, 401, { error: 'Authentication required' });
