@@ -421,6 +421,12 @@ body { background: var(--bg); color: var(--ink); }
 .site-preview .pv-b img { width: 64px; height: 70px; object-fit: contain; filter: drop-shadow(0 0 7px #7FB2FF) drop-shadow(0 0 22px #3B82F6); }
 @keyframes pvPulse { 0%,100% { opacity: .35; transform: scale(.92); } 50% { opacity: 1; transform: scale(1); } }
 @media (prefers-reduced-motion: reduce) { .site-preview .pv-b { animation: none; } }
+.ac-card { background: #fff; border-radius: 18px; padding: 16px 18px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(28,40,50,.05); display: flex; flex-direction: column; align-items: flex-start; }
+.ac-label { font-size: 12.5px; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
+.ac-value { font-size: 17px; font-weight: 800; color: var(--ink); overflow-wrap: anywhere; }
+.ac-sub { font-size: 13px; color: var(--muted); margin-top: 2px; line-height: 1.45; overflow-wrap: anywhere; }
+.ac-link { border: 0; background: none; padding: 7px 0; font: inherit; font-size: 14px; font-weight: 700; color: var(--accent); cursor: pointer; text-align: left; }
+.ac-link.ac-danger { color: #b23b2c; }
 </style>
 </head>
 <body>
@@ -1436,35 +1442,39 @@ function renderAccountPane() {
   var slug = activeThreadId; var b = bizById(slug); if (!b) return;
   var d = b.data || {}; var raw = d.raw || {};
   var nameArg = esc(bizName(slug)); var sl = esc(slug);
+  var dm = d.customDomain || d.domain || '';
+  var hasDomain = dm && !/brightsite\.app/i.test(dm);
   var pane = document.getElementById('accountPane');
   pane.innerHTML =
-    '<div class="acct-card"><h3>Domain</h3><div id="acctDomain">' + (function() { var dm = d.customDomain || d.domain || ''; return dm && !/brightsite\.app/i.test(dm) ? esc(dm.replace(/^https?:\/\//, '').replace(/\/$/, '')) + (d.domainConnected ? ' ✓' : ' …') + '<div class="adm-note">' + (d.domainConnected ? 'Connected to the website' : 'Waiting for nameservers / connects when live') + '</div>' : '<span class="adm-muted">No domain yet</span>'; })() + '</div>' +
-      '<div class="acct-form"><button type="button" class="acct-btn" onclick="openDomainModal(\'' + sl + '\',\'' + nameArg + '\')">' + ((d.customDomain || d.domain) && !/brightsite\.app/i.test(d.customDomain || d.domain) ? 'Change domain' : 'Add domain') + '</button></div></div>' +
-    '<div class="acct-card"><h3>Login</h3><div class="acct-row"><span class="k">Email</span><span id="acctEmail">Loading…</span></div>' +
-      '<div class="acct-row"><span class="k">Signed in with</span><span id="acctProv">…</span></div>' +
-      '<div class="acct-row"><span class="k">Last signed in</span><span id="acctLast">…</span></div>' +
-      '<div class="acct-form"><button type="button" class="acct-btn" onclick="openPrompt(\'email\')">Change email</button><button type="button" class="acct-btn" onclick="openPrompt(\'password\')">Set password</button><button type="button" class="acct-btn" onclick="acctReset(this)">Email reset link</button></div>' +
+    '<div class="ac-card"><div class="ac-label">Domain</div>' +
+      (hasDomain
+        ? '<div class="ac-value">' + esc(dm.replace(/^https?:\/\//, '').replace(/\/$/, '')) + '</div><div class="ac-sub">' + (d.domainConnected ? 'Connected to the website' : 'Connects when the website goes live') + '</div>'
+        : '<div class="ac-value">No domain yet</div><div class="ac-sub">Connect one they already own</div>') +
+      '<button type="button" class="ac-link" onclick="openDomainModal(\'' + sl + '\',\'' + nameArg + '\')">' + (hasDomain ? 'Change domain' : 'Add domain') + '</button></div>' +
+    '<div class="ac-card"><div class="ac-label">Login email</div><div class="ac-value" id="acctEmail">Loading…</div><div class="ac-sub" id="acctLast"></div>' +
+      '<button type="button" class="ac-link" onclick="openPrompt(\'email\')">Change email</button>' +
+      '<button type="button" class="ac-link" onclick="openPrompt(\'password\')">Set password</button>' +
+      '<button type="button" class="ac-link" onclick="acctReset(this)">Email reset link</button>' +
       '<div class="acct-msg" id="acctMsg"></div></div>' +
-    '<div class="acct-card"><h3>Plan</h3><div id="acctPlan">' + (d.planActive ? 'Paid' : 'Not paid') + '</div>' +
-      '<div class="acct-form" id="acctPlanBtns"></div></div>' +
-    '<div class="acct-card"><h3>Contact</h3><div class="acct-row"><span class="k">Name</span>' + esc(raw.fullName || '—') + '</div><div class="acct-row"><span class="k">Business email</span>' + esc(raw.email || raw.contactEmail || '—') + '</div><div class="acct-row"><span class="k">Phone</span>' + esc(raw.phone || '—') + '</div>' +
-      '<div class="acct-form"><button type="button" class="acct-btn" onclick="copyClientInfo(\'' + sl + '\', this)">Copy all info</button></div></div>' +
-    '<div class="acct-card"><h3>Danger zone</h3><div class="acct-form"><button type="button" class="acct-btn danger" onclick="openDeleteModal(\'' + sl + '\',\'' + nameArg + '\')">Delete account</button></div></div>';
+    '<div class="ac-card"><div class="ac-label">Plan</div><div class="ac-value" id="acctPlan">' + (d.planActive ? 'Paid' : 'No plan yet') + '</div><div id="acctPlanBtns"></div></div>' +
+    '<div class="ac-card"><div class="ac-label">Contact</div>' +
+      '<div class="ac-sub">' + esc(raw.fullName || '—') + ' · ' + esc(raw.email || raw.contactEmail || '—') + ' · ' + esc(raw.phone || '—') + '</div>' +
+      '<button type="button" class="ac-link" onclick="copyClientInfo(\'' + sl + '\', this)">Copy all info</button></div>' +
+    '<div class="ac-card"><div class="ac-label">Danger zone</div><button type="button" class="ac-link ac-danger" onclick="openDeleteModal(\'' + sl + '\',\'' + nameArg + '\')">Delete account</button></div>';
   adminApi({ action: 'account-info', slug: slug }).then(function(info) {
     if (activeThreadId !== slug) return;
     var l = info.login;
     document.getElementById('acctEmail').textContent = l ? l.email : 'No login';
-    document.getElementById('acctProv').textContent = l ? ((l.providers || []).join(', ') || 'email') : '—';
-    document.getElementById('acctLast').textContent = l && l.lastSignIn ? new Date(l.lastSignIn).toLocaleString('en-GB') : '—';
+    document.getElementById('acctLast').textContent = l && l.lastSignIn ? 'Last signed in ' + new Date(l.lastSignIn).toLocaleString('en-GB') : '';
     var sub = info.subscription; var planEl = document.getElementById('acctPlan'); var btns = document.getElementById('acctPlanBtns');
     if (sub && !sub.error) {
-      planEl.innerHTML = esc((sub.amount != null ? '£' + (sub.amount / 100).toFixed(2) : '') + (sub.interval ? ' / ' + sub.interval : '')) + ' · <b>' + esc(sub.status) + '</b>' +
-        (sub.renews ? '<div class="adm-note">' + (sub.cancelAtPeriodEnd ? 'Ends ' : 'Renews ') + new Date(sub.renews).toLocaleDateString('en-GB') + '</div>' : '') +
-        (sub.card ? '<div class="adm-note">' + esc(sub.card) + '</div>' : '');
-      btns.innerHTML = sub.status === 'canceled' ? '' : (sub.cancelAtPeriodEnd
-        ? '<button type="button" class="acct-btn" onclick="acctPlan(\'undo\', this)">Keep plan (undo cancel)</button>'
-        : '<button type="button" class="acct-btn danger" onclick="acctPlan(\'end\', this)">Cancel at end of period</button>');
-    } else if (sub && sub.error) planEl.innerHTML += '<div class="adm-note">Stripe: ' + esc(sub.error) + '</div>';
+      planEl.innerHTML = esc((sub.amount != null ? '£' + (sub.amount / 100).toFixed(2) : '') + (sub.interval ? ' / ' + sub.interval : '') + ' · ' + sub.status);
+      var extra = (sub.renews ? '<div class="ac-sub">' + (sub.cancelAtPeriodEnd ? 'Ends ' : 'Renews ') + new Date(sub.renews).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + '</div>' : '') +
+        (sub.card ? '<div class="ac-sub">' + esc(sub.card) + '</div>' : '');
+      btns.innerHTML = extra + (sub.status === 'canceled' ? '' : (sub.cancelAtPeriodEnd
+        ? '<button type="button" class="ac-link" onclick="acctPlan(\'undo\', this)">Keep plan (undo cancel)</button>'
+        : '<button type="button" class="ac-link ac-danger" onclick="acctPlan(\'end\', this)">Cancel at end of period</button>'));
+    } else if (sub && sub.error) planEl.innerHTML += '<div class="ac-sub">Stripe: ' + esc(sub.error) + '</div>';
   }).catch(function(err) { var m = document.getElementById('acctMsg'); if (m) { m.textContent = err.message; m.className = 'acct-msg err'; } });
 }
 function acctSay(text, ok) { var m = document.getElementById('acctMsg'); m.textContent = text; m.className = 'acct-msg ' + (ok ? 'ok' : 'err'); }
