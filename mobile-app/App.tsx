@@ -1459,12 +1459,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
         </>} />) :
       <ScrollView key={tab} scrollEnabled={tab !== 'Website'} contentContainerStyle={s.dashboardContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
         {tab === 'Account' && adminBiz && <>
-          <View style={s.dashboardInfoCard}>
-            <Text style={s.dashboardCardLabel}>Domain</Text>
-            <Text style={s.dashboardCardTitle}>{ownedDomain || domainLabel}</Text>
-            <Text style={s.dashboardCardText}>{isLive ? 'Connected to the website' : ownedDomain || domain ? 'Connects when the website goes live' : 'No domain yet'}</Text>
-          </View>
-          <AdminAccountPanel biz={adminBiz} session={session} />
+          <AdminAccountPanel biz={adminBiz} session={session} isLive={isLive} />
         </>}
         {tab === 'Account' && !adminBiz && <>
           <View style={s.dashboardInfoCard}>
@@ -1489,7 +1484,10 @@ function DashboardHome({ tab, setTab, data, domain, suffix, palette, font, servi
         {tab === 'Website' && <Animated.View {...websiteBounce.panHandlers} style={{ transform: [{ translateY: websiteDrag }] }}>
           <View style={[s.dashboardWebsiteHead, { zIndex: 20 }]}>
             {adminBiz
-              ? <Pressable onPress={() => void Share.share({ message: businessBrief(adminBiz), title: 'Business brief' })} accessibilityLabel="Copy all business info" style={({ pressed }) => [s.dashboardEdit, { paddingHorizontal: 11 }, pressed && s.pressed]}><Ionicons name="copy-outline" size={15} color={C.ink} /></Pressable>
+              ? <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <Pressable onPress={() => void Share.share({ message: businessBrief(adminBiz), title: 'Business brief' })} accessibilityLabel="Copy all business info" style={({ pressed }) => [s.dashboardEdit, { paddingHorizontal: 11 }, pressed && s.pressed]}><Ionicons name="copy-outline" size={15} color={C.ink} /></Pressable>
+                  <Pressable onPress={() => void Linking.openURL(`https://brightsite.app/account/admin.html?client=${encodeURIComponent(adminBiz.id)}&upload=1`)} accessibilityLabel="Upload website" style={({ pressed }) => [s.dashboardEdit, pressed && s.pressed]}><Ionicons name="cloud-upload-outline" size={15} color={C.ink} /><Text style={s.dashboardEditText}>Upload</Text></Pressable>
+                </View>
               : (isReady || isLive || isPublishing) && !isBuilding
               ? isLive
                 ? <Pressable onPress={confirmOffline} style={({ pressed }) => [s.dashboardEdit, pressed && s.pressed]}>
@@ -3206,11 +3204,12 @@ const adminApiCall = (session: any, slug: string, payload: Record<string, any>) 
   .then(async r => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`); return j; });
 
 // Admin-only account controls, laid out like the client's Account cards. Inputs pop up when an option is tapped.
-function AdminAccountPanel({ biz, session }: { biz: any; session: any }) {
+function AdminAccountPanel({ biz, session, isLive }: { biz: any; session: any; isLive: boolean }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [info, setInfo] = useState<any>(null);
-  const [prompt, setPrompt] = useState<null | 'email' | 'password'>(null);
+  const [prompt, setPrompt] = useState<null | 'email' | 'password' | 'domain'>(null);
+  const [domainNow, setDomainNow] = useState<string | null>(null);
   const [value, setValue] = useState('');
   const d = biz.data || {};
   const api = (payload: Record<string, any>) => adminApiCall(session, biz.id, payload);
@@ -3223,11 +3222,24 @@ function AdminAccountPanel({ biz, session }: { biz: any; session: any }) {
   const submit = () => {
     const v = value.trim();
     if (prompt === 'email' && v) void run(async () => { await api({ action: 'update-login', email: v }); await loadInfo(); }, 'Login email changed.');
+    else if (prompt === 'domain' && v) void run(async () => {
+      const r = await api({ domain: v });
+      setDomainNow(v.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, ''));
+      setMsg(r.connected ? 'Connected. The site loads on this domain within a few minutes.' : `Almost there. At their registrar set the nameservers to: ${(r.nameservers || []).join(', ')}. It connects automatically after that.`);
+    });
     else if (prompt === 'password') { if (v.length < 8) { setMsg('Password must be 8+ characters.'); } else void run(async () => { await api({ action: 'update-login', password: v }); }, 'Password set. Let them know.'); }
     setPrompt(null); setValue('');
   };
   const when = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  const shownDomain = domainNow ?? (d.customDomain || d.domain || '');
+  const realDomain = /brightsite\.app/i.test(shownDomain) ? '' : shownDomain;
   return <View>
+    <View style={s.dashboardInfoCard}>
+      <Text style={s.dashboardCardLabel}>Domain</Text>
+      <Text style={s.dashboardCardTitle}>{realDomain || 'No domain yet'}</Text>
+      <Text style={s.dashboardCardText}>{realDomain ? (isLive || d.domainConnected ? 'Connected to the website' : 'Waiting for nameservers / connects when live') : 'Connect one they already own'}</Text>
+      {link('add-circle-outline', realDomain ? 'Change domain' : 'Add domain', () => { setValue(''); setPrompt('domain'); })}
+    </View>
     <View style={s.dashboardInfoCard}>
       <Text style={s.dashboardCardLabel}>Plan</Text>
       {sub && !sub.error ? <>
@@ -3250,8 +3262,8 @@ function AdminAccountPanel({ biz, session }: { biz: any; session: any }) {
     <Modal visible={!!prompt} transparent animationType="fade" onRequestClose={() => setPrompt(null)}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.planModalOverlay}>
         <View style={s.planModalBox}>
-          <View style={s.planModalHeader}><Text style={s.planModalTitle}>{prompt === 'email' ? 'Change login email' : 'Set password'}</Text><Pressable onPress={() => setPrompt(null)} hitSlop={10}><Ionicons name="close" size={22} color={C.ink} /></Pressable></View>
-          <TextInput autoFocus value={value} onChangeText={setValue} placeholder={prompt === 'email' ? 'New login email' : 'New password (8+ characters)'} placeholderTextColor={C.placeholder} autoCapitalize="none" autoCorrect={false} keyboardType={prompt === 'email' ? 'email-address' : 'default'} onSubmitEditing={submit} style={aS.admInput} />
+          <View style={s.planModalHeader}><Text style={s.planModalTitle}>{prompt === 'email' ? 'Change login email' : prompt === 'domain' ? 'Add domain' : 'Set password'}</Text><Pressable onPress={() => setPrompt(null)} hitSlop={10}><Ionicons name="close" size={22} color={C.ink} /></Pressable></View>
+          <TextInput autoFocus value={value} onChangeText={setValue} placeholder={prompt === 'email' ? 'New login email' : prompt === 'domain' ? 'e.g. willowbeauty.co.uk' : 'New password (8+ characters)'} placeholderTextColor={C.placeholder} autoCapitalize="none" autoCorrect={false} keyboardType={prompt === 'email' ? 'email-address' : prompt === 'domain' ? 'url' : 'default'} onSubmitEditing={submit} style={aS.admInput} />
           <Pressable onPress={submit} style={({ pressed }) => [s.planModalPayBtn, { marginTop: 14 }, pressed && s.pressed]}><Text style={s.planModalPayBtnText}>Save</Text></Pressable>
         </View>
       </KeyboardAvoidingView>

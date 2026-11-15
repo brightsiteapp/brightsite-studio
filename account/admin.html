@@ -746,6 +746,15 @@ function renderBusinesses(businesses, emails) {
 
 function applyFilter() {
   renderClientList();
+  // The app's "Upload website" button links here: ?client=<slug>&upload=1 opens that client's upload window.
+  if (!window.__deepLinked) {
+    var q = new URLSearchParams(location.search), want = q.get('client');
+    if (want && bizById(want)) {
+      window.__deepLinked = true;
+      selectClient(want);
+      if (q.get('upload') === '1') openUploadModal(want, bizName(want));
+    }
+  }
 }
 
 function esc(s) {
