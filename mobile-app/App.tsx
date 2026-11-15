@@ -1505,11 +1505,13 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   }, []);
 
 
+  // Apple sign-ups never set a password on the login step, so the Contact card asks for one.
+  const needsPassword = !!session?.user && session.user.app_metadata?.provider === 'apple' && !session.user.user_metadata?.passwordSet;
   const minimumInfoComplete = (stepId = step.id) => {
     switch (stepId) {
       case 'login': return /\S+@\S+\.\S+/.test(data.email.trim()) && data.password.length >= 8;
       case 'business': return !!data.fullName.trim() && !!data.businessName.trim() && !!data.category.trim();
-      case 'contact': return /\S+@\S+\.\S+/.test(data.contactEmail.trim()) || data.phone.replace(/\D/g, '').length >= 7;
+      case 'contact': return /\S+@\S+\.\S+/.test(data.contactEmail.trim()) && (!needsPassword || data.password.length >= 8);
       case 'hours': return hours.some(row => row.enabled && row.start.trim() && row.end.trim());
       case 'prices': return services.some(it => it.name.trim()) && services.every(it => !it.name.trim() || it.section.trim());
       default: return true;
@@ -1678,6 +1680,12 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     const { data: fresh } = await supabase.auth.getSession();
     const authed = fresh.session || session;
     if (!draft) setSaveError('');
+    // Apple sign-ups set their email password here, so they can sign in on the website too.
+    if (!draft && needsPassword && data.password.length >= 8) {
+      const { error: pwErr } = await supabase.auth.updateUser({ password: data.password, data: { passwordSet: true } });
+      if (pwErr) { setSaveError('Your password couldn’t be saved: ' + pwErr.message); return false; }
+      setData((d: any) => ({ ...d, password: '' }));
+    }
     const baseSlug = slug || slugify(domainReady ? domain : data.businessName) || `site-${session.user.id.slice(0, 8)}`;
     const hoursStructured = hours.map(h => ({ day: h.label, open: h.enabled, from: h.start, to: h.end }));
     const groups: Record<string, { name: string; items: [string, string, string][] }> = {};
@@ -2004,6 +2012,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         </View></>;
       case 'contact': return <><Intro>Add whichever ways customers should contact you. Leave anything blank to skip it.</Intro>
         <Field label="Email" value={data.contactEmail} onChangeText={(v: string) => setData((d: any) => ({ ...d, contactEmail: v }))} placeholder="you@business.co.uk" keyboardType="email-address" textContentType="emailAddress" autoComplete="email" autoCapitalize="none" autoCorrect={false} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.phone?.focus()} />
+        {needsPassword && <Field label="Password (to sign in on the web too)" value={data.password} onChangeText={(v: string) => setData((d: any) => ({ ...d, password: v }))} placeholder="At least 8 characters" secureTextEntry autoCapitalize="none" autoCorrect={false} textContentType="newPassword" autoComplete="password-new" />}
         <Field label="Phone" optional inputRef={(r: any) => { fieldRefs.current.phone = r; }} value={data.phone} onChangeText={(v: string) => setData((d: any) => ({ ...d, phone: v }))} placeholder="e.g. 07700 900123" keyboardType="phone-pad" textContentType="telephoneNumber" autoComplete="tel" />
         <Field label="Address" optional inputRef={(r: any) => { fieldRefs.current.address = r; }} value={data.address} onChangeText={(v: string) => setData((d: any) => ({ ...d, address: v }))} placeholder="e.g. 12 High Street, London" textContentType="fullStreetAddress" autoComplete="street-address" autoCapitalize="words" returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.instagram?.focus()} />
         <Field label="Instagram" optional inputRef={(r: any) => { fieldRefs.current.instagram = r; }} value={data.instagram} onChangeText={(v: string) => setData((d: any) => ({ ...d, instagram: v }))} placeholder="@yourbusiness" autoCapitalize="none" autoCorrect={false} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.facebook?.focus()} />
