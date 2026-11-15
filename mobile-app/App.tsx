@@ -1136,9 +1136,11 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
               </View>
             </View>
             : <>
+            <View style={[s.buildingWrap, { height: DASHBOARD_PREVIEW_HEIGHT + DASHBOARD_PREVIEW_INSET * 2, justifyContent: 'center' }]}>
               {realUrl
-                ? <RealSitePreview url={realUrl} label={isLive && domain ? `${domain}${suffix}` : ''} desktop={previewMode === 'desktop'} onPress={openPreview} />
+                ? <RealSitePreview url={realUrl} label={domain ? `${domain}${suffix}` : 'Website preview'} desktop={previewMode === 'desktop'} onPress={openPreview} />
                 : <View style={[previewMode === 'desktop' ? s.desktopFrame : s.phoneFrame, { alignItems: 'center', justifyContent: 'center', padding: 24 }]}><Text style={[s.buildingSub, { color: 'rgba(255,255,255,.6)', textAlign: 'center' }]}>Your website preview appears here once it's ready.</Text></View>}
+            </View>
             </>}
         </Animated.View>}
       </ScrollView>}
