@@ -1204,7 +1204,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [chooseMode, setChooseMode] = useState<'pick' | 'auto'>('pick');
   const [autoPending, setAutoPending] = useState(false);
   const [adminBusinesses, setAdminBusinesses] = useState<any[]>([]);
-  const [adminFilter, setAdminFilter] = useState<'all' | 'new' | 'build' | 'pending' | 'live'>('all');
+  const [adminFilter, setAdminFilter] = useState<'all' | 'unread' | 'red' | 'yellow' | 'green' | 'stub'>('all');
   const [adminSearch, setAdminSearch] = useState('');
   const [adminTab, setAdminTab] = useState<'businesses' | 'messages' | 'notifications'>('businesses');
   const [adminActiveThread, setAdminActiveThread] = useState<any>(null);
@@ -1343,12 +1343,14 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
 
   const ADMIN_EMAIL = 'brightsiteapp@gmail.com';
 
-  const adminStatusOf = (b: any): 'new' | 'build' | 'pending' | 'live' => {
+  // Same categories and rules as the web admin: stub = setup pending, green = live,
+  // yellow = preview sent, red = to build.
+  const adminStatusOf = (b: any): 'stub' | 'green' | 'yellow' | 'red' => {
     const d = b.data || {};
-    if (d.published) return 'live';
-    if (d.previewUrl || d.demoUrl || d.liveUrl) return 'pending';
-    if (d.buildChoice === 'designer' || /Build choice: designer/i.test(d.notes || '')) return 'build';
-    return 'new';
+    if (d.stub) return 'stub';
+    if (d.liveUrl || d.published) return 'green';
+    if (d.demoUploaded || d.demoUrl || d.previewSent || d.previewUrl) return 'yellow';
+    return 'red';
   };
 
 
@@ -2117,16 +2119,17 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   </FlowBackdrop>;
 
   if (appScreen === 'admin') {
-    const STATUS_COLORS: Record<string, string> = { new: '#6B7680', build: C.danger, pending: C.warning, live: C.success };
-    const STATUS_LABELS: Record<string, string> = { new: 'New', build: 'Build', pending: 'Pending', live: 'Live' };
+    const STATUS_COLORS: Record<string, string> = { stub: '#6B7680', red: C.danger, yellow: C.warning, green: C.success };
+    const STATUS_LABELS: Record<string, string> = { stub: 'Setup pending', red: 'To build', yellow: 'Preview sent', green: 'Live' };
     const filteredBiz = adminBusinesses.filter(b => {
-      if (adminFilter !== 'all' && adminStatusOf(b) !== adminFilter) return false;
+      if (adminFilter === 'unread' && !adminThreadUnread(b.id)) return false;
+      if (adminFilter !== 'all' && adminFilter !== 'unread' && adminStatusOf(b) !== adminFilter) return false;
       if (adminSearch) { const q = adminSearch.toLowerCase(); const d = b.data || {}; return (d.name || '').toLowerCase().includes(q) || (b.id || '').toLowerCase().includes(q); }
       return true;
     }).sort((a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime());
 
-    const tabCounts: Record<string, number> = { all: adminBusinesses.length, new: 0, build: 0, pending: 0, live: 0 };
-    adminBusinesses.forEach(b => { tabCounts[adminStatusOf(b)]++; });
+    const tabCounts: Record<string, number> = { all: adminBusinesses.length, unread: 0, stub: 0, red: 0, yellow: 0, green: 0 };
+    adminBusinesses.forEach(b => { tabCounts[adminStatusOf(b)]++; if (adminThreadUnread(b.id)) tabCounts.unread++; });
 
     const threadsWithMessages = adminBusinessesWithMessages();
     const totalUnread = threadsWithMessages.filter(t => adminThreadUnread(t.id)).length;
@@ -2157,10 +2160,10 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
 
         {adminTab === 'businesses' && <>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={aS.filterRow}>
-            {(['all', 'new', 'build', 'pending', 'live'] as const).map(f => (
+            {(['all', 'unread', 'red', 'yellow', 'green', 'stub'] as const).map(f => (
               <Pressable key={f} onPress={() => setAdminFilter(f)} style={[aS.filterTab, adminFilter === f && aS.filterTabOn]}>
-                {f !== 'all' && <View style={[aS.filterDot, { backgroundColor: STATUS_COLORS[f] }]} />}
-                <Text style={[aS.filterTabText, adminFilter === f && aS.filterTabTextOn]}>{f === 'all' ? 'All' : STATUS_LABELS[f]} <Text style={[aS.filterCount, adminFilter === f && { color: 'rgba(255,255,255,.75)' }]}>{tabCounts[f]}</Text></Text>
+                {f !== 'all' && f !== 'unread' && <View style={[aS.filterDot, { backgroundColor: STATUS_COLORS[f] }]} />}
+                <Text style={[aS.filterTabText, adminFilter === f && aS.filterTabTextOn]}>{f === 'all' ? 'All' : f === 'unread' ? 'Unread' : STATUS_LABELS[f]} <Text style={[aS.filterCount, adminFilter === f && { color: 'rgba(255,255,255,.75)' }]}>{tabCounts[f]}</Text></Text>
               </Pressable>
             ))}
           </ScrollView>
@@ -2230,8 +2233,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           {adminBusinesses.slice().sort((a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()).slice(0, 40).map(biz => {
             const st = adminStatusOf(biz);
             const name = biz.data?.name || biz.data?.businessName || biz.id;
-            const icon = ({ new: 'person-add-outline', build: 'hammer-outline', pending: 'time-outline', live: 'checkmark-circle-outline' } as any)[st];
-            const desc = ({ new: 'Signed up', build: 'Submitted to build', pending: 'Preview ready — awaiting payment', live: 'Live and paying' } as any)[st];
+            const icon = ({ stub: 'alert-circle-outline', red: 'hammer-outline', yellow: 'eye-outline', green: 'checkmark-circle-outline' } as any)[st];
+            const desc = ({ stub: 'Setup pending', red: 'To build', yellow: 'Preview sent', green: 'Live' } as any)[st];
             return <Pressable key={biz.id} onPress={() => adminOpenBusiness(biz)} style={({ pressed }) => [aS.notifRow, pressed && s.pressed]}>
               <View style={[aS.notifIcon, { backgroundColor: STATUS_COLORS[st] + '18' }]}><Ionicons name={icon} size={18} color={STATUS_COLORS[st]} /></View>
               <View style={{ flex: 1 }}><Text style={aS.notifName} numberOfLines={1}>{name}</Text><Text style={aS.notifDesc}>{desc}</Text></View>
