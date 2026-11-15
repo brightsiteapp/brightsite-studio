@@ -1169,7 +1169,7 @@ Colour palette: ${design.palette}${extras.length ? `
 Also interested in: ${extras.join(', ')}` : ''}`;
       const status = document.getElementById('handoffStatus');
       status.textContent = 'Opening your email app…';
-      window.location.href = `mailto:brightsiteapp@gmail.com?subject=${encodeURIComponent(`Website preview - ${businessName || 'New enquiry'}`)}&body=${encodeURIComponent(message)}`;
+      window.location.href = `mailto:tom@brightsite.app?subject=${encodeURIComponent(`Website preview - ${businessName || 'New enquiry'}`)}&body=${encodeURIComponent(message)}`;
 
       let previewFile = null;
       try {

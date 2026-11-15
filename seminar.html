@@ -215,7 +215,7 @@
       if (!response.ok) {
         var body = await response.text();
         if (body.indexOf('seminar_full') !== -1) {
-          show('Sorry, all 25 places have been taken. Email brightsiteapp@gmail.com and we will add you to the waiting list.', 'error');
+          show('Sorry, all 25 places have been taken. Email tom@brightsite.app and we will add you to the waiting list.', 'error');
           submit.disabled = true;
           return;
         }
@@ -231,7 +231,7 @@
       show("You're on the list. We'll be in touch with the details, and you'll get a free demo of what your brand could look like.", 'ok');
     } catch (err) {
       console.error('Seminar sign-up failed', err);
-      show('Something went wrong. Please try again, or email brightsiteapp@gmail.com.', 'error');
+      show('Something went wrong. Please try again, or email tom@brightsite.app.', 'error');
     } finally {
       if (!status.textContent.startsWith('Sorry')) submit.disabled = false;
     }
