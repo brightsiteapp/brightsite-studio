@@ -1220,7 +1220,7 @@ function connectDomainRequest(slug, domain) {
 document.getElementById('domainConfirm').addEventListener('click', function() {
   var domain = document.getElementById('domainInput').value.trim();
   var status = document.getElementById('domainStatus');
-  if (!domain) { status.textContent = 'Enter a domain first.'; status.className = 'modal-status err'; return; }
+  if (!domain) return;
   var btn = document.getElementById('domainConfirm');
   btn.textContent = 'Connecting…'; btn.disabled = true;
   status.textContent = ''; status.className = 'modal-status';

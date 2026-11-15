@@ -3213,7 +3213,7 @@ function AdminAccountPanel({ biz, session, isLive }: { biz: any; session: any; i
   const [value, setValue] = useState('');
   const d = biz.data || {};
   const api = (payload: Record<string, any>) => adminApiCall(session, biz.id, payload);
-  const run = async (fn: () => Promise<any>, ok?: string) => { setBusy(true); setMsg(''); try { await fn(); if (ok) setMsg(ok); } catch (e: any) { setMsg(e.message || 'Something went wrong'); } setBusy(false); };
+  const run = async (fn: () => Promise<any>, ok?: string) => { setBusy(true); setMsg(''); try { await fn(); if (ok) setMsg(ok); } catch (e: any) { if (!/valid domain/i.test(e.message || '')) setMsg(e.message || 'Something went wrong'); } setBusy(false); };
   const loadInfo = () => api({ action: 'account-info' }).then(setInfo).catch(e => setMsg(e.message));
   useEffect(() => { void loadInfo(); }, [biz.id]);
   const sub = info?.subscription;
@@ -3221,6 +3221,7 @@ function AdminAccountPanel({ biz, session, isLive }: { biz: any; session: any; i
     <Pressable disabled={busy} onPress={onPress} style={s.cardLink} hitSlop={8}><Ionicons name={icon} size={15} color={danger ? C.danger : C.primary} /><Text style={[s.cardLinkText, danger && { color: C.danger }]}>{label}</Text></Pressable>;
   const submit = () => {
     const v = value.trim();
+    if (prompt === 'domain' && !/^(https?:\/\/)?(www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+\/?$/i.test(v)) return; // not a domain yet: stay on the pop-up, no warning
     if (prompt === 'email' && v) void run(async () => { await api({ action: 'update-login', email: v }); await loadInfo(); }, 'Login email changed.');
     else if (prompt === 'domain' && v) void run(async () => {
       const r = await api({ domain: v });
