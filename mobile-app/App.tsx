@@ -2120,7 +2120,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
 
   if (appScreen === 'admin') {
     const STATUS_COLORS: Record<string, string> = { stub: '#6B7680', red: C.danger, yellow: C.warning, green: C.success };
-    const STATUS_LABELS: Record<string, string> = { stub: 'Mew', red: 'To build', yellow: 'Preview sent', green: 'Live' };
+    const STATUS_LABELS: Record<string, string> = { stub: 'New', red: 'To build', yellow: 'Preview sent', green: 'Live' };
     const filteredBiz = adminBusinesses.filter(b => {
       if (adminFilter !== 'all' && adminStatusOf(b) !== adminFilter) return false;
       if (adminSearch) { const q = adminSearch.toLowerCase(); const d = b.data || {}; return (d.name || '').toLowerCase().includes(q) || (b.id || '').toLowerCase().includes(q); }
@@ -2233,7 +2233,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             const st = adminStatusOf(biz);
             const name = biz.data?.name || biz.data?.businessName || biz.id;
             const icon = ({ stub: 'alert-circle-outline', red: 'hammer-outline', yellow: 'eye-outline', green: 'checkmark-circle-outline' } as any)[st];
-            const desc = ({ stub: 'Mew', red: 'To build', yellow: 'Preview sent', green: 'Live' } as any)[st];
+            const desc = ({ stub: 'New', red: 'To build', yellow: 'Preview sent', green: 'Live' } as any)[st];
             return <Pressable key={biz.id} onPress={() => adminOpenBusiness(biz)} style={({ pressed }) => [aS.notifRow, pressed && s.pressed]}>
               <View style={[aS.notifIcon, { backgroundColor: STATUS_COLORS[st] + '18' }]}><Ionicons name={icon} size={18} color={STATUS_COLORS[st]} /></View>
               <View style={{ flex: 1 }}><Text style={aS.notifName} numberOfLines={1}>{name}</Text><Text style={aS.notifDesc}>{desc}</Text></View>
