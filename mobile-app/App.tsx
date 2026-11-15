@@ -1803,9 +1803,11 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     if (Array.isArray(raw.reviewItems)) setReviewsList(raw.reviewItems);
     if (Array.isArray(raw.offers)) setOffers(raw.offers);
     setMedia({ logo: raw.logoImage, hero: raw.heroImage, gallery: Array.isArray(raw.gallery) ? raw.gallery : [] });
-    const chosen = record.customDomain || record.domain || raw.chosenDomain || '';
+    // customDomain can hold the free brightsite.app address; only a real domain counts here
+    const chosen = String([record.customDomain, record.domain, raw.chosenDomain].find((x: any) => x && !/brightsite\.app/i.test(String(x))) || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
     const dot = chosen.indexOf('.');
     if (dot > 0) { setDomain(chosen.slice(0, dot)); setSuffix(chosen.slice(dot)); setDomainReady(true); }
+    else { setDomain(''); setSuffix('.co.uk'); setDomainReady(false); } // don't carry the previous client's domain over
     const design = raw.design || {};
     if (typeof design.palette === 'number' && palettes[design.palette]) setPalette(design.palette);
     if (typeof design.font === 'number' && fonts[design.font]) setFont(design.font);
