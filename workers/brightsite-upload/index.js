@@ -88,7 +88,7 @@ async function verifyAdminAuth(request) {
   if (!res.ok) throw new Error('Unauthorized');
   const user = await res.json();
   if (!user || !user.email) throw new Error('Unauthorized');
-  if (user.email !== 'brightsiteapp@gmail.com') throw new Error('Forbidden');
+  if (!['brightsiteapp@gmail.com', 'admin@brightsite.app'].includes(user.email)) throw new Error('Forbidden');
   return user;
 }
 

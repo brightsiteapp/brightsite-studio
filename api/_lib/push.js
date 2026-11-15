@@ -24,7 +24,7 @@ export async function notifyBusiness(slug, { title, body, message }) {
 
 // Push to BrightSite admins' phones. Admin phones register their token from the app (stored on
 // the admin's login as user_metadata.pushTokens), so no extra table is needed.
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'brightsiteapp@gmail.com,tommeofficial1@gmail.com')
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'brightsiteapp@gmail.com,admin@brightsite.app')
   .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
 
 export async function adminPushTokens() {

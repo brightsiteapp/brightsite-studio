@@ -7,8 +7,8 @@ drop policy if exists "admin full access" on public.messages;
 create policy "admin full access" on public.messages
   for all to authenticated
   using (
-    (auth.jwt() ->> 'email') in ('brightsiteapp@gmail.com', 'tommeofficial1@gmail.com')
+    (auth.jwt() ->> 'email') in ('brightsiteapp@gmail.com', 'admin@brightsite.app')
   )
   with check (
-    (auth.jwt() ->> 'email') in ('brightsiteapp@gmail.com', 'tommeofficial1@gmail.com')
+    (auth.jwt() ->> 'email') in ('brightsiteapp@gmail.com', 'admin@brightsite.app')
   );

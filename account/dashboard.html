@@ -1158,7 +1158,7 @@
   }
 
   // Admin account should never be on the customer dashboard
-  if (!isAdminView && session && (session.email || '').toLowerCase() === 'brightsiteapp@gmail.com') {
+  if (!isAdminView && session && ['brightsiteapp@gmail.com', 'admin@brightsite.app'].includes((session.email || '').toLowerCase())) {
     try { localStorage.removeItem('bs_session'); } catch(e) {}
     try { localStorage.setItem('bs_admin', JSON.stringify({ admin: true, access_token: session.access_token, email: session.email })); } catch(e) {}
     location.replace('admin.html');

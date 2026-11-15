@@ -54,7 +54,7 @@
       var email = (r.data.email || '').toLowerCase();
 
       // Admin account always goes to admin dashboard
-      if (email === 'brightsiteapp@gmail.com') {
+      if (email === 'brightsiteapp@gmail.com' || email === 'admin@brightsite.app') {
         try { localStorage.removeItem('bs_session'); } catch(e) {}
         try { localStorage.setItem('bs_admin', JSON.stringify({ admin: true, access_token: accessToken, email: email })); } catch(e) {}
         location.replace('admin.html');

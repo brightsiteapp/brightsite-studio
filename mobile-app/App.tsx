@@ -1341,7 +1341,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     onSignedOut();
   };
 
-  const ADMIN_EMAILS = ['brightsiteapp@gmail.com'];
+  const ADMIN_EMAILS = ['brightsiteapp@gmail.com', 'admin@brightsite.app'];
 
   // Same categories and rules as the web admin: stub = setup pending, green = live,
   // yellow = preview sent, red = to build.
