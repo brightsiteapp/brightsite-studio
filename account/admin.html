@@ -386,7 +386,6 @@ body { background: var(--bg); color: var(--ink); }
 .edit-overlay[hidden]{display:none}
 .edit-head{display:flex;justify-content:space-between;align-items:center;padding:12px 18px}
 .edit-overlay iframe{flex:1;border:0;width:100%}
-#ws-msgs .thread-body,#ws-msgs .composer{padding-left:16px !important;padding-right:16px !important}
 #anModal h3 { font-size: 12px; font-weight: 700; color: var(--muted); margin: 18px 0 6px; }
 .an-range { display: flex; gap: 6px; margin: 8px 0 14px; flex-wrap: wrap; }
 .an-range button { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
@@ -435,6 +434,24 @@ body { background: var(--bg); color: var(--ink); }
 .filter-pills button { flex: none; border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 7px 13px; font: inherit; font-size: 13px; font-weight: 700; color: var(--ink); cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
 .filter-pills button.on { background: var(--ink); border-color: var(--ink); color: #fff; }
 .filter-pills button i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.site-preview.desktop { display: block; aspect-ratio: auto; height: auto; max-height: none; background: #E9ECEF; border-radius: 14px; }
+.site-preview.desktop .pv-bar { position: relative; height: 32px; display: flex; align-items: center; justify-content: center; background: #E9ECEF; }
+.site-preview.desktop .pv-bar i { position: absolute; left: 12px; width: 9px; height: 9px; border-radius: 50%; }
+.site-preview.desktop .pv-bar i + i { left: 26px; }
+.site-preview.desktop .pv-bar i + i + i { left: 40px; }
+.site-preview .pv-url { background: #fff; border-radius: 999px; padding: 3px 14px; font-size: 12px; color: #757b80; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.site-preview.desktop .pv-frame { position: relative; width: 100%; padding-bottom: 62.5%; background: #fff; overflow: hidden; }
+.site-preview.desktop .pv-frame iframe { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+/* search + filter pills: fit the client column, pills centred */
+.client-col-head { display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 14px; }
+.client-col-head .search-wrap { width: 100%; min-width: 0; max-width: 100%; flex: none; }
+.client-col-head .search-wrap input { width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; padding-right: 14px !important; }
+.filter-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; overflow: visible; width: 100%; }
+/* messages and account: centred column like the app */
+#ws-msgs .thread-body { padding-left: max(16px, calc((100% - 680px) / 2)); padding-right: max(16px, calc((100% - 680px) / 2)); }
+#ws-msgs .composer { padding-left: max(12px, calc((100% - 680px) / 2)); padding-right: max(12px, calc((100% - 680px) / 2)); }
+#accountPane { max-width: 640px; width: 100%; margin: 0 auto; box-sizing: border-box; padding: 4px 0 24px; }
+.ac-card { width: 100%; box-sizing: border-box; }
 </style>
 </head>
 <body>
@@ -1387,6 +1404,17 @@ function renderAdminPanel() {
 
 // ---- Website tab: preview + make live / take offline ----
 var sitePreviewMode = 'mobile';
+// Desktop preview: the site is laid out at 960px wide and scaled to fit the frame, like the app.
+function fitDesktopPreview() {
+  var f = document.querySelector('#sitePreview .pv-frame');
+  var ifr = f && f.querySelector('iframe');
+  if (!ifr) return;
+  var sc = f.clientWidth / 960;
+  ifr.style.width = '960px';
+  ifr.style.height = (f.clientHeight / sc) + 'px';
+  ifr.style.transform = 'scale(' + sc + ')';
+}
+window.addEventListener('resize', fitDesktopPreview);
 function renderSitePreview() {
   var b = bizById(activeThreadId); if (!b) return;
   var d = b.data || {};
@@ -1395,9 +1423,19 @@ function renderSitePreview() {
   document.getElementById('sitePvDesktop').classList.toggle('active', sitePreviewMode === 'desktop');
   var pv = document.getElementById('sitePreview');
   pv.className = 'site-preview ' + sitePreviewMode;
+  var key = url + '|' + sitePreviewMode;
   if (url) {
-    if (pv.getAttribute('data-url') !== url) { pv.setAttribute('data-url', url); pv.innerHTML = '<iframe src="' + esc(url) + '" title="Client website"></iframe>'; }
+    if (pv.getAttribute('data-key') !== key) {
+      pv.setAttribute('data-key', key);
+      var host = url.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+      var frame = '<iframe src="' + esc(url) + '" title="Client website" loading="lazy"></iframe>';
+      pv.innerHTML = sitePreviewMode === 'desktop'
+        ? '<div class="pv-bar"><i style="background:#FF5F57"></i><i style="background:#FEBC2E"></i><i style="background:#28C840"></i><span class="pv-url">' + esc(host) + '</span></div><div class="pv-frame">' + frame + '</div>'
+        : frame;
+      fitDesktopPreview();
+    }
   } else {
+    pv.removeAttribute('data-key');
     pv.removeAttribute('data-url');
     pv.innerHTML = '<div class="pv-empty"><div class="pv-b"><img src="/img/brightsite-b-white.png" alt=""></div><b>Building the preview</b>Upload their website and it shows here.</div>';
   }
