@@ -12,7 +12,6 @@ import {
   ActivityIndicator, Alert, Animated, AppState, Dimensions, Easing, Image, Keyboard, KeyboardAvoidingView, Modal, PanResponder,
   Linking, Platform, Pressable, ScrollView, Share, StyleSheet, Switch, Text, TextInput, View,
 } from 'react-native';
-import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
@@ -44,11 +43,6 @@ const C = {
   success: '#1F8A54', successSoft: 'rgba(31,138,84,.12)', warning: '#B26A00', warningSoft: 'rgba(178,106,0,.12)', danger: '#B42318', dangerSoft: 'rgba(180,35,24,.10)',
 };
 const BRAND = C.primary;
-const DOMAIN_TLDS = ['.com', '.co.uk', '.net', '.org', '.io', '.co', '.uk', '.app'];
-const DOMAIN_API = 'https://api.brightsite.app/api/check-domain';
-const PAYMENT_SHEET_API = 'https://api.brightsite.app/api/create-payment-sheet';
-const CONFIRM_PAYMENT_API = 'https://api.brightsite.app/api/confirm-app-payment';
-const STRIPE_PUBLISHABLE_KEY = 'pk_live_51UFf7iGqCP7G2YApFHjoKMHkxsEIrf0SJiBpxeTR2MRZ4zs26OQ5jjBClWu8OvZXGXAZvMectFW0zLEuGFFKC7CA008zYaYMzc';
 // Same Supabase project, R2 bucket and Cloudflare worker the account
 // dashboard (account/dashboard.html) uses — so a business created or edited
 // in the app is the exact same row the website’s dashboard reads and writes,
@@ -278,7 +272,6 @@ function timeLabel(iso: string) {
 function isImageMessage(body: string) {
   return /^https?:\/\//.test(body) && (body.includes(R2_PUBLIC_URL) || /\.(png|jpe?g|webp|gif)(\?|$)/i.test(body));
 }
-// Replace with your Stripe publishable key from stripe.com/dashboard
 const CARD = '#EFE4DB';
 const DARK = '#1C2832';
 const GALLERY_COLS = 4;
@@ -302,19 +295,8 @@ const steps: Step[] = [
 ];
 const setupStepIndexes = Array.from({ length: 7 }, (_, i) => i + 1);
 // ordered so the chip rows come out roughly even in width
-// Mirrors api/_lib/plans.js: annual plans and Pro cover the first £12 of the domain.
-function domainNote(pence: number, included: boolean) {
-  if (!pence) return 'registration charged at checkout';
-  const charge = included ? Math.max(0, pence - 1200) : pence;
-  if (!charge) return 'free domain included with your plan';
-  return `£${(charge / 100).toFixed(2)} today${included ? ' (£12 off with your plan)' : ' registration'}`;
-}
 
 // Same plans as pricing.html; "essential" is the Free plan.
-const PLAN_OPTIONS = [
-  { id: 'essential' as const, name: 'Free', note: 'Website built free · 1–5 pages', build: '£0', buildLabel: 'build', tag: null },
-  { id: 'pro' as const, name: 'Pro', note: 'For websites over 5 pages', build: '£199', buildLabel: 'one-off build', tag: '5+ PAGES' },
-];
 const BUSINESS_TYPES = ['Hair & Beauty', 'Aesthetics', 'Fitness', 'Pets', 'Health & Wellness', 'Home & Garden', 'Food & Drink', 'Automotive', 'Trades', 'Professional Services', 'Creative', 'Other'];
 
 
@@ -855,7 +837,7 @@ function MessageThread({ session, slug, viewer, otherName, placeholder, intro }:
   </>;
 }
 
-function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, contactForm, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, onPaid, saveError, planAnnual, planPro, media, isPaying, buildChoice, session, slug, onAdminBack, onDomainChosen, ownedDomain = '', adminBiz, liveUrl = '', infoComplete, onSendToDesigner, playReveal, onRevealDone, previewLink = '' }: any) {
+function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, contactForm, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, saveError, planAnnual, planPro, media, isPaying, buildChoice, session, slug, onAdminBack, ownedDomain = '', adminBiz, liveUrl = '', infoComplete, onSendToDesigner, playReveal, onRevealDone, previewLink = '' }: any) {
   // After sending to the designer: a full-screen preview card, the B fades in, then the text,
   // then the card shrinks into its place on the dashboard.
   const buildCardRef = useRef<View>(null);
@@ -928,15 +910,6 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
     onPanResponderTerminate: () => Animated.timing(websiteDrag, { toValue: 0, duration: 380, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(),
   }), []);
   const siteUrl = data.website?.trim() || `https://${domain}${suffix}`;
-  const [showPlanModal, setShowPlanModal] = useState(false);
-  const [domainPriceLabel, setDomainPriceLabel] = useState<string | null>(null);
-  const [domainPence, setDomainPence] = useState(0);
-  const [domainPriceLoading, setDomainPriceLoading] = useState(false);
-  const [planStep, setPlanStep] = useState<'domain' | 'plan'>('domain');
-  const [liveDomain, setLiveDomain] = useState(domain || '');
-  const [liveSuffix, setLiveSuffix] = useState(suffix || '.co.uk');
-  const [domainError, setDomainError] = useState('');
-  const [domainAvailable, setDomainAvailable] = useState(false);
   const [subNote, setSubNote] = useState('');
   const [showAnalytics, setShowAnalytics] = useState(false);
   useEffect(() => {
@@ -945,106 +918,6 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
       .then(r => r.json()).then(j => { const sub = j?.subscription; if (sub?.renews) setSubNote(` · ${sub.cancelAtPeriodEnd ? 'Ends' : 'Renews'} ${new Date(sub.renews).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`); })
       .catch(() => {});
   }, [isPaying, slug]);
-  const [buyMode, setBuyMode] = useState(false); // Account page: buying just a domain, no plan yet
-  const openPlanModal = () => {
-    setBuyMode(false);
-    setPlanStep(ownedDomain ? 'plan' : 'domain');
-    setDomainError('');
-    setDomainAvailable(false);
-    setShowPlanModal(true);
-  };
-  const checkLiveDomain = async () => {
-    const name = liveDomain.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
-    if (!name) { setDomainError('Type the name you want first.'); return; }
-    setLiveDomain(name);
-    setDomainPriceLoading(true); setDomainError(''); setDomainAvailable(false);
-    try {
-      const res = await fetch(`${DOMAIN_API}?domain=${encodeURIComponent(name + liveSuffix)}`);
-      const result = await res.json();
-      if (!res.ok || !result.available) throw new Error(result.error || 'That domain is taken. Try another name or ending.');
-      setDomainPriceLabel(result.priceLabel || null);
-      setDomainPence(Number(result.pricePence) || 0);
-      setDomainAvailable(true);
-    } catch (error: any) { setDomainError(error.message || 'Couldn’t check that domain right now.'); }
-    finally { setDomainPriceLoading(false); }
-  };
-  const confirmDomain = () => { onDomainChosen?.(liveDomain, liveSuffix); setPlanStep('plan'); };
-  const openBuyDomain = () => { setBuyMode(true); setPlanStep('domain'); setDomainError(''); setDomainAvailable(false); setShowPlanModal(true); };
-  const buyDomain = async () => {
-    setDomainPriceLoading(true); setDomainError('');
-    try {
-      const email = session?.user?.email || data.contactEmail || data.email;
-      const res = await fetch('https://api.brightsite.app/api/create-domain-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ domain: liveDomain + liveSuffix, email, slug, ui_mode: 'hosted' }) });
-      const json = await res.json();
-      if (!res.ok || !json.url) throw new Error(json.error || 'Could not open checkout.');
-      await Linking.openURL(json.url);
-      setShowPlanModal(false);
-    } catch (error: any) { setDomainError(error.message || 'Could not open checkout.'); }
-    finally { setDomainPriceLoading(false); }
-  };
-  const [annual, setAnnual] = useState(!!planAnnual);
-  const [planChoice, setPlanChoice] = useState<'essential' | 'pro'>('essential');
-  const [payBusy, setPayBusy] = useState(false);
-  const [payError, setPayError] = useState('');
-  const { initPaymentSheet, presentPaymentSheet } = useStripe();
-  // Referral code: a valid one makes the domain free. Checked on the server before paying.
-  const [referralCode, setReferralCode] = useState('');
-  const [referralApplied, setReferralApplied] = useState('');
-  const [referralNote, setReferralNote] = useState<{ ok: boolean; text: string } | null>(null);
-  const checkReferral = async () => {
-    const code = referralCode.trim().toUpperCase();
-    if (!code) return;
-    setReferralNote({ ok: false, text: 'Checking code…' });
-    try {
-      const r = await fetch('https://api.brightsite.app/api/create-checkout-session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ check_referral: true, referral: code }) });
-      const j = await r.json();
-      if (j.valid) { setReferralApplied(code); setReferralNote({ ok: true, text: 'Code applied: your domain is free.' }); }
-      else { setReferralApplied(''); setReferralNote({ ok: false, text: 'That code isn’t valid.' }); }
-    } catch { setReferralNote({ ok: false, text: 'Couldn’t check the code. Try again.' }); }
-  };
-  const handlePay = async () => {
-    setPayBusy(true); setPayError('');
-    try {
-      const email = session?.user?.email || data.contactEmail || data.email;
-      const res = await fetch(PAYMENT_SHEET_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: planChoice, billing: annual ? 'annual' : 'monthly', email, slug, domain: !ownedDomain && liveDomain ? liveDomain + liveSuffix : '', referral: referralApplied || undefined }),
-      });
-      const json = await res.json();
-      if (!res.ok || !json.paymentIntentClientSecret) throw new Error(json.error || 'Could not set up payment.');
-      const init = await initPaymentSheet({
-        merchantDisplayName: 'BrightSite',
-        customerId: json.customerId,
-        customerEphemeralKeySecret: json.ephemeralKey,
-        paymentIntentClientSecret: json.paymentIntentClientSecret,
-        defaultBillingDetails: { email },
-        returnURL: 'app.brightsite.mobile://stripe-redirect',
-        appearance: { colors: { primary: C.primary }, shapes: { borderRadius: 12 } },
-      });
-      if (init.error) throw new Error(init.error.message);
-      const result = await presentPaymentSheet();
-      if (result.error) { if (result.error.code !== 'Canceled') setPayError(result.error.message); return; }
-      setShowPlanModal(false);
-      const confirm = await fetch(CONFIRM_PAYMENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscriptionId: json.subscriptionId }) });
-      if (confirm.ok) { onPaid?.(annual, planChoice === 'pro'); Alert.alert('Publishing your website', "We’re setting everything up. This usually takes around 5 minutes while your domain registers. You’ll get a notification as soon as it’s live!"); }
-      else Alert.alert('Payment received', "Thanks! We’re finishing setting up your website and will message you as soon as it’s live.");
-    } catch (err: any) {
-      try {
-        const email = session?.user?.email || data.contactEmail || data.email;
-        const fb = await fetch('https://api.brightsite.app/api/create-checkout-session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ plan: planChoice, billing: annual ? 'annual' : 'monthly', email, slug, domain: !ownedDomain && liveDomain ? liveDomain + liveSuffix : '', ui_mode: 'hosted', referral: referralApplied || undefined }),
-        });
-        const fbJson = await fb.json();
-        if (fb.ok && fbJson.url) { await Linking.openURL(fbJson.url); setShowPlanModal(false); return; }
-      } catch { /* fallback also failed */ }
-      setPayError(err.message || 'Payment failed. Please try again.');
-    }
-    finally { setPayBusy(false); }
-  };
-
   const checkIfNowLive = async () => {
     if (!session?.access_token || !slug) return;
     try {
@@ -1110,7 +983,12 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
   const realUrl = (isLive && liveUrl) || previewLink || '';
   // Opens exactly what the preview shows: the live address once live, otherwise the uploaded preview.
   const openPreview = () => { const u = realUrl || (isLive ? siteUrl : ''); if (u) void Linking.openURL(/^https?:/.test(u) ? u : `https://${u}`); };
-  const goLive = () => { if (isPaying) void onGoLive?.(); else void openPlanModal(); };
+  // Like Wix and Squarespace, plans and domains are bought on the website, never inside the app
+  // (App Store rules). Once paid there, the app picks it up when it's next opened.
+  const goLive = () => {
+    if (isPaying) { void onGoLive?.(); return; }
+    Alert.alert('Choose your plan on the web', 'To put your website live, sign in to your account at brightsite.app and choose a plan. Your site goes live as soon as it\'s paid, and the app updates when you next open it.');
+  };
   const [deleting, setDeleting] = useState(false);
   // App Store requirement: customers can delete their account (and website) from inside the app.
   const confirmDeleteAccount = () => Alert.alert('Delete your account?', 'This permanently deletes your account, your website and your messages, cancels your plan and takes your site offline. This can\'t be undone.', [
@@ -1173,13 +1051,12 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
           <View style={s.dashboardInfoCard}>
             <Text style={s.dashboardCardLabel}>Plan</Text>
             <Text style={s.dashboardCardTitle}>{isPaying ? `${planPro ? 'Pro' : 'Free'} plan · ${planAnnual ? 'Annual' : 'Monthly'}` : 'No plan yet'}</Text>
-            <Text style={s.dashboardCardText}>{isPaying ? (planAnnual ? '£16/month hosting, billed £192 yearly' : '£19/month hosting') + subNote : 'Choose a plan when you tap Make Live.'}</Text>
+            <Text style={s.dashboardCardText}>{isPaying ? (planAnnual ? '£16/month hosting, billed £192 yearly' : '£19/month hosting') + subNote : 'Choose your plan at brightsite.app'}</Text>
           </View>
           <View style={s.dashboardInfoCard}>
             <Text style={s.dashboardCardLabel}>Domain</Text>
             <Text style={s.dashboardCardTitle}>{ownedDomain || domainLabel}</Text>
-            <Text style={s.dashboardCardText}>{isLive ? 'Connected to your website' : ownedDomain ? 'Bought. Connects when your website goes live' : domain ? 'Connects when your website goes live' : 'Buy one now or choose it when you go live'}</Text>
-            {!ownedDomain && !isPaying && !onAdminBack && <Pressable onPress={openBuyDomain} style={s.cardLink} hitSlop={8}><Ionicons name="globe-outline" size={15} color={C.primary} /><Text style={s.cardLinkText}>Buy a domain</Text></Pressable>}
+            <Text style={s.dashboardCardText}>{isLive ? 'Connected to your website' : ownedDomain ? 'Bought. Connects when your website goes live' : domain ? 'Connects when your website goes live' : 'Choose one at brightsite.app'}</Text>
           </View>
           <View style={s.dashboardInfoCard}>
             <Text style={s.dashboardCardLabel}>Login email</Text>
@@ -1274,65 +1151,6 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
       </ScrollView>}
     </View>
     <AnalyticsModal visible={showAnalytics} slug={adminBiz ? adminBiz.id : slug} session={session} onClose={() => setShowAnalytics(false)} />
-    <Modal visible={showPlanModal} transparent animationType="slide" onRequestClose={() => setShowPlanModal(false)}>
-      <View style={s.planModalOverlay}>
-        <View style={s.planModalBox}>
-          {planStep === 'domain' ? <>
-          <View style={s.planModalHeader}><Text style={s.planModalTitle}>{buyMode ? 'Buy a domain' : 'Choose your domain'}</Text><Pressable onPress={() => setShowPlanModal(false)} hitSlop={10}><Ionicons name="close" size={22} color={C.ink} /></Pressable></View>
-          <Text style={s.planModalSub}>This is the web address people will type to find you.</Text>
-          <TextInput value={liveDomain} onChangeText={v => { setLiveDomain(v); setDomainAvailable(false); setDomainError(''); }} placeholder="yourbusiness" placeholderTextColor={C.placeholder} autoCapitalize="none" autoCorrect={false} keyboardType="url" returnKeyType="search" onSubmitEditing={() => void checkLiveDomain()} style={[s.input, { marginTop: 14 }]} />
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 8, paddingVertical: 12 }}>
-            {DOMAIN_TLDS.map(t => <Pressable key={t} onPress={() => { setLiveSuffix(t); setDomainAvailable(false); setDomainError(''); }} style={[s.chip, liveSuffix === t && s.chipOn]}><Text style={[s.chipText, liveSuffix === t && s.chipTextOn]}>{t}</Text></Pressable>)}
-          </ScrollView>
-          {!!domainError && <Text style={s.domainError}>{domainError}</Text>}
-          {domainAvailable && <View style={s.domainResult}><Ionicons name="checkmark-circle" size={24} color={C.success || '#1f9d55'} /><View style={{ flex: 1 }}><Text style={s.domainName}>{liveDomain}{liveSuffix}</Text><Text style={s.domainPrice}>Available{domainPriceLabel ? ` — ${domainPriceLabel}` : ''}</Text></View></View>}
-          <Pressable disabled={domainPriceLoading || !liveDomain.trim()} onPress={() => domainAvailable ? (buyMode ? void buyDomain() : confirmDomain()) : void checkLiveDomain()} style={[s.planModalPayBtn, (domainPriceLoading || !liveDomain.trim()) && { opacity: .5 }]}>
-            {domainPriceLoading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={s.planModalPayBtnText}>{domainAvailable ? (buyMode ? 'Buy domain' : 'Continue') : 'Check availability'}</Text>}
-          </Pressable>
-          </> : <>
-          <View style={s.planModalHeader}><Pressable onPress={() => ownedDomain ? setShowPlanModal(false) : setPlanStep('domain')} hitSlop={10}><Ionicons name="chevron-back" size={22} color={C.ink} /></Pressable><Text style={[s.planModalTitle, { flex: 1, marginLeft: 6 }]}>Choose your plan</Text><Pressable onPress={() => setShowPlanModal(false)} hitSlop={10}><Ionicons name="close" size={22} color={C.ink} /></Pressable></View>
-          <View style={s.billingToggle}>
-            {([false, true] as const).map(isAnnual => <Pressable key={String(isAnnual)} onPress={() => setAnnual(isAnnual)} style={[s.billingOption, annual === isAnnual && s.billingOptionOn]}>
-              <Text style={[s.billingText, annual === isAnnual && s.billingTextOn]}>{isAnnual ? 'Annual' : 'Monthly'}</Text>
-              {isAnnual && <Text style={[s.billingSave, annual && { color: '#fff' }]}>save £36</Text>}
-            </Pressable>)}
-          </View>
-          {PLAN_OPTIONS.map(opt => <Pressable key={opt.id} onPress={() => setPlanChoice(opt.id)} style={[s.planModalOption, planChoice === opt.id && s.planModalOptionOn]}>
-            <View style={{ flex: 1, paddingRight: 10 }}>
-              {opt.tag && <View style={s.savePill}><Text style={s.savePillText}>{opt.tag}</Text></View>}
-              <Text style={s.planModalOptionName}>{opt.name}</Text>
-              <Text style={s.planModalOptionNote}>{opt.note}</Text>
-            </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={s.planModalOptionPrice}>{opt.build}</Text>
-              <Text style={s.planModalOptionNote}>{opt.buildLabel}</Text>
-            </View>
-          </Pressable>)}
-          <Text style={s.planModalTotal}>{planChoice === 'pro' ? '£199 build fee today, then ' : ''}{annual ? '£192/yr hosting (£16/mo)' : '£19/mo hosting'} · cancel any time</Text>
-          <View style={s.planModalFeeNote}>
-            <Ionicons name="globe-outline" size={14} color={C.primary} />
-            <Text style={s.planModalFeeText}>
-              {ownedDomain ? `${ownedDomain}: already yours, nothing to pay for your domain` : `${liveDomain}${liveSuffix}: ${domainPriceLoading ? 'checking price…' : domainNote(domainPence, annual || planChoice === 'pro')}`}
-            </Text>
-          </View>
-          {!!liveDomain && !ownedDomain && <View style={{ marginTop: 10 }}>
-            <Text style={{ fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.ink, marginBottom: 6 }}>Have a referral code?</Text>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              <TextInput value={referralCode} onChangeText={v => { setReferralCode(v.toUpperCase()); setReferralApplied(''); setReferralNote(null); }} placeholder="Enter code" placeholderTextColor={C.placeholder} autoCapitalize="characters" autoCorrect={false} style={{ flex: 1, height: 44, borderRadius: 12, borderWidth: 1, borderColor: C.line, paddingHorizontal: 12, fontFamily: FONT, fontSize: 15, color: C.ink, backgroundColor: C.field }} />
-              <Pressable onPress={() => void checkReferral()} style={({ pressed }) => [{ height: 44, paddingHorizontal: 16, borderRadius: 12, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' }, pressed && s.pressed]}>
-                <Text style={{ fontFamily: FONT, fontSize: 14, fontWeight: '700', color: '#fff' }}>Apply</Text>
-              </Pressable>
-            </View>
-            {!!referralNote && <Text style={{ fontFamily: FONT, fontSize: 13, marginTop: 6, color: referralNote.ok ? C.success : C.danger }}>{referralNote.text}</Text>}
-          </View>}
-          {!!payError && <Text style={{ fontFamily: FONT, fontSize: 12, color: C.danger, marginTop: 8 }}>{payError}</Text>}
-          <Pressable onPress={() => void handlePay()} disabled={payBusy} style={[s.planModalPayBtn, payBusy && { opacity: .6 }]}>
-            {payBusy ? <ActivityIndicator size="small" color="#fff" /> : <><Ionicons name="lock-closed" size={15} color="#fff" /><Text style={s.planModalPayBtnText}>Pay securely</Text></>}
-          </Pressable>
-          </>}
-        </View>
-      </View>
-    </Modal>
     {revealing && <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { zIndex: 998, elevation: 998, backgroundColor: C.card, opacity: revealBackdrop }]} />}
     {revealing && <Animated.View pointerEvents="none" style={[s.revealCard, revealRect ? {
       left: revealShrink.interpolate({ inputRange: [0, 1], outputRange: [0, revealRect.x] }),
@@ -2417,7 +2235,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   }
 
   if (appScreen === 'dashboard') return <FadeIn>
-    <DashboardHome previewLink={businessRecord.current?.demoUrl || businessRecord.current?.previewUrl || ''} playReveal={playReveal} onRevealDone={() => setPlayReveal(false)} onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} services={services} hours={hours} contactForm={contactForm} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} onPaid={(isAnnual: boolean, isPro: boolean) => { businessRecord.current = { ...businessRecord.current, planActive: true }; setPlanAnnual(isAnnual); setPlanPro(isPro); setWebsiteStatus('publishing'); }} infoComplete={infoComplete} onSendToDesigner={sendFromDashboard} onEditInfo={() => { setEditingInfo(websiteStatus !== 'todo'); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} saveError={saveError} planAnnual={planAnnual} planPro={planPro} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} onDomainChosen={(d: string, sfx: string) => { setDomain(d); setSuffix(sfx); setDomainReady(true); }} adminBiz={adminViewingBusiness} liveUrl={businessRecord.current?.liveUrl || (/^https?:/.test(businessRecord.current?.customDomain || '') ? businessRecord.current.customDomain : '')} ownedDomain={businessRecord.current?.domainRegistered ? (businessRecord.current?.customDomain || businessRecord.current?.domain || '') : ''} />
+    <DashboardHome previewLink={businessRecord.current?.demoUrl || businessRecord.current?.previewUrl || ''} playReveal={playReveal} onRevealDone={() => setPlayReveal(false)} onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} services={services} hours={hours} contactForm={contactForm} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} infoComplete={infoComplete} onSendToDesigner={sendFromDashboard} onEditInfo={() => { setEditingInfo(websiteStatus !== 'todo'); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} saveError={saveError} planAnnual={planAnnual} planPro={planPro} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} adminBiz={adminViewingBusiness} liveUrl={businessRecord.current?.liveUrl || (/^https?:/.test(businessRecord.current?.customDomain || '') ? businessRecord.current.customDomain : '')} ownedDomain={businessRecord.current?.domainRegistered ? (businessRecord.current?.customDomain || businessRecord.current?.domain || '') : ''} />
   </FadeIn>;
 
 
@@ -2582,12 +2400,12 @@ export default function App() {
   const [generation, setGeneration] = useState(0);
   const [splash, setSplash] = useState(true);
   useEffect(() => { void ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {}); }, []);
-  return <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY} merchantIdentifier="merchant.app.brightsite.mobile" urlScheme="app.brightsite.mobile">
+  return <>
     <View style={{ flex: 1 }}>
       <AppInner key={generation} onSignedOut={() => setGeneration(g => g + 1)} />
       {splash && <SplashGlow onDone={() => setSplash(false)} />}
     </View>
-  </StripeProvider>;
+  </>;
 }
 
 const s = StyleSheet.create({
@@ -2623,7 +2441,7 @@ const s = StyleSheet.create({
   uploadTitle: { fontFamily: FONT, fontWeight: '800', fontSize: 14, color: '#1C2832' }, uploadSub: { fontFamily: FONT, fontSize: 11, color: C.inkSoft, marginTop: 3 }, swipeHint: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.ink, textAlign: 'center' },
   fixedPrompt: { position: 'absolute', left: 18, right: 18, bottom: 14, zIndex: 120, elevation: 120, alignItems: 'center', gap: 7 }, swipeRow: { minHeight: 34, paddingHorizontal: 14, borderRadius: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,.7)' }, validationText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.danger, textAlign: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: C.dangerSoft, overflow: 'hidden' },
   addService: { marginTop: 14, height: 46, borderRadius: 12, borderWidth: 1, borderColor: C.primaryBorder, backgroundColor: C.primarySoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, addServiceText: { fontFamily: FONT, fontWeight: '700', fontSize: 14, color: C.ink }, site: { overflow: 'hidden' },
-  previewDots: { position: 'absolute', left: 11, flexDirection: 'row', gap: 4 }, previewDot: { width: 6, height: 6, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.35)' }, previewAddress: { fontFamily: FONT, fontSize: 8, color: 'rgba(255,255,255,.54)' },
+  previewDots: { position: 'absolute', left: 11, flexDirection: 'row', gap: 4 }, previewDot: { width: 6, height: 6, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.35)' }, 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,.45)', justifyContent: 'flex-end', cursor: 'default' as any },
   modalBox: { backgroundColor: C.canvas, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: Platform.OS === 'ios' ? 42 : 24 },
   modalButtons: { flexDirection: 'row', gap: 10 },
@@ -2631,8 +2449,7 @@ const s = StyleSheet.create({
   modalButtonCancel: { backgroundColor: 'rgba(0,0,0,.06)' },
   modalButtonSave: { backgroundColor: C.primary },
   modalButtonText: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#1C2832' },
-  dot: { width: 20, height: 20, borderRadius: 10 }, selected: { borderColor: BRAND, backgroundColor: 'rgba(59,130,246,.12)' }, fontOption: { paddingVertical: 10, borderRadius: 14, marginTop: 6, borderWidth: 1, borderColor: 'rgba(66,104,125,.15)' }, fontOptionText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', textAlign: 'center', color: C.ink },
-  domainError: { marginTop: 10, fontFamily: FONT, fontSize: 13, lineHeight: 18, color: C.danger }, domainResult: { marginTop: 14, padding: 15, borderRadius: 14, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: C.successSoft, borderWidth: 1, borderColor: 'rgba(31,138,84,.3)' }, domainName: { fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#1C2832' }, domainPrice: { fontFamily: FONT, fontSize: 13, color: C.success, fontWeight: '600', marginTop: 2 },
+  dot: { width: 20, height: 20, borderRadius: 10 }, 
   formChoice: { marginTop: 22, padding: 17, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: 'rgba(255,255,255,.45)', borderWidth: 1, borderColor: 'rgba(28,40,50,.16)' }, formChoiceIcon: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(59,130,246,.12)' }, formChoiceTitle: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#1C2832' }, formChoiceText: { fontFamily: FONT, fontSize: 13, color: C.inkSoft, marginTop: 3, lineHeight: 18 },
   rail: { position: 'absolute', top: SAFE_TOP + 2, left: '25%', right: '25%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', zIndex: 140, elevation: 140 }, railButton: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }, railActive: { position: 'absolute', width: 27, height: 27, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: C.primary, borderWidth: 0, shadowColor: C.primary, shadowOpacity: .45, shadowRadius: 8, elevation: 8 }, railDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#1A1E22', borderWidth: 1, borderColor: 'rgba(0,0,0,.32)', shadowColor: '#000', shadowOpacity: .2, shadowRadius: 2 }, railDotOn: { backgroundColor: C.primary, borderColor: '#A9C8FF', shadowColor: C.primary, shadowOpacity: .45, shadowRadius: 5 },
   reviewRowText: { fontFamily: FONT, fontSize: 15, lineHeight: 21, fontWeight: '600', color: '#1C2832' },
@@ -2688,16 +2505,8 @@ buildingWrap: { alignItems: 'center', paddingBottom: 24 },
   planModalBox: { backgroundColor: C.canvas, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 22, paddingBottom: Platform.OS === 'ios' ? 40 : 24 },
   planModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   planModalTitle: { fontFamily: FONT, fontSize: 20, fontWeight: '800', color: '#1C2832' },
-  planModalSub: { fontFamily: FONT, fontSize: 14, color: C.inkSoft, marginBottom: 12 },
-  planModalFeeNote: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 14 },
-  planModalFeeText: { flex: 1, fontFamily: FONT, fontSize: 13, lineHeight: 18, color: C.inkSoft },
-  planModalOption: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderRadius: 14, borderWidth: 1.5, borderColor: C.line, backgroundColor: '#fff', marginBottom: 10 },
-  planModalOptionOn: { borderColor: C.primary, backgroundColor: '#F3F7FF' },
-  planModalOptionName: { fontFamily: FONT, fontSize: 15, fontWeight: '700', color: '#1C2832' },
-  planModalOptionNote: { fontFamily: FONT, fontSize: 13, color: C.inkMuted, marginTop: 2 },
-  planModalOptionPrice: { fontFamily: FONT, fontSize: 22, fontWeight: '800', color: '#1C2832' },
-  savePill: { alignSelf: 'flex-start', backgroundColor: C.success, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999, marginBottom: 4 },
-  savePillText: { fontFamily: FONT, fontSize: 10, fontWeight: '800', color: '#fff', letterSpacing: .4 },
+  
+  
   planModalPayBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', minHeight: 54, borderRadius: 14, backgroundColor: C.primary, marginTop: 14 },
   planModalPayBtnText: { fontFamily: FONT, fontSize: 15, fontWeight: '800', color: '#fff' },
   fullLoading: { flex: 1, justifyContent: 'center', paddingHorizontal: 32, gap: 14 },
@@ -2742,13 +2551,7 @@ pathCardWhite: { backgroundColor: '#fff', shadowColor: '#1C2832', shadowOpacity:
   gridRow: { flexDirection: 'row', gap: 6 },
   gridCell: { minHeight: 44, borderRadius: 11, paddingHorizontal: 10, fontFamily: FONT, fontSize: 14, color: C.ink, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line },
   notesBox: { marginTop: 7, minHeight: 220, paddingTop: 14, paddingBottom: 14, textAlignVertical: 'top' },
-  billingToggle: { flexDirection: 'row', gap: 4, padding: 4, marginTop: 12, marginBottom: 10, borderRadius: 14, backgroundColor: 'rgba(28,40,50,.07)' },
-  billingOption: { flex: 1, minHeight: 40, borderRadius: 11, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 },
-  billingOptionOn: { backgroundColor: C.primary },
-  billingText: { fontFamily: FONT, fontSize: 14, fontWeight: '700', color: C.inkSoft },
-  billingTextOn: { color: '#fff' },
-  billingSave: { fontFamily: FONT, fontSize: 11, fontWeight: '800', color: C.success },
-  planModalTotal: { fontFamily: FONT, fontSize: 13, fontWeight: '600', color: C.inkSoft, marginTop: 6, textAlign: 'center' },
+  
 savedPill: { position: 'absolute', top: SAFE_TOP + 86, alignSelf: 'center', zIndex: 200, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(28,40,50,.82)' },
   savedPillText: { fontFamily: FONT, fontSize: 12, fontWeight: '700', color: '#fff' },
   listRowSub: { fontFamily: FONT, fontSize: 13, color: C.inkMuted, marginTop: 2 },

@@ -35,10 +35,6 @@
         }
       ],
       [
-        "@stripe/stripe-react-native",
-        {}
-      ],
-      [
         "expo-notifications",
         {
           "icon": "./assets/brightsite-icon.png",
