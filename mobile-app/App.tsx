@@ -1822,12 +1822,12 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const lastDraftIndex = useRef(index);
   // Saves progress to the server and flashes the "All changes saved" pill. Runs on every card change
   // and, a moment after they stop typing, on any edit, so nothing depends on swiping to save.
-  const syncDraftNow = () => {
+  const syncDraftNow = (flash = true) => {
     if (!authSession || appScreen !== 'onboarding' || editingInfo || index < 1 || !data.businessName.trim() || draftBusy.current) return;
     draftBusy.current = true;
     void syncOnboardingToBackend(buildChoice || 'designer', { draft: true }).then(ok => {
       draftBusy.current = false;
-      if (!ok) return;
+      if (!ok || !flash) return;
       draftPill.setValue(0);
       Animated.sequence([
         Animated.timing(draftPill, { toValue: 1, duration: 180, useNativeDriver: true }),
@@ -1844,7 +1844,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const draftEditSkip = useRef(true);
   useEffect(() => {
     if (draftEditSkip.current) { draftEditSkip.current = false; return; } // not on first render
-    const timer = setTimeout(syncDraftNow, 2500);
+    const timer = setTimeout(() => syncDraftNow(false), 2500);
     return () => clearTimeout(timer);
   }, [data, hours, services, reviewsList, offers, contactForm, media]);
 
@@ -2082,7 +2082,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           <TextInput value={data.googleLink} onChangeText={v => setData(d => { const n = { ...d, googleLink: v }; const tp = n.trustpilotLink.trim(), g = n.googleLink.trim(); return { ...n, reviewLink: tp || g, reviewSource: tp ? 'Trustpilot' : g ? 'Google' : null }; })} placeholder="Google reviews link" placeholderTextColor={C.placeholder} keyboardType="url" autoCapitalize="none" autoCorrect={false} style={s.input} />
           <TextInput value={data.trustpilotLink} onChangeText={v => setData(d => { const n = { ...d, trustpilotLink: v }; const tp = n.trustpilotLink.trim(), g = n.googleLink.trim(); return { ...n, reviewLink: tp || g, reviewSource: tp ? 'Trustpilot' : g ? 'Google' : null }; })} placeholder="Trustpilot link" placeholderTextColor={C.placeholder} keyboardType="url" autoCapitalize="none" autoCorrect={false} style={s.input} />
         </View>
-        {!editingInfo && <Pressable onPress={sendToDesigner} style={({ pressed }) => [s.primaryBtn, s.sendGlow, { marginTop: 24 }, pressed && s.pressed]}>
+        {!editingInfo && <Pressable onPress={sendToDesigner} style={({ pressed }) => [s.primaryBtn, s.sendGlow, { marginTop: 200 }, pressed && s.pressed]}>
           <Text style={s.primaryBtnText}>Send to designer</Text>
         </Pressable>}
         </>;
@@ -2355,7 +2355,6 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
 
             {deckStep.id === 'business' && isActive && !editingInfo && <Pressable onPress={() => { Keyboard.dismiss(); builderResume.current = index; setChooseMode('pick'); setAppScreen('choose'); }} hitSlop={12} style={[s.chooseBack, { position: 'absolute', top: SAFE_TOP + 24, left: 26, zIndex: 120, marginBottom: 0 }]} accessibilityLabel="Back"><Text style={s.chooseBackText}>‹ Back</Text></Pressable>}
             <View style={s.cardHeader}><Text style={s.cardTitle}>{deckStep.title}</Text><View style={s.cardHeaderActions}>
-              {deckIndex > 0 && <Text style={s.count}>{deckIndex}/{setupStepIndexes.length}</Text>}
               {!editingInfo && isActive && SWIPE_LOCK_STEPS.includes(deckStep.id) && <Pressable onPress={() => setStepEditMode(v => !v)} hitSlop={10} style={stepEditMode ? s.saveTickBtn : s.editStepBtn}>{stepEditMode ? <Ionicons name="checkmark" size={18} color="#fff" /> : <Text style={s.editStepText}>Edit</Text>}</Pressable>}
               {editingInfo && !(stepEditMode && isActive && SWIPE_LOCK_STEPS.includes(deckStep.id)) && <Pressable disabled={savingInfo} onPress={async () => {
                 setSavingInfo(true); await syncOnboardingToBackend(buildChoice || 'designer'); setSavingInfo(false); setEditingInfo(false); setAppScreen('dashboard');
@@ -2368,12 +2367,14 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             </ScrollView>
             <View pointerEvents="box-none" style={s.fixedPrompt}>
               {!!validationMessage && isActive && <Text pointerEvents="none" style={s.validationText}>{validationMessage}</Text>}
-              {isActive && !editingInfo && deckStep.id !== 'reviews' && <View pointerEvents="none" style={s.swipeRow}><Text style={s.swipeHint}>Swipe to continue</Text></View>}
+              {isActive && !editingInfo && deckStep.id !== 'reviews' && <View pointerEvents="none" style={s.swipeRow}><Text style={s.swipeHint}>Swipe to continue</Text><Ionicons name="arrow-forward" size={15} color={C.ink} /></View>}
             </View>
           </Animated.View>;
         })}
       </View>
-      <Animated.View style={[s.rail, { opacity: railOpacity }]} {...railPan.panHandlers}>{setupStepIndexes.map((actual) => {
+      <View pointerEvents="box-none" style={{ position: 'absolute', top: SAFE_TOP + 2, left: 22, right: 22, flexDirection: 'row', alignItems: 'center', zIndex: 140, elevation: 140 }}>
+        <Text style={[s.count, { width: 46 }]}>{deckIndex > 0 ? `${deckIndex}/${setupStepIndexes.length}` : ''}</Text>
+      <Animated.View style={[s.rail, { position: 'relative', top: 0, left: 0, right: 0, flex: 1, opacity: railOpacity }]} {...railPan.panHandlers}>{setupStepIndexes.map((actual) => {
         const item = steps[actual], done = complete.has(actual);
         const dotScale = motion.interpolate({
           inputRange: [Math.max(0, actual - 1) * CARD_TRAVEL, actual * CARD_TRAVEL, (actual + 1) * CARD_TRAVEL],
@@ -2385,6 +2386,10 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           <Animated.View pointerEvents="none" style={[s.railActive, { opacity: motion.interpolate({ inputRange: [Math.max(0, actual - 1) * CARD_TRAVEL, (actual - .85) * CARD_TRAVEL, (actual + .85) * CARD_TRAVEL, (actual + 1) * CARD_TRAVEL], outputRange: [0, 1, 1, 0], extrapolate: 'clamp' }), transform: [{ scale: dotScale.interpolate({ inputRange: [1, 1.75], outputRange: [0, 1], extrapolate: 'clamp' }) }] }]}><Ionicons name={item.icon} size={15} color="#fff" /></Animated.View>
         </View>;
       })}</Animated.View>
+        <Pressable disabled={!(isActive && deckStep.id === 'reviews' && !editingInfo)} onPress={sendToDesigner} hitSlop={10} accessibilityLabel="Send to designer" style={{ width: 34, height: 34, borderRadius: 17, marginLeft: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: (isActive && deckStep.id === 'reviews' && !editingInfo) ? '#3B82F6' : 'rgba(59,130,246,.22)' }}>
+          <Ionicons name="checkmark" size={20} color="#fff" />
+        </Pressable>
+      </View>
     </View>
     <Animated.View pointerEvents="none" style={[s.savedPill, { opacity: draftPill, transform: [{ translateY: draftPill.interpolate({ inputRange: [0, 1], outputRange: [-6, 0] }) }] }]}>
       <Ionicons name="checkmark-circle" size={14} color="#fff" /><Text style={s.savedPillText}>All changes saved</Text>
