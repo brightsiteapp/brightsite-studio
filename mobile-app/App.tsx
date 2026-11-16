@@ -300,11 +300,24 @@ const setupStepIndexes = Array.from({ length: 7 }, (_, i) => i + 1);
 const BUSINESS_TYPES = ['Hair & Beauty', 'Aesthetics', 'Fitness', 'Pets', 'Health & Wellness', 'Home & Garden', 'Food & Drink', 'Automotive', 'Trades', 'Professional Services', 'Creative', 'Other'];
 
 
-function Field({ label, optional = false, value, onChangeText, placeholder, keyboardType = 'default', multiline = false, inputRef, ...inputProps }: any) {
+// Real-looking email: letters/digits/._%+- before the @, a domain and a 2+ letter ending (no spaces, no double dots)
+const isRealEmail = (v: string) => {
+  const e = (v || '').trim();
+  return /^[A-Za-z0-9](?:[A-Za-z0-9._%+-]*[A-Za-z0-9])?@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/.test(e) && !e.includes('..');
+};
+
+function Field({ label, optional = false, value, onChangeText, placeholder, keyboardType = 'default', multiline = false, inputRef, secureTextEntry = false, ...inputProps }: any) {
+  const [hidden, setHidden] = useState(!!secureTextEntry);
   return <View style={s.fieldWrap}>
     <Text style={s.fieldLabel}>{label}{optional && <Text style={s.fieldOptional}>  optional</Text>}</Text>
-    <TextInput ref={inputRef} value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={C.placeholder}
-      keyboardType={keyboardType} multiline={multiline} rejectResponderTermination={false} style={[s.input, multiline && s.inputMultiline]} {...inputProps} />
+    <View>
+      <TextInput ref={inputRef} value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={C.placeholder}
+        keyboardType={keyboardType} multiline={multiline} rejectResponderTermination={false} style={[s.input, multiline && s.inputMultiline, secureTextEntry && { paddingRight: 48 }]}
+        secureTextEntry={secureTextEntry ? hidden : false} {...inputProps} />
+      {!!secureTextEntry && <Pressable onPress={() => setHidden(h => !h)} hitSlop={10} accessibilityLabel={hidden ? 'Show password' : 'Hide password'} style={{ position: 'absolute', right: 14, top: 0, bottom: 0, justifyContent: 'center' }}>
+        <Ionicons name={hidden ? 'eye-outline' : 'eye-off-outline'} size={20} color={C.inkSoft} />
+      </Pressable>}
+    </View>
   </View>;
 }
 
@@ -1511,9 +1524,9 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const needsPassword = !!session?.user && session.user.app_metadata?.provider === 'apple' && !session.user.user_metadata?.passwordSet;
   const minimumInfoComplete = (stepId = step.id) => {
     switch (stepId) {
-      case 'login': return /\S+@\S+\.\S+/.test(data.email.trim()) && data.password.length >= 8;
+      case 'login': return isRealEmail(data.email) && data.password.length >= 8;
       case 'business': return !!data.fullName.trim() && !!data.businessName.trim() && !!data.category.trim();
-      case 'contact': return /\S+@\S+\.\S+/.test(data.contactEmail.trim()) && (!needsPassword || data.password.length >= 8);
+      case 'contact': return isRealEmail(data.contactEmail) && (!needsPassword || data.password.length >= 8);
       case 'hours': return hours.some(row => row.enabled && row.start.trim() && row.end.trim());
       case 'prices': return services.some(it => it.name.trim()) && services.every(it => !it.name.trim() || it.section.trim());
       default: return true;
@@ -1984,7 +1997,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         {!!authStatus && <Text style={s.authStatus}>{authStatus}</Text>}
         {authMode === 'login' && <Pressable hitSlop={8} onPress={async () => {
           const email = data.email.trim().toLowerCase();
-          if (!/\S+@\S+\.\S+/.test(email)) { setAuthStatus('Enter your email address first.'); return; }
+          if (!isRealEmail(email)) { setAuthStatus('Enter your email address first.'); return; }
           setAuthStatus('Sending reset link…');
           const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: 'https://brightsite.app/account/reset-password' });
           setAuthStatus(error ? 'Couldn\'t send a reset email. Try again.' : 'Check your inbox for a reset link.');

@@ -3385,5 +3385,31 @@
 
 
 
+<script>
+// Show/Hide toggle on password fields
+(function () {
+  document.querySelectorAll('input[type="password"]').forEach(function (input) {
+    if (input.dataset.eye) return;
+    input.dataset.eye = '1';
+    var wrap = document.createElement('div');
+    wrap.style.position = 'relative';
+    input.parentNode.insertBefore(wrap, input);
+    wrap.appendChild(input);
+    input.style.paddingRight = '64px';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = 'Show';
+    btn.setAttribute('aria-label', 'Show password');
+    btn.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;font:600 13px inherit;color:#757b80;cursor:pointer;padding:6px';
+    btn.onclick = function () {
+      var show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      btn.textContent = show ? 'Hide' : 'Show';
+      btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    };
+    wrap.appendChild(btn);
+  });
+})();
+</script>
 </body>
 </html>
