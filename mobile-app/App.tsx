@@ -890,7 +890,7 @@ function MessageThread({ session, slug, viewer, otherName, placeholder, intro }:
   </>;
 }
 
-function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, contactForm, websiteStatus, onMakeLive, onAutomatic, onEditSection, onTakeOffline, onGoLive, onSignOut, onEditInfo, saveError, planAnnual, planPro, media, isPaying, buildChoice, session, slug, onAdminBack, ownedDomain = '', adminBiz, liveUrl = '', infoComplete, onSendToDesigner, playReveal, onRevealDone, previewLink = '' }: any) {
+function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, contactForm, websiteStatus, onMakeLive, onAutomatic, onEditSection, startWithGrid, onGridShown, onTakeOffline, onGoLive, onSignOut, onEditInfo, saveError, planAnnual, planPro, media, isPaying, buildChoice, session, slug, onAdminBack, ownedDomain = '', adminBiz, liveUrl = '', infoComplete, onSendToDesigner, playReveal, onRevealDone, previewLink = '' }: any) {
   // After sending to the designer: a full-screen preview card, the B fades in, then the text,
   // then the card shrinks into its place on the dashboard.
   const buildCardRef = useRef<View>(null);
@@ -954,7 +954,8 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
   const [previewMode, setPreviewMode] = useState<'mobile' | 'desktop'>('mobile');
   const [showPassword, setShowPassword] = useState(false);
   const [showEditMenu, setShowEditMenu] = useState(false);
-  const [showSectionGrid, setShowSectionGrid] = useState(false);
+  const [showSectionGrid, setShowSectionGrid] = useState(!!startWithGrid);
+  useEffect(() => { if (startWithGrid) onGridShown?.(); }, []);
   // the Website tab fits the screen, so it rubber-bands and springs back instead of scrolling
   const websiteDrag = useRef(new Animated.Value(0)).current;
   const websiteBounce = useMemo(() => PanResponder.create({
@@ -1256,6 +1257,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [validationMessage, setValidationMessage] = useState('');
   // card the builder was on when the user went back to the picker
   const builderResume = useRef(1);
+  // after saving a section from the edit grid, return to the grid (not the plain dashboard)
+  const [reopenGrid, setReopenGrid] = useState(false);
   const [media, setMedia] = useState<{ logo?: string; hero?: string; gallery: string[] }>({ gallery: [] });
   const [domain, setDomain] = useState('');
   const [suffix, setSuffix] = useState('.co.uk');
@@ -2325,7 +2328,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   }
 
   if (appScreen === 'dashboard') return <FadeIn>
-    <DashboardHome previewLink={businessRecord.current?.demoUrl || businessRecord.current?.previewUrl || ''} playReveal={playReveal} onRevealDone={() => setPlayReveal(false)} onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} services={services} hours={hours} contactForm={contactForm} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} infoComplete={infoComplete} onSendToDesigner={sendFromDashboard} onEditInfo={() => { setEditingInfo(websiteStatus !== 'todo'); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} onAutomatic={() => { setChooseMode('auto'); setAppScreen('choose'); }} onEditSection={(id: string) => { const i = steps.findIndex(x => x.id === id); if (i < 0) return; setEditingInfo(true); setIndex(i); motion.setValue(i * CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} saveError={saveError} planAnnual={planAnnual} planPro={planPro} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} adminBiz={adminViewingBusiness} liveUrl={businessRecord.current?.liveUrl || (/^https?:/.test(businessRecord.current?.customDomain || '') ? businessRecord.current.customDomain : '')} ownedDomain={businessRecord.current?.domainRegistered ? (businessRecord.current?.customDomain || businessRecord.current?.domain || '') : ''} />
+    <DashboardHome previewLink={businessRecord.current?.demoUrl || businessRecord.current?.previewUrl || ''} playReveal={playReveal} onRevealDone={() => setPlayReveal(false)} onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} services={services} hours={hours} contactForm={contactForm} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} infoComplete={infoComplete} onSendToDesigner={sendFromDashboard} onEditInfo={() => { setEditingInfo(websiteStatus !== 'todo'); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} onAutomatic={() => { setChooseMode('auto'); setAppScreen('choose'); }} startWithGrid={reopenGrid} onGridShown={() => setReopenGrid(false)} onEditSection={(id: string) => { const i = steps.findIndex(x => x.id === id); if (i < 0) return; setEditingInfo(true); setIndex(i); motion.setValue(i * CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} saveError={saveError} planAnnual={planAnnual} planPro={planPro} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} adminBiz={adminViewingBusiness} liveUrl={businessRecord.current?.liveUrl || (/^https?:/.test(businessRecord.current?.customDomain || '') ? businessRecord.current.customDomain : '')} ownedDomain={businessRecord.current?.domainRegistered ? (businessRecord.current?.customDomain || businessRecord.current?.domain || '') : ''} />
   </FadeIn>;
 
 
@@ -2407,7 +2410,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             <View style={s.cardHeader}><Text style={s.cardTitle}>{deckStep.title}</Text><View style={s.cardHeaderActions}>
               {!editingInfo && isActive && SWIPE_LOCK_STEPS.includes(deckStep.id) && <Pressable onPress={() => setStepEditMode(v => !v)} hitSlop={10} style={stepEditMode ? s.saveTickBtn : s.editStepBtn}>{stepEditMode ? <Ionicons name="checkmark" size={18} color="#fff" /> : <Text style={s.editStepText}>Edit</Text>}</Pressable>}
               {editingInfo && !(stepEditMode && isActive && SWIPE_LOCK_STEPS.includes(deckStep.id)) && <Pressable disabled={savingInfo} onPress={async () => {
-                setSavingInfo(true); await syncOnboardingToBackend(buildChoice || 'designer'); setSavingInfo(false); setEditingInfo(false); setAppScreen('dashboard');
+                setSavingInfo(true); await syncOnboardingToBackend(buildChoice || 'designer'); setSavingInfo(false); setEditingInfo(false); setReopenGrid(true); setAppScreen('dashboard');
               }} style={s.saveTickBtn} accessibilityLabel="Save changes">{savingInfo ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="checkmark" size={18} color="#fff" />}</Pressable>}
             </View></View>
             <ScrollView style={s.cardScroll} contentContainerStyle={[s.content, deckStep.id === 'login' && s.loginContent, deckStep.id === 'hours' && s.hoursContent]}
