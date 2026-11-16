@@ -321,6 +321,15 @@ function Field({ label, optional = false, value, onChangeText, placeholder, keyb
   </View>;
 }
 
+// Plain full-screen overlay used for every popup. Native RN Modals crash when removed during a screen change
+// (and leave a dark strip at the top while animating), so popups are simply shown or hidden here.
+function Overlay({ visible, onClose, children }: { visible: boolean; onClose: () => void; children: any }) {
+  if (!visible) return null;
+  return <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 400, elevation: 400 }}>
+    {children}
+  </View>;
+}
+
 const Intro = ({ children }: any) => <Text style={s.intro}>{children}</Text>;
 
 type SheetField = { key: string; placeholder: string; multiline?: boolean; optional?: boolean };
@@ -330,7 +339,7 @@ function ItemSheet({ open, title, fields, initial, onSave, onDelete, onClose }: 
   const [draft, setDraft] = useState<Record<string, string>>({});
   useEffect(() => { if (open) setDraft(initial || {}); }, [open]);
   const ready = fields.every(f => f.optional || (draft[f.key] || '').trim());
-  return <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
+  return <Overlay visible={open} onClose={onClose}>
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.planModalOverlay}>
       <Pressable style={{ flex: 1 }} onPress={onClose} />
       <View style={s.planModalBox}>
@@ -342,7 +351,7 @@ function ItemSheet({ open, title, fields, initial, onSave, onDelete, onClose }: 
         {onDelete && <Pressable onPress={onDelete} style={s.sheetDelete}><Text style={s.sheetDeleteText}>Remove</Text></Pressable>}
       </View>
     </KeyboardAvoidingView>
-  </Modal>;
+  </Overlay>;
 }
 
 function ItemList({ items, primary, secondary, addLabel, onOpen }: { items: Record<string, string>[]; primary: string; secondary: string; addLabel: string; onOpen: (index: number | null) => void }) {
@@ -380,7 +389,7 @@ function CategorySheet({ open, initial, onSave, onDelete, onClose }: { open: boo
   useEffect(() => { if (open) { setSection(initial?.section || ''); setRows(initial?.rows.length ? [...initial.rows, { name: '', duration: '', price: '' }] : emptyRows()); } }, [open]);
   const setCell = (i: number, key: keyof ServiceRow, v: string) => setRows(r => r.map((x, n) => n === i ? { ...x, [key]: v } : x));
   const ready = !!section.trim() && rows.some(r => r.name.trim());
-  return <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
+  return <Overlay visible={open} onClose={onClose}>
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.planModalOverlay}>
       <Pressable style={{ flex: 1 }} onPress={onClose} />
       <View style={[s.planModalBox, { maxHeight: SCREEN_HEIGHT * .85 }]}>
@@ -398,7 +407,7 @@ function CategorySheet({ open, initial, onSave, onDelete, onClose }: { open: boo
         {onDelete && <Pressable onPress={onDelete} style={s.sheetDelete}><Text style={s.sheetDeleteText}>Remove category</Text></Pressable>}
       </View>
     </KeyboardAvoidingView>
-  </Modal>;
+  </Overlay>;
 }
 
 function Services({ items, setItems }: any) {
@@ -619,7 +628,7 @@ function AnalyticsModal({ visible, slug, session, onClose }: { visible: boolean;
   const fmtTime = (sec: number) => sec >= 60 ? `${Math.floor(sec / 60)}m ${sec % 60}s` : `${sec}s`;
   const pageName = (path: string) => path === '/' ? 'Home' : path.replace(/^\//, '').replace(/[-_/]/g, ' ').replace(/^./, c => c.toUpperCase());
   const CLICK_LABELS: [string, string, any][] = [['phone', 'Phone calls', 'call-outline'], ['email', 'Emails', 'mail-outline'], ['whatsapp', 'WhatsApp', 'logo-whatsapp'], ['directions', 'Directions', 'navigate-outline'], ['social', 'Social links', 'share-social-outline']];
-  return <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+  return <Overlay visible={visible} onClose={onClose}>
     <View style={{ flex: 1, backgroundColor: C.canvas, paddingTop: Platform.OS === 'ios' ? 54 : 28 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 14 }}>
         <Text style={{ fontFamily: FONT, fontSize: 22, fontWeight: '800', color: C.ink }}>Analytics</Text>
@@ -668,7 +677,7 @@ function AnalyticsModal({ visible, slug, session, onClose }: { visible: boolean;
       </>}
       </ScrollView>
     </View>
-  </Modal>;
+  </Overlay>;
 }
 
 // The client's real website (uploaded site / live address) in the phone or desktop frame.
@@ -716,7 +725,7 @@ function ChangePasswordModal({ visible, onClose }: { visible: boolean; onClose: 
     onClose();
     Alert.alert('Password changed', 'Use your new password next time you log in.');
   };
-  return <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+  return <Overlay visible={visible} onClose={onClose}>
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
       <Pressable style={s.modalOverlay} onPress={onClose}>
         <Pressable onPress={() => {}} style={s.modalBox}>
@@ -732,7 +741,7 @@ function ChangePasswordModal({ visible, onClose }: { visible: boolean; onClose: 
         </Pressable>
       </Pressable>
     </KeyboardAvoidingView>
-  </Modal>;
+  </Overlay>;
 }
 
 const LOADING_MESSAGES = {
@@ -2728,7 +2737,7 @@ function AdminAccountPanel({ biz, session, isLive, onDeleted }: { biz: any; sess
     </View>
     <Pressable disabled={busy} onPress={() => Alert.alert('Delete account?', `This permanently removes ${biz?.data?.name || biz?.data?.raw?.name || 'this client'}: their login, messages and website record. It also cancels any subscription and takes their site offline. This can't be undone.`, [{ text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: () => void run(async () => { const r = await fetch(ADMIN_API, { method: 'POST', headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete-account', slug: biz.id }) }); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`); onDeleted?.(); }) }])} style={({ pressed }) => [s.dashboardInfoCard, { marginTop: 12, alignItems: 'center' }, pressed && s.pressed]}><Text style={[s.dashboardCardTitle, { color: C.danger }]}>Delete account</Text></Pressable>
     {!!msg && <Text style={[s.dashboardCardText, { paddingHorizontal: 4 }]}>{msg}</Text>}
-    <Modal visible={!!prompt} transparent animationType="fade" onRequestClose={() => setPrompt(null)}>
+    <Overlay visible={!!prompt} onClose={() => setPrompt(null)}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.planModalOverlay}>
         <View style={s.planModalBox}>
           <View style={s.planModalHeader}><Text style={s.planModalTitle}>{prompt === 'email' ? 'Change login email' : prompt === 'domain' ? 'Add domain' : 'Set password'}</Text><Pressable onPress={() => setPrompt(null)} hitSlop={10}><Ionicons name="close" size={22} color={C.ink} /></Pressable></View>
@@ -2736,7 +2745,7 @@ function AdminAccountPanel({ biz, session, isLive, onDeleted }: { biz: any; sess
           <Pressable onPress={submit} style={({ pressed }) => [s.planModalPayBtn, { marginTop: 14 }, pressed && s.pressed]}><Text style={s.planModalPayBtnText}>Save</Text></Pressable>
         </View>
       </KeyboardAvoidingView>
-    </Modal>
+    </Overlay>
   </View>;
 }
 
