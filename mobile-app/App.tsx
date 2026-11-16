@@ -2286,7 +2286,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             {appScreen === 'choose' && <Image source={require('./assets/brightsite-icon.png')} style={{ width: 30, height: 30, borderRadius: 8 }} />}
             <Logo height={20} />
           </View>
-          {appScreen === 'choose' && chooseMode === 'pick' ? <Pressable onPress={signOut} hitSlop={10} accessibilityLabel="Sign out"><Text style={s.chooseBackText}>Sign out</Text></Pressable> : <Image source={require('./assets/brightsite-icon.png')} style={s.loginAppIcon} />}
+          {appScreen === 'choose' ? (chooseMode === 'pick' ? <Pressable onPress={signOut} hitSlop={10} accessibilityLabel="Sign out"><Text style={s.chooseBackText}>Sign out</Text></Pressable> : <View />) : <Image source={require('./assets/brightsite-icon.png')} style={s.loginAppIcon} />}
         </View>
         {chooseMode === 'pick' ? <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 18, paddingBottom: 110 }}>
           <Text style={[s.heroTitle, { textAlign: 'center', marginBottom: 0 }]}>How would you like to build your website?</Text>
