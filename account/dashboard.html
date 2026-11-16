@@ -980,6 +980,7 @@
   <div class="path-veil" id="pathChoiceVeil" hidden>
     <div class="path-sheet" role="dialog" aria-modal="true" aria-label="How would you like to build your website?">
       <div id="pathPickScreen">
+        <button type="button" id="pathSignOut" style="display:block;margin:0 0 6px auto;background:none;border:0;font:700 14px inherit;color:#3B82F6;cursor:pointer;padding:6px">Log out</button>
         <p class="path-title">How would you like to build your website?</p>
         <p class="path-sub">You can change anything later.</p>
         <div class="path-stack">
@@ -1233,6 +1234,11 @@
   var _acctName = document.getElementById('acctName'); if (_acctName) _acctName.textContent = session.email || '';
   var _acctEmailTop = document.getElementById('acctEmailTop'); if (_acctEmailTop) _acctEmailTop.textContent = session.email || '';
   document.getElementById('acctEmailRow').textContent = session.email || '';
+  var pathSignOut = document.getElementById('pathSignOut');
+  if (pathSignOut) pathSignOut.addEventListener('click', function () {
+    localStorage.removeItem('bs_session');
+    location.href = 'login.html';
+  });
   document.getElementById('acctLogoutBtn').addEventListener('click', function () {
     localStorage.removeItem('bs_session');
     location.href = 'login.html';
