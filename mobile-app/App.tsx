@@ -585,7 +585,7 @@ const EDIT_SECTIONS = [
 function SectionGrid({ visible, onPick, onClose }: { visible: boolean; onPick: (id: string) => void; onClose: () => void }) {
   if (!visible) return null;
   return <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 500, elevation: 500 }}>
-    <View style={{ flex: 1, backgroundColor: C.canvas, paddingTop: Platform.OS === 'ios' ? 54 : 28 }}>
+    <View style={{ flex: 1, backgroundColor: C.canvas, paddingTop: Platform.OS === 'ios' ? 81 : 55 }}>
       <View style={s.cardHeader}>
         <Text style={s.cardTitle}>Edit your website</Text>
         <Pressable onPress={onClose} hitSlop={10} accessibilityLabel="Done" style={s.saveTickBtn}><Ionicons name="checkmark" size={18} color="#fff" /></Pressable>
