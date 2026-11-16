@@ -2339,7 +2339,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             </ScrollView>
             <View pointerEvents="box-none" style={s.fixedPrompt}>
               {!!validationMessage && isActive && <Text pointerEvents="none" style={s.validationText}>{validationMessage}</Text>}
-              {isActive && !editingInfo && deckStep.id !== 'reviews' && <View pointerEvents="none" style={s.swipeRow}><Text style={s.swipeHint}>Swipe to continue</Text></View>}
+              {isActive && !editingInfo && deckStep.id !== 'reviews' && <View pointerEvents="none" style={s.swipeRow}><Text style={s.swipeHint}>Swipe left to continue</Text></View>}
             </View>
           </Animated.View>;
         })}
