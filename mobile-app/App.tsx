@@ -2005,12 +2005,12 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [stepEditMode, setStepEditMode] = useState(false);
   const pan = useMemo(() => PanResponder.create({
     onMoveShouldSetPanResponder: (_, g) => {
-      if (keyboardVisible || stepEditMode) return false;
+      if (keyboardVisible || stepEditMode || editingInfo) return false;
       // cards move sideways, so a mostly-horizontal drag anywhere changes card without fighting vertical scrolling
       return Math.abs(g.dx) > 12 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5;
     },
     // capture phase too, so a sideways drag that starts on a text box or scroll view still moves the card
-    onMoveShouldSetPanResponderCapture: (_, g) => !keyboardVisible && !stepEditMode && Math.abs(g.dx) > 12 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
+    onMoveShouldSetPanResponderCapture: (_, g) => !keyboardVisible && !stepEditMode && !editingInfo && Math.abs(g.dx) > 12 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
     onPanResponderTerminationRequest: () => false,
     onPanResponderGrant: revealRail,
     onPanResponderMove: (_, g) => {
@@ -2030,7 +2030,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       Animated.spring(motion, { toValue: index * CARD_TRAVEL, damping: 20, stiffness: 210, useNativeDriver: true }).start(() => setDeckDirection(0));
       hideRailSoon();
     },
-  }), [index, step.id, stepEditMode, data, hours, services, domainReady, designReady, keyboardVisible]);
+  }), [index, step.id, stepEditMode, editingInfo, data, hours, services, domainReady, designReady, keyboardVisible]);
 
   const railPan = useMemo(() => PanResponder.create({
     onStartShouldSetPanResponder: () => true, onMoveShouldSetPanResponder: () => true,
@@ -2392,7 +2392,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     <StatusBar style="dark" />
     <View style={{ flex: 1 }}>
       <View style={s.stage}>
-        {steps.filter((deckStep, deckIndex) => deckStep.id !== 'login' && Math.abs(deckIndex - index) <= 2).map((deckStep) => {
+        {steps.filter((deckStep, deckIndex) => deckStep.id !== 'login' && (editingInfo ? deckIndex === index : Math.abs(deckIndex - index) <= 2)).map((deckStep) => {
           const deckIndex = steps.findIndex(stepItem => stepItem.id === deckStep.id);
           const distance = deckIndex - index;
           const isActive = distance === 0;
