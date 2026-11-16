@@ -570,8 +570,10 @@ const EDIT_SECTIONS = [
   { id: 'extras', label: 'Extras', icon: 'add-circle-outline' },
   { id: 'reviews', label: 'Reviews', icon: 'star-outline' },
 ];
+// A plain overlay, not a Modal: RN's iOS Modal crashes when it is removed during a screen change.
 function SectionGrid({ visible, onPick, onClose }: { visible: boolean; onPick: (id: string) => void; onClose: () => void }) {
-  return <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+  if (!visible) return null;
+  return <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 500, elevation: 500 }}>
     <View style={{ flex: 1, backgroundColor: C.canvas, paddingTop: SAFE_TOP + 14 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 14 }}>
         <Text style={{ fontFamily: FONT, fontSize: 22, fontWeight: '800', color: C.ink }}>Edit your website</Text>
@@ -584,7 +586,7 @@ function SectionGrid({ visible, onPick, onClose }: { visible: boolean; onPick: (
         </Pressable>)}
       </ScrollView>
     </View>
-  </Modal>;
+  </View>;
 }
 
 // In-app analytics: page views and visitors per day from the site worker (owner or admin login).
