@@ -1207,6 +1207,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const railTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [designReady, setDesignReady] = useState(false);
   const [validationMessage, setValidationMessage] = useState('');
+  // card the builder was on when the user went back to the picker
+  const builderResume = useRef(1);
   const [media, setMedia] = useState<{ logo?: string; hero?: string; gallery: string[] }>({ gallery: [] });
   const [domain, setDomain] = useState('');
   const [suffix, setSuffix] = useState('.co.uk');
@@ -1461,6 +1463,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         if (typeof draft.index === 'number' && draft.index > 0) {
           // drafts saved before the domain step was removed can point past the last card
           // a leftover draft keeps its details, but the account still starts at the builder picker
+          builderResume.current = Math.min(draft.index, steps.length - 1);
           setChooseMode('pick');
           setAppScreen('choose');
           return;
@@ -2296,7 +2299,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
               <Text style={[s.pathTitle, { color: C.ink }]}>Automatic</Text>
               <Text style={[s.pathText, { color: C.ink }]}>Share your Google, Facebook or website link and our designer builds it for you.</Text>
             </Pressable>
-            <Pressable onPress={() => { setIndex(1); motion.setValue(CARD_TRAVEL); setAppScreen('onboarding'); }} style={({ pressed }) => [s.pathCard, s.pathCardWhite, pressed && s.pressed]}>
+            <Pressable onPress={() => { const at = builderResume.current || 1; setIndex(at); motion.setValue(at * CARD_TRAVEL); setAppScreen('onboarding'); }} style={({ pressed }) => [s.pathCard, s.pathCardWhite, pressed && s.pressed]}>
               <Image source={require('./assets/brightbuilder-blue.png')} resizeMode="contain" style={{ width: 19*1543/137, height: 19, marginBottom: 8 }} />
               <Text style={[s.pathTitle, { color: C.ink }]}>Seven. Simple. Steps.</Text>
               <Text style={[s.pathText, { color: C.ink }]}>Under 10 minutes. Enter your details, hours, services and photos yourself.</Text>
@@ -2350,7 +2353,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           const cardScale = cardPosition.interpolate({ inputRange: [-CARD_TRAVEL, 0, CARD_TRAVEL], outputRange: [.93, 1, .93], extrapolate: 'clamp' });
           return <Animated.View key={deckStep.id} pointerEvents={isActive ? 'auto' : 'none'} {...(isActive ? pan.panHandlers : {})} style={[s.card, s.deckCard, isActive ? s.deckCardActive : s.deckCardBehind, { zIndex: isActive ? 22 : 20 - Math.abs(distance), transform: [{ translateX: travelPosition }, { scale: cardScale }] }]}>
 
-            {deckStep.id === 'business' && isActive && !editingInfo && <Pressable onPress={() => { Keyboard.dismiss(); setChooseMode('pick'); setAppScreen('choose'); }} hitSlop={12} style={[s.chooseBack, { position: 'absolute', top: SAFE_TOP + 24, left: 26, zIndex: 120, marginBottom: 0 }]} accessibilityLabel="Back"><Text style={s.chooseBackText}>‹ Back</Text></Pressable>}
+            {deckStep.id === 'business' && isActive && !editingInfo && <Pressable onPress={() => { Keyboard.dismiss(); builderResume.current = index; setChooseMode('pick'); setAppScreen('choose'); }} hitSlop={12} style={[s.chooseBack, { position: 'absolute', top: SAFE_TOP + 24, left: 26, zIndex: 120, marginBottom: 0 }]} accessibilityLabel="Back"><Text style={s.chooseBackText}>‹ Back</Text></Pressable>}
             <View style={s.cardHeader}><Text style={s.cardTitle}>{deckStep.title}</Text><View style={s.cardHeaderActions}>
               {deckIndex > 0 && <Text style={s.count}>{deckIndex}/{setupStepIndexes.length}</Text>}
               {!editingInfo && isActive && SWIPE_LOCK_STEPS.includes(deckStep.id) && <Pressable onPress={() => setStepEditMode(v => !v)} hitSlop={10} style={stepEditMode ? s.saveTickBtn : s.editStepBtn}>{stepEditMode ? <Ionicons name="checkmark" size={18} color="#fff" /> : <Text style={s.editStepText}>Edit</Text>}</Pressable>}
