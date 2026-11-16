@@ -1520,6 +1520,14 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   }, []);
 
 
+  // Show a message under the card when an email is typed but isn't a real-looking address
+  const EMAIL_MESSAGE = 'Enter a real email address, like name@example.com';
+  useEffect(() => {
+    const raw = step.id === 'login' ? data.email : step.id === 'contact' ? data.contactEmail : '';
+    if (raw.trim() && !isRealEmail(raw)) setValidationMessage(EMAIL_MESSAGE);
+    else setValidationMessage(current => current === EMAIL_MESSAGE ? '' : current);
+  }, [data.email, data.contactEmail, step.id]);
+
   // Apple sign-ups never set a password on the login step, so the Contact card asks for one.
   const needsPassword = !!session?.user && session.user.app_metadata?.provider === 'apple' && !session.user.user_metadata?.passwordSet;
   const minimumInfoComplete = (stepId = step.id) => {
