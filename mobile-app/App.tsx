@@ -585,12 +585,12 @@ const EDIT_SECTIONS = [
 function SectionGrid({ visible, onPick, onClose }: { visible: boolean; onPick: (id: string) => void; onClose: () => void }) {
   if (!visible) return null;
   return <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 500, elevation: 500 }}>
-    <View style={{ flex: 1, backgroundColor: C.canvas, paddingTop: SAFE_TOP + 34 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 2 }}>
-        <Text style={{ fontFamily: FONT, fontSize: 22, fontWeight: '800', color: C.ink }}>Edit your website</Text>
+    <View style={{ flex: 1, backgroundColor: C.canvas, paddingTop: Platform.OS === 'ios' ? 54 : 28 }}>
+      <View style={s.cardHeader}>
+        <Text style={s.cardTitle}>Edit your website</Text>
         <Pressable onPress={onClose} hitSlop={10} accessibilityLabel="Close"><Ionicons name="close" size={24} color={C.ink} /></Pressable>
       </View>
-      <ScrollView contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: 20, paddingTop: 4, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         {EDIT_SECTIONS.map(sec => <Pressable key={sec.id} onPress={() => onPick(sec.id)} style={({ pressed }) => [{ width: '47%', minHeight: 116, borderRadius: 18, backgroundColor: '#fff', padding: 14, justifyContent: 'space-between', shadowColor: '#253B58', shadowOpacity: .08, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 }, pressed && s.pressed]}>
           <Ionicons name={sec.icon as any} size={22} color={C.primary} />
           <Text style={{ fontFamily: FONT, fontSize: 15, fontWeight: '800', color: C.ink }}>{sec.label}</Text>
