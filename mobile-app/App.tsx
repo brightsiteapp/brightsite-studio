@@ -2180,6 +2180,11 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     </View>
   </FlowBackdrop>;
 
+  // Splash while the saved session is checked, so signed-in users go straight to their dashboard without seeing the login
+  if (authChecking) return <View style={{ flex: 1, backgroundColor: C.canvas, alignItems: 'center', justifyContent: 'center' }}>
+    <StatusBar style="dark" />
+    <Image source={require('./assets/brightsite-icon.png')} style={{ width: 96, height: 96, borderRadius: 24 }} />
+  </View>;
   if (index === 0 && appScreen === 'onboarding') return <FlowBackdrop plain>
     <StatusBar style="dark" />
     <View style={{ flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28 }}>
