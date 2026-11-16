@@ -560,6 +560,33 @@ function Logo({ height = 18, tint }: { height?: number; tint?: string }) {
 const DESKTOP_WIDTH = 960;
 const DESKTOP_VIEW_W = SCREEN_WIDTH - 52;
 const DESKTOP_VIEW_H = Math.round(DESKTOP_VIEW_W * 0.68);
+// Edit grid for a sent site: one card per section, tap one to edit just that section (same as the web dashboard).
+const EDIT_SECTIONS = [
+  { id: 'business', label: 'Business', icon: 'briefcase-outline' },
+  { id: 'contact', label: 'Contact', icon: 'call-outline' },
+  { id: 'hours', label: 'Opening hours', icon: 'time-outline' },
+  { id: 'prices', label: 'Services & prices', icon: 'pricetag-outline' },
+  { id: 'media', label: 'Photos', icon: 'images-outline' },
+  { id: 'extras', label: 'Extras', icon: 'add-circle-outline' },
+  { id: 'reviews', label: 'Reviews', icon: 'star-outline' },
+];
+function SectionGrid({ visible, onPick, onClose }: { visible: boolean; onPick: (id: string) => void; onClose: () => void }) {
+  return <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+    <View style={{ flex: 1, backgroundColor: C.canvas, paddingTop: Platform.OS === 'ios' ? 54 : 28 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 14 }}>
+        <Text style={{ fontFamily: FONT, fontSize: 22, fontWeight: '800', color: C.ink }}>Edit your website</Text>
+        <Pressable onPress={onClose} hitSlop={10} accessibilityLabel="Close"><Ionicons name="close" size={24} color={C.ink} /></Pressable>
+      </View>
+      <ScrollView contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, padding: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+        {EDIT_SECTIONS.map(sec => <Pressable key={sec.id} onPress={() => onPick(sec.id)} style={({ pressed }) => [{ width: '47%', minHeight: 116, borderRadius: 18, backgroundColor: '#fff', padding: 14, justifyContent: 'space-between', shadowColor: '#253B58', shadowOpacity: .08, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 }, pressed && s.pressed]}>
+          <Ionicons name={sec.icon as any} size={22} color={C.primary} />
+          <Text style={{ fontFamily: FONT, fontSize: 15, fontWeight: '800', color: C.ink }}>{sec.label}</Text>
+        </Pressable>)}
+      </ScrollView>
+    </View>
+  </Modal>;
+}
+
 // In-app analytics: page views and visitors per day from the site worker (owner or admin login).
 function AnalyticsModal({ visible, slug, session, onClose }: { visible: boolean; slug: string; session: any; onClose: () => void }) {
   const [rangeDays, setRangeDays] = useState<number | 'all'>(30);
@@ -850,7 +877,7 @@ function MessageThread({ session, slug, viewer, otherName, placeholder, intro }:
   </>;
 }
 
-function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, contactForm, websiteStatus, onMakeLive, onAutomatic, onTakeOffline, onGoLive, onSignOut, onEditInfo, saveError, planAnnual, planPro, media, isPaying, buildChoice, session, slug, onAdminBack, ownedDomain = '', adminBiz, liveUrl = '', infoComplete, onSendToDesigner, playReveal, onRevealDone, previewLink = '' }: any) {
+function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, contactForm, websiteStatus, onMakeLive, onAutomatic, onEditSection, onTakeOffline, onGoLive, onSignOut, onEditInfo, saveError, planAnnual, planPro, media, isPaying, buildChoice, session, slug, onAdminBack, ownedDomain = '', adminBiz, liveUrl = '', infoComplete, onSendToDesigner, playReveal, onRevealDone, previewLink = '' }: any) {
   // After sending to the designer: a full-screen preview card, the B fades in, then the text,
   // then the card shrinks into its place on the dashboard.
   const buildCardRef = useRef<View>(null);
@@ -914,6 +941,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
   const [previewMode, setPreviewMode] = useState<'mobile' | 'desktop'>('mobile');
   const [showPassword, setShowPassword] = useState(false);
   const [showEditMenu, setShowEditMenu] = useState(false);
+  const [showSectionGrid, setShowSectionGrid] = useState(false);
   // the Website tab fits the screen, so it rubber-bands and springs back instead of scrolling
   const websiteDrag = useRef(new Animated.Value(0)).current;
   const websiteBounce = useMemo(() => PanResponder.create({
@@ -1134,7 +1162,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
                 <Ionicons name="stats-chart" size={15} color={C.primary} />
               </Pressable>
             <View>
-              <Pressable onPress={() => isBuilding || adminBiz ? onEditInfo?.() : setShowEditMenu(v => !v)} style={({ pressed }) => [s.dashboardEdit, pressed && s.pressed]}>
+              <Pressable onPress={() => isTodo ? onEditInfo?.() : isBuilding || adminBiz ? setShowSectionGrid(true) : setShowEditMenu(v => !v)} style={({ pressed }) => [s.dashboardEdit, pressed && s.pressed]}>
                 <Ionicons name="create-outline" size={15} color={C.ink} /><Text style={s.dashboardEditText}>Edit</Text>
                 {!isBuilding && !adminBiz && <Ionicons name={showEditMenu ? 'chevron-up' : 'chevron-down'} size={14} color={C.inkMuted} />}
               </Pressable>
@@ -1170,6 +1198,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
         </Animated.View>}
       </ScrollView>}
     </View>
+    <SectionGrid visible={showSectionGrid} onClose={() => setShowSectionGrid(false)} onPick={(id: string) => { setShowSectionGrid(false); onEditSection?.(id); }} />
     <AnalyticsModal visible={showAnalytics} slug={adminBiz ? adminBiz.id : slug} session={session} onClose={() => setShowAnalytics(false)} />
     {revealing && <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { zIndex: 998, elevation: 998, backgroundColor: C.card, opacity: revealBackdrop }]} />}
     {revealing && <Animated.View pointerEvents="none" style={[s.revealCard, revealRect ? {
@@ -2280,7 +2309,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   }
 
   if (appScreen === 'dashboard') return <FadeIn>
-    <DashboardHome previewLink={businessRecord.current?.demoUrl || businessRecord.current?.previewUrl || ''} playReveal={playReveal} onRevealDone={() => setPlayReveal(false)} onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} services={services} hours={hours} contactForm={contactForm} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} infoComplete={infoComplete} onSendToDesigner={sendFromDashboard} onEditInfo={() => { setEditingInfo(websiteStatus !== 'todo'); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} onAutomatic={() => { setChooseMode('auto'); setAppScreen('choose'); }} saveError={saveError} planAnnual={planAnnual} planPro={planPro} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} adminBiz={adminViewingBusiness} liveUrl={businessRecord.current?.liveUrl || (/^https?:/.test(businessRecord.current?.customDomain || '') ? businessRecord.current.customDomain : '')} ownedDomain={businessRecord.current?.domainRegistered ? (businessRecord.current?.customDomain || businessRecord.current?.domain || '') : ''} />
+    <DashboardHome previewLink={businessRecord.current?.demoUrl || businessRecord.current?.previewUrl || ''} playReveal={playReveal} onRevealDone={() => setPlayReveal(false)} onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} services={services} hours={hours} contactForm={contactForm} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} infoComplete={infoComplete} onSendToDesigner={sendFromDashboard} onEditInfo={() => { setEditingInfo(websiteStatus !== 'todo'); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} onAutomatic={() => { setChooseMode('auto'); setAppScreen('choose'); }} onEditSection={(id: string) => { const i = steps.findIndex(x => x.id === id); if (i < 0) return; setEditingInfo(true); setIndex(i); motion.setValue(i * CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} saveError={saveError} planAnnual={planAnnual} planPro={planPro} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} adminBiz={adminViewingBusiness} liveUrl={businessRecord.current?.liveUrl || (/^https?:/.test(businessRecord.current?.customDomain || '') ? businessRecord.current.customDomain : '')} ownedDomain={businessRecord.current?.domainRegistered ? (businessRecord.current?.customDomain || businessRecord.current?.domain || '') : ''} />
   </FadeIn>;
 
 
