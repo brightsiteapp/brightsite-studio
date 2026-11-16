@@ -1460,9 +1460,9 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         if (draft.domain) setDomain(draft.domain);
         if (typeof draft.index === 'number' && draft.index > 0) {
           // drafts saved before the domain step was removed can point past the last card
-          const resumeAt = Math.min(draft.index, steps.length - 1);
-          setIndex(resumeAt);
-          motion.setValue(resumeAt * CARD_TRAVEL);
+          // a leftover draft keeps its details, but the account still starts at the builder picker
+          setChooseMode('pick');
+          setAppScreen('choose');
           return;
         }
       }
@@ -2283,7 +2283,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
       <View style={{ flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28 }}>
         <View style={s.loginHeader}><Logo height={20} /><Image source={require('./assets/brightsite-icon.png')} style={s.loginAppIcon} /></View>
         {chooseMode === 'pick' ? <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 18, paddingBottom: 110 }}>
-          <Pressable onPress={signOut} hitSlop={10} style={{ position: 'absolute', top: SAFE_TOP + 24, right: 26, zIndex: 120 }} accessibilityLabel="Sign out"><Text style={s.chooseBackText}>Sign out</Text></Pressable>
+          <Pressable onPress={signOut} hitSlop={10} style={{ position: 'absolute', top: 128, right: 26, zIndex: 120 }} accessibilityLabel="Sign out"><Text style={s.chooseBackText}>Sign out</Text></Pressable>
           <Text style={[s.heroTitle, { textAlign: 'center', marginBottom: 0 }]}>How would you like to build your website?</Text>
           <Text style={{ fontFamily: FONT, fontSize: 17, lineHeight: 24, color: C.inkSoft, textAlign: 'center', marginTop: 2, marginBottom: 18 }}>You can change anything later.</Text>
           <View style={{ gap: 14 }}>
