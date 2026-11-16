@@ -5,7 +5,6 @@ import { WebView } from 'react-native-webview';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import * as ImagePicker from 'expo-image-picker';
-import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -21,7 +20,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 WebBrowser.maybeCompleteAuthSession();
 
-SplashScreen.preventAutoHideAsync().catch(() => {});
+// Set by AppInner once the saved session has been checked; the launch splash waits for it before fading
+const AUTH_READY: { done: boolean; cb: null | (() => void) } = { done: false, cb: null };
 const DRAFT_KEY = 'brightsite_onboarding_draft';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -1242,7 +1242,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [resetBusy, setResetBusy] = useState(false);
   const [authBusy, setAuthBusy] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
-  useEffect(() => { if (!authChecking) SplashScreen.hideAsync().catch(() => {}); }, [authChecking]);
+  useEffect(() => { if (!authChecking) { AUTH_READY.done = true; AUTH_READY.cb?.(); } }, [authChecking]);
   const [authSession, setAuthSession] = useState(false);
   const [authStatus, setAuthStatus] = useState('');
   const [complete, setComplete] = useState<Set<number>>(new Set());
@@ -2183,7 +2183,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     </View>
   </FlowBackdrop>;
 
-  // The phone's own launch screen stays up while the saved session is checked (see hideAsync above), so nothing flashes
+  // The launch splash (SplashGlow) stays over the app until the saved session is checked, so the login never flashes
   if (authChecking) return null;
   if (index === 0 && appScreen === 'onboarding') return <FlowBackdrop plain>
     <StatusBar style="dark" />
@@ -2475,8 +2475,10 @@ function SplashGlow({ onDone }: { onDone: () => void }) {
       Animated.delay(60),
       Animated.timing(glow, { toValue: 1, duration: 100, easing: Easing.out(Easing.quad), useNativeDriver: true }),
       Animated.timing(glow, { toValue: 0, duration: 240, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-      Animated.timing(fade, { toValue: 0, duration: 220, useNativeDriver: true }),
-    ]).start(onDone);
+    ]).start(() => {
+      const fadeOut = () => Animated.timing(fade, { toValue: 0, duration: 220, useNativeDriver: true }).start(onDone);
+      if (AUTH_READY.done) fadeOut(); else AUTH_READY.cb = fadeOut;
+    });
   }, []);
   const dot = 18 * SPLASH_K;
   // light sources the exact size of the dot, so only their soft shadows show beyond it
