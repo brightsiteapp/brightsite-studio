@@ -572,7 +572,7 @@ const EDIT_SECTIONS = [
 ];
 function SectionGrid({ visible, onPick, onClose }: { visible: boolean; onPick: (id: string) => void; onClose: () => void }) {
   return <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-    <View style={{ flex: 1, backgroundColor: C.canvas, paddingTop: Platform.OS === 'ios' ? 54 : 28 }}>
+    <View style={{ flex: 1, backgroundColor: C.canvas, paddingTop: SAFE_TOP + 14 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 14 }}>
         <Text style={{ fontFamily: FONT, fontSize: 22, fontWeight: '800', color: C.ink }}>Edit your website</Text>
         <Pressable onPress={onClose} hitSlop={10} accessibilityLabel="Close"><Ionicons name="close" size={24} color={C.ink} /></Pressable>
@@ -1198,7 +1198,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
         </Animated.View>}
       </ScrollView>}
     </View>
-    <SectionGrid visible={showSectionGrid} onClose={() => setShowSectionGrid(false)} onPick={(id: string) => { setShowSectionGrid(false); onEditSection?.(id); }} />
+    <SectionGrid visible={showSectionGrid} onClose={() => setShowSectionGrid(false)} onPick={(id: string) => { setShowSectionGrid(false); setTimeout(() => onEditSection?.(id), 450); }} />
     <AnalyticsModal visible={showAnalytics} slug={adminBiz ? adminBiz.id : slug} session={session} onClose={() => setShowAnalytics(false)} />
     {revealing && <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { zIndex: 998, elevation: 998, backgroundColor: C.card, opacity: revealBackdrop }]} />}
     {revealing && <Animated.View pointerEvents="none" style={[s.revealCard, revealRect ? {
