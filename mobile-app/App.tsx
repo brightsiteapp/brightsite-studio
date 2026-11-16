@@ -2423,7 +2423,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         })}
       </View>
       <View pointerEvents="box-none" style={{ position: 'absolute', top: SAFE_TOP + 2, left: 22, right: 22, flexDirection: 'row', alignItems: 'center', zIndex: 140, elevation: 140 }}>
-        <Text style={[s.count, { width: 46 }]}>{deckIndex > 0 ? `${deckIndex}/${setupStepIndexes.length}` : ''}</Text>
+        <Text style={[s.count, { width: 46 }]}>{index > 0 ? `${index}/${setupStepIndexes.length}` : ''}</Text>
       <Animated.View style={[s.rail, { position: 'relative', top: 0, left: 0, right: 0, flex: 1, opacity: railOpacity }]} {...railPan.panHandlers}>{setupStepIndexes.map((actual) => {
         const item = steps[actual], done = complete.has(actual);
         const dotScale = motion.interpolate({
@@ -2436,7 +2436,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           <Animated.View pointerEvents="none" style={[s.railActive, { opacity: motion.interpolate({ inputRange: [Math.max(0, actual - 1) * CARD_TRAVEL, (actual - .85) * CARD_TRAVEL, (actual + .85) * CARD_TRAVEL, (actual + 1) * CARD_TRAVEL], outputRange: [0, 1, 1, 0], extrapolate: 'clamp' }), transform: [{ scale: dotScale.interpolate({ inputRange: [1, 1.75], outputRange: [0, 1], extrapolate: 'clamp' }) }] }]}><Ionicons name={item.icon} size={15} color="#fff" /></Animated.View>
         </View>;
       })}</Animated.View>
-        <Pressable disabled={!(isActive && deckStep.id === 'reviews' && !editingInfo)} onPress={sendToDesigner} hitSlop={10} accessibilityLabel="Send to designer" style={{ width: 34, height: 34, borderRadius: 17, marginLeft: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: (isActive && deckStep.id === 'reviews' && !editingInfo) ? '#3B82F6' : 'rgba(59,130,246,.22)' }}>
+        <Pressable disabled={!(steps[index]?.id === 'reviews' && !editingInfo)} onPress={sendToDesigner} hitSlop={10} accessibilityLabel="Send to designer" style={{ width: 34, height: 34, borderRadius: 17, marginLeft: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: (steps[index]?.id === 'reviews' && !editingInfo) ? '#3B82F6' : 'rgba(59,130,246,.22)' }}>
           <Ionicons name="checkmark" size={20} color="#fff" />
         </Pressable>
       </View>
