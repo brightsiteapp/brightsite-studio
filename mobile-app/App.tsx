@@ -751,9 +751,10 @@ const LOADING_MESSAGES = {
   designer: ['Saving your details', 'Preparing your dashboard', 'Our designer is on it!', "You’ll get a notification when your preview is ready"],
 };
 
-function FadeIn({ children }: { children: React.ReactNode }) {
-  const opacity = useRef(new Animated.Value(0)).current;
+function FadeIn({ children, instant = false }: { children: React.ReactNode; instant?: boolean }) {
+  const opacity = useRef(new Animated.Value(instant ? 1 : 0)).current;
   useEffect(() => {
+    if (instant) return;
     Animated.timing(opacity, { toValue: 1, duration: 480, useNativeDriver: true }).start();
   }, []);
   return <Animated.View style={{ flex: 1, opacity }}>{children}</Animated.View>;
@@ -2327,7 +2328,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     </FadeIn>;
   }
 
-  if (appScreen === 'dashboard') return <FadeIn>
+  if (appScreen === 'dashboard') return <FadeIn instant={reopenGrid}>
     <DashboardHome previewLink={businessRecord.current?.demoUrl || businessRecord.current?.previewUrl || ''} playReveal={playReveal} onRevealDone={() => setPlayReveal(false)} onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} services={services} hours={hours} contactForm={contactForm} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} infoComplete={infoComplete} onSendToDesigner={sendFromDashboard} onEditInfo={() => { setEditingInfo(websiteStatus !== 'todo'); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} onAutomatic={() => { setChooseMode('auto'); setAppScreen('choose'); }} startWithGrid={reopenGrid} onGridShown={() => setReopenGrid(false)} onEditSection={(id: string) => { const i = steps.findIndex(x => x.id === id); if (i < 0) return; setEditingInfo(true); setIndex(i); motion.setValue(i * CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} saveError={saveError} planAnnual={planAnnual} planPro={planPro} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} adminBiz={adminViewingBusiness} liveUrl={businessRecord.current?.liveUrl || (/^https?:/.test(businessRecord.current?.customDomain || '') ? businessRecord.current.customDomain : '')} ownedDomain={businessRecord.current?.domainRegistered ? (businessRecord.current?.customDomain || businessRecord.current?.domain || '') : ''} />
   </FadeIn>;
 
@@ -2475,7 +2476,7 @@ function SplashGlow({ onDone }: { onDone: () => void }) {
   useEffect(() => {
     // one flash: the dot brightens with a soft light bleeding off it, then settles and the splash fades
     Animated.sequence([
-      Animated.delay(560),
+      Animated.delay(400),
       Animated.timing(glow, { toValue: 1, duration: 100, easing: Easing.out(Easing.quad), useNativeDriver: true }),
       Animated.timing(glow, { toValue: 0, duration: 240, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
     ]).start(() => {
