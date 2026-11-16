@@ -2472,7 +2472,7 @@ function SplashGlow({ onDone }: { onDone: () => void }) {
   useEffect(() => {
     // one flash: the dot brightens with a soft light bleeding off it, then settles and the splash fades
     Animated.sequence([
-      Animated.delay(60),
+      Animated.delay(560),
       Animated.timing(glow, { toValue: 1, duration: 100, easing: Easing.out(Easing.quad), useNativeDriver: true }),
       Animated.timing(glow, { toValue: 0, duration: 240, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
     ]).start(() => {
