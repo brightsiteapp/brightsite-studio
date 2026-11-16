@@ -850,7 +850,7 @@ function MessageThread({ session, slug, viewer, otherName, placeholder, intro }:
   </>;
 }
 
-function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, contactForm, websiteStatus, onMakeLive, onTakeOffline, onGoLive, onSignOut, onEditInfo, saveError, planAnnual, planPro, media, isPaying, buildChoice, session, slug, onAdminBack, ownedDomain = '', adminBiz, liveUrl = '', infoComplete, onSendToDesigner, playReveal, onRevealDone, previewLink = '' }: any) {
+function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, contactForm, websiteStatus, onMakeLive, onAutomatic, onTakeOffline, onGoLive, onSignOut, onEditInfo, saveError, planAnnual, planPro, media, isPaying, buildChoice, session, slug, onAdminBack, ownedDomain = '', adminBiz, liveUrl = '', infoComplete, onSendToDesigner, playReveal, onRevealDone, previewLink = '' }: any) {
   // After sending to the designer: a full-screen preview card, the B fades in, then the text,
   // then the card shrinks into its place on the dashboard.
   const buildCardRef = useRef<View>(null);
@@ -1152,6 +1152,10 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
                 <View style={{ flex: 1, width: DASHBOARD_PREVIEW_WIDTH - 40, alignItems: 'center', justifyContent: 'center' }}>
                 <Animated.View style={[s.buildingGlow, isTodo && s.todoGlow, { opacity: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.35, 1] }), transform: [{ scale: buildPulse.interpolate({ inputRange: [0, 1], outputRange: [.92, 1] }) }] }]}><View style={[s.buildingGlowInner, isTodo && s.todoGlowInner]}><Image source={require('./assets/brightsite-b-white.png')} resizeMode="contain" style={s.buildingLogo} /></View></Animated.View>
                 {!isLoadingSite && <Text style={[s.buildingText, { color: '#fff', marginTop: 28 }]}>{isTodo ? 'Let’s build your website' : 'Building your preview'}</Text>}
+                {isTodo && !isLoadingSite && <View style={{ flexDirection: 'row', gap: 10, marginTop: 22, paddingHorizontal: 20 }}>
+                  <Pressable onPress={() => onAutomatic?.()} style={({ pressed }) => [{ flex: 1, height: 46, borderRadius: 14, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' }, pressed && s.pressed]}><Text style={{ fontFamily: FONT, fontSize: 14, fontWeight: '800', color: C.ink }}>Automatic</Text></Pressable>
+                  <Pressable onPress={() => onEditInfo?.()} style={({ pressed }) => [{ flex: 1, height: 46, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.18)', borderWidth: 1, borderColor: 'rgba(255,255,255,.5)', alignItems: 'center', justifyContent: 'center' }, pressed && s.pressed]}><Text style={{ fontFamily: FONT, fontSize: 14, fontWeight: '800', color: '#fff' }}>Manual</Text></Pressable>
+                </View>}
                 {!isLoadingSite && <Text style={[s.buildingSub, { color: 'rgba(255,255,255,.6)' }]}>{isTodo ? 'Fill in your info cards. The more you add, the better your site. Then send it to your designer.' : 'We’ll send you a notification as soon as it’s ready to review.'}</Text>}
                 </View>
               </View>
@@ -1479,8 +1483,9 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     }
     setIndex(1);
     motion.setValue(CARD_TRAVEL);
-    setChooseMode('pick');
-    setAppScreen('choose');
+    setTab('Website');
+    setWebsiteStatus('todo');
+    setAppScreen('dashboard');
   };
 
   useEffect(() => {
@@ -2275,7 +2280,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   }
 
   if (appScreen === 'dashboard') return <FadeIn>
-    <DashboardHome previewLink={businessRecord.current?.demoUrl || businessRecord.current?.previewUrl || ''} playReveal={playReveal} onRevealDone={() => setPlayReveal(false)} onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} services={services} hours={hours} contactForm={contactForm} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} infoComplete={infoComplete} onSendToDesigner={sendFromDashboard} onEditInfo={() => { setEditingInfo(websiteStatus !== 'todo'); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} saveError={saveError} planAnnual={planAnnual} planPro={planPro} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} adminBiz={adminViewingBusiness} liveUrl={businessRecord.current?.liveUrl || (/^https?:/.test(businessRecord.current?.customDomain || '') ? businessRecord.current.customDomain : '')} ownedDomain={businessRecord.current?.domainRegistered ? (businessRecord.current?.customDomain || businessRecord.current?.domain || '') : ''} />
+    <DashboardHome previewLink={businessRecord.current?.demoUrl || businessRecord.current?.previewUrl || ''} playReveal={playReveal} onRevealDone={() => setPlayReveal(false)} onAdminBack={adminViewingBusiness ? adminBackFromBusiness : undefined} tab={tab} setTab={setTab} data={data} domain={domain} suffix={suffix} services={services} hours={hours} contactForm={contactForm} websiteStatus={websiteStatus} session={session} slug={slug || slugify(domainReady ? domain : data.businessName)} onMakeLive={() => setWebsiteStatus('live')} infoComplete={infoComplete} onSendToDesigner={sendFromDashboard} onEditInfo={() => { setEditingInfo(websiteStatus !== 'todo'); setIndex(1); motion.setValue(CARD_TRAVEL); setDeckDirection(0); setAppScreen('onboarding'); }} onTakeOffline={() => setLive(false)} onGoLive={() => setLive(true)} onSignOut={adminViewingBusiness ? adminBackFromBusiness : signOut} onAutomatic={() => { setChooseMode('auto'); setAppScreen('choose'); }} saveError={saveError} planAnnual={planAnnual} planPro={planPro} media={media} isPaying={!!businessRecord.current.planActive} buildChoice={buildChoice} adminBiz={adminViewingBusiness} liveUrl={businessRecord.current?.liveUrl || (/^https?:/.test(businessRecord.current?.customDomain || '') ? businessRecord.current.customDomain : '')} ownedDomain={businessRecord.current?.domainRegistered ? (businessRecord.current?.customDomain || businessRecord.current?.domain || '') : ''} />
   </FadeIn>;
 
 
@@ -2307,7 +2312,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           </View>
         </View> : <ScrollView contentContainerStyle={[s.content, s.loginContent]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
           <>
-              <Pressable onPress={() => setChooseMode('pick')} hitSlop={10} style={s.chooseBack}><Text style={s.chooseBackText}>‹ Back</Text></Pressable>
+              <Pressable onPress={() => setAppScreen('dashboard')} hitSlop={10} style={s.chooseBack}><Text style={s.chooseBackText}>‹ Back</Text></Pressable>
               <Text style={s.heroTitle}>Share your links</Text>
               <Intro>Add your name and at least one link. Our designer will take it from there.</Intro>
               <Field label="Full name" value={data.fullName} onChangeText={(v: string) => setData((d: any) => ({ ...d, fullName: v }))} placeholder="e.g. Jane Smith" textContentType="name" autoComplete="name" autoCapitalize="words" returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.autoGoogle?.focus()} />
