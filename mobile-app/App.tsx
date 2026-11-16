@@ -2281,7 +2281,13 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     return <View style={{ flex: 1, backgroundColor: C.card }}>
       <StatusBar style="dark" />
       <View style={{ flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28 }}>
-        <View style={s.loginHeader}><Logo height={20} />{chooseMode === 'pick' && appScreen === 'choose' ? <Pressable onPress={signOut} hitSlop={10} accessibilityLabel="Sign out" style={{ flex: 1, alignItems: 'flex-end', paddingRight: 14 }}><Text style={s.chooseBackText}>Sign out</Text></Pressable> : <View style={{ flex: 1 }} />}<Image source={require('./assets/brightsite-icon.png')} style={s.loginAppIcon} /></View>
+        <View style={s.loginHeader}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            {appScreen === 'choose' && <Image source={require('./assets/brightsite-icon.png')} style={{ width: 30, height: 30, borderRadius: 8 }} />}
+            <Logo height={20} />
+          </View>
+          {appScreen === 'choose' && chooseMode === 'pick' ? <Pressable onPress={signOut} hitSlop={10} accessibilityLabel="Sign out"><Text style={s.chooseBackText}>Sign out</Text></Pressable> : <Image source={require('./assets/brightsite-icon.png')} style={s.loginAppIcon} />}
+        </View>
         {chooseMode === 'pick' ? <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 18, paddingBottom: 110 }}>
           <Text style={[s.heroTitle, { textAlign: 'center', marginBottom: 0 }]}>How would you like to build your website?</Text>
           <Text style={{ fontFamily: FONT, fontSize: 17, lineHeight: 24, color: C.inkSoft, textAlign: 'center', marginTop: 2, marginBottom: 18 }}>You can change anything later.</Text>
