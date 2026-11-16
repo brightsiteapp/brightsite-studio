@@ -588,7 +588,7 @@ function SectionGrid({ visible, onPick, onClose }: { visible: boolean; onPick: (
     <View style={{ flex: 1, backgroundColor: C.canvas, paddingTop: Platform.OS === 'ios' ? 54 : 28 }}>
       <View style={s.cardHeader}>
         <Text style={s.cardTitle}>Edit your website</Text>
-        <Pressable onPress={onClose} hitSlop={10} accessibilityLabel="Close"><Ionicons name="close" size={24} color={C.ink} /></Pressable>
+        <Pressable onPress={onClose} hitSlop={10} accessibilityLabel="Done" style={s.saveTickBtn}><Ionicons name="checkmark" size={18} color="#fff" /></Pressable>
       </View>
       <ScrollView contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: 20, paddingTop: 4, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         {EDIT_SECTIONS.map(sec => <Pressable key={sec.id} onPress={() => onPick(sec.id)} style={({ pressed }) => [{ width: '47%', minHeight: 116, borderRadius: 18, backgroundColor: '#fff', padding: 14, justifyContent: 'space-between', shadowColor: '#253B58', shadowOpacity: .08, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 }, pressed && s.pressed]}>
