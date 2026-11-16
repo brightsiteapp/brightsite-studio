@@ -5,6 +5,7 @@ import { WebView } from 'react-native-webview';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import * as ImagePicker from 'expo-image-picker';
+import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -20,6 +21,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 WebBrowser.maybeCompleteAuthSession();
 
+SplashScreen.preventAutoHideAsync().catch(() => {});
 const DRAFT_KEY = 'brightsite_onboarding_draft';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -1209,7 +1211,7 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
         </Animated.View>}
       </ScrollView>}
     </View>
-    <SectionGrid visible={showSectionGrid} onClose={() => setShowSectionGrid(false)} onPick={(id: string) => { setShowSectionGrid(false); setTimeout(() => onEditSection?.(id), 450); }} />
+    <SectionGrid visible={showSectionGrid} onClose={() => setShowSectionGrid(false)} onPick={(id: string) => { onEditSection?.(id); setShowSectionGrid(false); }} />
     <AnalyticsModal visible={showAnalytics} slug={adminBiz ? adminBiz.id : slug} session={session} onClose={() => setShowAnalytics(false)} />
     {revealing && <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { zIndex: 998, elevation: 998, backgroundColor: C.card, opacity: revealBackdrop }]} />}
     {revealing && <Animated.View pointerEvents="none" style={[s.revealCard, revealRect ? {
@@ -1240,6 +1242,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [resetBusy, setResetBusy] = useState(false);
   const [authBusy, setAuthBusy] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
+  useEffect(() => { if (!authChecking) SplashScreen.hideAsync().catch(() => {}); }, [authChecking]);
   const [authSession, setAuthSession] = useState(false);
   const [authStatus, setAuthStatus] = useState('');
   const [complete, setComplete] = useState<Set<number>>(new Set());
@@ -2180,11 +2183,8 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     </View>
   </FlowBackdrop>;
 
-  // Splash while the saved session is checked, so signed-in users go straight to their dashboard without seeing the login
-  if (authChecking) return <View style={{ flex: 1, backgroundColor: C.canvas, alignItems: 'center', justifyContent: 'center' }}>
-    <StatusBar style="dark" />
-    <Image source={require('./assets/brightsite-icon.png')} style={{ width: 96, height: 96, borderRadius: 24 }} />
-  </View>;
+  // The phone's own launch screen stays up while the saved session is checked (see hideAsync above), so nothing flashes
+  if (authChecking) return null;
   if (index === 0 && appScreen === 'onboarding') return <FlowBackdrop plain>
     <StatusBar style="dark" />
     <View style={{ flex: 1, paddingTop: Platform.OS === 'ios' ? 54 : 28 }}>
