@@ -2339,7 +2339,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
             </ScrollView>
             <View pointerEvents="box-none" style={s.fixedPrompt}>
               {!!validationMessage && isActive && <Text pointerEvents="none" style={s.validationText}>{validationMessage}</Text>}
-              {isActive && !editingInfo && deckStep.id !== 'reviews' && <View pointerEvents="none" style={s.swipeRow}><Text style={s.swipeHint}>Swipe left to continue</Text></View>}
+              {isActive && !editingInfo && deckStep.id !== 'reviews' && <View pointerEvents="none" style={s.swipeRow}><Text style={s.swipeHint}>Swipe to continue</Text></View>}
             </View>
           </Animated.View>;
         })}
@@ -2456,7 +2456,7 @@ const s = StyleSheet.create({
   editStepBtn: { paddingHorizontal: 14, height: 30, borderRadius: 15, backgroundColor: C.field, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center' },
   editStepText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.ink },
   uploadTitle: { fontFamily: FONT, fontWeight: '800', fontSize: 14, color: '#1C2832' }, uploadSub: { fontFamily: FONT, fontSize: 11, color: C.inkSoft, marginTop: 3 }, swipeHint: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.ink, textAlign: 'center' },
-  fixedPrompt: { position: 'absolute', left: 18, right: 18, bottom: 14, zIndex: 120, elevation: 120, alignItems: 'center', gap: 7 }, swipeRow: { minHeight: 34, paddingHorizontal: 14, borderRadius: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,.7)' }, validationText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.danger, textAlign: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: C.dangerSoft, overflow: 'hidden' },
+  fixedPrompt: { position: 'absolute', left: 18, right: 18, bottom: 14, zIndex: 120, elevation: 120, alignItems: 'center', gap: 7 }, swipeRow: { minHeight: 34, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, validationText: { fontFamily: FONT, fontSize: 13, fontWeight: '700', color: C.danger, textAlign: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: C.dangerSoft, overflow: 'hidden' },
   addService: { marginTop: 14, height: 46, borderRadius: 12, borderWidth: 1, borderColor: C.primaryBorder, backgroundColor: C.primarySoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }, addServiceText: { fontFamily: FONT, fontWeight: '700', fontSize: 14, color: C.ink }, site: { overflow: 'hidden' },
   previewDots: { position: 'absolute', left: 11, flexDirection: 'row', gap: 4 }, previewDot: { width: 6, height: 6, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.35)' }, 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,.45)', justifyContent: 'flex-end', cursor: 'default' as any },
