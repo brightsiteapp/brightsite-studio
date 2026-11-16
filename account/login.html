@@ -67,10 +67,6 @@
       <div class="acct-field">
         <label for="fPassword">Password</label>
         <input type="password" id="fPassword" required autocomplete="current-password" placeholder="••••••••" minlength="6">
-        <div class="acct-pwd-show">
-          <input type="checkbox" id="pwdToggle">
-          <label for="pwdToggle">Show password</label>
-        </div>
         <p class="acct-forgot" id="forgotWrap"><button type="button" id="forgotBtn">Forgot password?</button></p>
       </div>
       <button type="submit" class="acct-submit" id="acctSubmit">Log in</button>
@@ -117,7 +113,6 @@
   var prefillEmailEl = document.getElementById('acctPrefillEmail');
   var prefillEmailValueEl = document.getElementById('acctPrefillEmailValue');
   var prefillEmailEditBtn = document.getElementById('acctPrefillEmailEdit');
-  var pwdToggle = document.getElementById('pwdToggle');
   var forgotWrap = document.getElementById('forgotWrap');
   var forgotBtn = document.getElementById('forgotBtn');
   var googleWrap = document.querySelector('.acct-divider');
@@ -141,9 +136,6 @@
     emailInput.focus();
   });
 
-  pwdToggle.addEventListener('change', function () {
-    passwordInput.type = pwdToggle.checked ? 'text' : 'password';
-  });
 
   // If already logged in, go straight to the dashboard.
   try {
@@ -382,8 +374,7 @@
     btn.setAttribute('aria-label', 'Show password');
     btn.className = 'pw-eye';
     btn.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;font:600 13px inherit;color:#757b80;cursor:pointer;padding:6px';
-    if (!document.getElementById('pw-eye-style')) { var st = document.createElement('style'); st.id = 'pw-eye-style'; st.textContent = '@media (min-width:901px){.pw-eye{display:none !important}}'; document.head.appendChild(st); }
-    btn.onclick = function () {
+        btn.onclick = function () {
       var show = input.type === 'password';
       input.type = show ? 'text' : 'password';
       btn.textContent = show ? 'Hide' : 'Show';

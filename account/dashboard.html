@@ -3402,8 +3402,7 @@
     btn.setAttribute('aria-label', 'Show password');
     btn.className = 'pw-eye';
     btn.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;font:600 13px inherit;color:#757b80;cursor:pointer;padding:6px';
-    if (!document.getElementById('pw-eye-style')) { var st = document.createElement('style'); st.id = 'pw-eye-style'; st.textContent = '@media (min-width:901px){.pw-eye{display:none !important}}'; document.head.appendChild(st); }
-    btn.onclick = function () {
+        btn.onclick = function () {
       var show = input.type === 'password';
       input.type = show ? 'text' : 'password';
       btn.textContent = show ? 'Hide' : 'Show';
