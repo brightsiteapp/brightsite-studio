@@ -330,7 +330,7 @@ function ItemSheet({ open, title, fields, initial, onSave, onDelete, onClose }: 
   const [draft, setDraft] = useState<Record<string, string>>({});
   useEffect(() => { if (open) setDraft(initial || {}); }, [open]);
   const ready = fields.every(f => f.optional || (draft[f.key] || '').trim());
-  return <Modal visible={open} transparent animationType="slide" onRequestClose={onClose}>
+  return <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.planModalOverlay}>
       <Pressable style={{ flex: 1 }} onPress={onClose} />
       <View style={s.planModalBox}>
@@ -380,7 +380,7 @@ function CategorySheet({ open, initial, onSave, onDelete, onClose }: { open: boo
   useEffect(() => { if (open) { setSection(initial?.section || ''); setRows(initial?.rows.length ? [...initial.rows, { name: '', duration: '', price: '' }] : emptyRows()); } }, [open]);
   const setCell = (i: number, key: keyof ServiceRow, v: string) => setRows(r => r.map((x, n) => n === i ? { ...x, [key]: v } : x));
   const ready = !!section.trim() && rows.some(r => r.name.trim());
-  return <Modal visible={open} transparent animationType="slide" onRequestClose={onClose}>
+  return <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.planModalOverlay}>
       <Pressable style={{ flex: 1 }} onPress={onClose} />
       <View style={[s.planModalBox, { maxHeight: SCREEN_HEIGHT * .85 }]}>
@@ -716,7 +716,7 @@ function ChangePasswordModal({ visible, onClose }: { visible: boolean; onClose: 
     onClose();
     Alert.alert('Password changed', 'Use your new password next time you log in.');
   };
-  return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+  return <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
       <Pressable style={s.modalOverlay} onPress={onClose}>
         <Pressable onPress={() => {}} style={s.modalBox}>
