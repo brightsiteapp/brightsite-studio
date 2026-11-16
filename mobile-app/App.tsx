@@ -2602,8 +2602,9 @@ buildingWrap: { alignItems: 'center', paddingBottom: 24 },
   buildingPhone: { backgroundColor: '#141A1E', alignItems: 'center', justifyContent: 'center' },
   // with no background, iOS traces the B's own shape, so the shadow reads as a blue glowing outline
   buildingLogo: { width: 64, height: 70 },
-  buildingGlow: { shadowColor: '#3B82F6', shadowOpacity: 1, shadowRadius: 22, shadowOffset: { width: 0, height: 0 } },
-  buildingGlowInner: { shadowColor: '#7FB2FF', shadowOpacity: 1, shadowRadius: 7, shadowOffset: { width: 0, height: 0 } },
+  // solid dark backing (same as the card) so iOS always draws the glow shadows around it
+  buildingGlow: { backgroundColor: '#141A1E', borderRadius: 38, padding: 6, alignItems: 'center', justifyContent: 'center', shadowColor: '#3B82F6', shadowOpacity: 1, shadowRadius: 22, shadowOffset: { width: 0, height: 0 } },
+  buildingGlowInner: { backgroundColor: '#141A1E', borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: '#7FB2FF', shadowOpacity: 1, shadowRadius: 7, shadowOffset: { width: 0, height: 0 } },
   todoGlow: { shadowColor: '#F59E0B' },
   todoGlowInner: { shadowColor: '#FFD27F' },
   buildingText: { fontFamily: FONT, fontSize: 18, fontWeight: '800', color: C.ink },
