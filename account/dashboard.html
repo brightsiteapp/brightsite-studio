@@ -204,6 +204,15 @@
   .an-best{font-weight:700;margin:0 0 6px;font-size:14px}
   .an-empty{font-size:13px;color:var(--muted);line-height:1.5;margin:10px 0 0}
   .an-tip{font-size:12px;color:var(--muted);height:16px;margin:6px 0 0;text-align:center}
+  /* analytics: header and day filters stay fixed at the top while scrolling */
+  #analyticsPanel .website-editor-header,
+  #analyticsPanel .an-range{position:sticky;top:0;z-index:6;background:var(--bg)}
+  #analyticsPanel .an-range{padding:6px 0 8px;margin:0 0 14px}
+  /* desktop: analytics opens as a popup over the page, not a separate page */
+  @media (min-width:901px){
+    #analyticsPanel:not([hidden]){position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:rgba(28,40,50,.4);padding:24px}
+    #analyticsPanel:not([hidden]) .panel-inner{width:min(680px,100%);max-height:86vh;overflow-y:auto;background:var(--bg);border-radius:24px;padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+  }
   .messages-panel{display:flex;flex-direction:column;overflow:hidden!important;flex:1;min-height:0;}
   .messages-panel .panel-inner{width:100%;padding:0;display:flex;flex-direction:column;flex:1;min-height:0}
 
