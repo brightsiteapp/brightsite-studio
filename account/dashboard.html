@@ -656,6 +656,7 @@
   /* Automatic/Manual choice modal */
   .path-veil{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;background:rgba(3,10,16,.6);padding:16px;box-sizing:border-box}
   .path-veil[hidden]{display:none}
+  @media(min-width:800px){.preview-frame-wrap > .path-veil{position:absolute;inset:0;background:var(--bg);overflow:auto}.preview-frame-wrap > .path-veil .path-sheet{max-height:100%;flex:none}}
   .path-sheet{width:min(480px,100%);max-height:90vh;overflow:auto;box-sizing:border-box;padding:28px 22px 30px;border-radius:24px;background:#F4EDE6;animation:bsSheetIn .22s ease-out}
   .path-title{margin:0 0 6px;font-family:var(--display);font-size:22px;font-weight:800;color:#1C2832;text-align:center}
   .path-sub{margin:0 0 22px;font-size:15px;color:rgba(28,40,50,.64);text-align:center}
@@ -1876,6 +1877,16 @@
 
   (function setupPathChoice() {
     var veil = document.getElementById('pathChoiceVeil');
+    var originalParent = veil.parentNode;
+    var previewWrap = document.getElementById('previewFrameWrap');
+    var desktopLayout = window.matchMedia('(min-width: 800px)');
+    function placePathChoice() {
+      (desktopLayout.matches ? previewWrap : originalParent).appendChild(veil);
+      veil.querySelector('.path-sheet').setAttribute('aria-modal', desktopLayout.matches ? 'false' : 'true');
+    }
+    placePathChoice();
+    if (desktopLayout.addEventListener) desktopLayout.addEventListener('change', placePathChoice);
+    else desktopLayout.addListener(placePathChoice);
     var pickScreen = document.getElementById('pathPickScreen');
     var autoScreen = document.getElementById('pathAutoScreen');
     var fullNameEl = document.getElementById('pathFullName');
