@@ -1320,7 +1320,6 @@
   var selectedAddons = { booking: false, store: false, domain: null };
   var isLive = false;
   var isEditing = false;
-  var openEditorAfterSetup = false;
   var activeSection = null; // which builder section (if any) is drilled into
   var hoursStructured = defaultHours();
   var hoursEdited = false;
@@ -1858,7 +1857,7 @@
     renderWelcomeMessage();
     if (renderDraftBanner()) showWebsiteTab();
     else showMessagesTab();
-    if (openEditorAfterSetup) { openEditorAfterSetup = false; showPathChoice(); }
+    showPathChoice();
   }
 
   // ---------------- Automatic/Manual choice for new web signups ----------------
@@ -1866,7 +1865,7 @@
     var raw = (business && business.data && business.data.raw) || {};
     // Already chose (e.g. signed up via app) — skip; never shown to admin
     if (isAdminView) return;
-    if (raw.buildChoice || raw.sentToDesigner || raw.draft === false) return;
+    if (raw.buildChoice || raw.sentToDesigner || typeof raw.draft === 'boolean' || getPreviewUrl() || isLive) return;
     document.getElementById('pathPickScreen').hidden = false;
     document.getElementById('pathAutoScreen').hidden = true;
     document.getElementById('pathChoiceVeil').hidden = false;
@@ -3257,7 +3256,6 @@
   }
 
   function showSetup() {
-    openEditorAfterSetup = true;
     createSetupBusiness(
       params.get('name') || localStorage.getItem('bs_pending_business_name') || (session.email || '').split('@')[0],
       params.get('slug') || localStorage.getItem('bs_pending_slug') || ''
