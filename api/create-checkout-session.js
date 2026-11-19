@@ -29,8 +29,8 @@ export default async function handler(req, res) {
 
   // US visitors (Cloudflare country header) get USD prices; everyone else keeps GBP.
   const region = String(req.headers['cf-ipcountry'] || '').toUpperCase() === 'US' || req.body?.region === 'us' ? 'us' : 'gbp';
-  if (region === 'us' && selectedDomain) {
-    return res.status(400).json({ error: 'Domain registration is not available in USD yet. Please choose a plan without a domain, or contact us.' });
+  if (region === 'us' && selectedDomain && !freeDomain) {
+    return res.status(400).json({ error: 'Free domains are only available with a free domain code. Please choose a plan without a domain, or contact us.' });
   }
   const prices = planPrices(plan, billing, region);
   if (!prices) return res.status(400).json({ error: `Unknown plan: ${plan}_${billing}` });
@@ -49,7 +49,8 @@ export default async function handler(req, res) {
     // Domain (one-off): listed at its real price; the part the plan covers comes off as a one-time
     // discount, so the customer sees the domain inside their total rather than as a £0 line.
     let discounts;
-    if (selectedDomain) {
+    // US: a domain only comes through with a valid free-domain code, so there is nothing to charge in GBP.
+    if (selectedDomain && region !== 'us') {
       const quote = await quoteDomainInGbp(selectedDomain);
       // a valid referral code makes the whole domain free; otherwise the plan covers what it normally does
       const coveredPence = freeDomain ? quote.amountPence : quote.amountPence - domainChargePence(plan, billing, quote.amountPence);
