@@ -21,7 +21,9 @@ export default {
       const target = new URL(usPath, url.origin);
       const usHeaders = new Headers(headers);
       usHeaders.set('x-us-routed', '1');
-      return fetch(new Request(target, { method: 'GET', headers: usHeaders }));
+      const usRes = await fetch(new Request(target, { method: 'GET', headers: usHeaders }));
+      // If the US page isn't deployed yet, fall back to the normal page rather than a 404.
+      if (usRes.ok) return usRes;
     }
 
     return fetch(request, { headers });
