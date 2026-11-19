@@ -29,19 +29,27 @@ export async function getLiveDomainQuote(domain) {
   return { domain: name, currency, amount, registrationCost: result.pricing.registration_cost, renewalCost: result.pricing?.renewal_cost || null };
 }
 
-// Stripe subscriptions in this project are GBP. Convert each verified
-// Cloudflare quote immediately before checkout using a live FX reference.
-export async function quoteDomainInGbp(domain) {
+// Convert each verified Cloudflare quote immediately before checkout using a live FX reference.
+// target is 'GBP' or 'USD'; amountMinor is pence or cents.
+export async function quoteDomainIn(domain, target = 'GBP') {
   const quote = await getLiveDomainQuote(domain);
-  let gbp = quote.amount;
-  if (quote.currency !== 'GBP') {
-    const response = await fetch(`https://api.frankfurter.dev/v1/latest?base=${encodeURIComponent(quote.currency)}&symbols=GBP`, { signal: AbortSignal.timeout(5000) });
+  let amount = quote.amount;
+  if (quote.currency !== target) {
+    const response = await fetch(`https://api.frankfurter.dev/v1/latest?base=${encodeURIComponent(quote.currency)}&symbols=${target}`, { signal: AbortSignal.timeout(5000) });
     const json = await response.json().catch(() => ({}));
-    const rate = Number(json?.rates?.GBP);
-    if (!response.ok || !Number.isFinite(rate) || rate <= 0) throw new Error('Could not convert the live domain quote to GBP.');
-    gbp *= rate;
+    const rate = Number(json?.rates?.[target]);
+    if (!response.ok || !Number.isFinite(rate) || rate <= 0) throw new Error(`Could not convert the live domain quote to ${target}.`);
+    amount *= rate;
   }
-  const amountPence = Math.round(gbp * 100);
-  if (amountPence < 1) throw new Error('Invalid live domain price.');
-  return { ...quote, amountPence };
+  const amountMinor = Math.round(amount * 100);
+  if (amountMinor < 1) throw new Error('Invalid live domain price.');
+  return { ...quote, amountMinor, amountPence: amountMinor, targetCurrency: target };
+}
+
+export async function quoteDomainInGbp(domain) {
+  return quoteDomainIn(domain, 'GBP');
+}
+
+export function regionFromRequest(req) {
+  return String(req.headers['cf-ipcountry'] || '').toUpperCase() === 'US' || req.body?.region === 'us' || req.query?.region === 'us' ? 'us' : 'gbp';
 }

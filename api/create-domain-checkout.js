@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { quoteDomainInGbp } from './_lib/domain-pricing.js';
+import { quoteDomainIn, regionFromRequest } from './_lib/domain-pricing.js';
 import { supabaseAdmin } from './_lib/supabase-admin.js';
 
 const ALLOWED_ORIGINS = ['https://brightsite.app'];
@@ -24,9 +24,10 @@ export default async function handler(req, res) {
     if (row?.data?.domainRegistered) return res.status(409).json({ error: `You already have ${row.data.customDomain || row.data.domain}.` });
   }
 
+  const region = regionFromRequest(req);
   let priceInPence;
   try {
-    priceInPence = (await quoteDomainInGbp(clean)).amountPence;
+    priceInPence = (await quoteDomainIn(clean, region === 'us' ? 'USD' : 'GBP')).amountMinor;
   } catch (err) {
     return res.status(503).json({ error: err.message });
   }
@@ -44,7 +45,7 @@ export default async function handler(req, res) {
       mode: 'payment',
       line_items: [{
         price_data: {
-          currency: 'gbp',
+          currency: region === 'us' ? 'usd' : 'gbp',
           product_data: {
             name: `Domain: ${clean}`,
             description: `1-year registration for ${clean}`,
@@ -58,6 +59,7 @@ export default async function handler(req, res) {
         type: 'domain_registration',
         domain: clean,
         slug: slug || '',
+        region,
       },
       payment_intent_data: {
         metadata: { type: 'domain_registration', domain: clean, slug: slug || '' },

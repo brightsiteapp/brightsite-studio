@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { quoteDomainInGbp } from './_lib/domain-pricing.js';
+import { quoteDomainIn, regionFromRequest } from './_lib/domain-pricing.js';
 import { planPrices, domainChargePence, addonPrice } from './_lib/plans.js';
 import { referralIsValid } from './_lib/referrals.js';
 
@@ -28,10 +28,7 @@ export default async function handler(req, res) {
   }
 
   // US visitors (Cloudflare country header) get USD prices; everyone else keeps GBP.
-  const region = String(req.headers['cf-ipcountry'] || '').toUpperCase() === 'US' || req.body?.region === 'us' ? 'us' : 'gbp';
-  if (region === 'us' && selectedDomain && !freeDomain) {
-    return res.status(400).json({ error: 'Free domains are only available with a free domain code. Please choose a plan without a domain, or contact us.' });
-  }
+  const region = regionFromRequest(req);
   const prices = planPrices(plan, billing, region);
   if (!prices) return res.status(400).json({ error: `Unknown plan: ${plan}_${billing}` });
 
@@ -49,24 +46,24 @@ export default async function handler(req, res) {
     // Domain (one-off): listed at its real price; the part the plan covers comes off as a one-time
     // discount, so the customer sees the domain inside their total rather than as a £0 line.
     let discounts;
-    // US: a domain only comes through with a valid free-domain code, so there is nothing to charge in GBP.
-    if (selectedDomain && region !== 'us') {
-      const quote = await quoteDomainInGbp(selectedDomain);
+    if (selectedDomain) {
+      const us = region === 'us';
+      const quote = await quoteDomainIn(selectedDomain, us ? 'USD' : 'GBP');
       // a valid referral code makes the whole domain free; otherwise the plan covers what it normally does
-      const coveredPence = freeDomain ? quote.amountPence : quote.amountPence - domainChargePence(plan, billing, quote.amountPence);
+      const coveredPence = freeDomain ? quote.amountMinor : quote.amountMinor - domainChargePence(plan, billing, quote.amountMinor);
       lineItems.push({
         price_data: {
-          currency: 'gbp',
+          currency: us ? 'usd' : 'gbp',
           product_data: { name: 'Domain: ' + selectedDomain, description: '1-year registration' },
-          unit_amount: quote.amountPence,
+          unit_amount: quote.amountMinor,
         },
         quantity: 1,
       });
       if (coveredPence > 0) {
         // One reusable coupon per amount, so loading checkout doesn't create a new coupon each time.
-        const couponId = `domain-included-${coveredPence}`;
+        const couponId = `domain-included-${us ? 'usd-' : ''}${coveredPence}`;
         const coupon = await stripe.coupons.retrieve(couponId).catch(() =>
-          stripe.coupons.create({ id: couponId, amount_off: coveredPence, currency: 'gbp', duration: 'once', name: 'Domain included with your plan' }));
+          stripe.coupons.create({ id: couponId, amount_off: coveredPence, currency: us ? 'usd' : 'gbp', duration: 'once', name: 'Domain included with your plan' }));
         discounts = [{ coupon: coupon.id }];
       }
     }
