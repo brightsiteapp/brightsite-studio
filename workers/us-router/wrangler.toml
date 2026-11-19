@@ -1,0 +1,8 @@
+name = "brightsite-us-router"
+main = "index.js"
+compatibility_date = "2024-09-01"
+
+# Runs on every brightsite.app request. Change the zone_name only if the domain moves.
+routes = [
+  { pattern = "brightsite.app/*", zone_name = "brightsite.app" }
+]

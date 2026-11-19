@@ -66,7 +66,7 @@ export default async function handler(req, res) {
       const mainSub = await stripe.subscriptions.retrieve(session.subscription);
       await stripe.subscriptions.create({
         customer: session.customer,
-        items: [{ price: addonPrice(), quantity: 1 }],
+        items: [{ price: addonPrice(session.metadata?.region === 'us' ? 'us' : 'gbp'), quantity: 1 }],
         default_payment_method: mainSub.default_payment_method || undefined,
         metadata: { slug, addon: 'monthly', parent_subscription: session.subscription },
       }, { idempotencyKey: `addon-${session.id}` });

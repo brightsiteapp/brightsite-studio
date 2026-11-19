@@ -27,7 +27,12 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: 'Automatic publishing is being set up. Please try again shortly.' });
   }
 
-  const prices = planPrices(plan, billing);
+  // US visitors (Cloudflare country header) get USD prices; everyone else keeps GBP.
+  const region = String(req.headers['cf-ipcountry'] || '').toUpperCase() === 'US' || req.body?.region === 'us' ? 'us' : 'gbp';
+  if (region === 'us' && selectedDomain) {
+    return res.status(400).json({ error: 'Domain registration is not available in USD yet. Please choose a plan without a domain, or contact us.' });
+  }
+  const prices = planPrices(plan, billing, region);
   if (!prices) return res.status(400).json({ error: `Unknown plan: ${plan}_${billing}` });
 
   try {
@@ -39,7 +44,7 @@ export default async function handler(req, res) {
     // on annual plans Stripe can't mix intervals, so it is started as its own monthly subscription after payment.
     const hasAddon = !!(addonBooking || addonStore);
     const addonSeparate = hasAddon && billing === 'annual';
-    if (hasAddon && !addonSeparate) lineItems.push({ price: addonPrice(), quantity: 1 });
+    if (hasAddon && !addonSeparate) lineItems.push({ price: addonPrice(region), quantity: 1 });
 
     // Domain (one-off): listed at its real price; the part the plan covers comes off as a one-time
     // discount, so the customer sees the domain inside their total rather than as a £0 line.
@@ -68,6 +73,7 @@ export default async function handler(req, res) {
     const metadata = { plan, billing, slug: slug || '', domain: selectedDomain, publish_on_payment: publishOnPayment ? 'true' : 'false' };
     if (freeDomain) metadata.referral = String(referral).trim().toUpperCase();
     if (addonSeparate) metadata.addon_separate = 'true';
+    metadata.region = region;
 
     // The mobile app opens Stripe's hosted Checkout page in the device browser
     // (there's no embeddable web view in Expo for ui_mode: 'embedded') — same
