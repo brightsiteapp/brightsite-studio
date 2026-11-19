@@ -260,15 +260,30 @@
   var slowEl     = document.getElementById('loading-slow');
   var slowTimer  = null;
 
+  // US visitors are charged in USD (the server decides from Cloudflare's country), so show USD here too.
+  var US_PLAN_INFO = {
+    essential: { name: 'Free Plan', setupMonthly: '$0 setup · $25/mo', setupAnnual: '$0 setup · $22/mo (annual)' },
+    pro:       { name: 'Pro Plan',  setupMonthly: '$269 build · $25/mo', setupAnnual: '$269 build · $22/mo (annual)' },
+  };
+  var isUS = false;
   function updatePriceLabel() {
-    var inf = PLAN_INFO[plan] || PLAN_INFO.essential;
+    var inf = (isUS ? US_PLAN_INFO : PLAN_INFO)[plan] || PLAN_INFO.essential;
     document.getElementById('plan-price').textContent = selectedAnnual ? inf.setupAnnual : inf.setupMonthly;
     var covered = selectedAnnual || plan === 'pro';
+    if (isUS) {
+      document.getElementById('plan-note').textContent = selectedAnnual ? 'Annual: $264/yr ($22/mo)' : '';
+      return;
+    }
     document.getElementById('plan-note').textContent = selectedAnnual
       ? 'Annual: £204/yr (£17/mo)' + (covered ? ' · domain included up to £12' : '')
       : (covered ? 'Domain included up to £12' : 'Switch to annual to save £24 and get a free domain');
   }
   updatePriceLabel();
+  try {
+    fetch('/cdn-cgi/trace').then(function (r) { return r.text(); }).then(function (t) {
+      if (/^loc=US$/m.test(t)) { isUS = true; updatePriceLabel(); }
+    }).catch(function () {});
+  } catch (e) {}
 
   // Referral box: only when a domain is being bought. A valid code makes the domain free.
   if (addonDomain) {
