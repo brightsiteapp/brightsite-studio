@@ -2,7 +2,9 @@ name = "brightsite-us-router"
 main = "index.js"
 compatibility_date = "2024-09-01"
 
-# Runs on every brightsite.app request. Change the zone_name only if the domain moves.
+# Every brightsite.app host goes through this Worker. Wildcard *.brightsite.app DNS is already proxied by Cloudflare.
 routes = [
-  { pattern = "brightsite.app/*", zone_name = "brightsite.app" }
+  { pattern = "brightsite.app/*", zone_name = "brightsite.app" },
+  { pattern = "us.brightsite.app/*", zone_name = "brightsite.app" },
+  { pattern = "uk.brightsite.app/*", zone_name = "brightsite.app" }
 ]
