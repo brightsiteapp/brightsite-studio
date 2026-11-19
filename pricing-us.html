@@ -35,7 +35,7 @@
 
   #pricing .plans{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;align-items:stretch}
   #pricing .plan{border-color:var(--accent);position:relative;box-sizing:border-box;width:100%;display:flex;flex-direction:column}
-  #pricing .plan.featured{border:2px solid var(--accent);box-shadow:0 14px 34px rgba(37,99,235,.18);transform:translateY(-6px)}
+  #pricing .plan.featured{border:1px solid var(--accent);box-shadow:0 14px 34px rgba(37,99,235,.18)}
   #pricing .plan ul{flex:1}
 
   .plan-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:3px 14px;border-radius:999px;white-space:nowrap}
@@ -53,7 +53,7 @@
   #pricing .pricing-note{margin-top:20px}
 
   /* Annual perks callout */
-  .annual-bonus{display:flex;flex-direction:column;gap:0;margin-bottom:20px;border-radius:13px;overflow:hidden;border:1.5px solid var(--accent);background:linear-gradient(135deg,#f0f7ff 0%,#e8f4fd 100%)}
+  .annual-bonus{display:flex;flex-direction:column;gap:0;margin:14px 0 6px;border-radius:13px;overflow:hidden;border:1.5px solid var(--accent);background:linear-gradient(135deg,#f0f7ff 0%,#e8f4fd 100%)}
   .annual-bonus-item{display:flex;align-items:center;gap:10px;padding:6px 12px;border-bottom:1px solid rgba(0,0,0,.06)}
   .annual-bonus-item:last-child{border-bottom:0}
   .bonus-icon{width:22px;height:22px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px}
@@ -86,6 +86,7 @@
 <script src="img-skeleton.js?v=20260907-1" defer></script>
 <script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script><script defer src="/_vercel/insights/script.js"></script>
 <style>
+.addon-line{display:flex;gap:10px;align-items:flex-start;margin:14px 0 4px;color:#1F2530;font-size:14px}.addon-line .addon-ico{font-size:18px;line-height:1.2}.addon-line strong{font-weight:800}.addon-line .addon-amt{font-weight:800;color:#2563eb}.addon-line .addon-desc{font-size:13px;margin-top:2px;opacity:.8;line-height:1.4}
 .addon-callout{background:#FFF4E0;border:2px solid #F5A623;border-radius:12px;padding:12px 14px;margin:12px 0}
 .addon-callout .addon-title{font-weight:800;font-size:15px;color:#1F2530}
 .addon-callout .addon-price{font-size:26px;font-weight:900;color:#B86E00;line-height:1.1;margin-top:2px}
@@ -131,6 +132,10 @@
           <h4>Annual</h4>
           <div style="font-size:13px;font-weight:800;color:#1F2530;letter-spacing:.04em;text-transform:uppercase;margin:4px 0 6px">Free Website Build</div>
           <div class="desc">Everything in Monthly, paid yearly.</div>
+          <div class="price-row">
+            <span class="price">$22<small>/mo hosting</small></span>
+          </div>
+          <div class="price-note">Billed $264/yr — <span class="annual-saving">save $36 a year</span></div>
           <div class="annual-bonus">
             <div class="annual-bonus-item">
               <div class="bonus-icon">✨</div>
@@ -147,15 +152,7 @@
               </div>
             </div>
           </div>
-          <div class="price-row">
-            <span class="price">$22<small>/mo hosting</small></span>
-          </div>
-          <div class="price-note">Billed $264/yr — <span class="annual-saving">save $36 a year</span></div>
-          <div class="addon-callout">
-            <div class="addon-title">Booking form or e-commerce</div>
-            <div class="addon-price">+$25<small>/mo</small></div>
-            <div class="addon-desc">Take bookings online 24/7, or sell your products. Add either to any plan.</div>
-          </div>
+          <div class="addon-line"><span class="addon-ico">🗓️</span><div><strong>Booking form or e-commerce</strong> <b class="addon-amt">+$25/mo</b><div class="addon-desc">Take bookings online 24/7, or sell your products. Add either to any plan.</div></div></div>
           <ul>
             <li>Website built for you at no cost</li>
             <li>Hosting, security &amp; maintenance</li>
@@ -171,6 +168,10 @@
           <h4>Monthly</h4>
           <div style="font-size:13px;font-weight:800;color:#1F2530;letter-spacing:.04em;text-transform:uppercase;margin:4px 0 6px">Free Website Build</div>
           <div class="desc">Website built for free — just pay hosting to go live.</div>
+          <div class="price-row">
+            <span class="price">$25<small>/mo hosting</small></span>
+          </div>
+          <div class="price-note">$25/mo — cancel any time</div>
           <div class="annual-bonus">
             <div class="annual-bonus-item">
               <div class="bonus-icon">✨</div>
@@ -187,15 +188,7 @@
               </div>
             </div>
           </div>
-          <div class="price-row">
-            <span class="price">$25<small>/mo hosting</small></span>
-          </div>
-          <div class="price-note">$25/mo — cancel any time</div>
-          <div class="addon-callout">
-            <div class="addon-title">Booking form or e-commerce</div>
-            <div class="addon-price">+$25<small>/mo</small></div>
-            <div class="addon-desc">Take bookings online 24/7, or sell your products. Add either to any plan.</div>
-          </div>
+          <div class="addon-line"><span class="addon-ico">🗓️</span><div><strong>Booking form or e-commerce</strong> <b class="addon-amt">+$25/mo</b><div class="addon-desc">Take bookings online 24/7, or sell your products. Add either to any plan.</div></div></div>
           <ul>
             <li>Website built for you at no cost</li>
             <li>Hosting, security &amp; maintenance</li>
