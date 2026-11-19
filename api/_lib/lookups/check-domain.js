@@ -1,5 +1,5 @@
 const ALLOWED_ORIGINS = ['https://brightsite.app'];
-import { quoteDomainInGbp } from '../domain-pricing.js';
+import { quoteDomainIn, regionFromRequest } from '../domain-pricing.js';
 import { supabaseAdmin } from '../supabase-admin.js';
 import { connectAnyDomain } from '../activate.js';
 
@@ -78,12 +78,14 @@ export default async function handler(req, res) {
   const clean = domain.toLowerCase().trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
 
   try {
-    const quote = await quoteDomainInGbp(clean);
+    const us = regionFromRequest(req) === 'us';
+    const quote = await quoteDomainIn(clean, us ? 'USD' : 'GBP');
     return res.status(200).json({
       domain: quote.domain,
       available: true,
-      pricePence: quote.amountPence,
-      priceLabel: `£${(quote.amountPence / 100).toFixed(2)}/yr`,
+      pricePence: quote.amountMinor,
+      currency: us ? 'usd' : 'gbp',
+      priceLabel: `${us ? '$' : '£'}${(quote.amountMinor / 100).toFixed(2)}/yr`,
       cloudflarePrice: { amount: quote.registrationCost, currency: quote.currency },
     });
   } catch (err) {
