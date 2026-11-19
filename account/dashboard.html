@@ -2104,7 +2104,7 @@
     var data = (business && business.data) || {};
     var set = function(id, text) { var el = document.getElementById(id); if (el) el.textContent = text; };
     set('acctPlanTitle', isPaying ? (selectedPlan === 'pro' ? 'Pro' : 'Free') + ' plan · ' + (selectedAnnual ? 'Annual' : 'Monthly') : 'No plan yet');
-    set('acctPlanSub', isPaying ? (selectedAnnual ? '£17/month hosting, billed £204 yearly' : '£19/month hosting') + (window.__subNote || '') : 'Choose a plan when you tap Make Live.');
+    set('acctPlanSub', isPaying ? (isUS ? (selectedAnnual ? '$22/month hosting, billed $264 yearly' : '$25/month hosting') : (selectedAnnual ? '£16/month hosting, billed £192 yearly' : '£19/month hosting')) + (window.__subNote || '') : 'Choose a plan when you tap Make Live.');
     document.getElementById('billingBtn').hidden = !isPaying;
     if (isPaying && !isAdminView && !window.__subLoaded && session && session.access_token) {
       window.__subLoaded = true;
@@ -2192,7 +2192,7 @@
   var isUS = false, CUR = '£';
   try {
     fetch('/cdn-cgi/trace').then(function (r) { return r.text(); }).then(function (t) {
-      if (/^loc=US$/m.test(t)) { isUS = true; CUR = '$'; }
+      if (/^loc=US$/m.test(t)) { isUS = true; CUR = '$'; try { renderAccountCards(); } catch (e) {} }
     }).catch(function () {});
   } catch (e) {}
 
@@ -2803,7 +2803,7 @@
       var toggle = el('div', { 'class': 'bs-billing' });
       [false, true].forEach(function(isAnnual) {
         var b = el('button', { type: 'button', 'class': annual === isAnnual ? 'on' : '' }, isAnnual ? 'Annual ' : 'Monthly');
-        if (isAnnual) b.appendChild(el('small', {}, isUS ? 'save $36' : 'save £24'));
+        if (isAnnual) b.appendChild(el('small', {}, isUS ? 'save $36' : 'save £36'));
         b.addEventListener('click', function() { annual = isAnnual; render(); });
         toggle.appendChild(b);
       });
@@ -2822,7 +2822,7 @@
         card.addEventListener('click', function() { plan = o.id; render(); });
         body.appendChild(card);
       });
-      body.appendChild(el('p', { 'class': 'bs-plan-total' }, (plan === 'pro' ? (isUS ? '$269' : '£199') + ' build fee today, then ' : '') + (isUS ? (annual ? '$264/yr hosting ($22/mo)' : '$25/mo hosting') : (annual ? '£204/yr hosting (£17/mo)' : '£19/mo hosting')) + ' · cancel any time'));
+      body.appendChild(el('p', { 'class': 'bs-plan-total' }, (plan === 'pro' ? (isUS ? '$269' : '£199') + ' build fee today, then ' : '') + (isUS ? (annual ? '$264/yr hosting ($22/mo)' : '$25/mo hosting') : (annual ? '£192/yr hosting (£16/mo)' : '£19/mo hosting')) + ' · cancel any time'));
       // mirrors api/_lib/plans.js: the domain is charged in full on top of the plan
       var charge = pendingDomainPence || null;
       body.appendChild(el('p', { 'class': 'bs-plan-domain' }, ownedDomain() ? ownedDomain() + ': already yours, nothing to pay for your domain' : pendingDomain + ': ' + (charge === null ? 'registration charged at checkout'
