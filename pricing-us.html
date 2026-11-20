@@ -106,19 +106,6 @@
 #pricing .plan .go{font-size:13px}
 </style>
 <style>#pricing .plan .included-label{font-size:16px;font-weight:600;color:#1F2530;margin:18px 0 10px}</style>
-<style>
-/* Plan cards: list items rise in one after another when the card scrolls into view */
-#pricing .plan li{opacity:0;transform:translateY(10px);transition:opacity .5s ease,transform .5s ease}
-#pricing .plan.in li{opacity:1;transform:none}
-#pricing .plan.in li:nth-child(1){transition-delay:.15s}
-#pricing .plan.in li:nth-child(2){transition-delay:.22s}
-#pricing .plan.in li:nth-child(3){transition-delay:.29s}
-#pricing .plan.in li:nth-child(4){transition-delay:.36s}
-#pricing .plan.in li:nth-child(5){transition-delay:.43s}
-#pricing .plan.in li:nth-child(6){transition-delay:.5s}
-#pricing .plan.in li:nth-child(7){transition-delay:.57s}
-@media (prefers-reduced-motion: reduce){#pricing .plan li{opacity:1;transform:none;transition:none}}
-</style>
 </head>
 <body>
 <div class="bar" id="bar"></div>
