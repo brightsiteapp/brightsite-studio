@@ -1458,7 +1458,7 @@ html,body{max-width:100%}
 #compare .opt-card-hi{background:linear-gradient(145deg,#f7fbff,#e9f3ff);border:1px solid #9ec6ff;box-shadow:0 12px 35px rgba(8,119,249,.12)}
 #compare .opt-card-hi::before{content:'';position:absolute;top:0;left:26px;right:26px;height:3px;background:#0877f9;border-radius:0 0 4px 4px}
 #compare .opt-logo{display:block;width:180px;max-width:100%;height:auto;margin:0 0 16px}
-#compare .opt-price-line{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px;min-height:30px}
+#compare .opt-price-line{display:flex;flex-wrap:wrap;align-content:flex-start;gap:6px;margin:0 0 14px;min-height:64px}
 #compare .opt-price{display:inline-block;vertical-align:middle;padding:3px 10px;border-radius:999px;background:#eaf2ff;color:#1d4ed8;font-family:inherit;font-size:13px;font-weight:700;letter-spacing:0;line-height:1.4;white-space:nowrap}
 #compare .opt-mini li::before{content:"✕"}
 #compare .opt-mini-pos li::before{content:"✓"}
