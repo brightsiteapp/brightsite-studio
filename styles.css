@@ -1519,6 +1519,9 @@ img[loading="lazy"].img-loaded{animation:none;background:none}
 .dash-band{margin-top:48px;display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center;background:#fff;border:1px solid #e1e5ea;border-radius:22px;padding:32px 36px}
 .dash-band h4{font-family:var(--display);font-size:24px;letter-spacing:-.03em;margin:6px 0 10px;color:var(--ink)}
 .dash-band p{color:#6b7482;line-height:1.55;margin:0}
+.dash-head{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.dash-app-logo{width:56px;height:56px;border-radius:14px;box-shadow:0 4px 14px rgba(23,32,31,.12);flex:none}
+.dash-head .eyebrow{margin:0}
 .dash-points{list-style:none;margin:0;padding:0;display:grid;gap:10px}
 .dash-points li{position:relative;padding-left:26px;font-size:15px;color:#17243d;font-weight:600;line-height:1.4}
 .dash-points li::before{content:"✓";position:absolute;left:0;top:0;width:18px;height:18px;border-radius:50%;background:#dbeafe;color:#1d4ed8;display:grid;place-items:center;font-size:11px;font-weight:700}
