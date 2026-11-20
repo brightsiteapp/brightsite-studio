@@ -1458,6 +1458,10 @@ html,body{max-width:100%}
 #compare .opt-card-hi{background:linear-gradient(145deg,#f7fbff,#e9f3ff);border:1px solid #9ec6ff;box-shadow:0 12px 35px rgba(8,119,249,.12)}
 #compare .opt-card-hi::before{content:'';position:absolute;top:0;left:26px;right:26px;height:3px;background:#0877f9;border-radius:0 0 4px 4px}
 #compare .opt-logo{display:block;width:180px;max-width:100%;height:auto;margin:0 0 16px}
+#compare .opt-brand{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 12px;margin:0 0 16px}
+#compare .opt-brand .opt-logo{margin:0}
+#compare .opt-price{font-weight:600;font-size:.9em;color:#2563eb;letter-spacing:-.01em;white-space:nowrap}
+#compare .opt-card h3 .opt-price{display:inline-block}
 #compare .opt-card-hi p{color:#10203b;font-weight:700}
 #compare .opt-mini{display:flex;flex-direction:column;gap:16px;margin:20px 0 0;padding-top:22px;border-top:1px solid #e1e5ea;text-align:left}
 #compare .opt-mini li{padding-left:27px;font-size:13px;line-height:1.5;color:#566172}
