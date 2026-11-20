@@ -145,14 +145,14 @@
   .steps3{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(20px,3vw,36px)}
   @media(max-width:820px){.steps3{grid-template-columns:1fr;max-width:420px;margin:0 auto}}
   .step3{text-align:center}
-  .step3-img{aspect-ratio:4/3;border-radius:18px;overflow:hidden;background:var(--bg);margin-bottom:18px}
+  .step3-img{aspect-ratio:4/3;border-radius:18px;overflow:hidden;background:var(--bg);margin-bottom:18px;border:1.5px solid #111;box-sizing:border-box}
   .step3-img img{width:100%;height:100%;object-fit:cover;display:block}
 .step3-choice{container-type:size;background:#EFE4DB;display:flex;align-items:center;justify-content:center}
 .pm-sheet{width:90cqw;box-sizing:border-box;font-family:'Avenir Next','Avenir','Nunito Sans',sans-serif;color:#1C2832;text-align:center}
 .pm-title{margin:0 0 .8cqw;font-size:3.9cqw;font-weight:800;line-height:1.2;letter-spacing:-.02em}
 .pm-sub{margin:0 0 2.4cqw;font-size:2.8cqw;color:rgba(28,40,50,.72)}
 .pm-stack{display:grid;grid-auto-rows:1fr;gap:3cqw}
-.pm-card{display:flex;flex-direction:column;align-items:center;justify-content:center;border:1.2px solid #111;background:#fff;border-radius:4cqw;padding:3.6cqw 4cqw;box-sizing:border-box;box-shadow:0 1.4cqw 3.6cqw rgba(28,40,50,.12)}
+.pm-card{display:flex;flex-direction:column;align-items:center;justify-content:center;border:1.5px solid #3B82F6;background:#fff;border-radius:4cqw;padding:3.6cqw 4cqw;box-sizing:border-box;box-shadow:0 1.4cqw 3.6cqw rgba(28,40,50,.12)}
 .step3-img .pm-logo{width:44cqw;max-width:none;height:auto;margin-bottom:1.4cqw;object-fit:initial}
 .pm-name{font-size:5.6cqw;font-weight:800;letter-spacing:-.02em;margin-bottom:.6cqw;line-height:1.2}
 .pm-name-seven{font-size:5cqw}
