@@ -289,6 +289,7 @@
   footer{text-align:center;padding:48px 24px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
   footer .brand{display:inline-flex;align-items:center;text-decoration:none}
   footer .brand img{height:26px;width:auto;display:block}
+footer .brand .foot-app-icon{height:28px;width:28px;border-radius:7px;margin-right:9px}
   footer a{color:var(--accent);text-decoration:none}
   @media(prefers-reduced-motion:reduce){.hint .mouse:after{animation:none}}
 
