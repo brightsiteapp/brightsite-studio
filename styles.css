@@ -1458,16 +1458,20 @@ html,body{max-width:100%}
 #compare .opt-card-hi{background:linear-gradient(145deg,#f7fbff,#e9f3ff);border:1px solid #9ec6ff;box-shadow:0 12px 35px rgba(8,119,249,.12)}
 #compare .opt-card-hi::before{content:'';position:absolute;top:0;left:26px;right:26px;height:3px;background:#0877f9;border-radius:0 0 4px 4px}
 #compare .opt-logo{display:block;width:180px;max-width:100%;height:auto;margin:0 0 16px}
-#compare .opt-brand{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 12px;margin:0 0 16px}
+#compare .opt-brand{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;margin:0 0 16px}
 #compare .opt-brand .opt-logo{margin:0}
-#compare .opt-price{font-weight:600;font-size:.9em;color:#2563eb;letter-spacing:-.01em;white-space:nowrap}
-#compare .opt-card h3 .opt-price{display:inline-block}
+#compare .opt-price{display:inline-block;vertical-align:middle;margin-left:6px;padding:3px 10px;border-radius:999px;background:#eaf2ff;color:#1d4ed8;font-family:inherit;font-size:13px;font-weight:700;letter-spacing:0;line-height:1.4;white-space:nowrap}
+#compare .opt-brand .opt-price{margin-left:0}
+#compare .opt-mini li::before{content:"✕"}
+#compare .opt-mini-pos li::before{content:"✓"}
 #compare .opt-card-hi p{color:#10203b;font-weight:700}
 #compare .opt-mini{display:flex;flex-direction:column;gap:16px;margin:20px 0 0;padding-top:22px;border-top:1px solid #e1e5ea;text-align:left}
 #compare .opt-mini li{padding-left:27px;font-size:13px;line-height:1.5;color:#566172}
-#compare .opt-mini li::before{top:1px;left:0;display:grid;place-items:center;width:18px;height:18px;background:#f0f2f5;border-radius:50%;font-size:11px;opacity:1;color:#9099a6}
+#compare .opt-mini li::before{top:1px;left:0;display:grid;place-items:center;width:18px;height:18px;background:#fee2e2;border-radius:50%;font-size:10px;font-weight:700;opacity:1;color:#dc2626}
 #compare .opt-mini-pos li{color:#17243d;font-weight:600}
 #compare .opt-mini-pos li::before{background:#22c55e;color:#fff}
+#compare .opt-more{display:inline-block;margin-top:18px;font-size:14px;font-weight:600;color:#2563eb;text-decoration:none}
+#compare .opt-more:hover{text-decoration:underline}
 #compare .opt-card:hover{transform:translateY(-3px);box-shadow:0 16px 40px rgba(23,32,31,.09)}
 .page #realperson{padding:0 0 36px}
 .page #realperson .founder{max-width:1040px;margin-bottom:0}
