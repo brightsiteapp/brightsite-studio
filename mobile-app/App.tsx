@@ -412,10 +412,28 @@ function CategorySheet({ open, initial, onSave, onDelete, onClose }: { open: boo
   </Overlay>;
 }
 
-function Services({ items, setItems }: any) {
-  const [editing, setEditing] = useState<{ cid: string | null } | null>(null);
+function Services({ items, onEdit }: any) {
   const cids: string[] = items.reduce((acc: string[], it: any) => acc.includes(it.cid) ? acc : [...acc, it.cid], []);
   // a never-filled placeholder category isn't shown
+  const groups = cids.map(cid => ({ cid, rows: items.filter((it: any) => it.cid === cid) })).filter(g => g.rows[0].section.trim() || g.rows.some((r: any) => r.name.trim()));
+  return <View>
+    {groups.map(g => {
+      const count = g.rows.filter((r: any) => r.name.trim()).length;
+      return <Pressable key={g.cid} onPress={() => onEdit(g.cid)} style={({ pressed }) => [s.listRow, pressed && s.pressed]}>
+        <View style={{ flex: 1 }}>
+          <Text style={s.reviewRowText} numberOfLines={1}>{g.rows[0].section || 'Untitled category'}</Text>
+          <Text style={s.listRowSub} numberOfLines={1}>{count} service{count === 1 ? '' : 's'}</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={16} color={C.inkMuted} />
+      </Pressable>;
+    })}
+    <Pressable onPress={() => onEdit(null)} style={s.addReviewBtn}><Ionicons name="add" size={16} color={DARK} /><Text style={s.addReviewText}>Add category</Text></Pressable>
+  </View>;
+}
+
+// Rendered at the app root (like the other sheets) so it covers the whole screen, not just the card's scroll area.
+function ServicesSheet({ items, setItems, editing, setEditing }: any) {
+  const cids: string[] = items.reduce((acc: string[], it: any) => acc.includes(it.cid) ? acc : [...acc, it.cid], []);
   const groups = cids.map(cid => ({ cid, rows: items.filter((it: any) => it.cid === cid) })).filter(g => g.rows[0].section.trim() || g.rows.some((r: any) => r.name.trim()));
   const current = editing?.cid ? groups.find(g => g.cid === editing.cid) : null;
   const save = (section: string, rows: ServiceRow[]) => {
@@ -436,21 +454,8 @@ function Services({ items, setItems }: any) {
     setItems(remaining.length ? remaining : [{ cid: newCid(), section: '', name: '', duration: '', price: '' }]);
     setEditing(null);
   };
-  return <View>
-    {groups.map(g => {
-      const count = g.rows.filter((r: any) => r.name.trim()).length;
-      return <Pressable key={g.cid} onPress={() => setEditing({ cid: g.cid })} style={({ pressed }) => [s.listRow, pressed && s.pressed]}>
-        <View style={{ flex: 1 }}>
-          <Text style={s.reviewRowText} numberOfLines={1}>{g.rows[0].section || 'Untitled category'}</Text>
-          <Text style={s.listRowSub} numberOfLines={1}>{count} service{count === 1 ? '' : 's'}</Text>
-        </View>
-        <Ionicons name="chevron-forward" size={16} color={C.inkMuted} />
-      </Pressable>;
-    })}
-    <Pressable onPress={() => setEditing({ cid: null })} style={s.addReviewBtn}><Ionicons name="add" size={16} color={DARK} /><Text style={s.addReviewText}>Add category</Text></Pressable>
-    <CategorySheet open={!!editing} initial={current ? { section: current.rows[0].section, rows: current.rows.filter((r: any) => r.name.trim()).map((r: any) => ({ name: r.name, duration: r.duration || '', price: r.price || '' })) } : null}
-      onSave={save} onDelete={current ? remove : undefined} onClose={() => setEditing(null)} />
-  </View>;
+  return <CategorySheet open={!!editing} initial={current ? { section: current.rows[0].section, rows: current.rows.filter((r: any) => r.name.trim()).map((r: any) => ({ name: r.name, duration: r.duration || '', price: r.price || '' })) } : null}
+    onSave={save} onDelete={current ? remove : undefined} onClose={() => setEditing(null)} />;
 }
 
 function Upload({ icon, title, subtitle, value, onChange, multiple = false, fill = false, h = 160 }: any) {
@@ -1299,6 +1304,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
   const [sheet, setSheet] = useState<{ kind: 'review' | 'offer'; index: number | null } | null>(null);
   const [hours, setHours] = useState(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((label, i) => ({ label, start: '9:00', end: i === 3 ? '19:00' : '17:30', enabled: i < 6 })));
   const [services, setServices] = useState([{ cid: newCid(), section: '', name: '', duration: '', price: '' }]);
+  const [catEditing, setCatEditing] = useState<{ cid: string | null } | null>(null);
   const [reviewsList, setReviewsList] = useState<{ title: string; description: string; name: string }[]>([]);
   const [offers, setOffers] = useState<{ name: string; value: string }[]>([]);
   const motion = useRef(new Animated.Value(0)).current;
@@ -2100,7 +2106,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         <Field label="Facebook" optional inputRef={(r: any) => { fieldRefs.current.facebook = r; }} value={data.facebook} onChangeText={(v: string) => setData((d: any) => ({ ...d, facebook: v }))} placeholder="facebook.com/yourbusiness" keyboardType="url" autoCapitalize="none" autoCorrect={false} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.website?.focus()} />
         <Field label="Existing website" optional inputRef={(r: any) => { fieldRefs.current.website = r; }} value={data.website} onChangeText={(v: string) => setData((d: any) => ({ ...d, website: v }))} placeholder="yoursite.com" keyboardType="url" textContentType="URL" autoCapitalize="none" autoCorrect={false} returnKeyType="done" /></>;
       case 'hours': return <><View style={s.hoursIntro}><Intro>Switch off days you’re closed. Times can be changed later.</Intro></View><Hours rows={hours} setRows={setHours} /></>;
-      case 'prices': return <><Intro>Add a category (e.g. Massages), then the services in it with their prices.</Intro><Services items={services} setItems={setServices} /></>;
+      case 'prices': return <><Intro>Add a category (e.g. Massages), then the services in it with their prices.</Intro><Services items={services} onEdit={(cid: string | null) => setCatEditing({ cid })} /></>;
       case 'media': return <><Intro>Add the images you want to use. Everything here is optional and can be changed later.</Intro>
         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
           <View style={{ flex: 1 }}>
@@ -2448,6 +2454,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     <Animated.View pointerEvents="none" style={[s.savedPill, { opacity: draftPill, transform: [{ translateY: draftPill.interpolate({ inputRange: [0, 1], outputRange: [-6, 0] }) }] }]}>
       <Ionicons name="checkmark-circle" size={14} color="#fff" /><Text style={s.savedPillText}>All changes saved</Text>
     </Animated.View>
+    <ServicesSheet items={services} setItems={setServices} editing={catEditing} setEditing={setCatEditing} />
     <ItemSheet open={typeSheet} title="Your business type" fields={[{ key: 'type', placeholder: 'e.g. Dog grooming' }]}
       initial={data.category && !BUSINESS_TYPES.includes(data.category) ? { type: data.category } : null}
       onSave={item => { setData(d => ({ ...d, category: item.type.trim() })); setTypeSheet(false); }} onClose={() => setTypeSheet(false)} />
