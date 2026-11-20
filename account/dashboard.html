@@ -669,6 +669,11 @@
   .path-card-plain .path-tag{color:rgba(28,40,50,.52)}
   .path-card-name{display:block;font-size:19px;font-weight:800;margin-bottom:5px;line-height:1.2}
   .path-card-desc{display:block;font-size:14px;line-height:1.5;opacity:.85}
+  .path-stack .path-card{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:#fff;border:0;border-radius:18px;box-shadow:0 6px 18px rgba(28,40,50,.12);padding:22px 20px;color:#1C2832;min-height:132px}
+  .path-stack .path-card-name{font-size:21px;font-weight:800;margin-bottom:6px}
+  .path-stack .path-card-desc{font-size:14px;line-height:1.45;opacity:1;color:#1C2832;font-weight:600}
+  .path-card-logo{display:block;width:44%;max-width:200px;height:auto;margin-bottom:10px}
+  .path-card-brand .path-card-name{font-size:17px;margin-bottom:4px}
   /* Automatic links screen */
   .path-back{border:0;background:none;font:700 15px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;color:#3B82F6;cursor:pointer;margin-bottom:18px;padding:0;display:flex;align-items:center;gap:4px}
   .path-field-label{display:block;font-size:13px;font-weight:700;color:rgba(28,40,50,.52);margin-bottom:5px;letter-spacing:.03em}
@@ -984,15 +989,14 @@
         <p class="path-title">How would you like to build your website?</p>
         <p class="path-sub">You can change anything later.</p>
         <div class="path-stack">
-          <button type="button" class="path-card path-card-main" id="pathChooseAuto">
-            <span class="path-tag">RECOMMENDED · 2 MINUTES</span>
+          <button type="button" class="path-card path-card-plain" id="pathChooseAuto">
             <span class="path-card-name">Automatic</span>
             <span class="path-card-desc">Share your Google, Facebook or website link and our designer builds it for you.</span>
           </button>
-          <button type="button" class="path-card path-card-plain" id="pathChooseManual">
-            <span class="path-tag">ABOUT 10 MINUTES</span>
-            <span class="path-card-name">Manual</span>
-            <span class="path-card-desc">Enter your details, hours, services and photos yourself.</span>
+          <button type="button" class="path-card path-card-plain path-card-brand" id="pathChooseManual">
+            <img class="path-card-logo" src="../img/brightbuilder-blue.png" alt="" width="214" height="19">
+            <span class="path-card-name">Seven. Simple. Steps.</span>
+            <span class="path-card-desc">Under 10 minutes. Enter your details, hours, services and photos yourself.</span>
           </button>
         </div>
       </div>
