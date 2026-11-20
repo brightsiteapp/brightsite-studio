@@ -153,8 +153,9 @@
 .pm-sub{margin:0 0 2.4cqw;font-size:2.8cqw;color:rgba(28,40,50,.72)}
 .pm-stack{display:grid;grid-auto-rows:1fr;gap:3cqw}
 .pm-card{display:flex;flex-direction:column;align-items:center;justify-content:center;border:1.2px solid #111;background:#fff;border-radius:4cqw;padding:3.6cqw 4cqw;box-sizing:border-box;box-shadow:0 1.4cqw 3.6cqw rgba(28,40,50,.12)}
-.step3-img .pm-logo{width:30cqw;max-width:none;height:auto;margin-bottom:1.4cqw;object-fit:initial}
-.pm-name{font-size:4.4cqw;font-weight:800;letter-spacing:-.02em;margin-bottom:.6cqw;line-height:1.2}
+.step3-img .pm-logo{width:44cqw;max-width:none;height:auto;margin-bottom:1.4cqw;object-fit:initial}
+.pm-name{font-size:5.6cqw;font-weight:800;letter-spacing:-.02em;margin-bottom:.6cqw;line-height:1.2}
+.pm-name-seven{font-size:5cqw}
 .pm-desc{font-size:2.7cqw;line-height:1.4;color:#1C2832;font-weight:600;max-width:64cqw}
 
   /* the live Kings Valeting frame fills this same fixed box (a "cover" crop
