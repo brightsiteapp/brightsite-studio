@@ -139,6 +139,12 @@
       const distance = signedDistance(i);
       const pos = VISIBLE_POSITIONS.has(distance) ? String(distance) : 'hidden';
       slide.dataset.pos = pos;
+      // Live sites load only once they're on screen (centre or either side),
+      // so the side cards show their site instead of a blank frame.
+      if (pos !== 'hidden') {
+        const liveFrame = slide.querySelector('iframe[data-src]');
+        if (liveFrame && !liveFrame.getAttribute('src')) liveFrame.src = liveFrame.dataset.src;
+      }
       // Reload live iframes when they become the active (centre) card so
       // load-triggered animations (e.g. van drive-in) replay each time.
       if (pos === '0') {
