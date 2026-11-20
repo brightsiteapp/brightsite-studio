@@ -5,7 +5,7 @@
 // Cloudflare sets request.cf.country. The country is passed on to the origin as cf-ipcountry,
 // which create-checkout-session.js reads to pick USD or GBP prices.
 const ORIGIN = 'https://brightsite.app';
-const US_PAGES = { '/': '/pricing-us.html', '/pricing': '/pricing-us.html', '/pricing.html': '/pricing-us.html' };
+const US_PAGES = { '/pricing': '/pricing-us.html', '/pricing.html': '/pricing-us.html' };
 
 export default {
   async fetch(request) {
@@ -34,6 +34,12 @@ export default {
     // If the US page is missing, show the normal page rather than a 404.
     if (usPath && !res.ok) {
       return fetch(new Request(ORIGIN + url.pathname + url.search, { method: request.method, headers: originHeaders, redirect: 'manual' }));
+    }
+    // US home: the UK homepage with USD prices swapped in (elements tagged data-usd in index.html).
+    if (wantUs && url.pathname === '/' && res.ok) {
+      return new HTMLRewriter()
+        .on('[data-usd]', { element(el) { el.setInnerContent(el.getAttribute('data-usd')); } })
+        .transform(res);
     }
     return res;
   },
