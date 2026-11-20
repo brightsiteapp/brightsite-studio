@@ -147,7 +147,7 @@
   .step3{text-align:center}
   .step3-img{aspect-ratio:4/3;border-radius:18px;overflow:hidden;background:var(--bg);margin-bottom:18px;border:1.5px solid #17243D;box-sizing:border-box}
   .step3-img img{width:100%;height:100%;object-fit:cover;display:block}
-.step3-choice{container-type:size;background:#EFE4DB;display:flex;align-items:center;justify-content:center}
+.step3-choice{container-type:size;background:#3B82F6;display:flex;align-items:center;justify-content:center}
 .pm-sheet{width:90cqw;box-sizing:border-box;font-family:'Avenir Next','Avenir','Nunito Sans',sans-serif;color:#1C2832;text-align:center}
 .pm-title{margin:0 0 .8cqw;font-size:3.9cqw;font-weight:800;line-height:1.2;letter-spacing:-.02em}
 .pm-sub{margin:0 0 2.4cqw;font-size:2.8cqw;color:rgba(28,40,50,.72)}
