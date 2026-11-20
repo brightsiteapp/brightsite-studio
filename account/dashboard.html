@@ -639,6 +639,9 @@
   .preview-placeholder[data-state="todo"]::before{opacity:0 !important}
   .preview-placeholder[data-state="all-done"]::before{filter:drop-shadow(0 0 7px #7FB2FF) drop-shadow(0 0 22px #3B82F6) !important}
   .sec-btn.is-active{box-shadow:0 0 0 2px #3B82F6 !important}
+  .guided-host{height:100%;overflow:auto;box-sizing:border-box;padding:24px;background:#fff;border-radius:12px}
+  .guided-host[hidden]{display:none}
+  .guided-open .fake-browser,.guided-open .fake-phone{display:none !important}
   @keyframes bsBPulse{0%,100%{opacity:.35;transform:scale(.92)}50%{opacity:1;transform:scale(1)}}
   .preview-placeholder-biz{display:none !important}
   .preview-placeholder .preview-placeholder-title{background:none !important;-webkit-text-fill-color:#fff !important;color:#fff;animation:none !important;filter:none !important;font-size:18px !important;margin-bottom:6px !important}
@@ -1099,6 +1102,7 @@
     </div>
   </div>
   <div class="preview-frame-wrap" id="previewFrameWrap">
+    <div id="guidedHost" class="guided-host" hidden></div>
     <!-- desktop: fake browser chrome -->
     <div class="fake-browser">
       <div class="fake-browser-bar">
@@ -1934,6 +1938,14 @@
     // Manual = the seven-step guided flow: business, details, hours, prices, media, extras, reviews
     var GUIDED_STEPS = ['business', 'details', 'hours', 'prices', 'media', 'extras', 'reviews'];
     var guidedFlow = false;
+    // Each section form remembers where it lives, so it can move to the right side and back
+    document.querySelectorAll('.builder-section').forEach(function(el) {
+      el._home = document.createComment('section-home');
+      el.parentNode.insertBefore(el._home, el);
+    });
+    function sendPanelHome(el) {
+      if (el._home && el._home.parentNode) el._home.parentNode.insertBefore(el, el._home.nextSibling);
+    }
 
     document.getElementById('pathChooseAuto').addEventListener('click', function() {
       pickScreen.hidden = true;
@@ -2619,6 +2631,25 @@
     });
     var wp = document.getElementById('websitePanel');
     if (wp && wp.scrollTo) wp.scrollTo({ top: 0, behavior: 'instant' });
+
+    var host = document.getElementById('guidedHost');
+    var frameWrap = document.getElementById('previewFrameWrap');
+    document.querySelectorAll('.builder-section').forEach(function(el) {
+      if (el.parentNode === host) sendPanelHome(el);
+    });
+    if (guidedFlow && id) {
+      var panel = document.querySelector('.builder-section[data-section-panel="' + id + '"]');
+      if (panel) {
+        host.appendChild(panel);
+        panel.hidden = false;
+        host.hidden = false;
+        frameWrap.classList.add('guided-open');
+        host.scrollTop = 0;
+      }
+    } else {
+      host.hidden = true;
+      frameWrap.classList.remove('guided-open');
+    }
   }
 
   document.querySelectorAll('.sec-btn').forEach(function(btn) {
