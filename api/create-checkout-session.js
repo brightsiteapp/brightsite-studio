@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
 import { quoteDomainIn, regionFromRequest } from './_lib/domain-pricing.js';
-import { planPrices, domainChargePence, addonPrice } from './_lib/plans.js';
+import { planPrices, addonPrice } from './_lib/plans.js';
 import { referralIsValid } from './_lib/referrals.js';
 
 const ALLOWED_ORIGINS = ['https://brightsite.app'];
@@ -50,7 +50,9 @@ export default async function handler(req, res) {
       const us = region === 'us';
       const quote = await quoteDomainIn(selectedDomain, us ? 'USD' : 'GBP');
       // a valid referral code makes the whole domain free; otherwise the plan covers what it normally does
-      const coveredPence = freeDomain ? quote.amountMinor : quote.amountMinor - domainChargePence(plan, billing, quote.amountMinor);
+      // Pro includes a domain allowance: £10, or $12 for US visitors. Anything under it is free and not mentioned.
+      const allowancePence = plan === 'pro' ? (us ? 1200 : 1000) : 0;
+      const coveredPence = freeDomain ? quote.amountMinor : Math.min(quote.amountMinor, allowancePence);
       lineItems.push({
         price_data: {
           currency: us ? 'usd' : 'gbp',
