@@ -1540,3 +1540,7 @@ img[loading="lazy"].img-loaded{animation:none;background:none}
 @media(max-width:760px){.dash-band{grid-template-columns:1fr;padding:24px 22px}}
 
 .step3:nth-child(1) .step3-img,.step3:nth-child(2) .step3-img{border:0}
+
+.step3:nth-child(3) .step3-img{border:0}
+.step3-img.step3-live .ex-bar{display:none}
+.step3-img.step3-live .ex-view{height:100%}
