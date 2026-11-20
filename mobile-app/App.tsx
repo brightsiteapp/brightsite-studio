@@ -1194,7 +1194,19 @@ function DashboardHome({ tab, setTab, data, domain, suffix, services, hours, con
             </View>
             </View>
           </View>
-          {isBuilding
+          {isBuilding && isTodo && !isLoadingSite && !adminBiz
+            ? <View style={[s.buildingWrap, { height: DASHBOARD_PREVIEW_HEIGHT + DASHBOARD_PREVIEW_INSET * 2, justifyContent: 'center', paddingHorizontal: 18, gap: 14 }]}>
+              <Pressable onPress={() => onAutomatic?.()} style={({ pressed }) => [s.pathCard, s.pathCardWhite, { height: undefined, paddingVertical: 24 }, pressed && s.pressed]}>
+                <Text style={[s.pathTitle, { color: C.ink }]}>Automatic</Text>
+                <Text style={[s.pathText, { color: C.ink }]}>Share your Google, Facebook or website link and our designer builds it for you.</Text>
+              </Pressable>
+              <Pressable onPress={() => onEditInfo?.()} style={({ pressed }) => [s.pathCard, s.pathCardWhite, { height: undefined, paddingVertical: 24 }, pressed && s.pressed]}>
+                <Image source={require('./assets/brightbuilder-blue.png')} resizeMode="contain" style={{ width: 19 * 1543 / 137, height: 19, marginBottom: 8 }} />
+                <Text style={[s.pathTitle, { color: C.ink }]}>Seven. Simple. Steps.</Text>
+                <Text style={[s.pathText, { color: C.ink }]}>Under 10 minutes. Enter your details, hours, services and photos yourself.</Text>
+              </Pressable>
+            </View>
+            : isBuilding
             ? <View style={[s.buildingWrap, { height: DASHBOARD_PREVIEW_HEIGHT + DASHBOARD_PREVIEW_INSET * 2, justifyContent: 'center' }]}>
               <View ref={buildCardRef} collapsable={false} style={previewMode === 'desktop' && !playReveal ? [s.desktopFrame, s.buildingPhone, { alignSelf: 'stretch', width: '100%', height: (SCREEN_WIDTH - 32) * 0.68, borderWidth: 6, padding: 0, marginTop: 18 }] : [s.phoneFrame, s.buildingPhone]}>
                 <View style={{ flex: 1, width: DASHBOARD_PREVIEW_WIDTH - 40, alignItems: 'center', justifyContent: 'center' }}>
@@ -1496,6 +1508,10 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
         if (token && token !== realRow.data?.pushToken) savePushToken(authedSession.access_token, realRow.id, token);
       });
       Keyboard.dismiss();
+      // same rule as the web dashboard: no builder picked yet, nothing sent, no preview, not live
+      const r = realRow.data?.raw || {};
+      const picked = r.buildChoice || r.sentToDesigner || typeof r.draft === 'boolean' || realRow.data?.previewUrl || realRow.data?.demoUrl || realRow.data?.published;
+      if (!picked) { builderResume.current = 1; setChooseMode('pick'); setAppScreen('choose'); return; }
       setAppScreen('dashboard');
       return;
     }
@@ -1538,7 +1554,9 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     motion.setValue(CARD_TRAVEL);
     setTab('Website');
     setWebsiteStatus('todo');
-    setAppScreen('dashboard');
+    builderResume.current = 1;
+    setChooseMode('pick');
+    setAppScreen('choose');
   };
 
   useEffect(() => {
@@ -2367,7 +2385,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           </View>
         </View> : <ScrollView contentContainerStyle={[s.content, s.loginContent]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false}>
           <>
-              <Pressable onPress={() => setAppScreen('dashboard')} hitSlop={10} style={s.chooseBack}><Text style={s.chooseBackText}>‹ Back</Text></Pressable>
+              <Pressable onPress={() => setChooseMode('pick')} hitSlop={10} style={s.chooseBack}><Text style={s.chooseBackText}>‹ Back</Text></Pressable>
               <Text style={s.heroTitle}>Share your links</Text>
               <Intro>Add your name and at least one link. Our designer will take it from there.</Intro>
               <Field label="Full name" value={data.fullName} onChangeText={(v: string) => setData((d: any) => ({ ...d, fullName: v }))} placeholder="e.g. Jane Smith" textContentType="name" autoComplete="name" autoCapitalize="words" returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => fieldRefs.current.autoGoogle?.focus()} />
