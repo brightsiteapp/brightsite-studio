@@ -396,7 +396,7 @@ function CategorySheet({ open, initial, onSave, onDelete, onClose }: { open: boo
       <Pressable style={{ flex: 1 }} onPress={onClose} />
       <View style={[s.planModalBox, { maxHeight: SCREEN_HEIGHT * .85 }]}>
         <View style={s.planModalHeader}><Text style={s.planModalTitle}>{initial ? 'Edit category' : 'Add category'}</Text><Pressable onPress={onClose} hitSlop={10} accessibilityLabel="Close"><Ionicons name="close" size={22} color={C.ink} /></Pressable></View>
-        <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingTop: 10 }}>
+        <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} style={{ flexGrow: 0, flexShrink: 1 }} contentContainerStyle={{ gap: 8, paddingTop: 10 }}>
           <TextInput value={section} onChangeText={setSection} placeholder="Category name, e.g. Massages" placeholderTextColor={C.placeholder} autoCapitalize="words" autoFocus={!initial} style={[s.input, { fontWeight: '700' }]} />
           {rows.map((r, i) => <View key={i} style={s.gridRow}>
             <TextInput value={r.name} onChangeText={v => setCell(i, 'name', v)} placeholder="Name" placeholderTextColor={C.placeholder} autoCapitalize="sentences" style={[s.gridCell, { flex: 1.8 }]} />
@@ -573,12 +573,12 @@ const DESKTOP_VIEW_W = SCREEN_WIDTH - 52;
 const DESKTOP_VIEW_H = Math.round(DESKTOP_VIEW_W * 0.68);
 // Edit grid for a sent site: one card per section, tap one to edit just that section (same as the web dashboard).
 const EDIT_SECTIONS = [
-  { id: 'business', label: 'Business', icon: 'briefcase-outline' },
-  { id: 'contact', label: 'Contact', icon: 'call-outline' },
+  { id: 'business', label: 'Business information', icon: 'briefcase-outline' },
+  { id: 'contact', label: 'Business details', icon: 'call-outline' },
   { id: 'hours', label: 'Opening hours', icon: 'time-outline' },
   { id: 'prices', label: 'Services & prices', icon: 'pricetag-outline' },
-  { id: 'media', label: 'Photos', icon: 'images-outline' },
-  { id: 'extras', label: 'Extras', icon: 'add-circle-outline' },
+  { id: 'media', label: 'Photos & logo', icon: 'images-outline' },
+  { id: 'extras', label: 'Offers & extras', icon: 'gift-outline' },
   { id: 'reviews', label: 'Reviews', icon: 'star-outline' },
 ];
 // A plain overlay, not a Modal: RN's iOS Modal crashes when it is removed during a screen change.
