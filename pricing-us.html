@@ -106,6 +106,19 @@
 #pricing .plan .go{font-size:13px}
 </style>
 <style>#pricing .plan .included-label{font-size:16px;font-weight:600;color:#1F2530;margin:18px 0 10px}</style>
+<style>
+/* Plan cards: list items rise in one after another when the card scrolls into view */
+#pricing .plan li{opacity:0;transform:translateY(10px);transition:opacity .5s ease,transform .5s ease}
+#pricing .plan.in li{opacity:1;transform:none}
+#pricing .plan.in li:nth-child(1){transition-delay:.15s}
+#pricing .plan.in li:nth-child(2){transition-delay:.22s}
+#pricing .plan.in li:nth-child(3){transition-delay:.29s}
+#pricing .plan.in li:nth-child(4){transition-delay:.36s}
+#pricing .plan.in li:nth-child(5){transition-delay:.43s}
+#pricing .plan.in li:nth-child(6){transition-delay:.5s}
+#pricing .plan.in li:nth-child(7){transition-delay:.57s}
+@media (prefers-reduced-motion: reduce){#pricing .plan li{opacity:1;transform:none;transition:none}}
+</style>
 </head>
 <body>
 <div class="bar" id="bar"></div>
@@ -151,13 +164,13 @@
           <div class="price-note">Billed $264/yr — <span class="annual-saving">save $36 a year</span></div>
           <div class="included-label">Included:</div>
           <ul>
-            <li>Custom hero/header image designed to match your brand</li>
-            <li>Changes anytime</li>
             <li>Website built for you at no cost</li>
             <li>Hosting, security &amp; maintenance</li>
             <li>SEO &amp; SEO-focused content</li>
             <li>Mobile optimisation</li>
-            <li>Contact &amp; enquiry forms</li>
+            <li>Up to 5 pages with contact &amp; enquiry forms</li>
+            <li>Custom hero/header image designed to match your brand</li>
+            <li>Changes anytime</li>
           </ul>
           <div class="addon-line"><div><strong>Booking form or e-commerce</strong> <span class="addon-amt">+$25/mo</span><div class="addon-desc">Take bookings online 24/7, or sell your products. Add either to any plan.</div></div></div>
           <a href="/account/login.html?signup=1" class="go">Sign up</a>
@@ -174,13 +187,13 @@
           <div class="price-note">$25/mo — cancel any time</div>
           <div class="included-label">Included:</div>
           <ul>
-            <li>Custom hero/header image designed to match your brand</li>
-            <li>Changes anytime</li>
             <li>Website built for you at no cost</li>
             <li>Hosting, security &amp; maintenance</li>
             <li>SEO &amp; SEO-focused content</li>
             <li>Mobile optimisation</li>
-            <li>Contact &amp; enquiry forms</li>
+            <li>Up to 5 pages with contact &amp; enquiry forms</li>
+            <li>Custom hero/header image designed to match your brand</li>
+            <li>Changes anytime</li>
           </ul>
           <div class="addon-line"><div><strong>Booking form or e-commerce</strong> <span class="addon-amt">+$25/mo</span><div class="addon-desc">Take bookings online 24/7, or sell your products. Add either to any plan.</div></div></div>
           <a href="/account/login.html?signup=1" class="go">Sign up</a>
@@ -201,8 +214,8 @@
             <li>Hosting, security &amp; maintenance</li>
             <li>SEO &amp; SEO-focused content</li>
             <li>Mobile optimisation</li>
+            <li>5+ pages with contact &amp; enquiry forms</li>
             <li>Free logo creation</li>
-            <li>Contact &amp; enquiry forms</li>
           </ul>
           <a href="/account/login.html?signup=1" class="go">Sign up</a>
         </div>
@@ -247,5 +260,6 @@
 
 </script>
 <script src="cookie-banner.js?v=20261113-2" defer></script>
+<script src="chatbot-widget.js?v=20261120-1" defer></script>
 </body>
 </html>
