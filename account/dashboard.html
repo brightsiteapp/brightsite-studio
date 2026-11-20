@@ -2901,8 +2901,18 @@
       body.appendChild(el('p', { 'class': 'bs-plan-total' }, (plan === 'pro' ? (isUS ? '$269' : '£199') + ' build fee today, then ' : '') + (isUS ? (annual ? '$264/yr hosting ($22/mo)' : '$25/mo hosting') : (annual ? '£192/yr hosting (£16/mo)' : '£19/mo hosting')) + ' · cancel any time'));
       // mirrors api/_lib/plans.js: the domain is charged in full on top of the plan
       var charge = pendingDomainPence || null;
-      body.appendChild(el('p', { 'class': 'bs-plan-domain' }, ownedDomain() ? ownedDomain() + ': already yours, nothing to pay for your domain' : pendingDomain + ': ' + (charge === null ? 'registration charged at checkout'
-        : CUR + (charge / 100).toFixed(2) + ' today for 1-year registration')));
+      // Pro includes £10 towards a domain ($12 for US visitors). Under that it is free and not mentioned.
+      var allowance = plan === 'pro' ? (isUS ? 1200 : 1000) : 0;
+      if (ownedDomain()) {
+        body.appendChild(el('p', { 'class': 'bs-plan-domain' }, ownedDomain() + ': already yours, nothing to pay for your domain'));
+      } else if (plan === 'pro' && charge !== null && charge <= allowance) {
+        // free with Pro: nothing shown
+      } else if (plan === 'pro' && charge !== null) {
+        var toPay = charge - allowance;
+        body.appendChild(el('p', { 'class': 'bs-plan-domain' }, pendingDomain + ' costs ' + CUR + (charge / 100).toFixed(2) + ' a year. Our Pro plan includes ' + CUR + (allowance / 100).toFixed(0) + ' towards it, so you pay ' + CUR + (toPay / 100).toFixed(2) + ' today for 1-year registration.'));
+      } else {
+        body.appendChild(el('p', { 'class': 'bs-plan-domain' }, pendingDomain + ': ' + (charge === null ? 'registration charged at checkout' : CUR + (charge / 100).toFixed(2) + ' today for 1-year registration')));
+      }
     }
     openSheet({
       title: 'Choose your plan',
