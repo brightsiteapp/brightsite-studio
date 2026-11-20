@@ -1902,6 +1902,10 @@
     }
     [fullNameEl, googleEl, fbEl, siteEl].forEach(function(el) { el.addEventListener('input', updateSend); });
 
+    // Manual = the seven-step guided flow: business, details, hours, prices, media, extras, reviews
+    var GUIDED_STEPS = ['business', 'details', 'hours', 'prices', 'media', 'extras', 'reviews'];
+    var guidedFlow = false;
+
     document.getElementById('pathChooseAuto').addEventListener('click', function() {
       pickScreen.hidden = true;
       autoScreen.hidden = false;
@@ -1919,6 +1923,8 @@
       veil.hidden = true;
       showWebsiteTab();
       document.getElementById('websitePanel').classList.add('editing');
+      guidedFlow = true;
+      openSection(GUIDED_STEPS[0]);
       // Save choice quietly then send the manual welcome message
       var record = Object.assign({}, (business.data || {}), { raw: raw, slug: slug, name: raw.name || business.name || '', updatedAt: new Date().toISOString() });
       authenticatedFetch(SUPABASE_URL + '/rest/v1/rpc/upsert_business', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ p_id: slug, p_name: record.name, p_user_id: session.user_id, p_data: record, p_updated_at: record.updatedAt }) })
@@ -2591,9 +2597,14 @@
 
   document.querySelectorAll('[data-back]').forEach(function(btn) {
     btn.addEventListener('click', function() {
-      if (activeSection) sectionDoneClicked[activeSection] = true;
+      var finished = activeSection;
+      if (finished) sectionDoneClicked[finished] = true;
       updateSectionChecks();
       scheduleAutoSave();
+      // In the guided flow, Done moves straight on to the next step
+      var idx = GUIDED_STEPS.indexOf(finished);
+      if (guidedFlow && idx > -1 && idx < GUIDED_STEPS.length - 1) { openSection(GUIDED_STEPS[idx + 1]); return; }
+      guidedFlow = false;
       openSection(null);
     });
   });
