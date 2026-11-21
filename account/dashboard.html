@@ -1962,7 +1962,7 @@
       // Save choice quietly then send the manual welcome message
       var record = Object.assign({}, (business.data || {}), { raw: raw, slug: slug, name: raw.name || business.name || '', updatedAt: new Date().toISOString() });
       authenticatedFetch(SUPABASE_URL + '/rest/v1/rpc/upsert_business', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ p_id: slug, p_name: record.name, p_user_id: session.user_id, p_data: record, p_updated_at: record.updatedAt }) })
-        .then(function() { sendManualStartMessage(); }).catch(function(){});
+        .catch(function(){});
     });
 
     sendBtn.addEventListener('click', function() {
@@ -2058,6 +2058,7 @@
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
         body: JSON.stringify({ slug: slug, fullName: raw.fullName || '', buildChoice: raw.buildChoice })
       }).catch(function() {});
+      sendAllDetailsReceivedMessage();
       // Reset section ticks — design is now in progress
       sectionDoneClicked = {};
       updateSectionChecks();
@@ -2721,7 +2722,6 @@
     var allDone = Object.values(complete).filter(Boolean).length >= Object.keys(complete).length;
     if (allDone && !_prevAllDone) {
       sendStageEmail('all_details_complete');
-      sendAllDetailsReceivedMessage();
     }
     _prevAllDone = allDone;
     updatePreviewCard();
