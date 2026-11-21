@@ -645,6 +645,7 @@
   .preview-placeholder[data-state="all-done"]::before{filter:drop-shadow(0 0 7px #7FB2FF) drop-shadow(0 0 22px #3B82F6) !important}
   #builderList .sec-btn.is-active{box-shadow:0 0 0 2px #3B82F6 !important}
   .guided-host{height:100%;width:min(520px,100%);margin:0 auto;overflow:auto;box-sizing:border-box;padding:24px;background:#fff;border-radius:12px}
+  .guided-send{margin-top:20px}
   .guided-back{display:none}
   .guided-on .guided-back{display:flex}
   .guided-host[hidden]{display:none}
@@ -2660,12 +2661,26 @@
       var i = GUIDED_STEPS.indexOf(el.dataset.sectionPanel);
       if (guidedFlow && i > -1) {
         t.textContent = 'Step ' + (i + 1) + ' of ' + GUIDED_STEPS.length;
-        b.textContent = i === GUIDED_STEPS.length - 1 ? 'Send to designer' : 'Next';
+        var lastStep = i === GUIDED_STEPS.length - 1;
+        b.textContent = lastStep ? 'Send to designer' : 'Next';
         b.disabled = false;
+        b.style.display = lastStep ? 'none' : '';
+        var gs = el.querySelector('.guided-send');
+        if (lastStep && !gs) {
+          gs = document.createElement('button');
+          gs.type = 'button';
+          gs.className = 'path-send-btn guided-send';
+          gs.textContent = 'Send to designer';
+          gs.addEventListener('click', function() { b.click(); });
+          el.appendChild(gs);
+        }
+        if (gs) gs.style.display = lastStep ? '' : 'none';
       } else {
         t.textContent = el._headDefault.title;
         b.textContent = el._headDefault.btn;
         b.disabled = false;
+        b.style.display = '';
+        var gs2 = el.querySelector('.guided-send'); if (gs2) gs2.style.display = 'none';
       }
     });
     document.querySelectorAll('.builder-section').forEach(function(el) {
