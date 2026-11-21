@@ -645,7 +645,9 @@
   .preview-placeholder[data-state="all-done"]::before{filter:drop-shadow(0 0 7px #7FB2FF) drop-shadow(0 0 22px #3B82F6) !important}
   #builderList .sec-btn.is-active{box-shadow:0 0 0 2px #3B82F6 !important}
   .guided-host{height:100%;width:min(520px,100%);margin:0 auto;overflow:auto;box-sizing:border-box;padding:24px;background:#fff;border-radius:12px}
-  .guided-send{margin-top:20px}
+  .guided-host .builder-section[data-section-panel="reviews"]:not([hidden]){display:flex;flex-direction:column;min-height:100%}
+  .guided-send{margin-top:auto;margin-bottom:6vh;flex:none}
+  .guided-host .builder-section[data-section-panel="reviews"] .guided-send{position:sticky;bottom:6vh}
   .guided-back{display:none}
   .guided-on .guided-back{display:flex}
   .guided-host[hidden]{display:none}
