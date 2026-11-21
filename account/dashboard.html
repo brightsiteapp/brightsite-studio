@@ -2634,6 +2634,27 @@
     var wp = document.getElementById('websitePanel');
     if (wp && wp.scrollTo) wp.scrollTo({ top: 0, behavior: 'instant' });
 
+    // Guided flow: one button per step ("Next"), and "Send to designer" on the last step
+    document.querySelectorAll('.builder-section').forEach(function(el) {
+      var t = el.querySelector('.section-head .section-title');
+      var b = el.querySelector('.section-head .builder-done');
+      if (!t || !b) return;
+      if (!el._headDefault) el._headDefault = { title: t.textContent, btn: b.textContent };
+      var i = GUIDED_STEPS.indexOf(el.dataset.sectionPanel);
+      if (guidedFlow && i > -1) {
+        t.textContent = 'Step ' + (i + 1) + ' of ' + GUIDED_STEPS.length;
+        b.textContent = i === GUIDED_STEPS.length - 1 ? 'Send to designer' : 'Next';
+        b.disabled = false;
+      } else {
+        t.textContent = el._headDefault.title;
+        b.textContent = el._headDefault.btn;
+        b.disabled = false;
+      }
+    });
+    var dm = document.getElementById('deskMakeLive');
+    if (dm && guidedFlow) dm.hidden = true;
+    else if (typeof updateWebsiteAppHeader === 'function') updateWebsiteAppHeader();
+
     var host = document.getElementById('guidedHost');
     var frameWrap = document.getElementById('previewFrameWrap');
     document.querySelectorAll('.builder-section').forEach(function(el) {
@@ -2667,6 +2688,13 @@
       // In the guided flow, Done moves straight on to the next step
       var idx = GUIDED_STEPS.indexOf(finished);
       if (guidedFlow && idx > -1 && idx < GUIDED_STEPS.length - 1) { openSection(GUIDED_STEPS[idx + 1]); return; }
+      if (guidedFlow && idx === GUIDED_STEPS.length - 1) {
+        // Last step: send everything to the designer
+        guidedFlow = false;
+        openSection(null);
+        sendToDesigner(btn);
+        return;
+      }
       guidedFlow = false;
       openSection(null);
     });
@@ -2680,10 +2708,10 @@
     ['business', 'details', 'hours', 'prices', 'media', 'extras', 'reviews'].forEach(function(k) { complete[k] = !!sectionDoneClicked[k]; });
     var previewReady = !!getPreviewUrl();
     var builderList = document.getElementById('builderList');
-    if (builderList) builderList.classList.toggle('preview-sent', previewReady);
+    if (builderList) builderList.classList.toggle('preview-sent', previewReady || !needsSending());
     Object.keys(complete).forEach(function(s) {
       var btn = document.querySelector('[data-section="' + s + '"]');
-      if (btn) { btn.classList.toggle('is-complete', complete[s] && !previewReady); btn.setAttribute('aria-label', btn.querySelector('.sec-title').textContent + (complete[s] ? ', complete' : ', to do')); }
+      if (btn) { btn.classList.toggle('is-complete', complete[s] && !previewReady && needsSending()); btn.setAttribute('aria-label', btn.querySelector('.sec-title').textContent + (complete[s] ? ', complete' : ', to do')); }
     });
     var allDone = Object.values(complete).filter(Boolean).length >= Object.keys(complete).length;
     if (allDone && !_prevAllDone) {
