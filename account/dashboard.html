@@ -78,6 +78,10 @@
   .dvt-btn{border:0;border-radius:6px;background:transparent;color:var(--muted);font:700 12px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;padding:5px 11px;cursor:pointer;transition:background .12s,color .12s}
   .dvt-btn.active{background:var(--accent);color:#fff}
   /* toggle sits in the middle of the bar; Analytics on the right */
+  .desk-analytics-btn{display:inline-flex;align-items:center;gap:6px;margin-left:auto;border:0;border-radius:8px;padding:8px 14px;font:700 12px/1 'Avenir Next','Avenir','Nunito Sans',sans-serif;background:rgba(59,130,246,.12);color:#3B82F6;cursor:pointer}
+  .desk-analytics-btn:disabled{opacity:.45;cursor:default;pointer-events:none}
+  @media(min-width:800px){#openAnalytics{display:none !important}}
+  @media(max-width:799px){.desk-analytics-btn{display:none}}
   .desk-preview-bar .desk-preview-toggle{position:absolute;left:50%;transform:translateX(-50%);margin-left:0}
   html.admin-edit .app-header, html.admin-edit #mobileViewTabs, html.admin-edit #deskPreview, html.admin-edit #draftBanner, html.admin-edit #pathChoiceVeil, html.admin-edit #websiteAppHeader, html.admin-edit .mobile-preview-wrap, html.admin-edit #editorDone{display:none !important}
   html.admin-edit #builderList{display:grid !important}
@@ -1096,6 +1100,7 @@
 <div id="deskPreview">
   <div class="desk-preview-bar">
     <button type="button" class="wah-make-live" id="deskMakeLive" hidden></button>
+    <button type="button" class="desk-analytics-btn" id="deskAnalytics" aria-label="Analytics"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="2" y="13" width="4" height="9" rx="1.2"/><rect x="7.33" y="8" width="4" height="14" rx="1.2"/><rect x="12.67" y="2" width="4" height="20" rx="1.2"/><rect x="18" y="10" width="4" height="12" rx="1.2"/></svg>Analytics</button>
     <div class="desk-preview-toggle" id="deskViewToggle">
       <button type="button" class="dvt-btn active" id="dvtDesktop" aria-pressed="true" onclick="var p=document.getElementById('deskPreview'),b=p.querySelector('.fake-browser'),m=p.querySelector('.fake-phone');p.classList.remove('mobile-view');b.hidden=false;m.hidden=true;b.style.display='flex';m.style.display='none';this.classList.add('active');this.setAttribute('aria-pressed','true');document.getElementById('dvtMobile').classList.remove('active');document.getElementById('dvtMobile').setAttribute('aria-pressed','false');">Desktop</button>
       <button type="button" class="dvt-btn" id="dvtMobile" aria-pressed="false" onclick="var p=document.getElementById('deskPreview'),b=p.querySelector('.fake-browser'),m=p.querySelector('.fake-phone');p.classList.add('mobile-view');b.hidden=true;m.hidden=false;b.style.display='none';m.style.display='flex';this.classList.add('active');this.setAttribute('aria-pressed','true');document.getElementById('dvtDesktop').classList.remove('active');document.getElementById('dvtDesktop').setAttribute('aria-pressed','false');">Mobile</button>
@@ -1607,7 +1612,7 @@
     this.querySelectorAll('button').forEach(function(x) { x.setAttribute('aria-pressed', String(x === b)); });
     loadAnalytics();
   });
-  ['openAnalytics', 'wahAnalytics'].forEach(function(id) {
+  ['openAnalytics', 'wahAnalytics', 'deskAnalytics'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.addEventListener('click', showAnalyticsTab);
   });
@@ -1714,7 +1719,7 @@
     if (nameEl) nameEl.textContent = raw.name || business.name || 'Your website';
 
     // Analytics show greyed out until the website is live.
-    ['wahAnalytics', 'openAnalytics'].forEach(function(id) {
+    ['wahAnalytics', 'openAnalytics', 'deskAnalytics'].forEach(function(id) {
       var el = document.getElementById(id);
       if (el) { el.disabled = !isLive; el.title = isLive ? '' : 'Available once your website is live'; }
     });
