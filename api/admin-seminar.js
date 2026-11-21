@@ -31,7 +31,7 @@ async function currentUser(token) {
 
 // Lists every seminar sign-up for the admin app. Admin-only: the caller's
 // Supabase token must belong to an address in ADMIN_EMAILS.
-const ALLOWED_ORIGINS = ['https://brightsite.app', 'https://www.brightsite.app'];
+const ALLOWED_ORIGINS = ['https://brightsite.app', 'https://www.brightsite.app', 'https://us.brightsite.app'];
 
 function applyCors(request, response) {
   const origin = request.headers.origin;

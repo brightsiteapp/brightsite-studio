@@ -1,4 +1,4 @@
-const ALLOWED_ORIGINS = ['https://brightsite.app'];
+const ALLOWED_ORIGINS = ['https://brightsite.app', 'https://us.brightsite.app'];
 import { quoteDomainIn, regionFromRequest } from '../domain-pricing.js';
 import { supabaseAdmin } from '../supabase-admin.js';
 import { connectAnyDomain } from '../activate.js';

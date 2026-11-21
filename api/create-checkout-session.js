@@ -3,7 +3,7 @@ import { quoteDomainIn, regionFromRequest } from './_lib/domain-pricing.js';
 import { planPrices, addonPrice } from './_lib/plans.js';
 import { referralIsValid } from './_lib/referrals.js';
 
-const ALLOWED_ORIGINS = ['https://brightsite.app'];
+const ALLOWED_ORIGINS = ['https://brightsite.app', 'https://us.brightsite.app'];
 
 export default async function handler(req, res) {
   const origin = req.headers.origin || '';
