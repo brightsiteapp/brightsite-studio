@@ -1957,6 +1957,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
     } catch { Alert.alert('Something went wrong', 'We couldn’t send your details. Please try again.'); }
   };
   const SECTION_KEYS = ['business', 'details', 'hours', 'prices', 'media', 'extras', 'reviews'];
+  const readyToSend = [1, 2, 3, 4, 5, 6].every(i => complete.has(i));
   const infoComplete = SECTION_KEYS.every(k => businessRecord.current.raw?.sectionDoneClicked?.[k]);
 
   // runs after setData has committed so the sync sees the pasted links
@@ -2158,7 +2159,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           <TextInput value={data.googleLink} onChangeText={v => setData(d => { const n = { ...d, googleLink: v }; const tp = n.trustpilotLink.trim(), g = n.googleLink.trim(); return { ...n, reviewLink: tp || g, reviewSource: tp ? 'Trustpilot' : g ? 'Google' : null }; })} placeholder="Google reviews link" placeholderTextColor={C.placeholder} keyboardType="url" autoCapitalize="none" autoCorrect={false} style={s.input} />
           <TextInput value={data.trustpilotLink} onChangeText={v => setData(d => { const n = { ...d, trustpilotLink: v }; const tp = n.trustpilotLink.trim(), g = n.googleLink.trim(); return { ...n, reviewLink: tp || g, reviewSource: tp ? 'Trustpilot' : g ? 'Google' : null }; })} placeholder="Trustpilot link" placeholderTextColor={C.placeholder} keyboardType="url" autoCapitalize="none" autoCorrect={false} style={s.input} />
         </View>
-        {!editingInfo && <Pressable onPress={sendToDesigner} style={({ pressed }) => [s.primaryBtn, s.sendGlow, { marginTop: 200 }, pressed && s.pressed]}>
+        {!editingInfo && <Pressable disabled={!readyToSend} onPress={sendToDesigner} style={({ pressed }) => [s.primaryBtn, s.sendGlow, !readyToSend && s.sendGlowOff, { marginTop: 200 }, pressed && s.pressed]}>
           <Text style={s.primaryBtnText}>Send to designer</Text>
         </Pressable>}
         </>;
@@ -2464,7 +2465,7 @@ function AppInner({ onSignedOut }: { onSignedOut: () => void }) {
           <Animated.View pointerEvents="none" style={[s.railActive, { opacity: motion.interpolate({ inputRange: [Math.max(0, actual - 1) * CARD_TRAVEL, (actual - .85) * CARD_TRAVEL, (actual + .85) * CARD_TRAVEL, (actual + 1) * CARD_TRAVEL], outputRange: [0, 1, 1, 0], extrapolate: 'clamp' }), transform: [{ scale: dotScale.interpolate({ inputRange: [1, 1.75], outputRange: [0, 1], extrapolate: 'clamp' }) }] }]}><Ionicons name={item.icon} size={15} color="#fff" /></Animated.View>
         </View>;
       })}</Animated.View>
-        <Pressable disabled={!(steps[index]?.id === 'reviews' && !editingInfo)} onPress={sendToDesigner} hitSlop={10} accessibilityLabel="Send to designer" style={{ width: 34, height: 34, borderRadius: 17, marginLeft: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: (steps[index]?.id === 'reviews' && !editingInfo) ? '#3B82F6' : 'rgba(59,130,246,.22)' }}>
+        <Pressable disabled={!(steps[index]?.id === 'reviews' && !editingInfo && readyToSend)} onPress={sendToDesigner} hitSlop={10} accessibilityLabel="Send to designer" style={{ width: 34, height: 34, borderRadius: 17, marginLeft: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: (steps[index]?.id === 'reviews' && !editingInfo && readyToSend) ? '#3B82F6' : 'rgba(59,130,246,.22)' }}>
           <Ionicons name="checkmark" size={20} color="#fff" />
         </Pressable>
       </View>}

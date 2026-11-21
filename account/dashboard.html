@@ -2667,6 +2667,7 @@
         b.textContent = lastStep ? 'Send to designer' : 'Next';
         b.disabled = false;
         b.style.display = lastStep ? 'none' : '';
+        var ready = GUIDED_STEPS.slice(0, -1).every(function(k) { return !!sectionDoneClicked[k]; });
         var gs = el.querySelector('.guided-send');
         if (lastStep && !gs) {
           gs = document.createElement('button');
@@ -2676,6 +2677,8 @@
           gs.addEventListener('click', function() { b.click(); });
           el.appendChild(gs);
         }
+        if (gs) { gs.disabled = !ready; gs.title = ready ? '' : 'Finish every step first'; }
+        if (lastStep) b.disabled = !ready;
         if (gs) gs.style.display = lastStep ? '' : 'none';
       } else {
         t.textContent = el._headDefault.title;
