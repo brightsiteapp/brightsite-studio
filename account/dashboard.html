@@ -1893,7 +1893,14 @@
     updateWebsiteAppHeader();
     checkSiteLive();
     renderWelcomeMessage();
-    if (renderDraftBanner()) showWebsiteTab();
+    if (raw.buildChoice === 'manual' && needsSending() && !isAdminView) {
+      // Reloaded (or lost connection) part-way through BrightBuilder: pick up at the first unfinished step
+      showWebsiteTab();
+      document.getElementById('websitePanel').classList.add('editing');
+      guidedFlow = true;
+      var resume = GUIDED_STEPS.find(function(k) { return !sectionDoneClicked[k]; }) || GUIDED_STEPS[GUIDED_STEPS.length - 1];
+      openSection(resume);
+    } else if (renderDraftBanner()) showWebsiteTab();
     else showMessagesTab();
     showPathChoice();
   }
