@@ -69,6 +69,15 @@ export default async function handler(req, res) {
         discounts = [{ coupon: coupon.id }];
       }
     }
+    // A valid partner code also waives the one-off Pro build fee (£199 / $269), so Pro is free to start.
+    if (freeDomain && plan === 'pro' && prices.setup) {
+      const us = region === 'us';
+      const feeMinor = us ? 26900 : 19900;
+      const feeCouponId = `pro-build-free-${us ? 'usd-' : ''}${feeMinor}`;
+      const feeCoupon = await stripe.coupons.retrieve(feeCouponId).catch(() =>
+        stripe.coupons.create({ id: feeCouponId, amount_off: feeMinor, currency: us ? 'usd' : 'gbp', duration: 'once', name: 'Pro build fee waived' }));
+      discounts = [...(discounts || []), { coupon: feeCoupon.id }];
+    }
 
     const metadata = { plan, billing, slug: slug || '', domain: selectedDomain, publish_on_payment: publishOnPayment ? 'true' : 'false' };
     if (freeDomain) metadata.referral = String(referral).trim().toUpperCase();

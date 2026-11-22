@@ -284,8 +284,8 @@
     }).catch(function () {});
   } catch (e) {}
 
-  // Referral box: only when a domain is being bought. A valid code makes the domain free.
-  if (addonDomain) {
+  // Referral box: when a domain is being bought or Pro is chosen. A valid code makes the domain free and waives the Pro build fee.
+  if (addonDomain || plan === 'pro') {
     document.getElementById('referral-box').style.display = 'block';
     var refInput = document.getElementById('referral-input');
     var refMsg = document.getElementById('referral-msg');
@@ -302,7 +302,7 @@
           if (d.valid) {
             referral = code;
             refMsg.style.color = '#1F8A54';
-            refMsg.textContent = 'Code applied: your domain is free.';
+            refMsg.textContent = 'Code applied: your partner perks are on.';
             loadCheckout();
           } else {
             referral = '';
