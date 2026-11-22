@@ -332,7 +332,9 @@
   document.getElementById('btn-annual').setAttribute('aria-pressed', selectedAnnual ? 'true' : 'false');
   document.getElementById('btn-monthly').setAttribute('aria-pressed', selectedAnnual ? 'false' : 'true');
 
+  var loadSeq = 0; // latest load wins: a slower, older load is discarded instead of mounting a second checkout
   function loadCheckout() {
+    var mySeq = ++loadSeq;
     if (checkout) { checkout.destroy(); checkout = null; }
     checkoutEl.innerHTML = '';
     checkoutEl.style.display = 'none';
@@ -354,11 +356,14 @@
     })
       .then(function (r) { return r.json(); })
       .then(function (data) {
+        if (mySeq !== loadSeq) return null;
         if (!data.clientSecret) throw new Error(data.error || 'No client secret returned');
         var stripe = Stripe(PUBLISHABLE_KEY);
         return stripe.initEmbeddedCheckout({ clientSecret: data.clientSecret });
       })
       .then(function (co) {
+        if (!co) return;
+        if (mySeq !== loadSeq) { co.destroy(); return; }
         checkout = co;
         clearTimeout(slowTimer);
         loadingEl.style.display = 'none';
@@ -367,6 +372,7 @@
         co.mount(checkoutEl);
       })
       .catch(function (err) {
+        if (mySeq !== loadSeq) return;
         clearTimeout(slowTimer);
         loadingEl.style.display = 'none';
         errorEl.textContent = 'Could not load checkout: ' + err.message + '. Please try again.';
