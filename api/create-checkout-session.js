@@ -45,14 +45,18 @@ export default async function handler(req, res) {
 
     // Domain (one-off): listed at its real price; the part the plan covers comes off as a one-time
     // discount, so the customer sees the domain inside their total rather than as a £0 line.
+    // Stripe Checkout allows only ONE discount, so the domain saving and the partner Pro build-fee
+    // waiver are added together into a single coupon.
+    const us = region === 'us';
     let discounts;
+    let offMinor = 0;
+    let domainOff = 0;
     if (selectedDomain) {
-      const us = region === 'us';
       const quote = await quoteDomainIn(selectedDomain, us ? 'USD' : 'GBP');
       // a valid referral code makes the whole domain free; otherwise the plan covers what it normally does
       // Pro includes a domain allowance: £10, or $12 for US visitors. Anything under it is free and not mentioned.
       const allowancePence = plan === 'pro' ? (us ? 1200 : 1000) : 0;
-      const coveredPence = freeDomain ? quote.amountMinor : Math.min(quote.amountMinor, allowancePence);
+      domainOff = freeDomain ? quote.amountMinor : Math.min(quote.amountMinor, allowancePence);
       lineItems.push({
         price_data: {
           currency: us ? 'usd' : 'gbp',
@@ -61,22 +65,24 @@ export default async function handler(req, res) {
         },
         quantity: 1,
       });
-      if (coveredPence > 0) {
-        // One reusable coupon per amount, so loading checkout doesn't create a new coupon each time.
-        const couponId = `domain-included-${us ? 'usd-' : ''}${coveredPence}`;
-        const coupon = await stripe.coupons.retrieve(couponId).catch(() =>
-          stripe.coupons.create({ id: couponId, amount_off: coveredPence, currency: us ? 'usd' : 'gbp', duration: 'once', name: 'Domain included with your plan' }));
-        discounts = [{ coupon: coupon.id }];
-      }
+      offMinor += domainOff;
     }
     // A valid partner code also waives the one-off Pro build fee (£199 / $269), so Pro is free to start.
-    if (freeDomain && plan === 'pro' && prices.setup) {
-      const us = region === 'us';
-      const feeMinor = us ? 26900 : 19900;
-      const feeCouponId = `pro-build-free-${us ? 'usd-' : ''}${feeMinor}`;
-      const feeCoupon = await stripe.coupons.retrieve(feeCouponId).catch(() =>
-        stripe.coupons.create({ id: feeCouponId, amount_off: feeMinor, currency: us ? 'usd' : 'gbp', duration: 'once', name: 'Pro build fee waived' }));
-      discounts = [...(discounts || []), { coupon: feeCoupon.id }];
+    const feeWaived = freeDomain && plan === 'pro' && !!prices.setup;
+    if (feeWaived) offMinor += us ? 26900 : 19900;
+    if (offMinor > 0) {
+      let couponId, couponName;
+      if (feeWaived) {
+        couponId = `partner-${us ? 'usd-' : ''}${offMinor}`;
+        couponName = domainOff > 0 ? 'Free domain and Pro build fee (partner offer)' : 'Pro build fee waived (partner offer)';
+      } else {
+        // One reusable coupon per amount, so loading checkout doesn't create a new coupon each time.
+        couponId = `domain-included-${us ? 'usd-' : ''}${offMinor}`;
+        couponName = 'Domain included with your plan';
+      }
+      const coupon = await stripe.coupons.retrieve(couponId).catch(() =>
+        stripe.coupons.create({ id: couponId, amount_off: offMinor, currency: us ? 'usd' : 'gbp', duration: 'once', name: couponName }));
+      discounts = [{ coupon: coupon.id }];
     }
 
     const metadata = { plan, billing, slug: slug || '', domain: selectedDomain, publish_on_payment: publishOnPayment ? 'true' : 'false' };
