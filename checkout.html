@@ -357,6 +357,13 @@
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (mySeq !== loadSeq) return null;
+        // Spell out what the partner code took off, e.g. "domain (-£4.04) and Pro build fee (-£199.00)".
+        if (referral && data.offers && typeof refMsg !== 'undefined' && refMsg) {
+          var o = data.offers, sym = o.currency === 'usd' ? '$' : '£', parts = [];
+          if (o.domainMinor > 0) parts.push('domain (\u2212' + sym + (o.domainMinor / 100).toFixed(2) + ')');
+          if (o.feeMinor > 0) parts.push('Pro build fee (\u2212' + sym + (o.feeMinor / 100).toFixed(2) + ')');
+          if (parts.length) { refMsg.style.display = 'block'; refMsg.style.color = '#1F8A54'; refMsg.textContent = 'Code applied: ' + parts.join(' and ') + ' taken off your total.'; }
+        }
         if (!data.clientSecret) throw new Error(data.error || 'No client secret returned');
         var stripe = Stripe(PUBLISHABLE_KEY);
         return stripe.initEmbeddedCheckout({ clientSecret: data.clientSecret });

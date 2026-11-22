@@ -85,6 +85,9 @@ export default async function handler(req, res) {
       discounts = [{ coupon: coupon.id }];
     }
 
+    // What the partner code took off, so the checkout page can say so in plain words.
+    const offers = { currency: us ? 'usd' : 'gbp', domainMinor: freeDomain ? domainOff : 0, feeMinor: feeWaived ? (us ? 26900 : 19900) : 0 };
+
     const metadata = { plan, billing, slug: slug || '', domain: selectedDomain, publish_on_payment: publishOnPayment ? 'true' : 'false' };
     if (freeDomain) metadata.referral = String(referral).trim().toUpperCase();
     if (addonSeparate) metadata.addon_separate = 'true';
@@ -105,7 +108,7 @@ export default async function handler(req, res) {
         discounts,
         allow_promotion_codes: discounts ? undefined : true,
       });
-      return res.status(200).json({ url: session.url });
+      return res.status(200).json({ url: session.url, offers });
     }
 
     const returnUrl = `https://brightsite.app/account/dashboard?slug=${encodeURIComponent(slug || '')}&payment=success`;
@@ -124,7 +127,7 @@ export default async function handler(req, res) {
       allow_promotion_codes: discounts ? undefined : true,
     });
 
-    res.status(200).json({ clientSecret: session.client_secret });
+    res.status(200).json({ clientSecret: session.client_secret, offers });
   } catch (err) {
     console.error('Stripe error:', err.message);
     res.status(500).json({ error: err.message });
