@@ -33,7 +33,11 @@
   .brandrow .apptxt b{display:block;font-size:13px;font-weight:900;color:var(--ink)}
   .collab{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:right;line-height:1.3}
 
-  .hero{background:linear-gradient(180deg,#DCE9FD 0%,#F7F2EC 100%);padding-bottom:70px}
+  html,body{min-height:100%}
+  body{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh;background:linear-gradient(180deg,#DCE9FD 0%,#F7F2EC 100%) fixed}
+  .hero{flex:1;display:flex;flex-direction:column;padding-bottom:20px}
+  .hero > .wrap{width:100%;flex:1;display:flex;flex-direction:column;justify-content:center}
+  .hero-grid{padding-bottom:24px}
   .hero-grid{display:grid;gap:26px;padding-top:34px}
   h1{font-size:clamp(58px,17vw,128px);line-height:.92;font-weight:900;letter-spacing:-.045em}
   h1 .free{color:var(--accent)}
@@ -78,18 +82,13 @@
   .plan p{font-size:13.5px;color:var(--muted);margin-top:4px}
   .fine{font-size:13px;color:var(--muted);margin-top:14px}
   .bottomcta{padding-bottom:10px}
-  footer{padding:34px 0 calc(40px + env(safe-area-inset-bottom,0px));font-size:13px;color:var(--muted);text-align:center}
-  footer .app{display:inline-flex;align-items:center;gap:10px;margin-bottom:12px;text-align:left}
-  footer .app img{width:40px;height:40px;border-radius:10px}
-  footer .app span{font-size:13px;line-height:1.25}
-  footer .app b{display:block;color:var(--ink);font-size:15px;font-weight:900}
+  footer{padding:12px 0 calc(22px + env(safe-area-inset-bottom,0px));font-size:13px;color:var(--muted);text-align:center}
 
   @media(max-width:859px){
     .top{flex-wrap:wrap;row-gap:10px}
     .collab{width:100%;text-align:left;order:3;letter-spacing:.06em}
     .collab br{display:none}
     /* phones only get the hero: the rest is on the main site */
-    main,footer .app{display:none}
     .hero{padding-bottom:40px}
   }
   @media(min-width:860px){
@@ -147,42 +146,7 @@
   </div>
 </header>
 
-<main class="wrap">
-  <section>
-    <h2>Websites we've built for local businesses</h2>
-    <div class="sites">
-      <figure class="site"><div class="bar"><i></i><i></i><i></i></div><img src="ads/meraki-hero.jpg" alt="Meraki hair and beauty salon website" loading="lazy" width="1440" height="815"><figcaption><b>Meraki</b> &middot; hair, brows &amp; beauty</figcaption></figure>
-      <figure class="site"><div class="bar"><i></i><i></i><i></i></div><img src="ads/an-automotive-hero.jpg" alt="AN Automotive garage website with online booking form" loading="lazy" width="1440" height="900"><figcaption><b>AN Automotive</b> &middot; with an online booking form</figcaption></figure>
-    </div>
-  </section>
-
-  <div class="steps-plans">
-    <section>
-      <h2>How it works</h2>
-      <ol>
-        <li><div><b>Tell us about your business</b><span>Add your business name and we build a personalised preview of your site. It's free to look.</span></div></li>
-        <li><div><b>Choose Pro</b><span>Happy with it? Pick the Pro plan to take it live.</span></div></li>
-        <li><div><b>Enter your code</b><span>Add ANYTIMEBEV at checkout and the domain and Pro build fee come off the price.</span></div></li>
-      </ol>
-    </section>
-
-    <section>
-      <h2>Hosting prices</h2>
-      <div class="plans">
-        <div class="plan best"><h3>Annual</h3><div class="p">£16<small>/mo</small></div><p>Billed yearly, save £36 a year.</p></div>
-        <div class="plan"><h3>Monthly</h3><div class="p">£19<small>/mo</small></div><p>Cancel any time.</p></div>
-      </div>
-      <p class="fine">With the code, Pro has no £199 build fee and includes a free logo and your first domain. One use per business, new subscriptions only.</p>
-    </section>
-  </div>
-
-  <section class="bottomcta">
-    <a class="cta" href="/">Build my free website</a>
-  </section>
-</main>
-
 <footer>
-  <div class="app"><img src="img/app-logo.png" alt="" width="40" height="40"><span>Also on the<b>App Store</b></span></div>
   <div><a href="/">brightsite.app</a> &middot; <a href="/terms">Terms</a></div>
 </footer>
 
