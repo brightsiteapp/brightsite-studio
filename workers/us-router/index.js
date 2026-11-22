@@ -1,7 +1,7 @@
 // Routes by host and country.
 //  - us.brightsite.app: the US site (USD pricing page at the front, everything else from brightsite.app).
 //  - uk.brightsite.app: the UK site (same content as brightsite.app).
-//  - brightsite.app: US visitors on /pricing get the USD page; everyone else gets the normal site.
+//  - brightsite.app: US visitors on the homepage are redirected to us.brightsite.app; on /pricing they get the USD page; everyone else gets the normal site.
 // Cloudflare sets request.cf.country. The country is passed on to the origin as cf-ipcountry,
 // which create-checkout-session.js reads to pick USD or GBP prices.
 const ORIGIN = 'https://brightsite.app';
@@ -21,6 +21,12 @@ export default {
 
     const isUsHost = url.hostname === 'us.brightsite.app';
     const isUkHost = url.hostname === 'uk.brightsite.app';
+
+    // Visitors in the US who land on the main domain's homepage go to the US site.
+    // uk.brightsite.app stays available for anyone in the US who wants the UK site.
+    if (country === 'US' && !isUsHost && !isUkHost && url.pathname === '/' && (request.method === 'GET' || request.method === 'HEAD')) {
+      return Response.redirect('https://us.brightsite.app/' + url.search, 302);
+    }
 
     // The US host always shows US prices; the main domain only does so for US visitors.
     const wantUs = isUsHost || (!isUkHost && country === 'US');
