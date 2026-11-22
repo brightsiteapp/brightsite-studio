@@ -6,8 +6,12 @@
   .poster{position:relative;width:2048px;height:1536px;
     background:radial-gradient(1100px 800px at 88% 8%,#DCE9FD 0%,rgba(220,233,253,0) 65%),#F7F2EC}
   /* top ~220px stays clear: the treadmill overlays a Bluetooth banner there */
-  .logo{position:absolute;left:110px;top:70px}
-  .logo img{height:54px;display:block}
+  .logo{position:absolute;left:110px;top:62px;display:flex;align-items:center;gap:26px}
+  .logo .word{height:54px;display:block}
+  .logo .sep{width:3px;height:56px;background:#D9CFC1;border-radius:2px}
+  .logo .appicon{width:68px;height:68px;border-radius:16px;display:block;box-shadow:0 6px 16px rgba(59,130,246,.35)}
+  .logo .apptxt{font-size:30px;line-height:1.12;font-weight:700;color:#616D79;white-space:nowrap}
+  .logo .apptxt b{display:block;font-size:34px;font-weight:900;color:#1F2530}
   h1{position:absolute;left:110px;top:225px;font-size:250px;line-height:.9;font-weight:900;letter-spacing:-6px;white-space:nowrap}
   h1 .free{color:#3B82F6}
   .sub{position:absolute;left:110px;top:468px;font-size:84px;font-weight:800;letter-spacing:-1px;white-space:nowrap}
@@ -33,11 +37,9 @@
   .tp-text b{color:#1F2530;font-weight:900}
   .foot{position:absolute;left:110px;bottom:70px;font-size:44px;font-weight:700;color:#616D79}
   .foot b{color:#1F2530}
-  .app{position:absolute;right:110px;bottom:78px;width:600px;white-space:nowrap;text-align:center;font-size:40px;font-weight:700;color:#616D79}
-  .app b{color:#1F2530;font-weight:900}
 </style></head>
 <body><div class="poster">
-  <div class="logo"><img src="../img/brightsite-logo.png"></div>
+  <div class="logo"><img class="word" src="../img/brightsite-logo.png"><span class="sep"></span><img class="appicon" src="../img/app-logo.png"><span class="apptxt">Also on the<b>App Store</b></span></div>
   <h1><span class="free">Free</span> website</h1>
   <div class="sub">Get your business in shape</div>
   <div class="perks">
@@ -57,6 +59,5 @@
     </div>
   </div>
   <div class="tp"><span class="tp-stars"><svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="20" fill="#00b67a" rx="1.5"/><path d="M10 3.5l1.8 4 4.4.6-3.2 3.2.8 4.5-3.8-2-3.8 2 .8-4.5-3.2-3.2 4.4-.6z" fill="#fff"/></svg><svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="20" fill="#00b67a" rx="1.5"/><path d="M10 3.5l1.8 4 4.4.6-3.2 3.2.8 4.5-3.8-2-3.8 2 .8-4.5-3.2-3.2 4.4-.6z" fill="#fff"/></svg><svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="20" fill="#00b67a" rx="1.5"/><path d="M10 3.5l1.8 4 4.4.6-3.2 3.2.8 4.5-3.8-2-3.8 2 .8-4.5-3.2-3.2 4.4-.6z" fill="#fff"/></svg><svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="20" fill="#00b67a" rx="1.5"/><path d="M10 3.5l1.8 4 4.4.6-3.2 3.2.8 4.5-3.8-2-3.8 2 .8-4.5-3.2-3.2 4.4-.6z" fill="#fff"/></svg><svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="20" fill="#00b67a" rx="1.5"/><path d="M10 3.5l1.8 4 4.4.6-3.2 3.2.8 4.5-3.8-2-3.8 2 .8-4.5-3.2-3.2 4.4-.6z" fill="#fff"/></svg></span><span class="tp-text">Rated <b>Excellent</b> on Trustpilot</span></div>
-  <div class="app">Also on the <b>BrightSite app</b></div>
   <div class="foot">In partnership with <b>Anytime Fitness Beverley</b></div>
 </div></body></html>
