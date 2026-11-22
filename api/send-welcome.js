@@ -29,7 +29,7 @@ export default async function handler(request, response) {
   response.setHeader('Cache-Control', 'private, no-store');
 
   const origin = request.headers.origin;
-  if (['https://brightsite.app', 'https://www.brightsite.app', 'https://us.brightsite.app'].includes(origin)) {
+  if (['https://brightsite.app', 'https://www.brightsite.app', 'https://us.brightsite.app', 'https://uk.brightsite.app'].includes(origin)) {
     response.setHeader('Access-Control-Allow-Origin', origin);
     response.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
     response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');

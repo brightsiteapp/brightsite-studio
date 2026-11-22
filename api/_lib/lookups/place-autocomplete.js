@@ -5,7 +5,7 @@ const AUTOCOMPLETE_URL = 'https://places.googleapis.com/v1/places:autocomplete';
 // mints one per search and passes it straight through here.
 export default async function handler(request, response) {
   const origin = request.headers.origin;
-  if (['https://brightsite.app', 'https://www.brightsite.app', 'https://us.brightsite.app'].includes(origin)) {
+  if (['https://brightsite.app', 'https://www.brightsite.app', 'https://us.brightsite.app', 'https://uk.brightsite.app'].includes(origin)) {
     response.setHeader('Access-Control-Allow-Origin', origin);
     response.setHeader('Vary', 'Origin');
   }

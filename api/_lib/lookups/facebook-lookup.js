@@ -41,7 +41,7 @@ async function graph(path, params, token) {
 
 export default async function handler(request, response) {
   const origin = request.headers.origin;
-  if (['https://brightsite.app', 'https://www.brightsite.app', 'https://us.brightsite.app'].includes(origin)) {
+  if (['https://brightsite.app', 'https://www.brightsite.app', 'https://us.brightsite.app', 'https://uk.brightsite.app'].includes(origin)) {
     response.setHeader('Access-Control-Allow-Origin', origin);
     response.setHeader('Vary', 'Origin');
   }

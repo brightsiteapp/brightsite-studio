@@ -2,7 +2,7 @@ import Stripe from 'stripe';
 import { quoteDomainIn, regionFromRequest } from './_lib/domain-pricing.js';
 import { supabaseAdmin } from './_lib/supabase-admin.js';
 
-const ALLOWED_ORIGINS = ['https://brightsite.app', 'https://us.brightsite.app'];
+const ALLOWED_ORIGINS = ['https://brightsite.app', 'https://us.brightsite.app', 'https://uk.brightsite.app'];
 export default async function handler(req, res) {
   const origin = req.headers.origin || '';
   const allowOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
