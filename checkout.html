@@ -314,6 +314,8 @@
     }
     document.getElementById('referral-apply').addEventListener('click', applyReferral);
     refInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); applyReferral(); } });
+    // A code saved by a partner landing page (e.g. /beverley) is filled in and checked automatically.
+    try { var savedRef = localStorage.getItem('bs_ref'); if (savedRef) { refInput.value = savedRef; applyReferral(); } } catch (e) {}
   }
 
   function setBilling(annual) {
