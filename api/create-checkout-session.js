@@ -74,7 +74,7 @@ export default async function handler(req, res) {
       let couponId, couponName;
       if (feeWaived) {
         couponId = `partner-${us ? 'usd-' : ''}${offMinor}`;
-        couponName = domainOff > 0 ? 'Free domain and Pro build fee (partner offer)' : 'Pro build fee waived (partner offer)';
+        couponName = domainOff > 0 ? 'Partner offer: free domain + Pro build' : 'Partner offer: Pro build fee waived'; // Stripe limits coupon names to 40 characters
       } else {
         // One reusable coupon per amount, so loading checkout doesn't create a new coupon each time.
         couponId = `domain-included-${us ? 'usd-' : ''}${offMinor}`;
