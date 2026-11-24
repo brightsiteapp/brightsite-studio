@@ -18,11 +18,11 @@
   .perks{position:absolute;left:110px;top:614px;display:flex;gap:34px}
   .perks div{font-size:44px;font-weight:800;display:flex;align-items:center;gap:12px;white-space:nowrap}
   .perks i{font-style:normal;width:46px;height:46px;border-radius:50%;background:#3B82F6;color:#fff;display:flex;align-items:center;justify-content:center;font-size:29px;font-weight:900;flex:none}
-  .sites{position:absolute;left:110px;top:720px;display:flex;gap:34px}
-  .site{width:568px;background:#fff;border-radius:18px;overflow:hidden;border:3px solid #E7DED2;box-shadow:0 20px 44px rgba(31,37,48,.14)}
+  .sites{position:absolute;left:110px;top:716px;display:flex;gap:44px;align-items:center}
+  .site{width:700px;background:#fff;border-radius:18px;overflow:hidden;border:3px solid #E7DED2;box-shadow:0 20px 44px rgba(31,37,48,.14)}
   .site .bar{height:30px;background:#EFE8DD;display:flex;align-items:center;gap:8px;padding:0 14px}
   .site .bar i{width:10px;height:10px;border-radius:50%;background:#C9BFB0;display:block}
-  .site img{display:block;width:100%;height:352px;object-fit:cover;object-position:top}
+  .site img{display:block;width:100%;height:437px;object-fit:cover;object-position:top}
   .col{position:absolute;right:110px;top:470px;width:600px}
   .save{background:#3B82F6;color:#fff;font-size:84px;font-weight:900;text-align:center;border-radius:28px;padding:6px 0 10px;line-height:1.1}
   .qr{margin-top:26px;background:#fff;border:3px solid #E7DED2;box-shadow:0 30px 70px rgba(31,37,48,.14);border-radius:44px;padding:46px 50px 34px;text-align:center}
@@ -37,6 +37,10 @@
   .tp-text b{color:#1F2530;font-weight:900}
   .foot{position:absolute;left:110px;bottom:70px;font-size:44px;font-weight:700;color:#616D79}
   .foot b{color:#1F2530}
+  .phone{width:236px;height:490px;background:#1F2530;border-radius:46px;padding:11px;box-shadow:0 20px 44px rgba(31,37,48,.22);position:relative}
+  .phone .screen{width:100%;height:100%;border-radius:36px;overflow:hidden;background:#fff}
+  .phone img{display:block;width:100%;height:100%;object-fit:cover;object-position:top}
+  .phone::after{content:"";position:absolute;top:19px;left:50%;transform:translateX(-50%);width:62px;height:16px;border-radius:10px;background:#1F2530}
 </style></head>
 <body><div class="poster">
   <div class="logo"><img class="word" src="../img/brightsite-logo.png"><span class="sep"></span><img class="appicon" src="../img/app-logo.png"><span class="apptxt">Also on the<b>App Store</b></span></div>
@@ -48,7 +52,7 @@
     <div><i>&#10003;</i>Free Pro upgrade</div>
   </div>
   <div class="sites">
-    <div class="site"><div class="bar"><i></i><i></i><i></i></div><img src="meraki-hero.jpg"></div>
+    <div class="phone"><div class="screen"><img src="meraki-mobile.jpg"></div></div>
     <div class="site"><div class="bar"><i></i><i></i><i></i></div><img src="an-automotive-hero.jpg"></div>
   </div>
   <div class="col">
