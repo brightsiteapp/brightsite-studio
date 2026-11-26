@@ -19,6 +19,11 @@
       "permanent": true
     },
     {
+      "source": "/partners",
+      "destination": "/affiliate",
+      "permanent": false
+    },
+    {
       "source": "/work",
       "destination": "/ourwork",
       "permanent": true
